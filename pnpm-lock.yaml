@@ -342,6 +342,9 @@ importers:
 
   packages/simulation:
     dependencies:
+      '@banglalab/board-emulators':
+        specifier: workspace:*
+        version: link:../board-emulators
       '@banglalab/circuit-engine':
         specifier: workspace:*
         version: link:../circuit-engine

@@ -2,8 +2,10 @@ import { holeAt, holeCoordinates, holeDistance, isHole, type HoleId } from './br
 import {
   BATTERY_TERMINALS,
   ComponentSchema,
+  UNO_TERMINALS,
   componentHoles,
   parseTerminal,
+  type BoardPart,
   type CircuitComponent,
   type CircuitDocument,
   type Wire,
@@ -23,15 +25,40 @@ export type EditError =
   | 'unknown-endpoint'
   | 'unknown-item'
   | 'battery-limit'
+  | 'board-limit'
   | 'invalid-value';
 
 export type EditResult =
-  { ok: true; circuit: CircuitDocument; id: string } | { ok: false; error: EditError };
+  | { ok: true; circuit: CircuitDocument; id: string }
+  | { ok: false; error: EditError };
 
-/** Longest distance a part's leads can stretch, in hole pitches. */
-export const MAX_LEAD_SPAN = { resistor: 12, led: 4 } as const;
-const DEFAULT_SPAN = { resistor: 4, led: 1 } as const;
+export type BoardPartType = BoardPart['type'];
+
+/**
+ * Physical shape of each part that plugs into the board: its leads in order,
+ * where they land when first placed (columns to the right of the tapped hole),
+ * and how far flexible leads can be bent apart, in hole pitches. Parts with no
+ * `maxSpan` are rigid: their leads keep their spacing and move only together.
+ */
+export const PART_SHAPES: Record<
+  BoardPartType,
+  { idPrefix: string; pins: readonly string[]; offsets: readonly number[]; maxSpan?: number }
+> = {
+  resistor: { idPrefix: 'R', pins: ['a', 'b'], offsets: [0, 4], maxSpan: 12 },
+  led: { idPrefix: 'LED', pins: ['anode', 'cathode'], offsets: [0, 1], maxSpan: 4 },
+  button: { idPrefix: 'SW', pins: ['a', 'b'], offsets: [0, 2], maxSpan: 4 },
+  potentiometer: { idPrefix: 'POT', pins: ['a', 'wiper', 'b'], offsets: [0, 1, 2] },
+};
+
+const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['props'] } = {
+  resistor: { resistance: 330 },
+  led: { color: 'red' },
+  button: {},
+  potentiometer: { resistance: 10_000, position: 0.5 },
+};
+
 export const MAX_BATTERIES = 2;
+export const MAX_BOARDS = 1;
 
 export const WIRE_COLORS = {
   red: '#d8342a',
@@ -49,18 +76,16 @@ function nextId(circuit: CircuitDocument, prefix: string): string {
   for (let n = 1; ; n++) if (!used.has(`${prefix}${n}`)) return `${prefix}${n}`;
 }
 
-/** Holes that already hold a lead or a wire end. A hole takes exactly one. */
-function occupiedHoles(circuit: CircuitDocument, ignoreId?: string): Set<HoleId> {
-  const holes = new Set<HoleId>();
-  for (const component of circuit.components) {
-    if (component.id !== ignoreId) componentHoles(component).forEach((h) => holes.add(h));
-  }
-  for (const wire of circuit.wires) {
-    if (wire.id === ignoreId) continue;
-    if (isHole(wire.from)) holes.add(wire.from);
-    if (isHole(wire.to)) holes.add(wire.to);
-  }
-  return holes;
+function findBoardPart(circuit: CircuitDocument, id: string): BoardPart | undefined {
+  const component = circuit.components.find((c) => c.id === id);
+  return component && 'pins' in component ? component : undefined;
+}
+
+/** Terminals a wire can plug into on a part that sits beside the board. */
+function terminalsOf(component: CircuitComponent): readonly string[] {
+  if (component.type === 'battery') return BATTERY_TERMINALS;
+  if (component.type === 'uno') return UNO_TERMINALS;
+  return [];
 }
 
 function endpointExists(circuit: CircuitDocument, endpoint: string): boolean {
@@ -68,58 +93,89 @@ function endpointExists(circuit: CircuitDocument, endpoint: string): boolean {
   const terminal = parseTerminal(endpoint);
   if (!terminal) return false;
   const owner = circuit.components.find((c) => c.id === terminal.componentId);
-  return owner?.type === 'battery' && BATTERY_TERMINALS.some((pin) => pin === terminal.pin);
+  return owner !== undefined && terminalsOf(owner).includes(terminal.pin);
+}
+
+/** A hole or board socket holds exactly one lead; a battery clip can hold several wires. */
+function holdsOneLead(circuit: CircuitDocument, endpoint: string): boolean {
+  if (isHole(endpoint)) return true;
+  const owner = circuit.components.find((c) => c.id === parseTerminal(endpoint)?.componentId);
+  return owner?.type === 'uno';
+}
+
+/** Holes and sockets that already hold a lead or a wire end. */
+function occupied(circuit: CircuitDocument, ignoreId?: string): Set<string> {
+  const taken = new Set<string>();
+  for (const component of circuit.components) {
+    if (component.id !== ignoreId) componentHoles(component).forEach((h) => taken.add(h));
+  }
+  for (const wire of circuit.wires) {
+    if (wire.id === ignoreId) continue;
+    for (const end of [wire.from, wire.to]) if (holdsOneLead(circuit, end)) taken.add(end);
+  }
+  return taken;
 }
 
 /** Why a new wire end cannot go on `endpoint`, or null when it can. */
 export function attachError(circuit: CircuitDocument, endpoint: string): EditError | null {
   if (!endpointExists(circuit, endpoint)) return 'unknown-endpoint';
-  return occupiedHoles(circuit).has(endpoint) ? 'hole-occupied' : null;
+  return occupied(circuit).has(endpoint) ? 'hole-occupied' : null;
 }
 
-export function addBattery(circuit: CircuitDocument, voltage = 9): EditResult {
-  if (circuit.components.filter((c) => c.type === 'battery').length >= MAX_BATTERIES) {
-    return fail('battery-limit');
-  }
-  const id = nextId(circuit, 'BAT');
-  const battery: CircuitComponent = { id, type: 'battery', props: { voltage } };
-  return { ok: true, id, circuit: { ...circuit, components: [...circuit.components, battery] } };
-}
-
-/**
- * Puts a new resistor or LED on the board with its first lead in `hole`.
- * The second lead goes to the right if there is room, otherwise to the left.
- */
-export function placePart(
+function addBeside(
   circuit: CircuitDocument,
-  type: 'resistor' | 'led',
-  hole: HoleId,
+  component: CircuitComponent,
+  limit: number,
+  limitError: EditError,
 ): EditResult {
-  if (!isHole(hole)) return fail('unknown-endpoint');
-  const occupied = occupiedHoles(circuit);
-  if (occupied.has(hole)) return fail('hole-occupied');
-
-  const { x, y } = holeCoordinates(hole);
-  const span = DEFAULT_SPAN[type];
-  const second = [span, -span, span + 1, -(span + 1)]
-    .map((dx) => holeAt(x + dx, y))
-    .find((candidate) => candidate !== undefined && !occupied.has(candidate));
-  if (!second) return fail('no-room');
-
-  const component: CircuitComponent =
-    type === 'resistor'
-      ? { id: nextId(circuit, 'R'), type, pins: { a: hole, b: second }, props: { resistance: 330 } }
-      : {
-          id: nextId(circuit, 'LED'),
-          type,
-          pins: { anode: hole, cathode: second },
-          props: { color: 'red' },
-        };
+  if (circuit.components.filter((c) => c.type === component.type).length >= limit) {
+    return fail(limitError);
+  }
   return {
     ok: true,
     id: component.id,
     circuit: { ...circuit, components: [...circuit.components, component] },
   };
+}
+
+export function addBattery(circuit: CircuitDocument, voltage = 9): EditResult {
+  const battery = { id: nextId(circuit, 'BAT'), type: 'battery', props: { voltage } } as const;
+  return addBeside(circuit, battery, MAX_BATTERIES, 'battery-limit');
+}
+
+export function addUno(circuit: CircuitDocument): EditResult {
+  const board = { id: nextId(circuit, 'UNO'), type: 'uno', props: {} } as const;
+  return addBeside(circuit, board, MAX_BOARDS, 'board-limit');
+}
+
+/**
+ * Puts a new part on the board with its first lead in `hole`. The other leads
+ * go to the right if there is room, otherwise to the left.
+ */
+export function placePart(circuit: CircuitDocument, type: BoardPartType, hole: HoleId): EditResult {
+  if (!isHole(hole)) return fail('unknown-endpoint');
+  const taken = occupied(circuit);
+  if (taken.has(hole)) return fail('hole-occupied');
+
+  const shape = PART_SHAPES[type];
+  const { x, y } = holeCoordinates(hole);
+  for (const direction of [1, -1]) {
+    const holes = shape.offsets.map((offset) => holeAt(x + direction * offset, y));
+    if (holes.some((h) => h === undefined || taken.has(h))) continue;
+    const pins = Object.fromEntries(shape.pins.map((pin, i) => [pin, holes[i]]));
+    const component = {
+      id: nextId(circuit, shape.idPrefix),
+      type,
+      pins,
+      props: DEFAULT_PROPS[type],
+    } as BoardPart;
+    return {
+      ok: true,
+      id: component.id,
+      circuit: { ...circuit, components: [...circuit.components, component] },
+    };
+  }
+  return fail('no-room');
 }
 
 function replaceComponent(circuit: CircuitDocument, next: CircuitComponent): CircuitDocument {
@@ -129,33 +185,35 @@ function replaceComponent(circuit: CircuitDocument, next: CircuitComponent): Cir
   };
 }
 
-function withPins(
-  circuit: CircuitDocument,
-  component: CircuitComponent,
-  pins: Record<string, HoleId>,
-): EditResult {
-  if (component.type === 'battery') return fail('unknown-item');
-  const holes = Object.values(pins);
+function withPins(circuit: CircuitDocument, part: BoardPart, pins: Record<string, HoleId>): EditResult {
+  const shape = PART_SHAPES[part.type];
+  const holes = shape.pins.map((pin) => pins[pin]!);
   if (holes.some((h) => !isHole(h))) return fail('no-room');
-  const [first, second] = holes as [HoleId, HoleId];
-  if (first === second) return fail('same-point');
-  const occupied = occupiedHoles(circuit, component.id);
-  if (holes.some((h) => occupied.has(h))) return fail('hole-occupied');
-  if (holeDistance(first, second) > MAX_LEAD_SPAN[component.type]) return fail('lead-too-long');
-  const next = { ...component, pins } as CircuitComponent;
-  return { ok: true, id: component.id, circuit: replaceComponent(circuit, next) };
+  if (new Set(holes).size !== holes.length) return fail('same-point');
+  const taken = occupied(circuit, part.id);
+  if (holes.some((h) => taken.has(h))) return fail('hole-occupied');
+  if (shape.maxSpan !== undefined && holeDistance(holes[0]!, holes.at(-1)!) > shape.maxSpan) {
+    return fail('lead-too-long');
+  }
+  const next = { ...part, pins } as BoardPart;
+  return { ok: true, id: part.id, circuit: replaceComponent(circuit, next) };
 }
 
-/** Moves one lead of a part to another hole. */
+/** True when each lead of the part can be moved on its own. */
+export function hasFlexibleLeads(type: BoardPartType): boolean {
+  return PART_SHAPES[type].maxSpan !== undefined;
+}
+
+/** Moves one lead of a part to another hole. Rigid parts refuse. */
 export function movePin(
   circuit: CircuitDocument,
   componentId: string,
   pin: string,
   hole: HoleId,
 ): EditResult {
-  const component = circuit.components.find((c) => c.id === componentId);
-  if (!component || !('pins' in component) || !(pin in component.pins)) return fail('unknown-item');
-  return withPins(circuit, component, { ...component.pins, [pin]: hole });
+  const part = findBoardPart(circuit, componentId);
+  if (!part || !(pin in part.pins) || !hasFlexibleLeads(part.type)) return fail('unknown-item');
+  return withPins(circuit, part, { ...part.pins, [pin]: hole });
 }
 
 /** Slides a whole part by a number of holes, keeping its shape. */
@@ -165,27 +223,25 @@ export function movePart(
   dx: number,
   dy: number,
 ): EditResult {
-  const component = circuit.components.find((c) => c.id === componentId);
-  if (!component || !('pins' in component)) return fail('unknown-item');
+  const part = findBoardPart(circuit, componentId);
+  if (!part) return fail('unknown-item');
   const pins: Record<string, HoleId> = {};
-  for (const [pin, hole] of Object.entries(component.pins)) {
+  for (const [pin, hole] of Object.entries(part.pins)) {
     const { x, y } = holeCoordinates(hole);
     const target = holeAt(x + dx, y + dy);
     if (!target) return fail('no-room');
     pins[pin] = target;
   }
-  return withPins(circuit, component, pins);
+  return withPins(circuit, part, pins);
 }
 
-/** Swaps the two leads of a part. For an LED this reverses its polarity. */
+/** Turns a part end for end. For an LED this reverses its polarity. */
 export function flipPart(circuit: CircuitDocument, componentId: string): EditResult {
-  const component = circuit.components.find((c) => c.id === componentId);
-  if (!component || !('pins' in component)) return fail('unknown-item');
-  const [[pinA, holeA], [pinB, holeB]] = Object.entries(component.pins) as [
-    [string, HoleId],
-    [string, HoleId],
-  ];
-  return withPins(circuit, component, { [pinA]: holeB, [pinB]: holeA });
+  const part = findBoardPart(circuit, componentId);
+  if (!part) return fail('unknown-item');
+  const names = PART_SHAPES[part.type].pins;
+  const holes = names.map((pin) => (part.pins as Record<string, HoleId>)[pin]!).reverse();
+  return withPins(circuit, part, Object.fromEntries(names.map((pin, i) => [pin, holes[i]!])));
 }
 
 function checkWire(circuit: CircuitDocument, wire: Wire): EditError | null {
@@ -193,18 +249,18 @@ function checkWire(circuit: CircuitDocument, wire: Wire): EditError | null {
     return 'unknown-endpoint';
   }
   if (wire.from === wire.to) return 'same-point';
-  const occupied = occupiedHoles(circuit, wire.id);
-  if (occupied.has(wire.from) || occupied.has(wire.to)) return 'hole-occupied';
+  const taken = occupied(circuit, wire.id);
+  if (taken.has(wire.from) || taken.has(wire.to)) return 'hole-occupied';
   return null;
 }
 
 /** Picks the conventional colour for power wires and cycles the rest. */
 export function suggestWireColor(circuit: CircuitDocument, from: string, to: string): string {
   const pins = [from, to].map((e) => parseTerminal(e)?.pin);
-  if (pins.includes('pos')) return WIRE_COLORS.red;
-  if (pins.includes('neg')) return WIRE_COLORS.black;
-  if ([from, to].some((e) => /^(tp|bp)/.test(e))) return WIRE_COLORS.red;
-  if ([from, to].some((e) => /^(tn|bn)/.test(e))) return WIRE_COLORS.black;
+  if (pins.some((pin) => pin === 'pos' || pin === '5v')) return WIRE_COLORS.red;
+  if (pins.some((pin) => pin === 'neg' || pin === 'gnd' || pin === 'gnd2')) return WIRE_COLORS.black;
+  if ([from, to].some((e) => /^(tp|bp)\d/.test(e))) return WIRE_COLORS.red;
+  if ([from, to].some((e) => /^(tn|bn)\d/.test(e))) return WIRE_COLORS.black;
   const cycle = [WIRE_COLORS.yellow, WIRE_COLORS.blue, WIRE_COLORS.green];
   return cycle[circuit.wires.length % cycle.length] ?? WIRE_COLORS.yellow;
 }
@@ -239,7 +295,7 @@ export function moveWireEnd(
   };
 }
 
-/** Changes a part's properties (resistance, colour, voltage) after validating them. */
+/** Changes a part's properties (resistance, colour, voltage…) after validating them. */
 export function updateProps(
   circuit: CircuitDocument,
   componentId: string,
@@ -252,7 +308,7 @@ export function updateProps(
   return { ok: true, id: componentId, circuit: replaceComponent(circuit, next) };
 }
 
-/** Removes a part or a wire. Removing a battery also removes the wires clipped to it. */
+/** Removes a part or a wire. Removing a battery or board also removes the wires plugged into it. */
 export function removeItem(circuit: CircuitDocument, id: string): EditResult {
   const isWire = circuit.wires.some((w) => w.id === id);
   const isComponent = circuit.components.some((c) => c.id === id);

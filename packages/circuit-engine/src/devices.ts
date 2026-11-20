@@ -17,7 +17,7 @@ export const GMIN = 1e-12;
  */
 export interface Device {
   readonly id: string;
-  readonly kind: 'resistor' | 'voltage-source' | 'diode';
+  readonly kind: 'resistor' | 'voltage-source' | 'thevenin-source' | 'diode';
   /** Nodes this device connects, first terminal first. */
   readonly nodes: readonly number[];
   /** Extra MNA unknowns this device needs (voltage sources need one). */
@@ -104,6 +104,53 @@ export function voltageSource(
     current: (s) => s.branchCurrent(device.branch),
   };
   return device;
+}
+
+export interface TheveninSource extends Device {
+  readonly kind: 'thevenin-source';
+  readonly positive: number;
+  readonly negative: number;
+  readonly volts: number;
+  readonly resistance: number;
+}
+
+/**
+ * A voltage source with a resistance in series: a real battery, or a
+ * microcontroller output pin. Stamped as its Norton equivalent, so it adds no
+ * extra unknowns. `current()` follows the voltage-source convention: negative
+ * while the source is delivering current out of its positive terminal.
+ */
+export function theveninSource(
+  id: string,
+  positive: number,
+  negative: number,
+  volts: number,
+  resistance: number,
+): TheveninSource {
+  if (!Number.isFinite(volts)) throw new RangeError(`Source ${id}: voltage must be finite`);
+  if (!(resistance > 0) || !Number.isFinite(resistance)) {
+    throw new RangeError(`Source ${id}: series resistance must be a positive number of ohms`);
+  }
+  const g = 1 / resistance;
+  return {
+    id,
+    kind: 'thevenin-source',
+    nodes: [positive, negative],
+    positive,
+    negative,
+    volts,
+    resistance,
+    branchCount: 0,
+    branch: -1,
+    reset() {},
+    stamp(system) {
+      system.stampConductance(positive, negative, g);
+      system.stampCurrentSource(negative, positive, volts * g);
+      return false;
+    },
+    voltage: (s) => s.voltage(positive) - s.voltage(negative),
+    current: (s) => (s.voltage(positive) - s.voltage(negative) - volts) * g,
+  };
 }
 
 export interface DiodeModel {

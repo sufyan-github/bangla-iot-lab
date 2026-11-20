@@ -1,0 +1,12 @@
+{
+  "name": "output-pin-led",
+  "engine": "ngspice-45.2",
+  "deck": "* output-pin-led\nVP13 xP13 0 DC 5\nRP13 1 xP13 25\nRR1 1 2 220\nDD1 2 0 MD1\n.model MD1 D(IS=1.557e-17 N=2)\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 4.671219544868547,
+    "2": 1.777951539711771
+  },
+  "sourceCurrents": {
+    "P13": -0.013151218205258108
+  }
+}

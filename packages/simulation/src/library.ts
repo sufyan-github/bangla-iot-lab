@@ -48,3 +48,20 @@ export const BATTERY_VOLTAGES = [1.5, 3, 4.5, 6, 9, 12] as const;
 export const RESISTOR_VALUES = [
   100, 150, 220, 330, 470, 680, 1_000, 2_200, 4_700, 10_000, 47_000, 100_000,
 ] as const;
+
+/** Electrical model of an ATmega328P pin at 5 V (typical datasheet values). */
+export const PIN_OUTPUT_RESISTANCE = 25;
+export const PIN_PULLUP_RESISTANCE = 35_000;
+/** Leakage path of a high-impedance input; it also makes an unconnected input read 0 V. */
+export const PIN_INPUT_RESISTANCE = 100_000_000;
+/** Absolute maximum current for one pin. */
+export const PIN_MAX_CURRENT = 0.04;
+/** Above this an input reads HIGH, below `LOGIC_LOW` it reads LOW, between them it keeps its last value. */
+export const LOGIC_HIGH = 3.0;
+export const LOGIC_LOW = 1.5;
+/** The board's 5 V socket: a stiff supply that a USB port limits to about half an ampere. */
+export const SUPPLY_RESISTANCE = 0.2;
+export const SUPPLY_MAX_CURRENT = 0.5;
+export const BUTTON_CLOSED_RESISTANCE = 0.05;
+/** Choices offered in the editor. */
+export const POTENTIOMETER_VALUES = [1_000, 10_000, 100_000] as const;

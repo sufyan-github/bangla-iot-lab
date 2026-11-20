@@ -143,7 +143,12 @@ export class UnoBoard {
 
   /** Runs the processor for a span of simulated time. */
   runFor(milliseconds: number): void {
-    const target = this.cpu.cycles + (milliseconds / 1000) * CLOCK_HZ;
+    this.runUntil(this.timeMs + milliseconds);
+  }
+
+  /** Runs the processor until its clock reaches `timeMs`. Never drifts, however it is sliced. */
+  runUntil(timeMs: number): void {
+    const target = (timeMs / 1000) * CLOCK_HZ;
     while (this.cpu.cycles < target) {
       avrInstruction(this.cpu);
       this.cpu.tick();

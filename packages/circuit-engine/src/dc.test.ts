@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { solveDc } from './dc';
-import { diode, limitJunctionVoltage, resistor, voltageSource, THERMAL_VOLTAGE } from './devices';
+import {
+  diode,
+  limitJunctionVoltage,
+  resistor,
+  theveninSource,
+  voltageSource,
+  THERMAL_VOLTAGE,
+} from './devices';
 import { solveLinearSystem } from './linear-solver';
 
 function solved(circuit: Parameters<typeof solveDc>[0]) {
@@ -88,6 +95,19 @@ describe('DC operating point', () => {
     const island = resistor('R1', 1, 2, 100);
     const { solution } = solved({ nodeCount: 3, devices: [island] });
     expect(island.current(solution)).toBe(0);
+  });
+
+  it('treats a source with series resistance like an ideal source plus a resistor', () => {
+    const pin = theveninSource('P1', 1, 0, 5, 25);
+    const load = resistor('R1', 1, 0, 225);
+    const { solution } = solved({ nodeCount: 2, devices: [pin, load] });
+    expect(solution.voltage(1)).toBeCloseTo(4.5, 12);
+    expect(load.current(solution)).toBeCloseTo(0.02, 12);
+    expect(pin.current(solution)).toBeCloseTo(-0.02, 12); // delivering
+    // Shorting it is well defined: the series resistance limits the current.
+    const shorted = solved({ nodeCount: 2, devices: [pin, resistor('W', 1, 0, 1e-3)] });
+    expect(pin.current(shorted.solution)).toBeCloseTo(-5 / 25.001, 9);
+    expect(() => theveninSource('P', 1, 0, 5, 0)).toThrow(RangeError);
   });
 
   it('reports conflicting ideal sources as singular', () => {

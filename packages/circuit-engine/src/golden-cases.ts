@@ -1,5 +1,5 @@
 import type { Circuit } from './dc';
-import { diode, resistor, voltageSource, type DiodeModel } from './devices';
+import { diode, resistor, theveninSource, voltageSource, type DiodeModel } from './devices';
 
 /**
  * Reference circuits solved by both this engine and ngspice.
@@ -144,6 +144,28 @@ export const GOLDEN_CASES: GoldenCase[] = [
         resistor('R1', 1, 2, 1000),
         resistor('R2', 2, 0, 4700),
         diode('D1', 2, 0, SILICON),
+      ],
+    }),
+  },
+  {
+    name: 'output-pin-led',
+    description: 'Microcontroller pin (5 V behind 25 Ω) driving a red LED through 220 Ω',
+    build: () => ({
+      nodeCount: 3,
+      devices: [theveninSource('P13', 1, 0, 5, 25), resistor('R1', 1, 2, 220), diode('D1', 2, 0, RED_LED)],
+    }),
+  },
+  {
+    name: 'pullup-and-divider',
+    description: '35 kΩ pull-up to 5 V against a 10 kΩ load, beside a 0.2 Ω supply feeding a divider',
+    build: () => ({
+      nodeCount: 4,
+      devices: [
+        theveninSource('PU', 1, 0, 5, 35_000),
+        resistor('R1', 1, 0, 10_000),
+        theveninSource('VCC', 2, 0, 5, 0.2),
+        resistor('R2', 2, 3, 7_500),
+        resistor('R3', 3, 0, 2_500),
       ],
     }),
   },

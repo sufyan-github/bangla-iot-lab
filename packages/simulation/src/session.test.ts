@@ -1,0 +1,212 @@
+import { readFileSync } from 'node:fs';
+import {
+  addWire,
+  emptyCircuit,
+  removeItem,
+  unoCircuitExample,
+  updateProps,
+  type CircuitDocument,
+  type EditResult,
+} from '@banglalab/shared';
+import { describe, expect, it } from 'vitest';
+import { SimulationSession } from './session';
+import { simulate } from './simulate';
+
+/** Firmware compiled from the starter sketches (kept in sync by the compile-worker tests). */
+const firmware = (name: string) =>
+  readFileSync(
+    new URL(`../../board-emulators/fixtures/starters/${name}.hex`, import.meta.url),
+    'utf8',
+  );
+
+function ok(result: EditResult): CircuitDocument {
+  if (!result.ok) throw new Error(`edit refused: ${result.error}`);
+  return result.circuit;
+}
+
+function run(session: SimulationSession, milliseconds: number, frameMs = 50) {
+  const frames = [];
+  for (let t = 0; t < milliseconds; t += frameMs) {
+    session.advance(frameMs);
+    frames.push(session.frame());
+  }
+  return frames;
+}
+
+/** Expected LED current with the pin HIGH: (5 V − Vf) / (220 Ω + 25 Ω pin + wires). */
+const LED_ON_CURRENT = (5 - 1.79) / 245.02;
+
+describe('UNO circuit before any program is uploaded', () => {
+  it('is powered but every pin is an input, so the LED is dark', () => {
+    const result = simulate(unoCircuitExample());
+    expect(result.readings.LED1!.led!.state).toBe('off');
+    // The potentiometer sits across the 5 V rail: 5 V / 10 kΩ = 0.5 mA.
+    expect(result.readings.POT1!.current).toBeCloseTo(0.0005, 5);
+    expect(result.sockets['UNO1.a0']!.voltage).toBeCloseTo(2.5, 2);
+    expect(result.readings.UNO1!.current).toBeCloseTo(0.0005, 5);
+  });
+});
+
+describe('Blink on pin 13', () => {
+  const session = new SimulationSession(unoCircuitExample());
+  session.loadFirmware('UNO1', firmware('blink'));
+  const frames = run(session, 2000);
+
+  it('lights the LED half the time with the current the pin model predicts', () => {
+    const lit = frames.filter((f) => f.result.readings.LED1!.led!.state === 'on');
+    expect(lit.length).toBeGreaterThanOrEqual(19);
+    expect(lit.length).toBeLessThanOrEqual(21);
+    const steady = lit.map((f) => f.result.readings.LED1!.current).sort((a, b) => b - a)[0]!;
+    expect(Math.abs(steady - LED_ON_CURRENT) / LED_ON_CURRENT).toBeLessThan(0.02);
+  });
+
+  it('reports the pin voltage sagging under load and the same current through the pin and LED', () => {
+    // A frame in which the pin was high the whole time (not one that straddles a toggle).
+    const lit = frames.find((f) => f.boards.UNO1!.highFraction[13] === 1)!;
+    const socket = lit.result.sockets['UNO1.d13']!;
+    expect(socket.current).toBeCloseTo(lit.result.readings.LED1!.current, 6);
+    expect(socket.voltage).toBeCloseTo(5 - socket.current * 25, 3);
+    expect(lit.boards.UNO1!.drives[13]).toBe('high');
+    expect(lit.result.diagnostics).toEqual([]);
+  });
+
+  it('does not call a dark LED a fault while a program is running', () => {
+    const dark = frames.find((f) => f.result.readings.LED1!.led!.state === 'off')!;
+    expect(dark.boards.UNO1!.drives[13]).toBe('low');
+    expect(dark.result.diagnostics).toEqual([]);
+  });
+
+  it('solves each distinct pin state only once', () => {
+    expect(session.solveCount).toBeLessThanOrEqual(4);
+    expect(session.timeMs).toBeCloseTo(2000, 6);
+  });
+});
+
+describe('Button on pin 2', () => {
+  it('reads the pull-up when released and ground when pressed', () => {
+    const document = unoCircuitExample();
+    const session = new SimulationSession(document);
+    session.loadFirmware('UNO1', firmware('button'));
+
+    let frame = run(session, 100).at(-1)!;
+    expect(frame.boards.UNO1!.drives[2]).toBe('pullup');
+    expect(frame.result.sockets['UNO1.d2']!.voltage).toBeCloseTo(5, 3);
+    expect(frame.result.readings.LED1!.led!.state).toBe('off');
+
+    session.update(document, ['SW1']);
+    frame = run(session, 100).at(-1)!;
+    expect(frame.result.sockets['UNO1.d2']!.voltage).toBeLessThan(0.01);
+    // The pull-up now feeds 5 V / 35 kΩ through the button.
+    expect(frame.result.readings.SW1!.current).toBeCloseTo(5 / 35_000, 6);
+    expect(frame.result.readings.LED1!.led!.state).toBe('on');
+
+    session.update(document, []);
+    frame = run(session, 100).at(-1)!;
+    expect(frame.result.readings.LED1!.led!.state).toBe('off');
+  });
+});
+
+/** The example with the LED moved from pin 13 to PWM pin 9. */
+function ledOnPin9(): CircuitDocument {
+  const document = ok(removeItem(unoCircuitExample(), 'W3'));
+  return ok(addWire(document, 'UNO1.d9', 'a5'));
+}
+
+describe('PWM on pin 9', () => {
+  it('Fade: brightness follows the duty cycle up and down', () => {
+    const session = new SimulationSession(ledOnPin9());
+    session.loadFirmware('UNO1', firmware('fade'));
+    const frames = run(session, 3200, 40);
+    const currents = frames.map((f) => f.result.readings.LED1!.current);
+    const duty = frames.map((f) => f.boards.UNO1!.highFraction[9]!);
+
+    expect(Math.max(...currents)).toBeGreaterThan(LED_ON_CURRENT * 0.9);
+    expect(Math.min(...currents)).toBeLessThan(LED_ON_CURRENT * 0.1);
+    // Average current is proportional to the time the pin spends high.
+    for (let i = 0; i < frames.length; i++) {
+      expect(Math.abs(currents[i]! - duty[i]! * LED_ON_CURRENT)).toBeLessThan(LED_ON_CURRENT * 0.03);
+    }
+    // It rises, then falls: the brightest frame is not at either end.
+    const peak = currents.indexOf(Math.max(...currents));
+    expect(peak).toBeGreaterThan(5);
+    expect(peak).toBeLessThan(frames.length - 5);
+    // A half-bright LED is "on", never "overcurrent" or "off".
+    const half = frames.find((f) => Math.abs(f.boards.UNO1!.highFraction[9]! - 0.5) < 0.1)!;
+    expect(half.result.readings.LED1!.led!.state).toBe('on');
+  });
+});
+
+describe('Potentiometer on A0', () => {
+  it('Knob: the program reads the wiper voltage and prints it', () => {
+    let document = ledOnPin9();
+    document = ok(updateProps(document, 'POT1', { position: 0.25 }));
+    const session = new SimulationSession(document);
+    session.loadFirmware('UNO1', firmware('knob'));
+    let frames = run(session, 500);
+
+    // Lead a is on 5 V and position 0.25 puts a quarter of the track above the wiper.
+    expect(frames.at(-1)!.result.sockets['UNO1.a0']!.voltage).toBeCloseTo(3.75, 2);
+    const printed = frames.map((f) => f.boards.UNO1!.serial).join('').trim().split(/\r?\n/).map(Number);
+    expect(printed.length).toBeGreaterThanOrEqual(3);
+    for (const value of printed) expect(Math.abs(value - 767)).toBeLessThanOrEqual(2);
+    expect(frames.at(-1)!.boards.UNO1!.highFraction[9]).toBeCloseTo(191 / 255, 1);
+
+    // Turning the knob while the program runs changes what it reads; the program is not restarted.
+    const before = session.timeMs;
+    session.update(ok(updateProps(document, 'POT1', { position: 1 })));
+    frames = run(session, 300);
+    const later = frames.map((f) => f.boards.UNO1!.serial).join('').trim().split(/\r?\n/).map(Number);
+    expect(later.at(-1)).toBeLessThanOrEqual(1);
+    expect(frames.at(-1)!.boards.UNO1!.timeMs).toBeCloseTo(before + 300, 3);
+  });
+});
+
+describe('mistakes with a board', () => {
+  it('LED straight on a pin with no resistor: pin overloaded and LED burned', () => {
+    let document: CircuitDocument = {
+      ...emptyCircuit(),
+      components: [
+        { id: 'UNO1', type: 'uno', props: {} },
+        { id: 'LED1', type: 'led', pins: { anode: 'd9', cathode: 'd10' }, props: { color: 'red' } },
+      ],
+    };
+    document = ok(addWire(document, 'UNO1.d13', 'a9'));
+    document = ok(addWire(document, 'a10', 'UNO1.gnd'));
+    const session = new SimulationSession(document);
+    session.loadFirmware('UNO1', firmware('blink'));
+    const frame = run(session, 300).find((f) => f.boards.UNO1!.drives[13] === 'high')!;
+    expect(frame.result.diagnostics).toEqual([
+      { code: 'pin-overcurrent', severity: 'error', componentId: 'UNO1', socket: 'd13' },
+      { code: 'led-burned', severity: 'error', componentId: 'LED1' },
+    ]);
+  });
+
+  it('5 V wired straight to GND is a short circuit', () => {
+    const document = ok(addWire(unoCircuitExample(), 'tp10', 'tn10'));
+    expect(simulate(document).diagnostics.map((d) => d.code)).toContain('supply-short');
+  });
+
+  it('rejects firmware that is not valid', () => {
+    const session = new SimulationSession(unoCircuitExample());
+    expect(() => session.loadFirmware('UNO1', 'not a hex file')).toThrow(/Intel HEX/);
+  });
+
+  it('drops a board that is removed from the circuit', () => {
+    const session = new SimulationSession(unoCircuitExample());
+    session.loadFirmware('UNO1', firmware('blink'));
+    session.update(ok(removeItem(unoCircuitExample(), 'UNO1')));
+    const frame = run(session, 50).at(-1)!;
+    expect(frame.boards).toEqual({});
+    expect(frame.result.diagnostics.map((d) => d.code)).toEqual(['no-battery']);
+  });
+});
+
+describe('a circuit with no board', () => {
+  it('gives the same answer through a session as through simulate()', () => {
+    const document: CircuitDocument = ok(removeItem(unoCircuitExample(), 'UNO1'));
+    const session = new SimulationSession(document);
+    session.advance(100);
+    expect(session.frame().result).toEqual(simulate(document));
+    expect(session.frame().result).toEqual(simulate(document)); // a second frame with no time passed
+  });
+});

@@ -26,7 +26,10 @@ for (const goldenCase of GOLDEN_CASES) {
     const value = series.values[0];
     const match = /^(v|i)\((.+)\)$/.exec(series.name);
     if (!match || typeof value !== 'number') throw new Error(`Unexpected series ${series.name}`);
-    if (match[1] === 'v') voltages[match[2]] = value;
+    if (match[1] === 'v') {
+      // Named nodes are internal to a source model; only numbered nodes are compared.
+      if (/^\d+$/.test(match[2])) voltages[match[2]] = value;
+    }
     // ngspice names the source "v<id>" in lower case; strip the leading v.
     else sourceCurrents[match[2].slice(1).toUpperCase()] = value;
   }

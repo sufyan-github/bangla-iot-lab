@@ -1,0 +1,14 @@
+{
+  "name": "pullup-and-divider",
+  "engine": "ngspice-45.2",
+  "deck": "* pullup-and-divider\nVPU xPU 0 DC 5\nRPU 1 xPU 35000\nRR1 1 0 10000\nVVCC xVCC 0 DC 5\nRVCC 2 xVCC 0.2\nRR2 2 3 7500\nRR3 3 0 2500\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 1.1111111111111112,
+    "2": 4.99990000199996,
+    "3": 1.24997500049999
+  },
+  "sourceCurrents": {
+    "PU": -0.00011111111111111112,
+    "VCC": -0.0004999900001969593
+  }
+}

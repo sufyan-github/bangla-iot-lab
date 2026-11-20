@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { allHoles, holeAt, holeCoordinates, parseHole, stripOf } from './breadboard';
-import { emptyCircuit, isCircuitDocument, type CircuitDocument } from './circuit';
+import {
+  emptyCircuit,
+  isCircuitDocument,
+  migrateCircuit,
+  unoPinNumber,
+  type CircuitDocument,
+} from './circuit';
 import {
   addBattery,
+  addUno,
   addWire,
   flipPart,
   movePart,
@@ -13,7 +20,7 @@ import {
   updateProps,
   type EditResult,
 } from './editing';
-import { ledCircuitExample } from './examples';
+import { ledCircuitExample, unoCircuitExample } from './examples';
 
 function ok(result: EditResult): CircuitDocument {
   if (!result.ok) throw new Error(`edit refused: ${result.error}`);
@@ -61,7 +68,7 @@ describe('circuit document', () => {
 
   it('rejects malformed documents', () => {
     const example = ledCircuitExample();
-    expect(isCircuitDocument({ ...example, schemaVersion: 2 })).toBe(false);
+    expect(isCircuitDocument({ ...example, schemaVersion: 3 })).toBe(false);
     expect(isCircuitDocument({ ...example, wires: [{ id: 'W1', from: 'a1' }] })).toBe(false);
     expect(
       isCircuitDocument({
@@ -72,6 +79,72 @@ describe('circuit document', () => {
       }),
     ).toBe(false);
     expect(isCircuitDocument(null)).toBe(false);
+  });
+});
+
+describe('document versions', () => {
+  it('opens a version 1 document as the current version', () => {
+    const v1 = { ...ledCircuitExample(), schemaVersion: 1 };
+    expect(isCircuitDocument(v1)).toBe(false);
+    expect(migrateCircuit(v1)).toEqual(ledCircuitExample());
+    expect(migrateCircuit(ledCircuitExample())).toEqual(ledCircuitExample());
+  });
+
+  it('refuses unknown versions and non-documents', () => {
+    expect(migrateCircuit({ ...ledCircuitExample(), schemaVersion: 99 })).toBeNull();
+    expect(migrateCircuit({ schemaVersion: 1, components: 'x', wires: [] })).toBeNull();
+    expect(migrateCircuit('circuit')).toBeNull();
+    expect(migrateCircuit(null)).toBeNull();
+  });
+});
+
+describe('UNO board, button and potentiometer', () => {
+  it('accepts the UNO example', () => {
+    expect(isCircuitDocument(unoCircuitExample())).toBe(true);
+  });
+
+  it('maps sockets to Arduino pin numbers', () => {
+    expect(unoPinNumber('d13')).toBe(13);
+    expect(unoPinNumber('a0')).toBe(14);
+    expect(unoPinNumber('a5')).toBe(19);
+    expect(unoPinNumber('5v')).toBeNull();
+    expect(unoPinNumber('gnd')).toBeNull();
+  });
+
+  it('allows one board, with one wire per socket', () => {
+    const circuit = ok(addUno(emptyCircuit()));
+    expect(addUno(circuit)).toEqual({ ok: false, error: 'board-limit' });
+    const wired = ok(addWire(circuit, 'UNO1.d13', 'a1'));
+    expect(addWire(wired, 'UNO1.d13', 'a2')).toEqual({ ok: false, error: 'hole-occupied' });
+    expect(addWire(wired, 'UNO1.d99', 'a2')).toEqual({ ok: false, error: 'unknown-endpoint' });
+    expect(addWire(wired, 'UNO1.gnd', 'UNO1.gnd2').ok).toBe(true);
+    // Removing the board unplugs its wires.
+    expect(ok(removeItem(wired, 'UNO1')).wires).toEqual([]);
+  });
+
+  it('places a potentiometer on three neighbouring columns and keeps it rigid', () => {
+    let circuit = ok(placePart(emptyCircuit(), 'potentiometer', 'c20'));
+    expect(circuit.components[0]).toMatchObject({
+      id: 'POT1',
+      pins: { a: 'c20', wiper: 'c21', b: 'c22' },
+      props: { resistance: 10_000, position: 0.5 },
+    });
+    expect(movePin(circuit, 'POT1', 'wiper', 'c25')).toEqual({ ok: false, error: 'unknown-item' });
+    circuit = ok(movePart(circuit, 'POT1', 3, 1));
+    expect(circuit.components[0]).toMatchObject({ pins: { a: 'd23', wiper: 'd24', b: 'd25' } });
+    circuit = ok(flipPart(circuit, 'POT1'));
+    expect(circuit.components[0]).toMatchObject({ pins: { a: 'd25', wiper: 'd24', b: 'd23' } });
+    expect(ok(updateProps(circuit, 'POT1', { position: 1 })).components[0]).toMatchObject({
+      props: { position: 1 },
+    });
+    expect(updateProps(circuit, 'POT1', { position: 1.2 })).toEqual({ ok: false, error: 'invalid-value' });
+  });
+
+  it('places the other leads to the left when there is no room on the right', () => {
+    const circuit = ok(placePart(emptyCircuit(), 'potentiometer', 'a30'));
+    expect(circuit.components[0]).toMatchObject({ pins: { a: 'a30', wiper: 'a29', b: 'a28' } });
+    const button = ok(placePart(emptyCircuit(), 'button', 'e7'));
+    expect(button.components[0]).toMatchObject({ id: 'SW1', pins: { a: 'e7', b: 'e9' } });
   });
 });
 
