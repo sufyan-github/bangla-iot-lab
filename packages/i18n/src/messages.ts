@@ -64,6 +64,9 @@ export const bn = {
   'hint.place': 'বসাতে বোর্ডের একটা ছিদ্রে ট্যাপ করো।',
   'hint.running': 'সার্কিট চালু অবস্থায় সুইচ বা সেন্সরে ট্যাপ করে বদলানো যায়, আর বোতাম চেপে ধরা যায়।',
   'tool.relay': 'রিলে',
+  'tool.servo': 'সার্ভো',
+  'tool.ultrasonic': 'দূরত্ব সেন্সর',
+  'tool.lcd': 'LCD',
   'tool.uno': 'UNO বোর্ড',
   'hint.button': 'বোতাম বসাতে একটা ছিদ্রে ট্যাপ করো। সার্কিট চালু থাকলে বোতামে চেপে ধরে রাখা যায়।',
   'hint.potentiometer': 'পটেনশিওমিটার বসাতে একটা ছিদ্রে ট্যাপ করো। তিনটা পা পাশাপাশি তিন কলামে বসবে।',
@@ -121,6 +124,15 @@ export const bn = {
   'part.relay': 'রিলে',
   'part.relay.about':
     'রিলে হলো তড়িৎচুম্বক দিয়ে চালানো সুইচ। কয়েলে (বাঁ দিকের দুই পা) কারেন্ট গেলে ভেতরের কন্টাক্ট টেনে বন্ধ হয় আর ডান দিকের দুই পা জুড়ে যায়। কয়েল প্রায় 70 mA চায়, তাই বোর্ডের পিন থেকে সরাসরি নয়, ট্রানজিস্টর দিয়ে চালাও।',
+  'part.servo': 'সার্ভো মোটর',
+  'part.ultrasonic': 'আলট্রাসনিক দূরত্ব সেন্সর',
+  'part.lcd': 'LCD (১৬ × ২)',
+  'part.servo.about':
+    'সার্ভো তার হাতটা ০° থেকে ১৮০°-র মধ্যে যে কোণে বলা হয় সেখানে ঘুরিয়ে ধরে রাখে। প্রোগ্রামে Servo লাইব্রেরি দিয়ে কোণ ঠিক করা হয়। পা: GND, 5 V, সিগন্যাল।',
+  'part.ultrasonic.about':
+    'Trig-এ ছোট একটা পালস দিলে এই সেন্সর শব্দ ছোড়ে, আর শব্দ ফিরে আসতে যত সময় লাগে তত সময় Echo HIGH রাখে: প্রতি সেন্টিমিটারে ৫৮ মাইক্রোসেকেন্ড। পা: 5 V, Trig, Echo, GND।',
+  'part.lcd.about':
+    'এই ডিসপ্লেতে ১৬ অক্ষরের দুই লাইন লেখা দেখানো যায়। LiquidCrystal লাইব্রেরি RS, E আর D4 থেকে D7 দিয়ে এটা চালায়। VSS আর RW GND-তে, VDD 5 V-তে লাগাও। এতে ইংরেজি অক্ষর আর সংখ্যা দেখানো যায়, বাংলা নয়।',
   'part.uno': 'UNO বোর্ড',
   'part.button.about':
     'চেপে ধরলে বোতামের দুই পা জুড়ে যায়, ছেড়ে দিলে আলাদা হয়ে যায়। সার্কিট চালু করে বোতামে চাপ দিয়ে দেখো।',
@@ -144,6 +156,7 @@ export const bn = {
   'inspector.obstacle': 'সামনে বাধা আছে',
   'inspector.clear': 'সামনে কিছু নেই',
   'lab.sound': 'শব্দ',
+  'inspector.distance': 'বাধা কত দূরে',
   'inspector.position': 'নবের অবস্থান',
   'color.red': 'লাল',
   'color.yellow': 'হলুদ',
@@ -216,6 +229,9 @@ export const bn = {
   'code.starter.button': 'বোতাম চাপলে LED',
   'code.starter.fade': 'ধীরে উজ্জ্বল-ম্লান (পিন ৯)',
   'code.starter.knob': 'নব ঘুরিয়ে উজ্জ্বলতা (পিন ৯)',
+  'code.starter.servo': 'সার্ভো এদিক-ওদিক (পিন ৯)',
+  'code.starter.distance': 'দূরত্ব মাপো (পিন ৭, ৬)',
+  'code.starter.lcd': 'LCD-তে লেখা',
   'code.editor': 'প্রোগ্রাম',
   'code.upload': 'বোর্ডে আপলোড করো',
   'code.uploading': 'কম্পাইল হচ্ছে…',
@@ -295,6 +311,9 @@ export const en: Record<MessageKey, string> = {
   'hint.running':
     'While the circuit runs, tap a switch or sensor to change it, or hold a button down.',
   'tool.relay': 'Relay',
+  'tool.servo': 'Servo',
+  'tool.ultrasonic': 'Distance',
+  'tool.lcd': 'LCD',
   'tool.uno': 'UNO board',
   'hint.button':
     'Tap a hole to place the button. While the circuit runs you can press and hold it.',
@@ -353,6 +372,15 @@ export const en: Record<MessageKey, string> = {
   'part.relay': 'Relay',
   'part.relay.about':
     'A relay is a switch worked by an electromagnet. Current through the coil (the two left legs) pulls the contact shut and joins the two right legs. The coil needs about 70 mA, so drive it with a transistor, not straight from a board pin.',
+  'part.servo': 'Servo motor',
+  'part.ultrasonic': 'Ultrasonic distance sensor',
+  'part.lcd': 'LCD (16 × 2)',
+  'part.servo.about':
+    'A servo turns its arm to an angle from 0° to 180° and holds it there. The program sets the angle with the Servo library. Legs: GND, 5 V, signal.',
+  'part.ultrasonic.about':
+    'This sensor sends a burst of sound when Trig gets a short pulse, then holds Echo HIGH for as long as the sound takes to come back: 58 microseconds for every centimetre. Legs: 5 V, Trig, Echo, GND.',
+  'part.lcd.about':
+    'This display shows two lines of 16 characters. The LiquidCrystal library drives it through RS, E and D4 to D7. Connect VSS and RW to GND and VDD to 5 V. It can show English letters and digits, not Bangla.',
   'part.uno': 'UNO board',
   'part.button.about':
     'While you hold it down, the two legs are joined; when you let go they separate. Run the circuit and press it.',
@@ -376,6 +404,7 @@ export const en: Record<MessageKey, string> = {
   'inspector.obstacle': 'Something in front',
   'inspector.clear': 'Nothing in front',
   'lab.sound': 'Sound',
+  'inspector.distance': 'Distance to the obstacle',
   'inspector.position': 'Knob position',
   'color.red': 'Red',
   'color.yellow': 'Yellow',
@@ -448,6 +477,9 @@ export const en: Record<MessageKey, string> = {
   'code.starter.button': 'Button lights the LED',
   'code.starter.fade': 'Fade in and out (pin 9)',
   'code.starter.knob': 'Knob sets brightness (pin 9)',
+  'code.starter.servo': 'Servo sweep (pin 9)',
+  'code.starter.distance': 'Measure distance (pins 7, 6)',
+  'code.starter.lcd': 'Text on the LCD',
   'code.editor': 'Program',
   'code.upload': 'Upload to the board',
   'code.uploading': 'Compiling…',

@@ -111,27 +111,35 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
-  if (part.type === 'ldr' || part.type === 'soil' || part.type === 'temperature') {
+  if (
+    part.type === 'ldr' ||
+    part.type === 'soil' ||
+    part.type === 'temperature' ||
+    part.type === 'ultrasonic'
+  ) {
     const slider = {
-      ldr: { key: 'light', label: 'inspector.light', max: 1, step: 0.01 },
-      soil: { key: 'moisture', label: 'inspector.moisture', max: 1, step: 0.01 },
-      temperature: { key: 'celsius', label: 'inspector.temperature', max: 100, step: 1 },
+      ldr: { key: 'light', label: 'inspector.light', min: 0, max: 1, step: 0.01 },
+      soil: { key: 'moisture', label: 'inspector.moisture', min: 0, max: 1, step: 0.01 },
+      temperature: { key: 'celsius', label: 'inspector.temperature', min: 0, max: 100, step: 1 },
+      ultrasonic: { key: 'distance', label: 'inspector.distance', min: 2, max: 400, step: 1 },
     }[part.type];
     const value = (part.props as Record<string, number>)[slider.key]!;
+    const shown =
+      part.type === 'temperature'
+        ? `${number(value)}°C`
+        : part.type === 'ultrasonic'
+          ? `${number(value)} cm`
+          : `${number(Math.round(value * 100))}%`;
     return (
       <label className="block">
         <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
           {t(slider.label as MessageKey)}
-          <span className="font-medium text-ink tabular-nums">
-            {part.type === 'temperature'
-              ? `${number(value)}°C`
-              : `${number(Math.round(value * 100))}%`}
-          </span>
+          <span className="font-medium text-ink tabular-nums">{shown}</span>
         </span>
         <input
           type="range"
           data-testid="slider"
-          min={0}
+          min={slider.min}
           max={slider.max}
           step={slider.step}
           value={value}

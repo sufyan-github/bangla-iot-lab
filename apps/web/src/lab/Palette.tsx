@@ -113,6 +113,26 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M3 21h18" {...stroke} />
     </>
   ),
+  servo: (
+    <>
+      <rect x="4" y="9" width="16" height="11" rx="2" {...stroke} />
+      <circle cx="12" cy="9" r="2.2" fill="currentColor" />
+      <path d="M12 9l5-6" {...stroke} strokeWidth={2.6} />
+    </>
+  ),
+  ultrasonic: (
+    <>
+      <rect x="2" y="7" width="20" height="10" rx="2" {...stroke} />
+      <circle cx="8" cy="12" r="2.8" {...stroke} />
+      <circle cx="16" cy="12" r="2.8" {...stroke} />
+    </>
+  ),
+  lcd: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="2" {...stroke} />
+      <path d="M6 10h9M6 14h6" {...stroke} />
+    </>
+  ),
   relay: (
     <>
       <rect x="3" y="6" width="18" height="12" rx="2" {...stroke} />
@@ -132,8 +152,8 @@ const GROUPS: PaletteItem[][] = [
   ['select', 'wire'],
   ['battery', 'uno'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
-  ['buzzer', 'motor', 'relay'],
-  ['ldr', 'temperature', 'soil', 'ir'],
+  ['buzzer', 'motor', 'relay', 'servo', 'lcd'],
+  ['ldr', 'temperature', 'soil', 'ir', 'ultrasonic'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

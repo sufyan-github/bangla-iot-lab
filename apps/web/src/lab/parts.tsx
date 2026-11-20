@@ -668,3 +668,168 @@ export function RelayView(props: {
     </g>
   );
 }
+
+/** Hobby servo: the arm on top turns to the commanded angle (straight up is 90°). */
+export function ServoView(props: {
+  gnd: Point;
+  signal: Point;
+  angle: number | undefined;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.gnd, props.signal);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <rect
+        x={-length / 2 - 12}
+        y={-46}
+        width={length + 24}
+        height={50}
+        rx={5}
+        fill="#2456a6"
+        stroke="#153564"
+      />
+      {[-length / 2, 0, length / 2].map((x, i) => (
+        <circle key={x} cx={x} r={2.6} fill={['#7b4a21', '#d8342a', '#ef7d1a'][i]} />
+      ))}
+      <circle cy={-24} r={13} fill="#e9ecea" stroke="#8d9396" />
+      <g transform={`translate(0 -24) rotate(${(props.angle ?? 90) - 90})`}>
+        <rect x={-3.5} y={-22} width={7} height={25} rx={3.5} fill="#f4f7f5" stroke="#6d7578" />
+        <circle r={2.2} fill="#3a4245" />
+      </g>
+    </g>
+  );
+}
+
+/** HC-SR04 ultrasonic sensor: two round transducers on a small board. */
+export function UltrasonicView(props: {
+  vcc: Point;
+  gnd: Point;
+  label: string;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.vcc, props.gnd);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <rect
+        x={-length / 2 - 14}
+        y={-48}
+        width={length + 28}
+        height={52}
+        rx={4}
+        fill="#1f5fa8"
+        stroke="#123a69"
+      />
+      {[-length / 2, -length / 6, length / 6, length / 2].map((x) => (
+        <circle key={x} cx={x} r={2.6} fill={LEG} />
+      ))}
+      {[-length / 2 + 4, length / 2 - 4].map((x) => (
+        <g key={x}>
+          <circle cx={x} cy={-28} r={13} fill="#c9d1d4" stroke="#6d7578" />
+          <circle cx={x} cy={-28} r={8} fill="#3a4245" />
+        </g>
+      ))}
+      <text
+        y={-8}
+        textAnchor="middle"
+        fontSize={10}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        {props.label}
+      </text>
+    </g>
+  );
+}
+
+/** 16 × 2 character LCD. `lines` is what it shows; undefined while it is off. */
+export function LcdView(props: {
+  first: Point;
+  last: Point;
+  lines: [string, string] | undefined;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const cell = (length - 16) / 16;
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <rect
+        x={-length / 2 - 14}
+        y={-104}
+        width={length + 28}
+        height={110}
+        rx={5}
+        fill="#17603c"
+        stroke="#0d3d25"
+      />
+      {Array.from({ length: 16 }, (_, i) => (
+        <circle key={i} cx={-length / 2 + (i * length) / 15} r={2.4} fill={LEG} />
+      ))}
+      <rect x={-length / 2 - 2} y={-92} width={length + 4} height={66} rx={3} fill="#0c1a12" />
+      <rect
+        x={-length / 2 + 4}
+        y={-86}
+        width={length - 8}
+        height={54}
+        rx={2}
+        fill={props.lines ? '#b9d23c' : '#5e6f2c'}
+      />
+      <g
+        fontFamily="ui-monospace, Menlo, Consolas, monospace"
+        fontSize={19}
+        fontWeight={700}
+        fill="#1c2a10"
+        textAnchor="middle"
+        pointerEvents="none"
+      >
+        {props.lines?.flatMap((line, row) =>
+          [...line].map((character, column) =>
+            character === ' ' ? null : (
+              <text
+                key={`${row}-${column}`}
+                x={-length / 2 + 8 + cell * (column + 0.5)}
+                y={-65 + row * 24}
+              >
+                {character}
+              </text>
+            ),
+          ),
+        )}
+      </g>
+      <g
+        fontSize={6.5}
+        fontWeight={600}
+        fill="#fff"
+        opacity={0.85}
+        textAnchor="middle"
+        pointerEvents="none"
+      >
+        {[
+          'VSS',
+          'VDD',
+          'V0',
+          'RS',
+          'RW',
+          'E',
+          'D0',
+          'D1',
+          'D2',
+          'D3',
+          'D4',
+          'D5',
+          'D6',
+          'D7',
+          'A',
+          'K',
+        ].map((name, i) => (
+          <text key={name} x={-length / 2 + (i * length) / 15} y={-11}>
+            {name}
+          </text>
+        ))}
+      </g>
+    </g>
+  );
+}

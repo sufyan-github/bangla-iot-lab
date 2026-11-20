@@ -41,6 +41,17 @@ type Drag = {
   | { kind: 'wire-end'; end: 'from' | 'to'; anchor: Point }
 );
 
+/** How far each module's body rises above its row of legs, in canvas units. */
+const BODY_HEIGHT: Partial<Record<string, number>> = {
+  temperature: 24,
+  soil: 24,
+  ir: 24,
+  relay: 26,
+  servo: 36,
+  ultrasonic: 38,
+  lcd: 94,
+};
+
 const ZOOM_MIN = 0.6;
 const ZOOM_MAX = 2;
 
@@ -230,8 +241,8 @@ export function Canvas() {
                 const leads = Object.values(component.pins).map(holePoint);
                 const first = leads[0]!;
                 const second = leads.at(-1)!;
-                // Sensor modules stand taller than their legs; the whole board is touchable.
-                const tall = ['temperature', 'soil', 'ir', 'relay'].includes(component.type);
+                // Modules stand taller than their legs; the whole body is touchable.
+                const bodyHeight = BODY_HEIGHT[component.type] ?? 0;
                 const length = Math.hypot(second.x - first.x, second.y - first.y);
                 const angle = (Math.atan2(second.y - first.y, second.x - first.x) * 180) / Math.PI;
                 return (
@@ -240,9 +251,9 @@ export function Canvas() {
                     className="drag-handle"
                     data-hit={component.id}
                     x={-length / 2 - 12}
-                    y={tall ? -36 : -12}
+                    y={-12 - bodyHeight}
                     width={length + 24}
-                    height={tall ? 48 : 24}
+                    height={24 + bodyHeight}
                     rx={12}
                     fill="transparent"
                     transform={`translate(${(first.x + second.x) / 2} ${(first.y + second.y) / 2}) rotate(${angle})`}

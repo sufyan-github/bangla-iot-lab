@@ -29,6 +29,7 @@ import {
   CapacitorView,
   DiodeView,
   LED_PAINT,
+  LcdView,
   LdrView,
   LedView,
   MotorView,
@@ -36,8 +37,10 @@ import {
   RelayView,
   ResistorView,
   SensorView,
+  ServoView,
   SwitchView,
   TransistorView,
+  UltrasonicView,
   UnoView,
   WireView,
 } from './parts';
@@ -288,6 +291,33 @@ function BoardPartDrawing(props: {
           selected={selected}
         />
       );
+    case 'servo':
+      return (
+        <ServoView
+          gnd={at(part.pins.gnd)}
+          signal={at(part.pins.signal)}
+          angle={reading?.angle}
+          selected={selected}
+        />
+      );
+    case 'ultrasonic':
+      return (
+        <UltrasonicView
+          vcc={at(part.pins.vcc)}
+          gnd={at(part.pins.gnd)}
+          label={`${props.formatNumber(part.props.distance)} cm`}
+          selected={selected}
+        />
+      );
+    case 'lcd':
+      return (
+        <LcdView
+          first={at(part.pins.vss)}
+          last={at(part.pins.k)}
+          lines={reading?.lcd?.lines}
+          selected={selected}
+        />
+      );
     case 'relay':
       return (
         <RelayView
@@ -388,6 +418,8 @@ export function Scene({
             data-current-ma={reading ? (reading.current * 1000).toFixed(2) : undefined}
             data-voltage={reading ? reading.voltage.toFixed(3) : undefined}
             data-activity={reading?.activity?.toFixed(2)}
+            data-angle={reading?.angle?.toFixed(0)}
+            data-lcd={reading?.lcd?.lines.join('|')}
           >
             <BoardPartDrawing
               part={component}

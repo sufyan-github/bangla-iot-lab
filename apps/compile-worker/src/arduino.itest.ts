@@ -132,6 +132,25 @@ describe('Arduino sketches on the emulated UNO', () => {
     expect(missingLoop.diagnostics[0].message).toBe("undefined reference to 'loop'");
   });
 
+  it('builds sketches that use the Servo and LiquidCrystal libraries', async () => {
+    const servo = await boardRunning(
+      '#include <Servo.h>\nServo s;\nvoid setup() { s.attach(9); s.write(90); }\nvoid loop() {}\n',
+    );
+    // 90° is a 1472 µs pulse every 20 ms: about 7.4 % of the time high.
+    servo.runFor(50);
+    expect(dutyCycle(servo, 9, 200)).toBeCloseTo(1472 / 20000, 2);
+
+    const lcd = await compile(
+      '#include <LiquidCrystal.h>\nLiquidCrystal lcd(12, 11, 5, 4, 3, 2);\nvoid setup() { lcd.begin(16, 2); lcd.print("hi"); }\nvoid loop() {}\n',
+    );
+    expect(lcd.ok).toBe(true);
+
+    const unknown = await compile('#include <NoSuchLibrary.h>\nvoid setup() {}\nvoid loop() {}\n');
+    expect(unknown).toMatchObject({ ok: false, reason: 'compile-error' });
+    expect(unknown.diagnostics[0]).toMatchObject({ line: 1 });
+    expect(unknown.diagnostics[0].message).toContain('NoSuchLibrary.h');
+  });
+
   it('cannot read host files from a sketch', async () => {
     const result = await compile('#include "/etc/passwd"\nvoid setup() {}\nvoid loop() {}\n');
     expect(result.ok).toBe(false);
@@ -140,7 +159,15 @@ describe('Arduino sketches on the emulated UNO', () => {
 
   it('shipped starter firmware matches its source', async () => {
     const sketches = (await readdir(startersDir)).filter((f) => f.endsWith('.ino'));
-    expect(sketches.sort()).toEqual(['blink.ino', 'button.ino', 'fade.ino', 'knob.ino']);
+    expect(sketches.sort()).toEqual([
+      'blink.ino',
+      'button.ino',
+      'distance.ino',
+      'fade.ino',
+      'knob.ino',
+      'lcd.ino',
+      'servo.ino',
+    ]);
     for (const sketch of sketches) {
       const result = await compile(await starter(sketch));
       // If this fails, run: pnpm --filter @banglalab/compile-worker starters:build
