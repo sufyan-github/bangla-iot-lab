@@ -1,0 +1,20 @@
+{
+  "name": "@banglalab/compile-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fastify/type-provider-typebox": "^6.3.0",
+    "fastify": "^5.12.8",
+    "tsx": "^4.23.15",
+    "typebox": "^1.4.7"
+  },
+  "devDependencies": {
+    "@banglalab/board-emulators": "workspace:*"
+  }
+}
