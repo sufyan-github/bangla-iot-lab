@@ -24,16 +24,24 @@ when their strip names match.
 
 ### 3. Netlist
 
-`packages/simulation/src/netlist.ts`. Strips and battery terminals become nodes.
+`packages/simulation/src/netlist.ts`. Strips, battery terminals and board
+sockets become nodes.
 
-| Part     | Becomes                                                              |
-| -------- | -------------------------------------------------------------------- |
-| Battery  | ideal source + 0.5 Ω internal resistance (extra internal node)       |
-| Resistor | resistor                                                             |
-| LED      | Shockley diode fitted to the colour's forward voltage at 20 mA       |
-| Wire     | 10 mΩ resistor (so each wire's current is known and can be animated) |
+| Part                                | Becomes                                                              |
+| ----------------------------------- | -------------------------------------------------------------------- |
+| Battery                             | source with 0.5 Ω in series                                          |
+| Resistor                            | resistor                                                             |
+| LED                                 | Shockley diode fitted to the colour's forward voltage at 20 mA       |
+| Push button                         | 50 mΩ resistor while held, nothing otherwise                         |
+| Potentiometer                       | two resistors that add up to its value, split at the knob position   |
+| Capacitor                           | capacitor (open circuit in a settled solve)                          |
+| UNO 5V socket                       | 5 V source with 0.2 Ω in series                                      |
+| UNO pin, output HIGH / LOW          | 5 V source with 25 Ω in series / 25 Ω to ground                      |
+| UNO pin, input / input with pull-up | 100 MΩ to ground / 5 V source with 35 kΩ in series                   |
+| Wire                                | 10 mΩ resistor (so each wire's current is known and can be animated) |
 
-Ground is the negative terminal of the first battery.
+Ground is the UNO's GND if there is a board, otherwise the negative terminal of
+the first battery. Only sockets with a wire in them get a device.
 
 ### 4. Solver
 
@@ -86,17 +94,38 @@ golden file no longer matches its circuit.
 Covered: resistor networks, single and multiple LEDs in series and parallel,
 reversed LED, LED with no resistor, batteries in series, a silicon diode clamp.
 
+## Running through time
+
+`packages/simulation/src/session.ts`. A `SimulationSession` owns the circuit,
+the emulated boards and the clock; time moves only when `advance(ms)` is
+called, so it is deterministic and tested without a real clock. The web app
+drives it from a Web Worker in real time and receives a frame about thirty
+times a second. See decisions D-016 to D-018 for the scheduling, caching and
+averaging rules.
+
+Time steps use backward Euler in `solveTimeStep`. Three time-dependent circuits
+(RC charge, a capacitor discharging through an LED, two capacitors in series)
+are compared with ngspice transient analysis; agreement is within 12 mV.
+
+Signals for the oscilloscope and logic analyser are recorded by the session as
+(time, value) pairs, one per change, so pin edges are exact.
+
 ## Known limitations (do not overstate)
 
-- **DC only.** No capacitors, no time. Transient analysis is Phase 1.
+- **Time steps are fixed and first-order.** 0.1 ms with backward Euler. Fast
+  time constants (below about 1 ms) are followed only roughly.
+- **Only the capacitor has memory.** No inductors; no transistor or other
+  three-terminal semiconductor yet.
 - **LED model is an ideal Shockley diode.** It matches the nominal forward
   voltage at 20 mA exactly but real LEDs have series resistance, so current at
   high drive is overestimated. Reverse breakdown is not modelled.
-- **Part values are typical, not measured.** Battery internal resistance is a
-  fixed 0.5 Ω for every voltage.
+- **Part and pin values are typical, not measured.** Battery internal
+  resistance is a fixed 0.5 Ω; pin output resistance a fixed 25 Ω.
 - **Burn-out is reported, not remembered.** A "burned" LED recovers when the
-  circuit is fixed.
+  circuit is fixed. Capacitor polarity is not modelled.
 - **No tolerance or temperature effects.** Temperature is fixed at 27 °C.
+- **Coupling delay.** A program reading a pin it also drives sees the result up
+  to 1 ms late.
 - ngspice agreement shows the _solver_ is right for these device equations; it
   says nothing about how closely the equations match a physical part.
 
@@ -112,7 +141,7 @@ reversed LED, LED with no resistor, batteries in series, a silicon diode clamp.
 ## UNO emulation
 
 `packages/board-emulators` wraps avr8js: an ATmega328P at 16 MHz with ports B, C
-and D, timers 0–2 and USART0. Verified by test: the blink firmware toggles pin 13
-every 500 ms of simulated time (within 0.2 %) and prints over serial. Not yet
-modelled: inputs driven from the circuit, ADC values, PWM measurement, EEPROM,
-SPI, I²C. The emulator is not yet connected to the circuit solver.
+and D, timers 0–2, the ADC and USART0. Verified by test with real compiled
+sketches: `delay` timing, `INPUT_PULLUP` and `digitalRead`, `analogWrite` duty
+on all three timers, `analogRead` with `Serial.println`. Not emulated: SPI, I²C,
+EEPROM, and interrupts triggered by the circuit.

@@ -25,6 +25,21 @@ To add a case: add it to `GOLDEN_CASES`, run `pnpm golden:regen`, commit the new
 test needs no toolchain. The compile-worker integration test compiles the same
 source and runs the result in the emulator.
 
+## Starter firmware
+
+The four starter sketches in `packages/board-emulators/fixtures/starters/` ship
+with compiled `.hex` files so they run offline. An integration test recompiles
+each sketch and fails if the shipped firmware is stale; rebuild with
+`pnpm --filter @banglalab/compile-worker starters:build`.
+
+## Board and instrument tests
+
+`packages/simulation/src/session.test.ts` runs real firmware against circuits
+with a simulated clock: blink timing and current, button, PWM brightness,
+potentiometer, capacitor curves, recorded signals. `apps/web/e2e/uno.spec.ts`
+covers the same workflows in the browser, including upload through the real
+API and sandboxed worker.
+
 ## Phase 0 acceptance test
 
 `apps/web/e2e/acceptance.spec.ts`, first test. It builds the LED circuit by

@@ -24,8 +24,11 @@ Compiles source for a board. Rate limit: 20 requests per minute per client.
 Request:
 
 ```json
-{ "board": "uno", "language": "c", "source": "int main(void) { ... }" }
+{ "board": "uno", "language": "arduino", "source": "void setup() { ... } void loop() { ... }" }
 ```
+
+`language` is `arduino` (a sketch with `setup` and `loop`, built against
+ArduinoCore-avr 1.8.8) or `c` (plain avr-libc C).
 
 `source` is 1 to 65 536 characters. Unknown properties are dropped.
 
@@ -67,7 +70,8 @@ Errors:
 
 ## Compile worker (internal)
 
-`GET /health` and `POST /compile` with the same body as above. Reachable only
+`GET /health` and `POST /compile` with the same body as above. `/health` also
+reports `arduino`: `ready`, or `unavailable` when the core has not been fetched. Reachable only
 from the API. Configuration:
 
 | Variable                 | Default          | Meaning                                                 |
