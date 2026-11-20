@@ -24,25 +24,27 @@ export function formatNumber(locale: Locale, value: number, significantDigits = 
   }).format(value);
 }
 
-export type Unit = 'V' | 'A' | 'Ω' | 'W';
+export type Unit = 'V' | 'A' | 'Ω' | 'W' | 'F';
 const PREFIXES = [
   { factor: 1e6, symbol: 'M' },
   { factor: 1e3, symbol: 'k' },
   { factor: 1, symbol: '' },
   { factor: 1e-3, symbol: 'm' },
   { factor: 1e-6, symbol: 'µ' },
+  { factor: 1e-9, symbol: 'n' },
 ] as const;
 
 /**
  * Formats a physical quantity with an SI prefix, e.g. 0.0218 A → "21.8 mA"
  * ("২১.৮ mA" in Bangla). Unit symbols stay in their international form, as
- * printed on real meters and parts. Anything below 1 µ-unit reads as zero.
+ * printed on real meters and parts. Readings below 1 µ-unit are leakage and
+ * read as zero; capacitances are part values, so they go down to nanofarads.
  */
 export function formatQuantity(locale: Locale, value: number, unit: Unit): string {
   const magnitude = Math.abs(value);
   if (!Number.isFinite(value)) return `– ${unit}`;
-  if (magnitude < 1e-6) return `${formatNumber(locale, 0)} ${unit}`;
-  const prefix = PREFIXES.find((p) => magnitude >= p.factor * 0.9995) ?? PREFIXES[4];
+  if (magnitude < (unit === 'F' ? 1e-10 : 1e-6)) return `${formatNumber(locale, 0)} ${unit}`;
+  const prefix = PREFIXES.find((p) => magnitude >= p.factor * 0.9995) ?? PREFIXES.at(-1)!;
   return `${formatNumber(locale, value / prefix.factor)} ${prefix.symbol}${unit}`;
 }
 

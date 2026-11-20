@@ -244,6 +244,21 @@ export function WireView(props: {
   );
 }
 
+/** Electrolytic capacitor lying across its two holes: a dark can with a pale stripe. */
+export function CapacitorView(props: { a: Point; b: Point; selected: boolean }) {
+  const { length, transform } = between(props.a, props.b);
+  const body = Math.min(40, Math.max(22, length - 10));
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <line x1={-length / 2} x2={length / 2} stroke={LEG} strokeWidth={2.6} strokeLinecap="round" />
+      <rect x={-body / 2} y={-11} width={body} height={22} rx={6} fill="#22325a" stroke="#131c36" />
+      <rect x={body / 2 - 9} y={-11} width={6} height={22} fill="#c9d2e6" opacity={0.85} />
+      <rect x={-body / 2 + 2} y={-11} width={3} height={22} fill="#8d9396" opacity={0.7} />
+    </g>
+  );
+}
+
 /** Tactile push button seen from above. The cap sinks and darkens while held. */
 export function ButtonView(props: { a: Point; b: Point; pressed: boolean; selected: boolean }) {
   const { length, transform } = between(props.a, props.b);

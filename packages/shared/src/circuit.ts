@@ -9,7 +9,7 @@ import { Value } from 'typebox/value';
 /**
  * Version history:
  * 1 — battery, resistor, LED, wires.
- * 2 — adds the UNO board, push button and potentiometer. Version 1 documents
+ * 2 — adds the UNO board, push button, potentiometer and capacitor. Version 1 documents
  *     are valid version 2 documents apart from the number.
  */
 export const CIRCUIT_SCHEMA_VERSION = 2;
@@ -69,6 +69,15 @@ export const PotentiometerSchema = Type.Object({
   }),
 });
 
+/** Capacitor. Polarity is not modelled, so it may be placed either way round. */
+export const CapacitorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('capacitor'),
+  pins: Type.Object({ a: Hole, b: Hole }),
+  /** Capacitance in farads. */
+  props: Type.Object({ capacitance: Type.Number({ minimum: 1e-10, maximum: 0.01 }) }),
+});
+
 /** Arduino UNO-compatible board. It sits beside the breadboard; wires plug into its sockets. */
 export const UnoSchema = Type.Object({
   id: Id,
@@ -82,6 +91,7 @@ export const ComponentSchema = Type.Union([
   LedSchema,
   ButtonSchema,
   PotentiometerSchema,
+  CapacitorSchema,
   UnoSchema,
 ]);
 
@@ -103,6 +113,7 @@ export type Resistor = Static<typeof ResistorSchema>;
 export type Led = Static<typeof LedSchema>;
 export type Button = Static<typeof ButtonSchema>;
 export type Potentiometer = Static<typeof PotentiometerSchema>;
+export type Capacitor = Static<typeof CapacitorSchema>;
 export type Uno = Static<typeof UnoSchema>;
 export type CircuitComponent = Static<typeof ComponentSchema>;
 /** A part whose leads plug into breadboard holes. */

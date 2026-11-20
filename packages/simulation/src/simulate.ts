@@ -1,4 +1,4 @@
-import { solveDc } from '@banglalab/circuit-engine';
+import { solveDc, type Solution } from '@banglalab/circuit-engine';
 import { UNO_TERMINALS, type CircuitDocument } from '@banglalab/shared';
 import {
   LED_BURN_CURRENT,
@@ -9,7 +9,7 @@ import {
   PIN_MAX_CURRENT,
   SUPPLY_MAX_CURRENT,
 } from './library';
-import { IDLE_STATE, buildNetlist, type CircuitState } from './netlist';
+import { IDLE_STATE, buildNetlist, type CircuitState, type Netlist } from './netlist';
 
 export type LedState = 'off' | 'on' | 'overcurrent' | 'burned' | 'reversed';
 
@@ -85,12 +85,20 @@ const SHORT_CIRCUIT_SAG = 0.5;
 const NEGLIGIBLE_CURRENT = 1e-6;
 const REVERSED_VOLTAGE = -0.5;
 
-/** Solves the circuit for one state. Returns null when no solution exists. */
+/** Solves the settled (DC) circuit for one state. Returns null when no solution exists. */
 export function solveState(document: CircuitDocument, state: CircuitState): StateSolution | null {
   const netlist = buildNetlist(document, state);
   const dc = solveDc(netlist.circuit);
-  if (!dc.ok) return null;
-  const { solution } = dc;
+  return dc.ok ? readSolution(document, netlist, dc.solution, dc.iterations) : null;
+}
+
+/** Turns solver output back into per-part, per-wire and per-socket values. */
+export function readSolution(
+  document: CircuitDocument,
+  netlist: Netlist,
+  solution: Solution,
+  iterations: number,
+): StateSolution {
   const volts = (endpoint: string) => {
     const node = netlist.nodeOf(endpoint);
     return node < 0 ? 0 : solution.voltage(node);
@@ -103,7 +111,7 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     shorted: [],
     delivering: false,
     bridged: netlist.bridgedParts,
-    iterations: dc.iterations,
+    iterations,
   };
 
   for (const [socket, device] of netlist.socketDevice) {
@@ -183,7 +191,7 @@ export class Observation {
   }
 
   /** Summarises the observation as readings and plain diagnostics. */
-  interpret(document: CircuitDocument, options: { programRunning: boolean }): SimulationResult {
+  interpret(document: CircuitDocument, options: { timeDependent: boolean }): SimulationResult {
     const result: SimulationResult = {
       ok: !this.failed,
       readings: {},
@@ -286,11 +294,12 @@ export class Observation {
       result.wireCurrents[wire.id] = average((s) => s.wires[wire.id] ?? 0);
     }
 
-    // The "why is this LED dark?" explanations assume steady power. While a program is
-    // running, an LED is often dark simply because its pin is LOW, so they are held back.
+    // The "why is this LED dark?" explanations assume a steady circuit. While a program is
+    // running an LED is often dark simply because its pin is LOW, and a charged capacitor
+    // rightly stops the current, so in those cases they are held back.
     const delivering = states.some(([s]) => s.delivering);
     let underpowered = false;
-    if (shorted.size === 0 && !options.programRunning) {
+    if (shorted.size === 0 && !options.timeDependent) {
       for (const component of document.components) {
         if (component.type !== 'led' || first.bridged.includes(component.id)) continue;
         const reading = result.readings[component.id];
@@ -314,7 +323,7 @@ export class Observation {
       shorted.size === 0 &&
       !reversedLed &&
       !underpowered &&
-      !options.programRunning
+      !options.timeDependent
     ) {
       result.diagnostics.push({ code: 'open-circuit', severity: 'info' });
     }
@@ -323,8 +332,9 @@ export class Observation {
 }
 
 /**
- * Solves the steady behaviour of a circuit and explains what it found.
- * Pure and synchronous. For a circuit with a running program use `SimulationSession`.
+ * Solves the settled behaviour of a circuit and explains what it found: what a
+ * meter shows after everything has stopped changing (capacitors fully charged).
+ * Pure and synchronous. To follow a program or a capacitor through time use `SimulationSession`.
  */
 export function simulate(
   document: CircuitDocument,
@@ -332,5 +342,6 @@ export function simulate(
 ): SimulationResult {
   const observation = new Observation();
   if (document.components.length > 0) observation.add(solveState(document, state), 1);
-  return observation.interpret(document, { programRunning: false });
+  const timeDependent = document.components.some((c) => c.type === 'capacitor');
+  return observation.interpret(document, { timeDependent });
 }

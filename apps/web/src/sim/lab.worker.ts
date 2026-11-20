@@ -22,12 +22,12 @@ function tick() {
   timer = setTimeout(tick, TICK_MS);
 }
 
-/** Starts or stops the real-time loop to match whether any board has a program. */
+/** Starts or stops the real-time loop to match whether the circuit changes with time. */
 function schedule() {
   clearTimeout(timer);
   timer = undefined;
   if (!session || !report) return;
-  if (session.hasPrograms) {
+  if (session.isTimeDependent) {
     lastTick = performance.now();
     timer = setTimeout(tick, TICK_MS);
   } else {
@@ -64,7 +64,7 @@ const api = {
   update(document: CircuitDocument, pressed: string[]): void {
     if (!session) return;
     session.update(document, pressed);
-    if (!session.hasPrograms) schedule();
+    if (!session.isTimeDependent) schedule();
   },
 
   /** Uploads new firmware to a board while the circuit keeps running. */

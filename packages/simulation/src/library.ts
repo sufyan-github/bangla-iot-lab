@@ -65,3 +65,4 @@ export const SUPPLY_MAX_CURRENT = 0.5;
 export const BUTTON_CLOSED_RESISTANCE = 0.05;
 /** Choices offered in the editor. */
 export const POTENTIOMETER_VALUES = [1_000, 10_000, 100_000] as const;
+export const CAPACITOR_VALUES = [100e-9, 1e-6, 10e-6, 100e-6, 1000e-6] as const;

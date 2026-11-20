@@ -1,5 +1,6 @@
 import { UNO_VCC, type PinDrive } from '@banglalab/board-emulators';
 import {
+  capacitor,
   diode,
   resistor,
   theveninSource,
@@ -30,6 +31,8 @@ export interface CircuitState {
   pressed: readonly string[];
   /** What each pin of each board is driving. A board not listed has all pins as inputs. */
   boards: Readonly<Record<string, readonly PinDrive[]>>;
+  /** Voltage each capacitor currently holds; a capacitor not listed is discharged. */
+  stored?: Readonly<Record<string, number>>;
 }
 
 export const IDLE_STATE: CircuitState = { pressed: [], boards: {} };
@@ -135,6 +138,20 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
               node(component.pins.anode),
               node(component.pins.cathode),
               ledDiodeModel(component.props.color),
+            ),
+          ),
+        );
+        break;
+      case 'capacitor':
+        partDevice.set(
+          id,
+          add(
+            capacitor(
+              id,
+              node(component.pins.a),
+              node(component.pins.b),
+              component.props.capacitance,
+              state.stored?.[id] ?? 0,
             ),
           ),
         );

@@ -2,6 +2,7 @@ import type { MessageKey } from '@banglalab/i18n';
 import { LED_COLORS, type CircuitComponent, type LedColor } from '@banglalab/shared';
 import {
   BATTERY_VOLTAGES,
+  CAPACITOR_VALUES,
   POTENTIOMETER_VALUES,
   RESISTOR_VALUES,
   type Diagnostic,
@@ -87,6 +88,24 @@ function PartSettings({ part }: { part: CircuitComponent }) {
           ))}
         </select>
       </label>
+    );
+  }
+  if (part.type === 'capacitor') {
+    return (
+      <fieldset>
+        <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.capacitance')}</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {CAPACITOR_VALUES.map((farads) => (
+            <Choice
+              key={farads}
+              selected={part.props.capacitance === farads}
+              onClick={() => setProps(part.id, { capacitance: farads })}
+            >
+              {quantity(farads, 'F')}
+            </Choice>
+          ))}
+        </div>
+      </fieldset>
     );
   }
   if (part.type === 'potentiometer') {

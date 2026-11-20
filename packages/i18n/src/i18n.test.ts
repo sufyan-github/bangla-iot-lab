@@ -37,6 +37,9 @@ describe('number formatting', () => {
     expect(formatQuantity('en', 0.000035, 'A')).toBe('35 µA');
     expect(formatQuantity('en', -0.0218, 'A')).toBe('-21.8 mA');
     expect(formatQuantity('en', 0.9996, 'V')).toBe('1 V');
+    expect(formatQuantity('en', 100e-6, 'F')).toBe('100 µF');
+    expect(formatQuantity('bn', 100e-9, 'F')).toBe('১০০ nF');
+    expect(formatQuantity('en', 1000e-6, 'F')).toBe('1 mF');
   });
 
   it('shows leakage-level values as zero', () => {

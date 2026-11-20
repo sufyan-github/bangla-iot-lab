@@ -222,3 +222,107 @@ describe('a circuit with no board', () => {
     expect(session.frame().result).toEqual(simulate(document)); // a second frame with no time passed
   });
 });
+
+describe('capacitors charge and discharge over time', () => {
+  /** 9 V battery → 1 kΩ → 100 µF → back to the battery: time constant 100 ms. */
+  const rcCircuit = (): CircuitDocument => ({
+    ...emptyCircuit(),
+    components: [
+      { id: 'BAT1', type: 'battery', props: { voltage: 9 } },
+      { id: 'R1', type: 'resistor', pins: { a: 'a1', b: 'a5' }, props: { resistance: 1000 } },
+      { id: 'C1', type: 'capacitor', pins: { a: 'b5', b: 'b7' }, props: { capacitance: 100e-6 } },
+    ],
+    wires: [
+      { id: 'W1', from: 'BAT1.pos', to: 'b1', color: '#000000' },
+      { id: 'W2', from: 'c7', to: 'BAT1.neg', color: '#000000' },
+    ],
+  });
+
+  it('follows the charging curve in real time, with no program involved', () => {
+    const session = new SimulationSession(rcCircuit());
+    expect(session.isTimeDependent).toBe(true);
+    session.advance(100);
+    let frame = session.frame();
+    session.advance(1);
+    frame = session.frame();
+    // After one time constant: 63 % of 9 V.
+    expect(frame.result.readings.C1!.voltage).toBeCloseTo(9 * (1 - Math.exp(-1)), 1);
+    expect(frame.result.readings.C1!.current).toBeCloseTo(frame.result.readings.R1!.current, 9);
+    expect(frame.result.readings.R1!.current).toBeGreaterThan(0.003);
+
+    session.advance(900);
+    frame = session.frame();
+    session.advance(1);
+    frame = session.frame();
+    expect(frame.result.readings.C1!.voltage).toBeCloseTo(9, 2);
+    expect(Math.abs(frame.result.readings.R1!.current)).toBeLessThan(1e-5);
+    // A full capacitor stopping the current is normal, not an open circuit.
+    expect(frame.result.diagnostics).toEqual([]);
+  });
+
+  it('keeps its charge when the circuit is edited, and empties through a new path', () => {
+    const session = new SimulationSession(rcCircuit());
+    session.advance(1000);
+    session.frame();
+    // Unplug the battery and bridge the capacitor with a 330 Ω resistor and an LED.
+    let document = ok(removeItem(rcCircuit(), 'BAT1'));
+    document = {
+      ...document,
+      components: [
+        ...document.components,
+        { id: 'R2', type: 'resistor', pins: { a: 'c5', b: 'c12' }, props: { resistance: 330 } },
+        {
+          id: 'LED1',
+          type: 'led',
+          pins: { anode: 'd12', cathode: 'd13' },
+          props: { color: 'red' },
+        },
+      ],
+    };
+    document = ok(addWire(document, 'e13', 'd7'));
+    session.update(document);
+
+    session.advance(5);
+    const early = session.frame().result;
+    expect(early.readings.C1!.voltage).toBeGreaterThan(7);
+    expect(early.readings.LED1!.led!.state).toBe('on');
+    expect(early.readings.C1!.current).toBeLessThan(0); // discharging
+
+    session.advance(2000);
+    session.frame();
+    session.advance(1);
+    const late = session.frame().result;
+    expect(late.readings.LED1!.led!.state).toBe('off');
+    expect(late.readings.C1!.voltage).toBeLessThan(1.5); // the LED stops conducting before it is empty
+  });
+
+  it('smooths a blinking pin into a slowly rising and falling voltage', () => {
+    let document: CircuitDocument = {
+      ...emptyCircuit(),
+      components: [
+        { id: 'UNO1', type: 'uno', props: {} },
+        { id: 'R1', type: 'resistor', pins: { a: 'a1', b: 'a5' }, props: { resistance: 1000 } },
+        { id: 'C1', type: 'capacitor', pins: { a: 'b5', b: 'b7' }, props: { capacitance: 100e-6 } },
+      ],
+    };
+    document = ok(addWire(document, 'UNO1.d13', 'b1'));
+    document = ok(addWire(document, 'c7', 'UNO1.gnd'));
+    const session = new SimulationSession(document);
+    session.loadFirmware('UNO1', firmware('blink'));
+    const voltages = run(session, 2000, 20).map((f) => f.result.readings.C1!.voltage);
+    // Pin high for 500 ms (five time constants): nearly 5 V. Then low for 500 ms: nearly 0 V.
+    expect(Math.max(...voltages)).toBeGreaterThan(4.8);
+    expect(Math.min(...voltages.slice(40))).toBeLessThan(0.2);
+    // It never jumps: neighbouring frames differ by a small step.
+    for (let i = 1; i < voltages.length; i++) {
+      expect(Math.abs(voltages[i]! - voltages[i - 1]!)).toBeLessThan(1.1);
+    }
+  });
+
+  it('the settled answer treats a capacitor as fully charged', () => {
+    const settled = simulate(rcCircuit());
+    expect(settled.readings.C1!.voltage).toBeCloseTo(9, 6);
+    expect(settled.readings.R1!.current).toBeCloseTo(0, 9);
+    expect(settled.diagnostics).toEqual([]);
+  });
+});

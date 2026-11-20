@@ -47,6 +47,7 @@ export const PART_SHAPES: Record<
   led: { idPrefix: 'LED', pins: ['anode', 'cathode'], offsets: [0, 1], maxSpan: 4 },
   button: { idPrefix: 'SW', pins: ['a', 'b'], offsets: [0, 2], maxSpan: 4 },
   potentiometer: { idPrefix: 'POT', pins: ['a', 'wiper', 'b'], offsets: [0, 1, 2] },
+  capacitor: { idPrefix: 'C', pins: ['a', 'b'], offsets: [0, 2], maxSpan: 6 },
 };
 
 const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['props'] } = {
@@ -54,6 +55,7 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
   led: { color: 'red' },
   button: {},
   potentiometer: { resistance: 10_000, position: 0.5 },
+  capacitor: { capacitance: 100e-6 },
 };
 
 export const MAX_BATTERIES = 2;

@@ -50,6 +50,8 @@ export const bn = {
   'tool.led': 'LED',
   'tool.button': 'বোতাম',
   'tool.potentiometer': 'পটেনশিওমিটার',
+  'tool.capacitor': 'ক্যাপাসিটর',
+  'hint.capacitor': 'ক্যাপাসিটর বসাতে একটা ছিদ্রে ট্যাপ করো।',
   'tool.uno': 'UNO বোর্ড',
   'hint.button': 'বোতাম বসাতে একটা ছিদ্রে ট্যাপ করো। সার্কিট চালু থাকলে বোতামে চেপে ধরে রাখা যায়।',
   'hint.potentiometer': 'পটেনশিওমিটার বসাতে একটা ছিদ্রে ট্যাপ করো। তিনটা পা পাশাপাশি তিন কলামে বসবে।',
@@ -74,6 +76,9 @@ export const bn = {
 
   'part.button': 'বোতাম',
   'part.potentiometer': 'পটেনশিওমিটার',
+  'part.capacitor': 'ক্যাপাসিটর',
+  'part.capacitor.about':
+    'ক্যাপাসিটর চার্জ জমা রাখে। রেজিস্টরের ভেতর দিয়ে এটা ধীরে ধীরে ভরে আর খালি হয়, তাতে সময় লাগে। ক্যাপাসিটর বা রেজিস্টর বড় হলে আরও ধীরে হয়। পুরো ভরে গেলে এর ভেতর দিয়ে আর স্থির কারেন্ট যায় না।',
   'part.uno': 'UNO বোর্ড',
   'part.button.about':
     'চেপে ধরলে বোতামের দুই পা জুড়ে যায়, ছেড়ে দিলে আলাদা হয়ে যায়। সার্কিট চালু করে বোতামে চাপ দিয়ে দেখো।',
@@ -88,6 +93,7 @@ export const bn = {
   'inspector.color': 'রং',
   'inspector.flip': 'পা উল্টে দাও',
   'inspector.remove': 'সরিয়ে ফেলো',
+  'inspector.capacitance': 'ধারকত্ব',
   'inspector.position': 'নবের অবস্থান',
   'color.red': 'লাল',
   'color.yellow': 'হলুদ',
@@ -210,6 +216,8 @@ export const en: Record<MessageKey, string> = {
   'tool.led': 'LED',
   'tool.button': 'Button',
   'tool.potentiometer': 'Potentiometer',
+  'tool.capacitor': 'Capacitor',
+  'hint.capacitor': 'Tap a hole to place the capacitor.',
   'tool.uno': 'UNO board',
   'hint.button':
     'Tap a hole to place the button. While the circuit runs you can press and hold it.',
@@ -235,6 +243,9 @@ export const en: Record<MessageKey, string> = {
 
   'part.button': 'Button',
   'part.potentiometer': 'Potentiometer',
+  'part.capacitor': 'Capacitor',
+  'part.capacitor.about':
+    'A capacitor stores charge. It fills up through a resistor and empties again, which takes time: a bigger capacitor or a bigger resistor makes it slower. Once full, no steady current passes through it.',
   'part.uno': 'UNO board',
   'part.button.about':
     'While you hold it down, the two legs are joined; when you let go they separate. Run the circuit and press it.',
@@ -249,6 +260,7 @@ export const en: Record<MessageKey, string> = {
   'inspector.color': 'Colour',
   'inspector.flip': 'Swap the legs',
   'inspector.remove': 'Remove',
+  'inspector.capacitance': 'Capacitance',
   'inspector.position': 'Knob position',
   'color.red': 'Red',
   'color.yellow': 'Yellow',

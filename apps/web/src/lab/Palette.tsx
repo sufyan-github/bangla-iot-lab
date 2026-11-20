@@ -46,6 +46,12 @@ const ICONS: Record<Tool | 'battery' | 'uno', ReactNode> = {
       <path d="M12 11l4-4M7 18v3M12 18v3M17 18v3" {...stroke} />
     </>
   ),
+  capacitor: (
+    <>
+      <path d="M2 12h7M15 12h7" {...stroke} />
+      <path d="M9 5.5v13M15 5.5v13" {...stroke} strokeWidth={2.6} />
+    </>
+  ),
   uno: (
     <>
       <rect x="3" y="6" width="18" height="13" rx="2" {...stroke} />
@@ -62,6 +68,7 @@ const HINTS: Record<Tool, MessageKey> = {
   led: 'hint.led',
   button: 'hint.button',
   potentiometer: 'hint.potentiometer',
+  capacitor: 'hint.capacitor',
 };
 
 /** Tool and part picker. One tap picks a tool; the hint says what to do next. */
@@ -72,7 +79,15 @@ export function Palette() {
   const { t } = useT();
 
   const hint = tool === 'wire' && wireStart ? 'hint.wire.end' : HINTS[tool];
-  const tools: Tool[] = ['select', 'wire', 'resistor', 'led', 'button', 'potentiometer'];
+  const tools: Tool[] = [
+    'select',
+    'wire',
+    'resistor',
+    'led',
+    'button',
+    'potentiometer',
+    'capacitor',
+  ];
 
   return (
     <div className="border-b border-line bg-surface">

@@ -24,6 +24,7 @@ import {
 import {
   BatteryView,
   ButtonView,
+  CapacitorView,
   LED_PAINT,
   LedView,
   PotentiometerView,
@@ -238,6 +239,17 @@ export function Scene({
                 a={holePoint(component.pins.a)}
                 b={holePoint(component.pins.b)}
                 pressed={held}
+                selected={selected}
+              />
+            </g>
+          );
+        }
+        if (component.type === 'capacitor') {
+          return (
+            <g key={component.id} data-part={component.id}>
+              <CapacitorView
+                a={holePoint(component.pins.a)}
+                b={holePoint(component.pins.b)}
                 selected={selected}
               />
             </g>
