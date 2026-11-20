@@ -10,6 +10,8 @@ import {
   MOTOR_RATED_VOLTAGE,
   MOTOR_START_VOLTAGE,
   PIN_MAX_CURRENT,
+  RELAY_DROP_OUT_CURRENT,
+  RELAY_PULL_IN_CURRENT,
   SUPPLY_MAX_CURRENT,
 } from './library';
 import { IDLE_STATE, buildNetlist, type CircuitState, type Netlist } from './netlist';
@@ -29,8 +31,8 @@ export interface Reading {
   /** Only for LEDs. */
   led?: { state: LedState; brightness: number };
   /**
-   * For parts that do something you can see or hear: 1 while a buzzer sounds,
-   * and a motor's speed from −1 (full speed backwards) to 1.
+   * For parts that do something you can see or hear: 1 while a buzzer sounds or
+   * a relay's contact is closed, and a motor's speed from −1 (full speed backwards) to 1.
    */
   activity?: number;
 }
@@ -85,6 +87,8 @@ export interface StateSolution {
   /** True when any source is delivering or absorbing a noticeable current. */
   delivering: boolean;
   bridged: string[];
+  /** Which relay contacts are closed in this state. */
+  relays: Record<string, boolean>;
   iterations: number;
 }
 
@@ -93,11 +97,50 @@ const SHORT_CIRCUIT_SAG = 0.5;
 const NEGLIGIBLE_CURRENT = 1e-6;
 const REVERSED_VOLTAGE = -0.5;
 
-/** Solves the settled (DC) circuit for one state. Returns null when no solution exists. */
+/**
+ * Works out which relay contacts should be closed for the coil currents just
+ * solved. A closed contact holds on until its coil current drops well below
+ * the level needed to close it.
+ */
+export function relayStates(
+  document: CircuitDocument,
+  solution: StateSolution,
+  current: Readonly<Record<string, boolean>>,
+): Record<string, boolean> {
+  const next: Record<string, boolean> = {};
+  for (const component of document.components) {
+    if (component.type !== 'relay') continue;
+    const coil = Math.abs(solution.parts[component.id]?.current ?? 0);
+    next[component.id] = current[component.id]
+      ? coil > RELAY_DROP_OUT_CURRENT
+      : coil >= RELAY_PULL_IN_CURRENT;
+  }
+  return next;
+}
+
+const sameStates = (a: Readonly<Record<string, boolean>>, b: Readonly<Record<string, boolean>>) =>
+  Object.keys(b).every((id) => Boolean(a[id]) === b[id]);
+
+/**
+ * Solves the settled (DC) circuit for one state. Returns null when no solution
+ * exists. Relays are re-solved until their contacts agree with their coil
+ * currents; a relay wired to interrupt its own coil never agrees, so the
+ * search stops after a few rounds with the last answer.
+ */
 export function solveState(document: CircuitDocument, state: CircuitState): StateSolution | null {
-  const netlist = buildNetlist(document, state);
-  const dc = solveDc(netlist.circuit);
-  return dc.ok ? readSolution(document, netlist, dc.solution, dc.iterations) : null;
+  let relays = state.relays ?? {};
+  let solution: StateSolution | null = null;
+  for (let round = 0; round < 4; round++) {
+    const netlist = buildNetlist(document, { ...state, relays });
+    const dc = solveDc(netlist.circuit);
+    if (!dc.ok) return null;
+    solution = readSolution(document, netlist, dc.solution, dc.iterations);
+    const next = relayStates(document, solution, relays);
+    solution.relays = next;
+    if (sameStates(relays, next)) break;
+    relays = next;
+  }
+  return solution;
 }
 
 /** Turns solver output back into per-part, per-wire and per-socket values. */
@@ -119,6 +162,7 @@ export function readSolution(
     shorted: [],
     delivering: false,
     bridged: netlist.bridgedParts,
+    relays: {},
     iterations,
   };
 
@@ -306,7 +350,9 @@ export class Observation {
           });
         }
       }
-      if (component.type === 'buzzer') {
+      if (component.type === 'relay') {
+        reading.activity = average((s) => (s.relays[id] ? 1 : 0)) >= 0.5 ? 1 : 0;
+      } else if (component.type === 'buzzer') {
         reading.activity = reading.voltage >= BUZZER_ON_VOLTAGE ? 1 : 0;
       } else if (component.type === 'motor') {
         const turning = Math.abs(reading.voltage) >= MOTOR_START_VOLTAGE;

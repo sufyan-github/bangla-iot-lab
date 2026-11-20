@@ -622,3 +622,49 @@ export function SensorView(props: {
     </g>
   );
 }
+
+/** Relay: coil legs on the left, contact legs on the right. The bar closes when the coil is energised. */
+export function RelayView(props: {
+  first: Point;
+  last: Point;
+  closed: boolean;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <rect
+        x={-length / 2 - 10}
+        y={-36}
+        width={length + 20}
+        height={42}
+        rx={4}
+        fill="#2456a6"
+        stroke="#153564"
+      />
+      {[0, PITCH, length - PITCH, length].map((x) => (
+        <circle key={x} cx={x - length / 2} r={2.6} fill={LEG} />
+      ))}
+      {/* Coil */}
+      <path
+        d={`M${-length / 2} -6V-18q4 -6 8 0q4 -6 8 0q4 -6 8 0V-6`}
+        fill="none"
+        stroke="#f2cf1d"
+        strokeWidth={2}
+      />
+      {/* Contact */}
+      <path d={`M${length / 2 - PITCH} -6V-20`} stroke="#e9ecea" strokeWidth={2} fill="none" />
+      <path d={`M${length / 2} -6V-14`} stroke="#e9ecea" strokeWidth={2} fill="none" />
+      <line
+        x1={length / 2 - PITCH}
+        y1={-20}
+        x2={length / 2 + (props.closed ? 0 : -4)}
+        y2={props.closed ? -14 : -29}
+        stroke={props.closed ? '#55e584' : '#e9ecea'}
+        strokeWidth={2.6}
+        strokeLinecap="round"
+      />
+    </g>
+  );
+}

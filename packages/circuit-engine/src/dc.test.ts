@@ -217,3 +217,62 @@ describe('device validation', () => {
     expect(limited).toBeLessThan(1.0);
   });
 });
+
+describe('parts with a loose end', () => {
+  // Found through the relay work: with this exact LED model the iteration used to wander
+  // forever in round-off noise, because the loose nodes were held only by leakage.
+  const led = { saturationCurrent: 1.5461489469569104e-17, emissionCoefficient: 2 };
+
+  it('solves an LED whose resistor leads nowhere, inside a second battery loop', () => {
+    const r = resistor('R1', 7, 8, 220);
+    const d = diode('LED1', 8, 9, led);
+    const { solution, iterations } = solved({
+      nodeCount: 10,
+      devices: [
+        theveninSource('BAT1', 1, 0, 6, 0.5),
+        theveninSource('BAT2', 2, 3, 6, 0.5),
+        resistor('K1', 4, 5, 70),
+        r,
+        d,
+        resistor('W1', 1, 4, 0.01),
+        resistor('W2', 5, 0, 0.01),
+        resistor('W3', 2, 6, 0.01),
+        resistor('W4', 9, 3, 0.01),
+      ],
+    });
+    expect(iterations).toBeLessThan(10);
+    // The whole loose chain sits at the voltage of the point it hangs from: no current, no drop.
+    expect(d.voltage(solution)).toBeCloseTo(0, 12);
+    expect(d.current(solution)).toBeCloseTo(0, 15);
+    expect(r.current(solution)).toBeCloseTo(0, 15);
+    expect(solution.voltage(7)).toBeCloseTo(solution.voltage(9), 12);
+    expect(solution.voltage(6)).toBeCloseTo(solution.voltage(2), 12);
+  });
+
+  it('gives a lone part, connected to nothing, zero volts and zero current', () => {
+    const r = resistor('R1', 1, 2, 330);
+    const d = diode('D1', 3, 4, led);
+    const { solution } = solved({ nodeCount: 5, devices: [r, d] });
+    expect(r.current(solution)).toBeCloseTo(0, 15);
+    expect(d.voltage(solution)).toBeCloseTo(0, 12);
+  });
+
+  it('settles two LEDs wired back to back, whose midpoint is held only by leakage', () => {
+    const forward = diode('D1', 1, 2, led);
+    const backward = diode('D2', 4, 3, led);
+    const result = solveDc({
+      nodeCount: 5,
+      devices: [
+        voltageSource('V1', 1, 0, 9),
+        forward,
+        resistor('W1', 2, 3, 0.01), // a jumper wire between them
+        backward,
+        resistor('R1', 4, 0, 330),
+      ],
+    });
+    if (!result.ok) throw new Error(result.reason);
+    expect(Math.abs(forward.current(result.solution))).toBeLessThan(1e-9);
+    // The two junction voltages still add up to the supply.
+    expect(forward.voltage(result.solution) - backward.voltage(result.solution)).toBeCloseTo(9, 3);
+  });
+});

@@ -6,6 +6,7 @@ import { buildNetlist, type CircuitState, type Netlist } from './netlist';
 import {
   Observation,
   readSolution,
+  relayStates,
   solveState,
   type SimulationResult,
   type StateSolution,
@@ -71,6 +72,7 @@ const EMPTY_SOLUTION: StateSolution = {
   shorted: [],
   delivering: false,
   bridged: [],
+  relays: {},
   iterations: 0,
 };
 
@@ -104,6 +106,8 @@ export class SimulationSession {
   private readonly stored = new Map<string, number>();
   private stepping: { key: string; netlist: Netlist } | null = null;
   private latest: StateSolution | null = null;
+  /** Which relay contacts are closed; a relay remembers its position between solves. */
+  private relays: Record<string, boolean> = {};
 
   /** Number of times the circuit was actually solved; exposed for tests and tuning. */
   solveCount = 0;
@@ -189,12 +193,18 @@ export class SimulationSession {
   private state(): CircuitState {
     const boards: Record<string, PinDrive[]> = {};
     for (const [id, board] of this.boards) boards[id] = board.drives;
-    return { pressed: this.pressed, boards, stored: Object.fromEntries(this.stored) };
+    return {
+      pressed: this.pressed,
+      boards,
+      stored: Object.fromEntries(this.stored),
+      relays: this.relays,
+    };
   }
 
   private stateKey(): string {
     let key = '';
     for (const [id, board] of this.boards) key += `${id}:${board.drives.join(',')};`;
+    for (const [id, closed] of Object.entries(this.relays)) if (closed) key += `${id};`;
     return key;
   }
 
@@ -208,6 +218,7 @@ export class SimulationSession {
       this.solutions.set(key, solution);
       this.solveCount++;
     }
+    if (solution) this.relays = solution.relays;
     return solution;
   }
 
@@ -226,6 +237,9 @@ export class SimulationSession {
       if (device.kind === 'capacitor') this.stored.set(id, (device as Capacitor).storedVoltage);
     }
     this.latest = readSolution(this.document, netlist, result.solution, result.iterations);
+    // A contact that should move does so for the next step.
+    this.latest.relays = this.relays;
+    this.relays = relayStates(this.document, this.latest, this.relays);
     return this.latest;
   }
 

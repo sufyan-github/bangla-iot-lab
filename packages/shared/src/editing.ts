@@ -57,6 +57,7 @@ export const PART_SHAPES: Record<
   temperature: { idPrefix: 'TMP', pins: ['vcc', 'out', 'gnd'], offsets: [0, 1, 2] },
   soil: { idPrefix: 'SOIL', pins: ['vcc', 'out', 'gnd'], offsets: [0, 1, 2] },
   ir: { idPrefix: 'IR', pins: ['vcc', 'out', 'gnd'], offsets: [0, 1, 2] },
+  relay: { idPrefix: 'K', pins: ['coil1', 'coil2', 'com', 'no'], offsets: [0, 1, 3, 4] },
 };
 
 const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['props'] } = {
@@ -74,6 +75,7 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
   temperature: { celsius: 25 },
   soil: { moisture: 0.3 },
   ir: { detected: false },
+  relay: {},
 };
 
 export const MAX_BATTERIES = 2;

@@ -41,6 +41,7 @@ test('every part in the palette can be placed, and the circuit still solves', as
     ['temperature', 'h18'],
     ['soil', 'h22'],
     ['ir', 'h26'],
+    ['relay', 'e20'],
   ] as const;
   for (const [tool, hole] of tools) await place(page, tool, hole);
   await expect(page.locator('[data-part]')).toHaveCount(tools.length + 1);

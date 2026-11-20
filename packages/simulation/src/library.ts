@@ -115,3 +115,12 @@ export function sensorOutputFraction(
       return sensor.props.detected ? 0.01 : 0.999; // output is pulled LOW by an obstacle
   }
 }
+
+/**
+ * Small 5 V relay: a 70 Ω coil (71 mA at 5 V, more than a board pin may supply).
+ * The contact closes once the coil carries 50 mA and stays closed until the
+ * current falls below 15 mA, as a real relay holds on with less than it needs to pull in.
+ */
+export const RELAY_COIL_RESISTANCE = 70;
+export const RELAY_PULL_IN_CURRENT = 0.05;
+export const RELAY_DROP_OUT_CURRENT = 0.015;

@@ -33,6 +33,7 @@ import {
   LedView,
   MotorView,
   PotentiometerView,
+  RelayView,
   ResistorView,
   SensorView,
   SwitchView,
@@ -284,6 +285,15 @@ function BoardPartDrawing(props: {
         <TransistorView
           collector={at(part.pins.collector)}
           emitter={at(part.pins.emitter)}
+          selected={selected}
+        />
+      );
+    case 'relay':
+      return (
+        <RelayView
+          first={at(part.pins.coil1)}
+          last={at(part.pins.no)}
+          closed={reading?.activity === 1}
           selected={selected}
         />
       );

@@ -231,7 +231,7 @@ export function Canvas() {
                 const first = leads[0]!;
                 const second = leads.at(-1)!;
                 // Sensor modules stand taller than their legs; the whole board is touchable.
-                const tall = ['temperature', 'soil', 'ir'].includes(component.type);
+                const tall = ['temperature', 'soil', 'ir', 'relay'].includes(component.type);
                 const length = Math.hypot(second.x - first.x, second.y - first.y);
                 const angle = (Math.atan2(second.y - first.y, second.x - first.x) * 180) / Math.PI;
                 return (

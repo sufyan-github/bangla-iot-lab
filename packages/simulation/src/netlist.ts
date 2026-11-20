@@ -24,6 +24,7 @@ import {
   PIN_INPUT_RESISTANCE,
   PIN_OUTPUT_RESISTANCE,
   PIN_PULLUP_RESISTANCE,
+  RELAY_COIL_RESISTANCE,
   SENSOR_RESISTANCE,
   SILICON_DIODE,
   SUPPLY_RESISTANCE,
@@ -41,6 +42,8 @@ export interface CircuitState {
   boards: Readonly<Record<string, readonly PinDrive[]>>;
   /** Voltage each capacitor currently holds; a capacitor not listed is discharged. */
   stored?: Readonly<Record<string, number>>;
+  /** Relays whose contact is closed at the moment. */
+  relays?: Readonly<Record<string, boolean>>;
 }
 
 export const IDLE_STATE: CircuitState = { pressed: [], boards: {} };
@@ -217,6 +220,29 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
             ),
           ),
         );
+        break;
+      case 'relay':
+        partDevice.set(
+          id,
+          add(
+            resistor(
+              id,
+              node(component.pins.coil1),
+              node(component.pins.coil2),
+              RELAY_COIL_RESISTANCE,
+            ),
+          ),
+        );
+        if (state.relays?.[id]) {
+          add(
+            resistor(
+              `${id}:contact`,
+              node(component.pins.com),
+              node(component.pins.no),
+              CONTACT_RESISTANCE,
+            ),
+          );
+        }
         break;
       case 'temperature':
       case 'soil':

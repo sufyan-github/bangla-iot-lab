@@ -314,3 +314,108 @@ describe('three-pin sensor modules', () => {
     expect(simulate(unpowered).readings.TMP1!.voltage).toBeCloseTo(0, 6);
   });
 });
+
+describe('relay', () => {
+  const relay: CircuitComponent = {
+    id: 'K1',
+    type: 'relay',
+    pins: { coil1: 'a20', coil2: 'a21', com: 'a23', no: 'a24' },
+    props: {},
+  };
+
+  /** A 6 V battery lights an LED through the relay contact; the coil has its own battery. */
+  const withCoilBattery = (coilVolts: number) =>
+    circuit(
+      [
+        { id: 'BAT1', type: 'battery', props: { voltage: coilVolts } },
+        { id: 'BAT2', type: 'battery', props: { voltage: 6 } },
+        relay,
+        resistor('R1', 'b24', 'b28', 220),
+        led('c28', 'c29'),
+      ],
+      [
+        ['BAT1.pos', 'b20'],
+        ['b21', 'BAT1.neg'],
+        ['BAT2.pos', 'b23'],
+        ['d29', 'BAT2.neg'],
+      ],
+    );
+
+  it('closes its contact when the coil gets enough current, switching a separate circuit', () => {
+    const on = simulate(withCoilBattery(6)); // 6 V / 70.5 Ω = 85 mA
+    expect(on.readings.K1!.current).toBeCloseTo(6 / 70.52, 3);
+    expect(on.readings.K1!.activity).toBe(1);
+    expect(on.readings.LED1!.led!.state).toBe('on');
+
+    const off = simulate(withCoilBattery(3)); // 43 mA: below the 50 mA it needs
+    expect(off.readings.K1!.activity).toBe(0);
+    expect(off.readings.LED1!.led!.state).toBe('off');
+  });
+
+  it('holds on with less current than it needs to pull in', () => {
+    const session = new SimulationSession(withCoilBattery(6));
+    session.advance(10);
+    expect(session.frame().result.readings.K1!.activity).toBe(1);
+    // 3 V is not enough to close the contact, but is enough to keep it closed.
+    session.update(withCoilBattery(3));
+    session.advance(10);
+    expect(session.frame().result.readings.K1!.activity).toBe(1);
+    // 1.5 V (21 mA) is above the drop-out level too; below it the contact opens.
+    session.update(circuit([relay, resistor('R1', 'b24', 'b28', 220)], []));
+    session.advance(10);
+    expect(session.frame().result.readings.K1!.activity).toBe(0);
+  });
+
+  it('driven straight from a pin it overloads the pin; through a transistor it does not', () => {
+    const direct = new SimulationSession(
+      circuit(
+        [uno, relay],
+        [
+          ['UNO1.d13', 'b20'],
+          ['b21', 'UNO1.gnd'],
+        ],
+      ),
+    );
+    direct.loadFirmware('UNO1', firmware('blink'));
+    let overloaded = false;
+    for (let i = 0; i < 20; i++) {
+      direct.advance(50);
+      overloaded ||= direct.frame().result.diagnostics.some((d) => d.code === 'pin-overcurrent');
+    }
+    expect(overloaded).toBe(true);
+
+    // 5 V → coil → collector; pin 13 → 1 kΩ → base; emitter → GND.
+    const session = new SimulationSession(
+      circuit(
+        [
+          uno,
+          relay,
+          {
+            id: 'Q1',
+            type: 'transistor',
+            pins: { collector: 'c21', base: 'c22', emitter: 'c23' },
+            props: {},
+          },
+          resistor('R1', 'd22', 'h22', 1000),
+        ],
+        [
+          ['UNO1.5v', 'b20'],
+          ['UNO1.d13', 'i22'],
+          ['d23', 'UNO1.gnd'],
+        ],
+      ),
+    );
+    session.loadFirmware('UNO1', firmware('blink'));
+    const states: number[] = [];
+    const problems = new Set<string>();
+    for (let i = 0; i < 40; i++) {
+      session.advance(50);
+      const { result } = session.frame();
+      states.push(result.readings.K1!.activity!);
+      result.diagnostics.forEach((d) => problems.add(d.code));
+    }
+    expect(states).toContain(1);
+    expect(states).toContain(0);
+    expect([...problems]).toEqual([]);
+  });
+});

@@ -10,8 +10,8 @@ import { Value } from 'typebox/value';
  * Version history:
  * 1 — battery, resistor, LED, wires.
  * 2 — adds the UNO board, push button, potentiometer and capacitor.
- * 3 — adds the switch, diode, LDR, buzzer, motor, NPN transistor and the
- *     temperature, soil-moisture and IR sensor modules.
+ * 3 — adds the switch, diode, LDR, buzzer, motor, NPN transistor, relay and
+ *     the temperature, soil-moisture and IR sensor modules.
  * Each version only adds part types, so an older document is valid in a newer
  * version apart from the number.
  */
@@ -158,6 +158,17 @@ export const IrSensorSchema = Type.Object({
   props: Type.Object({ detected: Type.Boolean() }),
 });
 
+/**
+ * Relay: current through the coil (coil1 to coil2) closes a separate contact
+ * between `com` and `no` (normally open), so a small circuit can switch a large one.
+ */
+export const RelaySchema = Type.Object({
+  id: Id,
+  type: Type.Literal('relay'),
+  pins: Type.Object({ coil1: Hole, coil2: Hole, com: Hole, no: Hole }),
+  props: noProps,
+});
+
 /** Arduino UNO-compatible board. It sits beside the breadboard; wires plug into its sockets. */
 export const UnoSchema = Type.Object({
   id: Id,
@@ -181,6 +192,7 @@ export const ComponentSchema = Type.Union([
   TemperatureSensorSchema,
   SoilSensorSchema,
   IrSensorSchema,
+  RelaySchema,
   UnoSchema,
 ]);
 

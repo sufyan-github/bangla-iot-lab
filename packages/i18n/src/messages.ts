@@ -63,6 +63,7 @@ export const bn = {
   'tool.ir': 'IR সেন্সর',
   'hint.place': 'বসাতে বোর্ডের একটা ছিদ্রে ট্যাপ করো।',
   'hint.running': 'সার্কিট চালু অবস্থায় সুইচ বা সেন্সরে ট্যাপ করে বদলানো যায়, আর বোতাম চেপে ধরা যায়।',
+  'tool.relay': 'রিলে',
   'tool.uno': 'UNO বোর্ড',
   'hint.button': 'বোতাম বসাতে একটা ছিদ্রে ট্যাপ করো। সার্কিট চালু থাকলে বোতামে চেপে ধরে রাখা যায়।',
   'hint.potentiometer': 'পটেনশিওমিটার বসাতে একটা ছিদ্রে ট্যাপ করো। তিনটা পা পাশাপাশি তিন কলামে বসবে।',
@@ -117,6 +118,9 @@ export const bn = {
     'মাটি যত ভেজা, এই সেন্সরের আউটপুট ভোল্টেজ তত কম: শুকনো অবস্থায় প্রায় 4.5 V, পুরো ভেজা অবস্থায় 1.5 V। পা: 5 V, আউটপুট, GND।',
   'part.ir.about':
     'এই সেন্সরের আউটপুট সাধারণত HIGH থাকে, সামনে কিছু এলে LOW হয়ে যায়। পা: 5 V, আউটপুট, GND। digitalRead দিয়ে পড়ো।',
+  'part.relay': 'রিলে',
+  'part.relay.about':
+    'রিলে হলো তড়িৎচুম্বক দিয়ে চালানো সুইচ। কয়েলে (বাঁ দিকের দুই পা) কারেন্ট গেলে ভেতরের কন্টাক্ট টেনে বন্ধ হয় আর ডান দিকের দুই পা জুড়ে যায়। কয়েল প্রায় 70 mA চায়, তাই বোর্ডের পিন থেকে সরাসরি নয়, ট্রানজিস্টর দিয়ে চালাও।',
   'part.uno': 'UNO বোর্ড',
   'part.button.about':
     'চেপে ধরলে বোতামের দুই পা জুড়ে যায়, ছেড়ে দিলে আলাদা হয়ে যায়। সার্কিট চালু করে বোতামে চাপ দিয়ে দেখো।',
@@ -290,6 +294,7 @@ export const en: Record<MessageKey, string> = {
   'hint.place': 'Tap a hole on the board to place it.',
   'hint.running':
     'While the circuit runs, tap a switch or sensor to change it, or hold a button down.',
+  'tool.relay': 'Relay',
   'tool.uno': 'UNO board',
   'hint.button':
     'Tap a hole to place the button. While the circuit runs you can press and hold it.',
@@ -345,6 +350,9 @@ export const en: Record<MessageKey, string> = {
     'This sensor’s output voltage falls as the soil gets wetter: about 4.5 V when dry and 1.5 V when soaked. Legs: 5 V, output, GND.',
   'part.ir.about':
     'This sensor’s output is HIGH normally and goes LOW when something is in front of it. Legs: 5 V, output, GND. Read it with digitalRead.',
+  'part.relay': 'Relay',
+  'part.relay.about':
+    'A relay is a switch worked by an electromagnet. Current through the coil (the two left legs) pulls the contact shut and joins the two right legs. The coil needs about 70 mA, so drive it with a transistor, not straight from a board pin.',
   'part.uno': 'UNO board',
   'part.button.about':
     'While you hold it down, the two legs are joined; when you let go they separate. Run the circuit and press it.',
