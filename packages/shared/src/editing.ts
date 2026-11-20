@@ -48,6 +48,15 @@ export const PART_SHAPES: Record<
   button: { idPrefix: 'SW', pins: ['a', 'b'], offsets: [0, 2], maxSpan: 4 },
   potentiometer: { idPrefix: 'POT', pins: ['a', 'wiper', 'b'], offsets: [0, 1, 2] },
   capacitor: { idPrefix: 'C', pins: ['a', 'b'], offsets: [0, 2], maxSpan: 6 },
+  switch: { idPrefix: 'S', pins: ['a', 'b'], offsets: [0, 2], maxSpan: 4 },
+  diode: { idPrefix: 'D', pins: ['anode', 'cathode'], offsets: [0, 3], maxSpan: 8 },
+  ldr: { idPrefix: 'LDR', pins: ['a', 'b'], offsets: [0, 2], maxSpan: 4 },
+  buzzer: { idPrefix: 'BZ', pins: ['pos', 'neg'], offsets: [0, 2], maxSpan: 3 },
+  motor: { idPrefix: 'M', pins: ['a', 'b'], offsets: [0, 3], maxSpan: 6 },
+  transistor: { idPrefix: 'Q', pins: ['collector', 'base', 'emitter'], offsets: [0, 1, 2] },
+  temperature: { idPrefix: 'TMP', pins: ['vcc', 'out', 'gnd'], offsets: [0, 1, 2] },
+  soil: { idPrefix: 'SOIL', pins: ['vcc', 'out', 'gnd'], offsets: [0, 1, 2] },
+  ir: { idPrefix: 'IR', pins: ['vcc', 'out', 'gnd'], offsets: [0, 1, 2] },
 };
 
 const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['props'] } = {
@@ -56,6 +65,15 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
   button: {},
   potentiometer: { resistance: 10_000, position: 0.5 },
   capacitor: { capacitance: 100e-6 },
+  switch: { closed: false },
+  diode: {},
+  ldr: { light: 0.5 },
+  buzzer: {},
+  motor: {},
+  transistor: {},
+  temperature: { celsius: 25 },
+  soil: { moisture: 0.3 },
+  ir: { detected: false },
 };
 
 export const MAX_BATTERIES = 2;

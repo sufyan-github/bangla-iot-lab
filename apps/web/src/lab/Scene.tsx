@@ -5,9 +5,10 @@ import {
   LED_COLORS,
   TERMINAL_ROWS,
   holeCoordinates,
+  type CircuitComponent,
   type CircuitDocument,
 } from '@banglalab/shared';
-import type { BoardStatus, SimulationResult } from '@banglalab/simulation';
+import type { BoardStatus, Reading, SimulationResult } from '@banglalab/simulation';
 import { memo } from 'react';
 import {
   BOARD_X,
@@ -23,12 +24,19 @@ import {
 } from './geometry';
 import {
   BatteryView,
+  BuzzerView,
   ButtonView,
   CapacitorView,
+  DiodeView,
   LED_PAINT,
+  LdrView,
   LedView,
+  MotorView,
   PotentiometerView,
   ResistorView,
+  SensorView,
+  SwitchView,
+  TransistorView,
   UnoView,
   WireView,
 } from './parts';
@@ -171,6 +179,146 @@ export interface SceneProps {
   batteryLabel(voltage: number): string;
   /** Text for the small reading shown beside a running part. */
   readingLabel?(amperes: number): string;
+  /** Formats a plain number in the student's language; used on sensor modules. */
+  formatNumber?(value: number): string;
+}
+
+/** Draws one part that plugs into the breadboard. */
+function BoardPartDrawing(props: {
+  part: Extract<CircuitComponent, { pins: unknown }>;
+  reading: Reading | undefined;
+  held: boolean;
+  selected: boolean;
+  formatNumber(value: number): string;
+}) {
+  const { part, reading, selected } = props;
+  const at = holePoint;
+  switch (part.type) {
+    case 'resistor':
+      return (
+        <ResistorView
+          a={at(part.pins.a)}
+          b={at(part.pins.b)}
+          resistance={part.props.resistance}
+          selected={selected}
+        />
+      );
+    case 'led':
+      return (
+        <LedView
+          anode={at(part.pins.anode)}
+          cathode={at(part.pins.cathode)}
+          color={part.props.color}
+          state={reading?.led?.state}
+          brightness={reading?.led?.brightness ?? 0}
+          selected={selected}
+        />
+      );
+    case 'button':
+      return (
+        <ButtonView
+          a={at(part.pins.a)}
+          b={at(part.pins.b)}
+          pressed={props.held}
+          selected={selected}
+        />
+      );
+    case 'switch':
+      return (
+        <SwitchView
+          a={at(part.pins.a)}
+          b={at(part.pins.b)}
+          closed={part.props.closed}
+          selected={selected}
+        />
+      );
+    case 'capacitor':
+      return <CapacitorView a={at(part.pins.a)} b={at(part.pins.b)} selected={selected} />;
+    case 'diode':
+      return (
+        <DiodeView
+          anode={at(part.pins.anode)}
+          cathode={at(part.pins.cathode)}
+          selected={selected}
+        />
+      );
+    case 'ldr':
+      return (
+        <LdrView
+          a={at(part.pins.a)}
+          b={at(part.pins.b)}
+          light={part.props.light}
+          selected={selected}
+        />
+      );
+    case 'buzzer':
+      return (
+        <BuzzerView
+          pos={at(part.pins.pos)}
+          neg={at(part.pins.neg)}
+          sounding={reading?.activity === 1}
+          selected={selected}
+        />
+      );
+    case 'motor':
+      return (
+        <MotorView
+          a={at(part.pins.a)}
+          b={at(part.pins.b)}
+          speed={reading?.activity ?? 0}
+          selected={selected}
+        />
+      );
+    case 'potentiometer':
+      return (
+        <PotentiometerView
+          a={at(part.pins.a)}
+          wiper={at(part.pins.wiper)}
+          b={at(part.pins.b)}
+          position={part.props.position}
+          selected={selected}
+        />
+      );
+    case 'transistor':
+      return (
+        <TransistorView
+          collector={at(part.pins.collector)}
+          emitter={at(part.pins.emitter)}
+          selected={selected}
+        />
+      );
+    case 'temperature':
+      return (
+        <SensorView
+          kind="temperature"
+          vcc={at(part.pins.vcc)}
+          gnd={at(part.pins.gnd)}
+          label={`${props.formatNumber(part.props.celsius)}°C`}
+          selected={selected}
+        />
+      );
+    case 'soil':
+      return (
+        <SensorView
+          kind="soil"
+          vcc={at(part.pins.vcc)}
+          gnd={at(part.pins.gnd)}
+          label={`${props.formatNumber(Math.round(part.props.moisture * 100))}%`}
+          selected={selected}
+        />
+      );
+    case 'ir':
+      return (
+        <SensorView
+          kind="ir"
+          vcc={at(part.pins.vcc)}
+          gnd={at(part.pins.gnd)}
+          label="IR"
+          lit={part.props.detected}
+          selected={selected}
+        />
+      );
+  }
 }
 
 /**
@@ -186,6 +334,7 @@ export function Scene({
   detailed = true,
   batteryLabel,
   readingLabel,
+  formatNumber = String,
 }: SceneProps) {
   let batteryCount = 0;
   return (
@@ -208,18 +357,6 @@ export function Scene({
             </g>
           );
         }
-        if (component.type === 'resistor') {
-          return (
-            <g key={component.id} data-part={component.id}>
-              <ResistorView
-                a={holePoint(component.pins.a)}
-                b={holePoint(component.pins.b)}
-                resistance={component.props.resistance}
-                selected={selected}
-              />
-            </g>
-          );
-        }
         if (component.type === 'uno') {
           return (
             <g key={component.id} data-part={component.id}>
@@ -231,57 +368,23 @@ export function Scene({
             </g>
           );
         }
-        if (component.type === 'button') {
-          const held = pressed.includes(component.id);
-          return (
-            <g key={component.id} data-part={component.id} data-pressed={held}>
-              <ButtonView
-                a={holePoint(component.pins.a)}
-                b={holePoint(component.pins.b)}
-                pressed={held}
-                selected={selected}
-              />
-            </g>
-          );
-        }
-        if (component.type === 'capacitor') {
-          return (
-            <g key={component.id} data-part={component.id}>
-              <CapacitorView
-                a={holePoint(component.pins.a)}
-                b={holePoint(component.pins.b)}
-                selected={selected}
-              />
-            </g>
-          );
-        }
-        if (component.type === 'potentiometer') {
-          return (
-            <g key={component.id} data-part={component.id}>
-              <PotentiometerView
-                a={holePoint(component.pins.a)}
-                wiper={holePoint(component.pins.wiper)}
-                b={holePoint(component.pins.b)}
-                position={component.props.position}
-                selected={selected}
-              />
-            </g>
-          );
-        }
+        const held = pressed.includes(component.id);
         return (
           <g
             key={component.id}
             data-part={component.id}
-            data-led-state={reading?.led?.state ?? 'idle'}
+            data-pressed={component.type === 'button' ? held : undefined}
+            data-led-state={component.type === 'led' ? (reading?.led?.state ?? 'idle') : undefined}
             data-current-ma={reading ? (reading.current * 1000).toFixed(2) : undefined}
+            data-voltage={reading ? reading.voltage.toFixed(3) : undefined}
+            data-activity={reading?.activity?.toFixed(2)}
           >
-            <LedView
-              anode={holePoint(component.pins.anode)}
-              cathode={holePoint(component.pins.cathode)}
-              color={component.props.color}
-              state={reading?.led?.state}
-              brightness={reading?.led?.brightness ?? 0}
+            <BoardPartDrawing
+              part={component}
+              reading={reading}
+              held={held}
               selected={selected}
+              formatNumber={formatNumber}
             />
           </g>
         );

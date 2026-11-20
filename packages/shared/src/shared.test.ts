@@ -68,7 +68,7 @@ describe('circuit document', () => {
 
   it('rejects malformed documents', () => {
     const example = ledCircuitExample();
-    expect(isCircuitDocument({ ...example, schemaVersion: 3 })).toBe(false);
+    expect(isCircuitDocument({ ...example, schemaVersion: 4 })).toBe(false);
     expect(isCircuitDocument({ ...example, wires: [{ id: 'W1', from: 'a1' }] })).toBe(false);
     expect(
       isCircuitDocument({
@@ -83,10 +83,13 @@ describe('circuit document', () => {
 });
 
 describe('document versions', () => {
-  it('opens a version 1 document as the current version', () => {
+  it('opens documents from every earlier version as the current version', () => {
     const v1 = { ...ledCircuitExample(), schemaVersion: 1 };
     expect(isCircuitDocument(v1)).toBe(false);
     expect(migrateCircuit(v1)).toEqual(ledCircuitExample());
+    expect(migrateCircuit({ ...unoCircuitExample(), schemaVersion: 2 })).toEqual(
+      unoCircuitExample(),
+    );
     expect(migrateCircuit(ledCircuitExample())).toEqual(ledCircuitExample());
   });
 
@@ -148,6 +151,67 @@ describe('UNO board, button and potentiometer', () => {
     expect(circuit.components[0]).toMatchObject({ pins: { a: 'a30', wiper: 'a29', b: 'a28' } });
     const button = ok(placePart(emptyCircuit(), 'button', 'e7'));
     expect(button.components[0]).toMatchObject({ id: 'SW1', pins: { a: 'e7', b: 'e9' } });
+  });
+});
+
+describe('the rest of the parts library', () => {
+  it('places every kind of part with sensible leads, ids and starting values', () => {
+    const placed = (type: Parameters<typeof placePart>[1]) =>
+      ok(placePart(emptyCircuit(), type, 'c10')).components[0];
+    expect(placed('switch')).toEqual({
+      id: 'S1',
+      type: 'switch',
+      pins: { a: 'c10', b: 'c12' },
+      props: { closed: false },
+    });
+    expect(placed('diode')).toEqual({
+      id: 'D1',
+      type: 'diode',
+      pins: { anode: 'c10', cathode: 'c13' },
+      props: {},
+    });
+    expect(placed('ldr')).toMatchObject({
+      id: 'LDR1',
+      pins: { a: 'c10', b: 'c12' },
+      props: { light: 0.5 },
+    });
+    expect(placed('buzzer')).toMatchObject({ id: 'BZ1', pins: { pos: 'c10', neg: 'c12' } });
+    expect(placed('motor')).toMatchObject({ id: 'M1', pins: { a: 'c10', b: 'c13' } });
+    expect(placed('transistor')).toMatchObject({
+      id: 'Q1',
+      pins: { collector: 'c10', base: 'c11', emitter: 'c12' },
+    });
+    expect(placed('temperature')).toMatchObject({
+      id: 'TMP1',
+      pins: { vcc: 'c10', out: 'c11', gnd: 'c12' },
+      props: { celsius: 25 },
+    });
+    expect(placed('soil')).toMatchObject({ id: 'SOIL1', props: { moisture: 0.3 } });
+    expect(placed('ir')).toMatchObject({ id: 'IR1', props: { detected: false } });
+  });
+
+  it('keeps three-lead parts rigid and validates their settings', () => {
+    let circuit = ok(placePart(emptyCircuit(), 'transistor', 'c10'));
+    expect(movePin(circuit, 'Q1', 'base', 'c14')).toEqual({ ok: false, error: 'unknown-item' });
+    circuit = ok(flipPart(circuit, 'Q1'));
+    expect(circuit.components[0]).toMatchObject({
+      pins: { collector: 'c12', base: 'c11', emitter: 'c10' },
+    });
+
+    circuit = ok(placePart(circuit, 'temperature', 'h10'));
+    expect(ok(updateProps(circuit, 'TMP1', { celsius: 40 })).components[1]).toMatchObject({
+      props: { celsius: 40 },
+    });
+    expect(updateProps(circuit, 'TMP1', { celsius: 300 })).toEqual({
+      ok: false,
+      error: 'invalid-value',
+    });
+    circuit = ok(placePart(circuit, 'switch', 'h20'));
+    expect(updateProps(circuit, 'S1', { closed: 'yes' })).toEqual({
+      ok: false,
+      error: 'invalid-value',
+    });
+    expect(isCircuitDocument(circuit)).toBe(true);
   });
 });
 

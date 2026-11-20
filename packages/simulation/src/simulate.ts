@@ -1,11 +1,14 @@
 import { solveDc, type Solution } from '@banglalab/circuit-engine';
 import { UNO_TERMINALS, type CircuitDocument } from '@banglalab/shared';
 import {
+  BUZZER_ON_VOLTAGE,
   LED_BURN_CURRENT,
   LED_FORWARD_VOLTAGE,
   LED_MAX_CURRENT,
   LED_RATED_CURRENT,
   LED_VISIBLE_CURRENT,
+  MOTOR_RATED_VOLTAGE,
+  MOTOR_START_VOLTAGE,
   PIN_MAX_CURRENT,
   SUPPLY_MAX_CURRENT,
 } from './library';
@@ -25,6 +28,11 @@ export interface Reading {
   power: number;
   /** Only for LEDs. */
   led?: { state: LedState; brightness: number };
+  /**
+   * For parts that do something you can see or hear: 1 while a buzzer sounds,
+   * and a motor's speed from −1 (full speed backwards) to 1.
+   */
+  activity?: number;
 }
 
 export type DiagnosticCode =
@@ -152,8 +160,19 @@ export function readSolution(
         };
         break;
       case 'button':
+      case 'switch':
+        // Open contacts have no device, but the voltage across them is still meaningful.
         result.parts[id] = {
           voltage: volts(component.pins.a) - volts(component.pins.b),
+          current: device?.current(solution) ?? 0,
+        };
+        break;
+      case 'temperature':
+      case 'soil':
+      case 'ir':
+        // What matters for a sensor is its output signal; the current is what it draws.
+        result.parts[id] = {
+          voltage: volts(component.pins.out) - volts(component.pins.gnd),
           current: device?.current(solution) ?? 0,
         };
         break;
@@ -286,6 +305,14 @@ export class Observation {
             componentId: id,
           });
         }
+      }
+      if (component.type === 'buzzer') {
+        reading.activity = reading.voltage >= BUZZER_ON_VOLTAGE ? 1 : 0;
+      } else if (component.type === 'motor') {
+        const turning = Math.abs(reading.voltage) >= MOTOR_START_VOLTAGE;
+        reading.activity = turning
+          ? Math.max(-1, Math.min(1, reading.voltage / MOTOR_RATED_VOLTAGE))
+          : 0;
       }
       result.readings[id] = reading;
     }

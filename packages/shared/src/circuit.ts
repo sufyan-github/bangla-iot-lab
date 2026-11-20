@@ -9,10 +9,13 @@ import { Value } from 'typebox/value';
 /**
  * Version history:
  * 1 — battery, resistor, LED, wires.
- * 2 — adds the UNO board, push button, potentiometer and capacitor. Version 1 documents
- *     are valid version 2 documents apart from the number.
+ * 2 — adds the UNO board, push button, potentiometer and capacitor.
+ * 3 — adds the switch, diode, LDR, buzzer, motor, NPN transistor and the
+ *     temperature, soil-moisture and IR sensor modules.
+ * Each version only adds part types, so an older document is valid in a newer
+ * version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 2;
+export const CIRCUIT_SCHEMA_VERSION = 3;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -78,6 +81,83 @@ export const CapacitorSchema = Type.Object({
   props: Type.Object({ capacitance: Type.Number({ minimum: 1e-10, maximum: 0.01 }) }),
 });
 
+const twoLeads = Type.Object({ a: Hole, b: Hole });
+/** Leads of a three-pin sensor module: supply, signal output and ground. */
+const sensorLeads = Type.Object({ vcc: Hole, out: Hole, gnd: Hole });
+const noProps = Type.Object({});
+
+/** On/off switch that stays where it is put. */
+export const SwitchSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('switch'),
+  pins: twoLeads,
+  props: Type.Object({ closed: Type.Boolean() }),
+});
+
+/** Rectifier diode: conducts from anode to cathode only. */
+export const DiodeSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('diode'),
+  pins: Type.Object({ anode: Hole, cathode: Hole }),
+  props: noProps,
+});
+
+/** Light-dependent resistor. `light` runs from 0 (dark) to 1 (bright). */
+export const LdrSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('ldr'),
+  pins: twoLeads,
+  props: Type.Object({ light: Type.Number({ minimum: 0, maximum: 1 }) }),
+});
+
+/** Buzzer with its own oscillator: it sounds whenever enough voltage is across it. */
+export const BuzzerSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('buzzer'),
+  pins: Type.Object({ pos: Hole, neg: Hole }),
+  props: noProps,
+});
+
+/** Small DC motor. */
+export const MotorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('motor'),
+  pins: twoLeads,
+  props: noProps,
+});
+
+/** NPN transistor. */
+export const TransistorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('transistor'),
+  pins: Type.Object({ collector: Hole, base: Hole, emitter: Hole }),
+  props: noProps,
+});
+
+/** Analog temperature sensor (LM35 style: 10 mV per °C). */
+export const TemperatureSensorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('temperature'),
+  pins: sensorLeads,
+  props: Type.Object({ celsius: Type.Number({ minimum: 0, maximum: 100 }) }),
+});
+
+/** Soil-moisture sensor. `moisture` runs from 0 (dry) to 1 (soaked). */
+export const SoilSensorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('soil'),
+  pins: sensorLeads,
+  props: Type.Object({ moisture: Type.Number({ minimum: 0, maximum: 1 }) }),
+});
+
+/** Infrared obstacle sensor: its output goes LOW while something is in front of it. */
+export const IrSensorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('ir'),
+  pins: sensorLeads,
+  props: Type.Object({ detected: Type.Boolean() }),
+});
+
 /** Arduino UNO-compatible board. It sits beside the breadboard; wires plug into its sockets. */
 export const UnoSchema = Type.Object({
   id: Id,
@@ -92,6 +172,15 @@ export const ComponentSchema = Type.Union([
   ButtonSchema,
   PotentiometerSchema,
   CapacitorSchema,
+  SwitchSchema,
+  DiodeSchema,
+  LdrSchema,
+  BuzzerSchema,
+  MotorSchema,
+  TransistorSchema,
+  TemperatureSensorSchema,
+  SoilSensorSchema,
+  IrSensorSchema,
   UnoSchema,
 ]);
 
@@ -138,7 +227,8 @@ export function isCircuitDocument(value: unknown): value is CircuitDocument {
 export function migrateCircuit(value: unknown): CircuitDocument | null {
   if (typeof value !== 'object' || value === null) return null;
   const version = (value as { schemaVersion?: unknown }).schemaVersion;
-  const upgraded = version === 1 ? { ...value, schemaVersion: CIRCUIT_SCHEMA_VERSION } : value;
+  const older = typeof version === 'number' && version >= 1 && version < CIRCUIT_SCHEMA_VERSION;
+  const upgraded = older ? { ...value, schemaVersion: CIRCUIT_SCHEMA_VERSION } : value;
   return isCircuitDocument(upgraded) ? upgraded : null;
 }
 

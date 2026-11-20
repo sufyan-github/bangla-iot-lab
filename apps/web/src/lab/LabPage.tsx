@@ -10,6 +10,7 @@ import { CodePanel } from './CodePanel';
 import { Palette } from './Palette';
 import { Inspector, Messages, Meter } from './panels';
 import { SignalsPanel } from './SignalsPanel';
+import { setBuzzing } from './sound';
 import { useLab } from './store';
 
 const SAVE_DELAY_MS = 400;
@@ -111,6 +112,23 @@ function useLiveSimulation() {
   }, [running]);
 }
 
+const MUTE_KEY = 'banglalab.mute';
+
+/** Sounds the buzzer tone while any buzzer in the circuit is active, unless muted. */
+function useBuzzerSound(muted: boolean) {
+  const sounding = useLab((s) =>
+    Object.entries(s.result?.readings ?? {}).some(
+      ([id, reading]) =>
+        reading.activity === 1 &&
+        s.circuit.components.some((c) => c.id === id && c.type === 'buzzer'),
+    ),
+  );
+  useEffect(() => {
+    setBuzzing(sounding && !muted);
+    return () => setBuzzing(false);
+  }, [sounding, muted]);
+}
+
 function useKeyboardShortcuts() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -170,6 +188,23 @@ export function LabPage() {
   const running = useLab((s) => s.running);
   const saveState = useLab((s) => s.saveState);
   const boardId = useLab((s) => s.circuit.components.find((c) => c.type === 'uno')?.id);
+  const hasBuzzer = useLab((s) => s.circuit.components.some((c) => c.type === 'buzzer'));
+  const [muted, setMuted] = useState(() => {
+    try {
+      return localStorage.getItem(MUTE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  useBuzzerSound(muted);
+  const toggleMute = () => {
+    setMuted(!muted);
+    try {
+      localStorage.setItem(MUTE_KEY, muted ? '0' : '1');
+    } catch {
+      // Private mode: the choice lasts for this visit.
+    }
+  };
   const [tab, setTab] = useState<'circuit' | 'code' | 'signals'>('circuit');
   const showCode = tab === 'code' && boardId !== undefined;
   const { setName, setRunning } = useLab.getState();
@@ -215,6 +250,20 @@ export function LabPage() {
           >
             {t(saveText[saveState])}
           </span>
+          {hasBuzzer && (
+            <button
+              type="button"
+              data-testid="mute"
+              aria-pressed={!muted}
+              onClick={toggleMute}
+              className="min-h-11 rounded-lg border-2 border-line px-3 text-sm font-medium hover:border-ink-soft"
+            >
+              <span aria-hidden className="mr-1.5">
+                {muted ? '🔇' : '🔊'}
+              </span>
+              {t('lab.sound')}
+            </button>
+          )}
           <button
             type="button"
             data-testid="run"

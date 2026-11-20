@@ -407,3 +407,218 @@ export function UnoView(props: { ledLevel: number; powered: boolean; selected: b
     </g>
   );
 }
+
+/** Legs and selection highlight shared by the two-lead parts below. */
+function TwoLeads(props: { length: number; selected: boolean }) {
+  return (
+    <>
+      {props.selected && <SelectionHalo length={props.length} />}
+      <line
+        x1={-props.length / 2}
+        x2={props.length / 2}
+        stroke={LEG}
+        strokeWidth={2.6}
+        strokeLinecap="round"
+      />
+    </>
+  );
+}
+
+/** Slide switch: the knob sits towards lead b when the switch is on. */
+export function SwitchView(props: { a: Point; b: Point; closed: boolean; selected: boolean }) {
+  const { length, transform } = between(props.a, props.b);
+  return (
+    <g transform={transform}>
+      <TwoLeads length={length} selected={props.selected} />
+      <rect x={-17} y={-10} width={34} height={20} rx={3} fill="#3a4245" stroke="#15191b" />
+      <rect x={-13} y={-5} width={26} height={10} rx={2} fill="#15191b" />
+      <rect
+        x={props.closed ? 1 : -12}
+        y={-6.5}
+        width={11}
+        height={13}
+        rx={2}
+        fill={props.closed ? '#55e584' : '#c9d1d4'}
+      />
+    </g>
+  );
+}
+
+/** Rectifier diode: the stripe marks the cathode, the end current comes out of. */
+export function DiodeView(props: { anode: Point; cathode: Point; selected: boolean }) {
+  const { length, transform } = between(props.anode, props.cathode);
+  const body = Math.min(34, Math.max(18, length - 12));
+  return (
+    <g transform={transform}>
+      <TwoLeads length={length} selected={props.selected} />
+      <rect x={-body / 2} y={-7} width={body} height={14} rx={3} fill="#1c1f21" />
+      <rect x={body / 2 - 8} y={-7} width={4.5} height={14} fill="#d7dde0" />
+    </g>
+  );
+}
+
+/** Light-dependent resistor: the face brightens with the light falling on it. */
+export function LdrView(props: { a: Point; b: Point; light: number; selected: boolean }) {
+  const { length, transform } = between(props.a, props.b);
+  return (
+    <g transform={transform}>
+      <TwoLeads length={length} selected={props.selected} />
+      <circle r={11} fill="#b5683c" stroke="#6f3d20" />
+      <circle r={11} fill="#ffe9a8" opacity={0.75 * props.light} />
+      <path d="M-7 -5H5V-1.5H-5V2H7V5.5H-7" fill="none" stroke="#3a2416" strokeWidth={1.6} />
+    </g>
+  );
+}
+
+export function BuzzerView(props: {
+  pos: Point;
+  neg: Point;
+  sounding: boolean;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.pos, props.neg);
+  return (
+    <g transform={transform}>
+      <TwoLeads length={length} selected={props.selected} />
+      {props.sounding && (
+        <g
+          className="buzzer-waves"
+          fill="none"
+          stroke="#e8a21a"
+          strokeWidth={2.4}
+          strokeLinecap="round"
+        >
+          <path d="M-13 -17A22 22 0 0 1 13 -17" />
+          <path d="M-18 -22A30 30 0 0 1 18 -22" />
+        </g>
+      )}
+      <circle r={13} fill="#1c1f21" stroke="#0c0e0f" />
+      <circle r={3} fill="#4a5256" />
+      <text
+        x={-length / 2 - 1}
+        y={-9}
+        textAnchor="middle"
+        fontSize={13}
+        fontWeight={700}
+        fill="#b8281f"
+      >
+        +
+      </text>
+    </g>
+  );
+}
+
+/** DC motor seen from the shaft end. `speed` is −1 to 1; the rotor turns to match. */
+export function MotorView(props: { a: Point; b: Point; speed: number; selected: boolean }) {
+  const { length, transform } = between(props.a, props.b);
+  const turning = Math.abs(props.speed) > 0;
+  return (
+    <g transform={transform}>
+      <TwoLeads length={length} selected={props.selected} />
+      <circle r={15} fill="#aeb6ba" stroke="#6d7578" strokeWidth={1.5} />
+      <g
+        className={turning ? 'motor-rotor' : undefined}
+        style={
+          turning
+            ? {
+                animationDuration: `${Math.max(0.18, 0.3 / Math.abs(props.speed))}s`,
+                animationDirection: props.speed < 0 ? 'reverse' : 'normal',
+              }
+            : undefined
+        }
+      >
+        <path d="M-11 0H11M0 -11V11" stroke="#e8a21a" strokeWidth={4} strokeLinecap="round" />
+        <circle r={3.5} fill="#3a4245" />
+      </g>
+    </g>
+  );
+}
+
+/** NPN transistor (TO-92 package) seen from above, flat face towards the viewer. */
+export function TransistorView(props: { collector: Point; emitter: Point; selected: boolean }) {
+  const { length, transform } = between(props.collector, props.emitter);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      {[-length / 2, 0, length / 2].map((x) => (
+        <circle key={x} cx={x} r={2.6} fill={LEG} />
+      ))}
+      <path d="M-15 4H15V-2A15 13 0 0 0 -15 -2Z" fill="#1c1f21" stroke="#0c0e0f" />
+      <g fontSize={8.5} fontWeight={700} fill="#d7dde0" textAnchor="middle" pointerEvents="none">
+        <text x={-length / 2} y={15}>
+          C
+        </text>
+        <text x={0} y={15}>
+          B
+        </text>
+        <text x={length / 2} y={15}>
+          E
+        </text>
+      </g>
+    </g>
+  );
+}
+
+const SENSOR_BOARD = { temperature: '#7b3fa0', soil: '#2f6b4a', ir: '#1f5fa8' } as const;
+
+/** Three-pin sensor module: a small board standing behind its supply, output and ground legs. */
+export function SensorView(props: {
+  vcc: Point;
+  gnd: Point;
+  kind: keyof typeof SENSOR_BOARD;
+  /** Short text shown on the module, e.g. the temperature it is sensing. */
+  label: string;
+  /** For the IR sensor: its indicator light. */
+  lit?: boolean;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.vcc, props.gnd);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <rect
+        x={-length / 2 - 10}
+        y={-34}
+        width={length + 20}
+        height={40}
+        rx={4}
+        fill={SENSOR_BOARD[props.kind]}
+        stroke="rgba(0,0,0,.4)"
+      />
+      {[-length / 2, 0, length / 2].map((x) => (
+        <circle key={x} cx={x} r={2.6} fill={LEG} />
+      ))}
+      <text
+        y={-14}
+        textAnchor="middle"
+        fontSize={12}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        {props.label}
+      </text>
+      <g
+        fontSize={7.5}
+        fontWeight={600}
+        fill="#fff"
+        opacity={0.85}
+        textAnchor="middle"
+        pointerEvents="none"
+      >
+        <text x={-length / 2} y={-2}>
+          +
+        </text>
+        <text x={0} y={-2}>
+          OUT
+        </text>
+        <text x={length / 2} y={-2}>
+          −
+        </text>
+      </g>
+      {props.lit !== undefined && (
+        <circle cx={length / 2 + 2} cy={-27} r={3} fill={props.lit ? '#ff5340' : '#5a1f1a'} />
+      )}
+    </g>
+  );
+}

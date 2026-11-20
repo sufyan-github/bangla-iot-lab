@@ -2,6 +2,7 @@ import { UNO_VCC, type PinDrive } from '@banglalab/board-emulators';
 import {
   capacitor,
   diode,
+  npnTransistor,
   resistor,
   theveninSource,
   type Circuit,
@@ -16,13 +17,20 @@ import {
 } from '@banglalab/shared';
 import {
   BATTERY_INTERNAL_RESISTANCE,
-  BUTTON_CLOSED_RESISTANCE,
+  BUZZER_RESISTANCE,
+  CONTACT_RESISTANCE,
+  MOTOR_RESISTANCE,
+  NPN_TRANSISTOR,
   PIN_INPUT_RESISTANCE,
   PIN_OUTPUT_RESISTANCE,
   PIN_PULLUP_RESISTANCE,
+  SENSOR_RESISTANCE,
+  SILICON_DIODE,
   SUPPLY_RESISTANCE,
   WIRE_RESISTANCE,
+  ldrResistance,
   ledDiodeModel,
+  sensorOutputFraction,
 } from './library';
 
 /** Everything that changes while a circuit runs, without the circuit itself being edited. */
@@ -156,12 +164,70 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           ),
         );
         break;
-      case 'button': {
+      case 'button':
+      case 'switch': {
         const a = node(component.pins.a);
         const b = node(component.pins.b);
-        if (state.pressed.includes(id)) {
-          partDevice.set(id, add(resistor(id, a, b, BUTTON_CLOSED_RESISTANCE)));
-        }
+        const closed =
+          component.type === 'switch' ? component.props.closed : state.pressed.includes(id);
+        if (closed) partDevice.set(id, add(resistor(id, a, b, CONTACT_RESISTANCE)));
+        break;
+      }
+      case 'diode':
+        partDevice.set(
+          id,
+          add(diode(id, node(component.pins.anode), node(component.pins.cathode), SILICON_DIODE)),
+        );
+        break;
+      case 'ldr':
+        partDevice.set(
+          id,
+          add(
+            resistor(
+              id,
+              node(component.pins.a),
+              node(component.pins.b),
+              ldrResistance(component.props.light),
+            ),
+          ),
+        );
+        break;
+      case 'buzzer':
+        partDevice.set(
+          id,
+          add(resistor(id, node(component.pins.pos), node(component.pins.neg), BUZZER_RESISTANCE)),
+        );
+        break;
+      case 'motor':
+        partDevice.set(
+          id,
+          add(resistor(id, node(component.pins.a), node(component.pins.b), MOTOR_RESISTANCE)),
+        );
+        break;
+      case 'transistor':
+        partDevice.set(
+          id,
+          add(
+            npnTransistor(
+              id,
+              node(component.pins.collector),
+              node(component.pins.base),
+              node(component.pins.emitter),
+              NPN_TRANSISTOR,
+            ),
+          ),
+        );
+        break;
+      case 'temperature':
+      case 'soil':
+      case 'ir': {
+        // A divider from supply to ground with the output at the tap.
+        const fraction = Math.min(1, Math.max(0, sensorOutputFraction(component)));
+        const out = node(component.pins.out);
+        const upper = Math.max(10, SENSOR_RESISTANCE * (1 - fraction));
+        const lower = Math.max(10, SENSOR_RESISTANCE * fraction);
+        partDevice.set(id, add(resistor(id, node(component.pins.vcc), out, upper)));
+        add(resistor(`${id}:lower`, out, node(component.pins.gnd), lower));
         break;
       }
       case 'potentiometer': {

@@ -52,6 +52,17 @@ export const bn = {
   'tool.potentiometer': 'পটেনশিওমিটার',
   'tool.capacitor': 'ক্যাপাসিটর',
   'hint.capacitor': 'ক্যাপাসিটর বসাতে একটা ছিদ্রে ট্যাপ করো।',
+  'tool.switch': 'সুইচ',
+  'tool.diode': 'ডায়োড',
+  'tool.ldr': 'LDR',
+  'tool.buzzer': 'বাজার',
+  'tool.motor': 'মোটর',
+  'tool.transistor': 'ট্রানজিস্টর',
+  'tool.temperature': 'তাপমাত্রা',
+  'tool.soil': 'মাটির সেন্সর',
+  'tool.ir': 'IR সেন্সর',
+  'hint.place': 'বসাতে বোর্ডের একটা ছিদ্রে ট্যাপ করো।',
+  'hint.running': 'সার্কিট চালু অবস্থায় সুইচ বা সেন্সরে ট্যাপ করে বদলানো যায়, আর বোতাম চেপে ধরা যায়।',
   'tool.uno': 'UNO বোর্ড',
   'hint.button': 'বোতাম বসাতে একটা ছিদ্রে ট্যাপ করো। সার্কিট চালু থাকলে বোতামে চেপে ধরে রাখা যায়।',
   'hint.potentiometer': 'পটেনশিওমিটার বসাতে একটা ছিদ্রে ট্যাপ করো। তিনটা পা পাশাপাশি তিন কলামে বসবে।',
@@ -79,6 +90,33 @@ export const bn = {
   'part.capacitor': 'ক্যাপাসিটর',
   'part.capacitor.about':
     'ক্যাপাসিটর চার্জ জমা রাখে। রেজিস্টরের ভেতর দিয়ে এটা ধীরে ধীরে ভরে আর খালি হয়, তাতে সময় লাগে। ক্যাপাসিটর বা রেজিস্টর বড় হলে আরও ধীরে হয়। পুরো ভরে গেলে এর ভেতর দিয়ে আর স্থির কারেন্ট যায় না।',
+  'part.switch': 'সুইচ',
+  'part.diode': 'ডায়োড',
+  'part.ldr': 'আলোর সেন্সর (LDR)',
+  'part.buzzer': 'বাজার',
+  'part.motor': 'ডিসি মোটর',
+  'part.transistor': 'NPN ট্রানজিস্টর',
+  'part.temperature': 'তাপমাত্রা সেন্সর',
+  'part.soil': 'মাটির আর্দ্রতা সেন্সর',
+  'part.ir': 'IR বাধা সেন্সর',
+  'part.switch.about':
+    'সুইচ চালু থাকলে এর দুই পা জুড়ে থাকে, বন্ধ থাকলে আলাদা থাকে। বোতামের মতো ছেড়ে দিলে ফিরে আসে না, যেভাবে রাখবে সেভাবেই থাকে।',
+  'part.diode.about':
+    'ডায়োড শুধু এক দিকে কারেন্ট যেতে দেয়: দাগ ছাড়া প্রান্ত থেকে দাগ দেওয়া প্রান্তের দিকে। যাওয়ার পথে প্রায় 0.7 V খরচ হয়।',
+  'part.ldr.about':
+    'LDR এমন রেজিস্টর যার মান আলোর সাথে বদলায়: অন্ধকারে প্রায় 1 MΩ, উজ্জ্বল আলোতে 1 kΩ। একটা সাধারণ রেজিস্টরের সাথে জুড়লে এমন ভোল্টেজ পাওয়া যায় যা বোর্ড পড়তে পারে।',
+  'part.buzzer.about':
+    'এই বাজারের দুই পায়ে প্রায় 3 V বা বেশি দিলে নিজেই শব্দ করে; + পা পজিটিভ দিকে রাখতে হয়। এটা প্রায় 25 mA নেয়, যা বোর্ডের একটা পিন দিতে পারে।',
+  'part.motor.about':
+    'ভোল্টেজ বাড়ালে মোটর জোরে ঘোরে, আর তার উল্টে দিলে উল্টো দিকে ঘোরে। বোর্ডের পিন যতটা কারেন্ট দিতে পারে মোটর তার চেয়ে অনেক বেশি চায়, তাই ট্রানজিস্টর দিয়ে চালাতে হয়।',
+  'part.transistor.about':
+    'ট্রানজিস্টর একটা ইলেকট্রনিক সুইচ। বেসে (মাঝের পা, রেজিস্টরের ভেতর দিয়ে) অল্প কারেন্ট দিলে কালেক্টর থেকে এমিটারে অনেক কারেন্ট যেতে পারে। বাঁ দিক থেকে পা: কালেক্টর, বেস, এমিটার।',
+  'part.temperature.about':
+    'এই সেন্সর প্রতি ডিগ্রি সেলসিয়াসে 10 mV দেয়, তাই 25 °C-এ 0.25 V। পা: 5 V, আউটপুট, GND। আউটপুট analogRead দিয়ে পড়ো।',
+  'part.soil.about':
+    'মাটি যত ভেজা, এই সেন্সরের আউটপুট ভোল্টেজ তত কম: শুকনো অবস্থায় প্রায় 4.5 V, পুরো ভেজা অবস্থায় 1.5 V। পা: 5 V, আউটপুট, GND।',
+  'part.ir.about':
+    'এই সেন্সরের আউটপুট সাধারণত HIGH থাকে, সামনে কিছু এলে LOW হয়ে যায়। পা: 5 V, আউটপুট, GND। digitalRead দিয়ে পড়ো।',
   'part.uno': 'UNO বোর্ড',
   'part.button.about':
     'চেপে ধরলে বোতামের দুই পা জুড়ে যায়, ছেড়ে দিলে আলাদা হয়ে যায়। সার্কিট চালু করে বোতামে চাপ দিয়ে দেখো।',
@@ -94,6 +132,14 @@ export const bn = {
   'inspector.flip': 'পা উল্টে দাও',
   'inspector.remove': 'সরিয়ে ফেলো',
   'inspector.capacitance': 'ধারকত্ব',
+  'inspector.light': 'আলো',
+  'inspector.temperature': 'তাপমাত্রা',
+  'inspector.moisture': 'মাটি কতটা ভেজা',
+  'inspector.on': 'চালু',
+  'inspector.off': 'বন্ধ',
+  'inspector.obstacle': 'সামনে বাধা আছে',
+  'inspector.clear': 'সামনে কিছু নেই',
+  'lab.sound': 'শব্দ',
   'inspector.position': 'নবের অবস্থান',
   'color.red': 'লাল',
   'color.yellow': 'হলুদ',
@@ -232,6 +278,18 @@ export const en: Record<MessageKey, string> = {
   'tool.potentiometer': 'Potentiometer',
   'tool.capacitor': 'Capacitor',
   'hint.capacitor': 'Tap a hole to place the capacitor.',
+  'tool.switch': 'Switch',
+  'tool.diode': 'Diode',
+  'tool.ldr': 'LDR',
+  'tool.buzzer': 'Buzzer',
+  'tool.motor': 'Motor',
+  'tool.transistor': 'Transistor',
+  'tool.temperature': 'Temperature',
+  'tool.soil': 'Soil sensor',
+  'tool.ir': 'IR sensor',
+  'hint.place': 'Tap a hole on the board to place it.',
+  'hint.running':
+    'While the circuit runs, tap a switch or sensor to change it, or hold a button down.',
   'tool.uno': 'UNO board',
   'hint.button':
     'Tap a hole to place the button. While the circuit runs you can press and hold it.',
@@ -260,6 +318,33 @@ export const en: Record<MessageKey, string> = {
   'part.capacitor': 'Capacitor',
   'part.capacitor.about':
     'A capacitor stores charge. It fills up through a resistor and empties again, which takes time: a bigger capacitor or a bigger resistor makes it slower. Once full, no steady current passes through it.',
+  'part.switch': 'Switch',
+  'part.diode': 'Diode',
+  'part.ldr': 'Light sensor (LDR)',
+  'part.buzzer': 'Buzzer',
+  'part.motor': 'DC motor',
+  'part.transistor': 'NPN transistor',
+  'part.temperature': 'Temperature sensor',
+  'part.soil': 'Soil-moisture sensor',
+  'part.ir': 'IR obstacle sensor',
+  'part.switch.about':
+    'A switch joins its two legs when it is on and separates them when it is off. Unlike a push button, it stays where you leave it.',
+  'part.diode.about':
+    'A diode lets current through one way only, from the plain end to the end with the stripe. It uses up about 0.7 V on the way.',
+  'part.ldr.about':
+    'An LDR is a resistor that changes with light: about 1 MΩ in the dark and 1 kΩ in bright light. With a fixed resistor it makes a voltage the board can read.',
+  'part.buzzer.about':
+    'This buzzer makes its own tone whenever about 3 V or more is across it, + leg to the positive side. It draws about 25 mA, which a board pin can supply.',
+  'part.motor.about':
+    'A motor turns faster with more voltage and the other way round if you swap its wires. It needs far more current than a board pin can give, so switch it with a transistor.',
+  'part.transistor.about':
+    'A transistor is an electronic switch. A small current into the base (middle leg, through a resistor) lets a large current flow from collector to emitter. Legs from the left: collector, base, emitter.',
+  'part.temperature.about':
+    'This sensor puts out 10 mV for every degree Celsius, so 25 °C gives 0.25 V. Legs: 5 V, output, GND. Read the output with analogRead.',
+  'part.soil.about':
+    'This sensor’s output voltage falls as the soil gets wetter: about 4.5 V when dry and 1.5 V when soaked. Legs: 5 V, output, GND.',
+  'part.ir.about':
+    'This sensor’s output is HIGH normally and goes LOW when something is in front of it. Legs: 5 V, output, GND. Read it with digitalRead.',
   'part.uno': 'UNO board',
   'part.button.about':
     'While you hold it down, the two legs are joined; when you let go they separate. Run the circuit and press it.',
@@ -275,6 +360,14 @@ export const en: Record<MessageKey, string> = {
   'inspector.flip': 'Swap the legs',
   'inspector.remove': 'Remove',
   'inspector.capacitance': 'Capacitance',
+  'inspector.light': 'Light',
+  'inspector.temperature': 'Temperature',
+  'inspector.moisture': 'Soil wetness',
+  'inspector.on': 'On',
+  'inspector.off': 'Off',
+  'inspector.obstacle': 'Something in front',
+  'inspector.clear': 'Nothing in front',
+  'lab.sound': 'Sound',
   'inspector.position': 'Knob position',
   'color.red': 'Red',
   'color.yellow': 'Yellow',

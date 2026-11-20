@@ -96,3 +96,29 @@ input {
   touch-action: none;
   cursor: grab;
 }
+
+/* A running motor's rotor; the duration is set from its speed. */
+@keyframes motor-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.motor-rotor {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: motor-spin linear infinite;
+}
+@keyframes buzzer-ring {
+  50% {
+    opacity: 0.25;
+  }
+}
+.buzzer-waves {
+  animation: buzzer-ring 0.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .motor-rotor,
+  .buzzer-waves {
+    animation: none;
+  }
+}

@@ -48,7 +48,7 @@ function Choice(props: {
 
 function PartSettings({ part }: { part: CircuitComponent }) {
   const { setProps } = useLab.getState();
-  const { t, quantity } = useT();
+  const { t, quantity, number } = useT();
 
   if (part.type === 'battery') {
     return (
@@ -87,6 +87,57 @@ function PartSettings({ part }: { part: CircuitComponent }) {
             </option>
           ))}
         </select>
+      </label>
+    );
+  }
+  if (part.type === 'switch' || part.type === 'ir') {
+    const key = part.type === 'switch' ? 'closed' : 'detected';
+    const value = part.type === 'switch' ? part.props.closed : part.props.detected;
+    const labels =
+      part.type === 'switch'
+        ? (['inspector.off', 'inspector.on'] as const)
+        : (['inspector.clear', 'inspector.obstacle'] as const);
+    return (
+      <div className="flex flex-wrap gap-1.5" data-testid="toggle">
+        {[false, true].map((option) => (
+          <Choice
+            key={String(option)}
+            selected={value === option}
+            onClick={() => setProps(part.id, { [key]: option })}
+          >
+            {t(labels[Number(option)]!)}
+          </Choice>
+        ))}
+      </div>
+    );
+  }
+  if (part.type === 'ldr' || part.type === 'soil' || part.type === 'temperature') {
+    const slider = {
+      ldr: { key: 'light', label: 'inspector.light', max: 1, step: 0.01 },
+      soil: { key: 'moisture', label: 'inspector.moisture', max: 1, step: 0.01 },
+      temperature: { key: 'celsius', label: 'inspector.temperature', max: 100, step: 1 },
+    }[part.type];
+    const value = (part.props as Record<string, number>)[slider.key]!;
+    return (
+      <label className="block">
+        <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+          {t(slider.label as MessageKey)}
+          <span className="font-medium text-ink tabular-nums">
+            {part.type === 'temperature'
+              ? `${number(value)}°C`
+              : `${number(Math.round(value * 100))}%`}
+          </span>
+        </span>
+        <input
+          type="range"
+          data-testid="slider"
+          min={0}
+          max={slider.max}
+          step={slider.step}
+          value={value}
+          onChange={(event) => setProps(part.id, { [slider.key]: Number(event.target.value) })}
+          className="h-11 w-full accent-amber"
+        />
       </label>
     );
   }

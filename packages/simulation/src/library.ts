@@ -1,5 +1,5 @@
-import { THERMAL_VOLTAGE, type DiodeModel } from '@banglalab/circuit-engine';
-import type { LedColor } from '@banglalab/shared';
+import { THERMAL_VOLTAGE, type DiodeModel, type TransistorModel } from '@banglalab/circuit-engine';
+import type { CircuitComponent, LedColor } from '@banglalab/shared';
 
 /**
  * Electrical data for the parts students can use. Values are typical datasheet
@@ -62,7 +62,56 @@ export const LOGIC_LOW = 1.5;
 /** The board's 5 V socket: a stiff supply that a USB port limits to about half an ampere. */
 export const SUPPLY_RESISTANCE = 0.2;
 export const SUPPLY_MAX_CURRENT = 0.5;
-export const BUTTON_CLOSED_RESISTANCE = 0.05;
+/** Closed contacts of a push button or switch. */
+export const CONTACT_RESISTANCE = 0.05;
 /** Choices offered in the editor. */
 export const POTENTIOMETER_VALUES = [1_000, 10_000, 100_000] as const;
 export const CAPACITOR_VALUES = [100e-9, 1e-6, 10e-6, 100e-6, 1000e-6] as const;
+
+/** General-purpose rectifier diode (1N4007): about 0.7 V at 20 mA. */
+export const SILICON_DIODE: DiodeModel = { saturationCurrent: 7.03e-9, emissionCoefficient: 1.81 };
+/** Small-signal NPN transistor (BC547 / 2N2222 class) with a gain of 200. */
+export const NPN_TRANSISTOR: TransistorModel = {
+  saturationCurrent: 1e-14,
+  forwardGain: 200,
+  reverseGain: 2,
+};
+
+/** LDR resistance: 1 MΩ in the dark falling to 1 kΩ in bright light, evenly on a log scale. */
+export function ldrResistance(light: number): number {
+  return 10 ** (6 - 3 * light);
+}
+
+/** A 5 V buzzer with a built-in oscillator draws about 25 mA and starts sounding near 2.5 V. */
+export const BUZZER_RESISTANCE = 200;
+export const BUZZER_ON_VOLTAGE = 2.5;
+
+/**
+ * A small hobby motor, modelled as its winding resistance only. That gives the
+ * stall current (240 mA at 6 V), which is what decides whether a pin can drive
+ * it; a spinning motor draws less. Speed is shown in proportion to voltage.
+ */
+export const MOTOR_RESISTANCE = 25;
+export const MOTOR_RATED_VOLTAGE = 6;
+export const MOTOR_START_VOLTAGE = 0.6;
+
+/** Total resistance of a three-pin sensor module from supply to ground. */
+export const SENSOR_RESISTANCE = 10_000;
+
+/**
+ * Output of a three-pin sensor module as a fraction of its supply voltage.
+ * The modules are modelled as voltage dividers, which is exact at 5 V and
+ * makes the output fall to zero when the module is not powered.
+ */
+export function sensorOutputFraction(
+  sensor: Extract<CircuitComponent, { type: 'temperature' | 'soil' | 'ir' }>,
+): number {
+  switch (sensor.type) {
+    case 'temperature':
+      return (sensor.props.celsius * 0.01) / 5; // LM35: 10 mV per °C
+    case 'soil':
+      return 0.9 - 0.6 * sensor.props.moisture; // dry reads high, wet reads low
+    case 'ir':
+      return sensor.props.detected ? 0.01 : 0.999; // output is pulled LOW by an obstacle
+  }
+}

@@ -54,9 +54,10 @@ export function Canvas() {
   const running = useLab((s) => s.running);
   const pressed = useLab((s) => s.pressed);
   const boards = useLab((s) => s.boards);
-  const { select, tapEndpoint, replaceCircuit, setNotice, setPressed } = useLab.getState();
+  const { select, tapEndpoint, replaceCircuit, setNotice, setPressed, setProps } =
+    useLab.getState();
   const height = canvasHeight(circuit);
-  const { t, quantity } = useT();
+  const { t, quantity, number } = useT();
 
   const frameRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -177,10 +178,34 @@ export function Canvas() {
             boards={boards}
             batteryLabel={(volts) => quantity(volts, 'V')}
             readingLabel={(amperes) => quantity(amperes, 'A')}
+            formatNumber={number}
           />
 
           {selecting && (
             <g>
+              {/* Wires first, so a part lying under a wire can still be picked up. */}
+              {circuit.wires.map((wire) => {
+                const from = endpointPoint(circuit, wire.from);
+                const to = endpointPoint(circuit, wire.to);
+                if (!from || !to) return null;
+                return (
+                  <path
+                    key={wire.id}
+                    data-hit={wire.id}
+                    d={wirePath(from, to)}
+                    fill="none"
+                    stroke="transparent"
+                    strokeWidth={18}
+                    strokeLinecap="round"
+                    style={{ cursor: 'pointer' }}
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                      select(wire.id);
+                    }}
+                  />
+                );
+              })}
+
               {circuit.components.map((component) => {
                 if (component.type === 'battery' || component.type === 'uno') {
                   const top = endpointPoint(circuit, `${component.id}.pos`);
@@ -205,6 +230,8 @@ export function Canvas() {
                 const leads = Object.values(component.pins).map(holePoint);
                 const first = leads[0]!;
                 const second = leads.at(-1)!;
+                // Sensor modules stand taller than their legs; the whole board is touchable.
+                const tall = ['temperature', 'soil', 'ir'].includes(component.type);
                 const length = Math.hypot(second.x - first.x, second.y - first.y);
                 const angle = (Math.atan2(second.y - first.y, second.x - first.x) * 180) / Math.PI;
                 return (
@@ -213,9 +240,9 @@ export function Canvas() {
                     className="drag-handle"
                     data-hit={component.id}
                     x={-length / 2 - 12}
-                    y={-12}
+                    y={tall ? -36 : -12}
                     width={length + 24}
-                    height={24}
+                    height={tall ? 48 : 24}
                     rx={12}
                     fill="transparent"
                     transform={`translate(${(first.x + second.x) / 2} ${(first.y + second.y) / 2}) rotate(${angle})`}
@@ -227,26 +254,37 @@ export function Canvas() {
               })}
               {running &&
                 circuit.components.map((component) => {
-                  if (component.type !== 'button') return null;
-                  const a = holePoint(component.pins.a);
-                  const b = holePoint(component.pins.b);
-                  const release = () => setPressed(component.id, false);
-                  // While the circuit runs, touching a button presses it instead of moving it.
+                  // While the circuit runs, touching these parts operates them instead of moving them:
+                  // a button is held, a switch flips, an IR sensor gets or loses its obstacle.
+                  const { type, id } = component;
+                  if (type !== 'button' && type !== 'switch' && type !== 'ir') return null;
+                  const leads = Object.values(component.pins).map(holePoint);
+                  const centre = {
+                    x: (leads[0]!.x + leads.at(-1)!.x) / 2,
+                    y: (leads[0]!.y + leads.at(-1)!.y) / 2 - (type === 'ir' ? 14 : 0),
+                  };
+                  const release = () => type === 'button' && setPressed(id, false);
                   return (
                     <circle
-                      key={component.id}
+                      key={id}
                       className="drag-handle"
-                      data-press={component.id}
-                      cx={(a.x + b.x) / 2}
-                      cy={(a.y + b.y) / 2}
-                      r={15}
+                      data-press={id}
+                      cx={centre.x}
+                      cy={centre.y}
+                      r={type === 'ir' ? 22 : 16}
                       fill="transparent"
                       style={{ cursor: 'pointer' }}
                       onPointerDown={(event) => {
                         event.stopPropagation();
-                        event.currentTarget.setPointerCapture(event.pointerId);
-                        select(component.id);
-                        setPressed(component.id, true);
+                        select(id);
+                        if (type === 'button') {
+                          event.currentTarget.setPointerCapture(event.pointerId);
+                          setPressed(id, true);
+                        } else if (type === 'switch') {
+                          setProps(id, { closed: !component.props.closed });
+                        } else {
+                          setProps(id, { detected: !component.props.detected });
+                        }
                       }}
                       onPointerUp={release}
                       onPointerCancel={release}
@@ -254,28 +292,6 @@ export function Canvas() {
                     />
                   );
                 })}
-              {circuit.wires.map((wire) => {
-                const from = endpointPoint(circuit, wire.from);
-                const to = endpointPoint(circuit, wire.to);
-                if (!from || !to) return null;
-                return (
-                  <path
-                    key={wire.id}
-                    data-hit={wire.id}
-                    d={wirePath(from, to)}
-                    fill="none"
-                    stroke="transparent"
-                    strokeWidth={18}
-                    strokeLinecap="round"
-                    style={{ cursor: 'pointer' }}
-                    onPointerDown={(event) => {
-                      event.stopPropagation();
-                      select(wire.id);
-                    }}
-                  />
-                );
-              })}
-
               {selectedPart &&
                 'pins' in selectedPart &&
                 hasFlexibleLeads(selectedPart.type) &&
