@@ -1,0 +1,35 @@
+# Written in Phase 0 but not yet run on a hosted runner. Known risk: hosted
+# Ubuntu runners may restrict the unprivileged user namespaces bubblewrap needs.
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: banglalab
+          POSTGRES_PASSWORD: banglalab_dev
+          POSTGRES_DB: banglalab_dev
+        ports: ['55440:5432']
+        options: >-
+          --health-cmd "pg_isready -U banglalab" --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: sudo apt-get update && sudo apt-get install -y gcc-avr avr-libc binutils-avr bubblewrap
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level high
+      - run: pnpm check
+      - run: pnpm test:integration
+      - run: pnpm --filter @banglalab/web exec playwright install --with-deps chromium
+      - run: pnpm test:e2e

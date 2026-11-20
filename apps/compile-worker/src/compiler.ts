@@ -148,7 +148,13 @@ export class Compiler {
     try {
       await writeFile(path.join(jobDir, 'sketch.c'), request.source);
 
-      const gcc = await runTool(sandbox, jobDir, 'avr-gcc', [...GCC_FLAGS, '-o', 'sketch.elf', 'sketch.c'], timeoutMs);
+      const gcc = await runTool(
+        sandbox,
+        jobDir,
+        'avr-gcc',
+        [...GCC_FLAGS, '-o', 'sketch.elf', 'sketch.c'],
+        timeoutMs,
+      );
       if (gcc.timedOut) return { ok: false, reason: 'timeout', diagnostics: [] };
       if (gcc.exitCode !== 0) {
         // The linker refuses programs that overflow the chip's memory regions.

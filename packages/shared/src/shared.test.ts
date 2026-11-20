@@ -66,7 +66,9 @@ describe('circuit document', () => {
     expect(
       isCircuitDocument({
         ...example,
-        components: [{ id: 'R1', type: 'resistor', pins: { a: 'z9', b: 'a1' }, props: { resistance: 1 } }],
+        components: [
+          { id: 'R1', type: 'resistor', pins: { a: 'z9', b: 'a1' }, props: { resistance: 1 } },
+        ],
       }),
     ).toBe(false);
     expect(isCircuitDocument(null)).toBe(false);
@@ -89,7 +91,10 @@ describe('editing rules', () => {
     const circuit = ledCircuitExample();
     expect(placePart(circuit, 'led', 'c5')).toEqual({ ok: false, error: 'hole-occupied' });
     expect(addWire(circuit, 'a5', 'b1')).toEqual({ ok: false, error: 'hole-occupied' });
-    expect(movePin(circuit, 'LED1', 'cathode', 'c9')).toEqual({ ok: false, error: 'hole-occupied' });
+    expect(movePin(circuit, 'LED1', 'cathode', 'c9')).toEqual({
+      ok: false,
+      error: 'hole-occupied',
+    });
   });
 
   it('places the second lead to the left at the right-hand edge', () => {
@@ -99,7 +104,10 @@ describe('editing rules', () => {
 
   it('limits how far leads can stretch', () => {
     const circuit = ledCircuitExample();
-    expect(movePin(circuit, 'LED1', 'cathode', 'd20')).toEqual({ ok: false, error: 'lead-too-long' });
+    expect(movePin(circuit, 'LED1', 'cathode', 'd20')).toEqual({
+      ok: false,
+      error: 'lead-too-long',
+    });
     expect(ok(movePin(circuit, 'LED1', 'cathode', 'd11')).components[2]).toMatchObject({
       pins: { anode: 'd9', cathode: 'd11' },
     });
@@ -135,8 +143,14 @@ describe('editing rules', () => {
     expect(ok(updateProps(circuit, 'R1', { resistance: 330 })).components[1]).toMatchObject({
       props: { resistance: 330 },
     });
-    expect(updateProps(circuit, 'R1', { resistance: -5 })).toEqual({ ok: false, error: 'invalid-value' });
-    expect(updateProps(circuit, 'LED1', { color: 'pink' })).toEqual({ ok: false, error: 'invalid-value' });
+    expect(updateProps(circuit, 'R1', { resistance: -5 })).toEqual({
+      ok: false,
+      error: 'invalid-value',
+    });
+    expect(updateProps(circuit, 'LED1', { color: 'pink' })).toEqual({
+      ok: false,
+      error: 'invalid-value',
+    });
   });
 
   it('removes the wires clipped to a removed battery', () => {

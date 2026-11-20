@@ -3,10 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts",
+    "./fixtures/*": "./fixtures/*"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "fixtures:build": "bash fixtures/build.sh"
   },
-  "dependencies": { "avr8js": "^0.21.1" }
+  "dependencies": {
+    "avr8js": "^0.21.1"
+  }
 }

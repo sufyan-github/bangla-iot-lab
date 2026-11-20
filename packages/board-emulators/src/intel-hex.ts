@@ -36,7 +36,12 @@ export function parseIntelHex(hex: string, flashSize: number): Uint8Array {
     } else if (recordType === 0x01) {
       sawEndOfFile = true;
       break;
-    } else if (recordType !== 0x02 && recordType !== 0x03 && recordType !== 0x04 && recordType !== 0x05) {
+    } else if (
+      recordType !== 0x02 &&
+      recordType !== 0x03 &&
+      recordType !== 0x04 &&
+      recordType !== 0x05
+    ) {
       // 02-05 only set addresses beyond 64 KiB or the start address; irrelevant for a 32 KiB part.
       throw new Error(`Intel HEX line ${lineNumber}: unsupported record type ${recordType}`);
     }

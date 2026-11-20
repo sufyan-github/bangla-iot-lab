@@ -25,7 +25,10 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-const id = () => uuid('id').primaryKey().default(sql`uuidv7()`);
+const id = () =>
+  uuid('id')
+    .primaryKey()
+    .default(sql`uuidv7()`);
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const at = (name: string) => timestamp(name, { withTimezone: true });
 
@@ -65,7 +68,10 @@ export const users = pgTable(
   (t) => [
     uniqueIndex('users_email_unique').on(sql`lower(${t.email})`),
     check('users_learner_has_no_contact_details', sql`${t.kind} = 'adult' OR ${t.email} IS NULL`),
-    check('users_learner_has_no_platform_role', sql`${t.kind} = 'adult' OR ${t.platformRole} IS NULL`),
+    check(
+      'users_learner_has_no_platform_role',
+      sql`${t.kind} = 'adult' OR ${t.platformRole} IS NULL`,
+    ),
   ],
 );
 

@@ -29,9 +29,8 @@ describe('DC operating point', () => {
     const v = voltageSource('V1', 1, 0, 9);
     const { solution, iterations } = solved({ nodeCount: 2, devices: [v, r] });
     expect(r.current(solution)).toBeCloseTo(0.02, 12);
-    // A delivering source reports negative current (SPICE convention). It also feeds the
-    // 9 pA that leaks through GMIN, hence the looser precision.
-    expect(v.current(solution)).toBeCloseTo(-0.02, 10);
+    // A delivering source reports negative current (SPICE convention).
+    expect(v.current(solution)).toBeCloseTo(-0.02, 12);
     expect(iterations).toBe(2); // linear circuit: one solve plus one confirming pass
   });
 
@@ -55,10 +54,34 @@ describe('DC operating point', () => {
     const dangling = resistor('R2', 2, 3, 1000);
     const { solution } = solved({
       nodeCount: 4,
-      devices: [voltageSource('V1', 1, 0, 5), resistor('R1', 1, 2, 100), resistor('R3', 2, 0, 100), dangling],
+      devices: [
+        voltageSource('V1', 1, 0, 5),
+        resistor('R1', 1, 2, 100),
+        resistor('R3', 2, 0, 100),
+        dangling,
+      ],
     });
-    expect(Math.abs(dangling.current(solution))).toBeLessThan(1e-9);
-    expect(solution.voltage(3)).toBeCloseTo(2.5, 6);
+    expect(dangling.current(solution)).toBeCloseTo(0, 15);
+    expect(solution.voltage(3)).toBeCloseTo(2.5, 12);
+  });
+
+  it('puts 0 V across a diode whose far side is not connected', () => {
+    // Anode at 9 V through a resistor, cathode (node 3) connected to nothing else.
+    const d = diode('D1', 2, 3, { saturationCurrent: 1.557e-17, emissionCoefficient: 2 });
+    const { solution } = solved({
+      nodeCount: 4,
+      devices: [voltageSource('V1', 1, 0, 9), resistor('R1', 1, 2, 330), d],
+    });
+    expect(d.voltage(solution)).toBeCloseTo(0, 9);
+    expect(d.current(solution)).toBeCloseTo(0, 15);
+    expect(solution.voltage(3)).toBeCloseTo(9, 9);
+  });
+
+  it('solves node numbers that no device uses', () => {
+    const r = resistor('R1', 1, 0, 100);
+    const { solution } = solved({ nodeCount: 5, devices: [voltageSource('V1', 1, 0, 5), r] });
+    expect(r.current(solution)).toBeCloseTo(0.05, 12);
+    expect(solution.voltage(3)).toBe(0);
   });
 
   it('solves an island with no connection to ground', () => {
@@ -114,7 +137,9 @@ describe('device validation', () => {
     expect(() => resistor('R1', 1, 0, 0)).toThrow(RangeError);
     expect(() => resistor('R1', 1, 0, Number.NaN)).toThrow(RangeError);
     expect(() => voltageSource('V1', 1, 0, Infinity)).toThrow(RangeError);
-    expect(() => diode('D1', 1, 0, { saturationCurrent: 0, emissionCoefficient: 2 })).toThrow(RangeError);
+    expect(() => diode('D1', 1, 0, { saturationCurrent: 0, emissionCoefficient: 2 })).toThrow(
+      RangeError,
+    );
   });
 
   it('limits a large upward junction step and leaves small steps alone', () => {

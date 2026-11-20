@@ -1,0 +1,38 @@
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      // Students often work with no connection, so the whole app shell is
+      // precached at install and new versions take over on the next visit.
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg'],
+      manifest: {
+        name: 'বাংলা IoT ল্যাব',
+        short_name: 'IoT ল্যাব',
+        description: 'বাংলায় ভার্চুয়াল ইলেকট্রনিক্স ল্যাব — সার্কিট বানাও, চালিয়ে দেখো।',
+        lang: 'bn',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#174a40',
+        theme_color: '#174a40',
+        icons: [
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        navigateFallback: 'index.html',
+      },
+    }),
+  ],
+  worker: { format: 'es' },
+  server: { port: 5173, strictPort: true },
+});

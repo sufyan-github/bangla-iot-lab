@@ -76,7 +76,9 @@ describe('POST /v1/compile', () => {
     app = await build(async () => json({ ok: true }));
     const statuses: number[] = [];
     for (let i = 0; i < 22; i++) {
-      statuses.push((await app.inject({ method: 'POST', url: '/v1/compile', payload: body })).statusCode);
+      statuses.push(
+        (await app.inject({ method: 'POST', url: '/v1/compile', payload: body })).statusCode,
+      );
     }
     expect(statuses.slice(0, 20).every((s) => s === 200)).toBe(true);
     expect(statuses.slice(20)).toEqual([429, 429]);
@@ -100,7 +102,10 @@ describe('health', () => {
 
   it('only allows the configured web origin', async () => {
     app = await build(async () => json({}));
-    const allowed = await app.inject({ url: '/health', headers: { origin: 'http://localhost:5173' } });
+    const allowed = await app.inject({
+      url: '/health',
+      headers: { origin: 'http://localhost:5173' },
+    });
     expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:5173');
     const other = await app.inject({ url: '/health', headers: { origin: 'https://evil.example' } });
     expect(other.headers['access-control-allow-origin']).not.toBe('https://evil.example');

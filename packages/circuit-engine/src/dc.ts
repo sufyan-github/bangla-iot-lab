@@ -1,4 +1,4 @@
-import { GMIN, type Device } from './devices';
+import type { Device } from './devices';
 import { solveLinearSystem } from './linear-solver';
 import { MnaSystem, Solution } from './mna';
 
@@ -30,10 +30,38 @@ const DEFAULTS: Required<DcOptions> = {
 };
 
 /**
+ * Finds the parts of the circuit that have no connection to ground at all and
+ * returns one node from each. Such an island (a common beginner mistake: parts
+ * placed but not wired to the battery) has no defined voltage relative to
+ * ground, which would make the equations unsolvable. Tying one of its nodes to
+ * ground fixes the reference without changing any current, because no current
+ * can flow between unconnected islands.
+ */
+function islandAnchors(circuit: Circuit): number[] {
+  const parent = Int32Array.from({ length: circuit.nodeCount }, (_, i) => i);
+  const find = (node: number): number => {
+    while (parent[node] !== node) {
+      parent[node] = parent[parent[node]];
+      node = parent[node];
+    }
+    return node;
+  };
+  for (const device of circuit.devices) {
+    const first = find(device.nodes[0]);
+    for (const node of device.nodes) parent[find(node)] = first;
+  }
+  const ground = find(0);
+  const anchors = new Map<number, number>();
+  for (let node = 1; node < circuit.nodeCount; node++) {
+    const root = find(node);
+    if (root !== ground && !anchors.has(root)) anchors.set(root, node);
+  }
+  return [...anchors.values()];
+}
+
+/**
  * DC operating point by Newton-Raphson iteration over the MNA equations.
- *
- * Every node gets GMIN to ground so that a floating part (a common beginner
- * mistake) yields "0 V, no current" instead of an unsolvable system.
+ * Parts that are not connected to anything solve to "no current" instead of failing.
  */
 export function solveDc(circuit: Circuit, options: DcOptions = {}): DcResult {
   const opts = { ...DEFAULTS, ...options };
@@ -49,6 +77,7 @@ export function solveDc(circuit: Circuit, options: DcOptions = {}): DcResult {
 
   const system = new MnaSystem(nodeCount, branchCount);
   const voltageUnknowns = nodeCount - 1;
+  const anchors = islandAnchors(circuit);
   let x: Float64Array = new Float64Array(system.size);
 
   for (let iteration = 1; iteration <= opts.maxIterations; iteration++) {
@@ -58,7 +87,7 @@ export function solveDc(circuit: Circuit, options: DcOptions = {}): DcResult {
     for (const device of devices) {
       if (device.stamp(system, previous)) limited = true;
     }
-    for (let i = 0; i < voltageUnknowns; i++) system.add(i, i, GMIN);
+    for (const node of anchors) system.stampConductance(node, 0, 1);
 
     const next = Float64Array.from(system.z);
     if (!solveLinearSystem(system.a, next, system.size)) {

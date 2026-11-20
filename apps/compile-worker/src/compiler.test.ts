@@ -5,14 +5,24 @@ import { loadConfig } from './config';
 describe('gcc diagnostics parser', () => {
   it('extracts position, severity and message', () => {
     const stderr = [
-      'sketch.c: In function \'main\':',
+      "sketch.c: In function 'main':",
       "sketch.c:7:3: error: 'PORTZ' undeclared (first use in this function)",
       'sketch.c:9:1: warning: control reaches end of non-void function [-Wreturn-type]',
       'sketch.c:2:10: fatal error: nothing.h: No such file or directory',
     ].join('\n');
     expect(parseGccDiagnostics(stderr)).toEqual([
-      { line: 7, column: 3, severity: 'error', message: "'PORTZ' undeclared (first use in this function)" },
-      { line: 9, column: 1, severity: 'warning', message: 'control reaches end of non-void function [-Wreturn-type]' },
+      {
+        line: 7,
+        column: 3,
+        severity: 'error',
+        message: "'PORTZ' undeclared (first use in this function)",
+      },
+      {
+        line: 9,
+        column: 1,
+        severity: 'warning',
+        message: 'control reaches end of non-void function [-Wreturn-type]',
+      },
       { line: 2, column: 10, severity: 'error', message: 'nothing.h: No such file or directory' },
     ]);
   });

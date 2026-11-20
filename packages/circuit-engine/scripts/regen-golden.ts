@@ -32,7 +32,10 @@ for (const goldenCase of GOLDEN_CASES) {
   }
   const engine = /Command: (ngspice-[\d.]+)/.exec(result.header)?.[1] ?? 'ngspice';
   const golden = { name: goldenCase.name, engine, deck, voltages, sourceCurrents };
-  await writeFile(new URL(`${goldenCase.name}.json`, outDir), JSON.stringify(golden, null, 2) + '\n');
+  await writeFile(
+    new URL(`${goldenCase.name}.json`, outDir),
+    JSON.stringify(golden, null, 2) + '\n',
+  );
   console.log(`${goldenCase.name}: ${Object.keys(voltages).length} node voltages (${engine})`);
 }
 process.exit(0);

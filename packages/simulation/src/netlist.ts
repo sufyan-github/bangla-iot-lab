@@ -58,7 +58,12 @@ export function buildNetlist(document: CircuitDocument): Netlist {
         const positive = node(netName(`${component.id}.pos`));
         const negative = node(netName(`${component.id}.neg`));
         const internal = node(`internal:${component.id}`);
-        const source = voltageSource(`${component.id}:emf`, internal, negative, component.props.voltage);
+        const source = voltageSource(
+          `${component.id}:emf`,
+          internal,
+          negative,
+          component.props.voltage,
+        );
         const series = resistor(component.id, internal, positive, BATTERY_INTERNAL_RESISTANCE);
         devices.push(source, series);
         sourceOf.set(component.id, source);

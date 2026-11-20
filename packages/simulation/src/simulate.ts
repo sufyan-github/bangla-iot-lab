@@ -1,6 +1,7 @@
 import { solveDc } from '@banglalab/circuit-engine';
 import type { CircuitDocument } from '@banglalab/shared';
 import {
+  LED_FORWARD_VOLTAGE,
   LED_BURN_CURRENT,
   LED_MAX_CURRENT,
   LED_RATED_CURRENT,
@@ -28,6 +29,8 @@ export type DiagnosticCode =
   | 'led-reversed'
   | 'led-overcurrent'
   | 'led-burned'
+  | 'led-bypassed'
+  | 'led-low-voltage'
   | 'legs-in-same-strip'
   | 'solver-failed';
 
@@ -135,9 +138,17 @@ export function simulate(document: CircuitDocument): SimulationResult {
       reading.led = { state, brightness: ledBrightness(state, current) };
       if (state === 'reversed') {
         reversedLed = true;
-        result.diagnostics.push({ code: 'led-reversed', severity: 'warning', componentId: component.id });
+        result.diagnostics.push({
+          code: 'led-reversed',
+          severity: 'warning',
+          componentId: component.id,
+        });
       } else if (state === 'burned') {
-        result.diagnostics.push({ code: 'led-burned', severity: 'error', componentId: component.id });
+        result.diagnostics.push({
+          code: 'led-burned',
+          severity: 'error',
+          componentId: component.id,
+        });
       } else if (state === 'overcurrent') {
         result.diagnostics.push({
           code: 'led-overcurrent',
@@ -153,8 +164,27 @@ export function simulate(document: CircuitDocument): SimulationResult {
     result.wireCurrents[wire.id] = netlist.deviceOf.get(wire.id)?.current(solution) ?? 0;
   }
 
+  // An LED that stays dark in a powered circuit gets its own explanation: either it is
+  // forward-biased but below the voltage its colour needs, or the current is going round it.
+  let underpowered = false;
+  if (!shorted) {
+    for (const component of document.components) {
+      if (component.type !== 'led' || netlist.bridgedParts.includes(component.id)) continue;
+      const reading = result.readings[component.id];
+      if (reading?.led?.state !== 'off') continue;
+      const forwardBiased = reading.voltage > LED_FORWARD_VOLTAGE[component.props.color] * 0.3;
+      if (forwardBiased) underpowered = true;
+      else if (!delivering) continue; // nothing flows anywhere: reported once as an open circuit
+      result.diagnostics.push({
+        code: forwardBiased ? 'led-low-voltage' : 'led-bypassed',
+        severity: 'warning',
+        componentId: component.id,
+      });
+    }
+  }
+
   const hasLoad = document.components.length > batteries.length || document.wires.length > 0;
-  if (batteries.length > 0 && hasLoad && !delivering && !shorted && !reversedLed) {
+  if (batteries.length > 0 && hasLoad && !delivering && !shorted && !reversedLed && !underpowered) {
     result.diagnostics.push({ code: 'open-circuit', severity: 'info' });
   }
   return result;

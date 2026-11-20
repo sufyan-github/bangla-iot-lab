@@ -1,0 +1,125 @@
+import { emptyCircuit, ledCircuitExample, type CircuitDocument } from '@banglalab/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router';
+import { useT } from '../i18n';
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../lab/geometry';
+import { Scene } from '../lab/Scene';
+import { projectStore, type ProjectRecord } from '../storage/projects';
+
+function Thumbnail({ circuit }: { circuit: CircuitDocument }) {
+  const { quantity } = useT();
+  return (
+    <svg
+      viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+      className="block w-full rounded-lg"
+      aria-hidden
+    >
+      <Scene
+        circuit={circuit}
+        result={null}
+        detailed={false}
+        batteryLabel={(v) => quantity(v, 'V')}
+      />
+    </svg>
+  );
+}
+
+/** The student's saved circuits, with ways to start a new one. */
+export function HomePage() {
+  const { t, relativeTime } = useT();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const projects = useQuery({ queryKey: ['projects'], queryFn: projectStore.list });
+
+  const create = useMutation({
+    mutationFn: (input: { name: string; circuit: CircuitDocument }) =>
+      projectStore.create(input.name, input.circuit),
+    onSuccess: (project) => navigate(`/lab/${project.id}`),
+  });
+  const remove = useMutation({
+    mutationFn: projectStore.remove,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+  });
+
+  const confirmRemove = (project: ProjectRecord) => {
+    if (window.confirm(t('home.deleteConfirm', { name: project.name }))) remove.mutate(project.id);
+  };
+  const storageFailed = projects.isError || create.isError;
+
+  return (
+    <main className="flex-1">
+      <div className="bg-mat text-paper">
+        <div className="mx-auto max-w-5xl px-4 py-8 sm:py-10">
+          <h1 className="text-3xl font-semibold sm:text-4xl">{t('home.title')}</h1>
+          <p className="mt-2 max-w-2xl text-lg text-paper/85">{t('home.intro')}</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              data-testid="new-project"
+              onClick={() => create.mutate({ name: t('home.untitled'), circuit: emptyCircuit() })}
+              className="min-h-12 rounded-xl bg-amber px-5 text-lg font-semibold text-ink hover:brightness-105"
+            >
+              + {t('home.new')}
+            </button>
+            <button
+              type="button"
+              data-testid="open-example"
+              onClick={() =>
+                create.mutate({ name: t('home.exampleName'), circuit: ledCircuitExample() })
+              }
+              className="min-h-12 rounded-xl border-2 border-paper/70 px-5 text-lg font-medium hover:bg-paper/10"
+            >
+              {t('home.example')}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-5xl px-4 py-6">
+        {storageFailed && (
+          <p
+            role="alert"
+            className="mb-4 rounded-lg border-l-4 border-danger bg-danger-soft px-4 py-3"
+          >
+            {t('home.storageError')}
+          </p>
+        )}
+        {projects.data?.length === 0 && (
+          <div className="rounded-xl border-2 border-dashed border-line px-6 py-10 text-center">
+            <p className="text-xl font-semibold">{t('home.empty.title')}</p>
+            <p className="mt-1 text-ink-soft">{t('home.empty.body')}</p>
+          </div>
+        )}
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="project-list">
+          {projects.data?.map((project) => (
+            <li
+              key={project.id}
+              className="overflow-hidden rounded-xl border border-line bg-surface"
+            >
+              <Link to={`/lab/${project.id}`} data-testid="project-link" className="block p-2 pb-0">
+                <Thumbnail circuit={project.circuit} />
+                <span className="mt-2 block px-1 text-lg leading-snug font-semibold">
+                  {project.name}
+                </span>
+              </Link>
+              <div className="flex items-end justify-between gap-2 px-3 pt-1 pb-3">
+                <p className="text-sm text-ink-soft">
+                  {t('home.parts', { count: project.circuit.components.length })}
+                  <br />
+                  {t('home.updated', { time: relativeTime(project.updatedAt) })}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => confirmRemove(project)}
+                  className="min-h-11 rounded-lg px-3 text-sm font-medium text-danger hover:bg-danger-soft"
+                >
+                  {t('home.delete')}
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </main>
+  );
+}

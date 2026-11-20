@@ -25,7 +25,11 @@ afterAll(async () => {
 });
 
 const compile = (source: string) =>
-  server.inject({ method: 'POST', url: '/compile', payload: { board: 'uno', language: 'c', source } });
+  server.inject({
+    method: 'POST',
+    url: '/compile',
+    payload: { board: 'uno', language: 'c', source },
+  });
 
 describe('compile worker (bubblewrap sandbox)', () => {
   it('compiles C to firmware that blinks pin 13 in the emulator', async () => {
@@ -81,17 +85,25 @@ describe('compile worker (bubblewrap sandbox)', () => {
   });
 
   it('rejects programs that do not fit in the UNO', async () => {
-    const body = (await compile('char big[4000] = {1};\nint main(void){ return big[3]; }\n')).json();
+    const body = (
+      await compile('char big[4000] = {1};\nint main(void){ return big[3]; }\n')
+    ).json();
     expect(body).toMatchObject({ ok: false, reason: 'program-too-large' });
   });
 
   it('stops a compile that exceeds the time limit and does not cache the timeout', async () => {
-    const slow = await buildServer({ ...loadConfig({ LOG_LEVEL: 'silent' }), cacheDir, timeoutMs: 1 });
+    const slow = await buildServer({
+      ...loadConfig({ LOG_LEVEL: 'silent' }),
+      cacheDir,
+      timeoutMs: 1,
+    });
     const payload = { board: 'uno', language: 'c', source: `${blinkSource}\n// timeout probe\n` };
     const body = (await slow.inject({ method: 'POST', url: '/compile', payload })).json();
     await slow.close();
     expect(body).toMatchObject({ ok: false, reason: 'timeout', cached: false });
-    expect((await server.inject({ method: 'POST', url: '/compile', payload })).json()).toMatchObject({
+    expect(
+      (await server.inject({ method: 'POST', url: '/compile', payload })).json(),
+    ).toMatchObject({
       ok: true,
       cached: false,
     });

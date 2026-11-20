@@ -3,7 +3,11 @@ import type { MnaSystem, Solution } from './mna';
 /** Thermal voltage kT/q at 27 °C (300.15 K), the SPICE nominal temperature. */
 export const THERMAL_VOLTAGE = (1.380649e-23 * 300.15) / 1.602176634e-19;
 
-/** Tiny conductance placed across junctions so an "off" diode never isolates a node. */
+/**
+ * Tiny conductance placed across every junction, as SPICE does. It keeps a node
+ * that hangs off a non-conducting diode solvable, and makes that node follow
+ * the diode's other side (0 V across the diode), which is the physical answer.
+ */
 export const GMIN = 1e-12;
 
 /**
@@ -14,6 +18,8 @@ export const GMIN = 1e-12;
 export interface Device {
   readonly id: string;
   readonly kind: 'resistor' | 'voltage-source' | 'diode';
+  /** Nodes this device connects, first terminal first. */
+  readonly nodes: readonly number[];
   /** Extra MNA unknowns this device needs (voltage sources need one). */
   readonly branchCount: number;
   /** Assigned by the solver before the first stamp. */
@@ -45,6 +51,7 @@ export function resistor(id: string, a: number, b: number, resistance: number): 
   return {
     id,
     kind: 'resistor',
+    nodes: [a, b],
     a,
     b,
     resistance,
@@ -82,6 +89,7 @@ export function voltageSource(
   const device: VoltageSource = {
     id,
     kind: 'voltage-source',
+    nodes: [positive, negative],
     positive,
     negative,
     volts,
@@ -134,6 +142,7 @@ export function diode(id: string, anode: number, cathode: number, model: DiodeMo
   return {
     id,
     kind: 'diode',
+    nodes: [anode, cathode],
     anode,
     cathode,
     model,
@@ -145,7 +154,7 @@ export function diode(id: string, anode: number, cathode: number, model: DiodeMo
     },
     stamp(system, previous) {
       let v: number;
-      let limited = false;
+      let limited: boolean;
       if (firstIteration) {
         // Start at the knee of the curve, as SPICE does, so conducting diodes converge quickly.
         v = vCritical;

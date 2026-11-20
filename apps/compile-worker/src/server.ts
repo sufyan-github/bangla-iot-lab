@@ -37,7 +37,9 @@ export async function buildServer(config: WorkerConfig) {
   }).withTypeProvider<TypeBoxTypeProvider>();
 
   if (config.sandbox === 'none') {
-    app.log.warn('COMPILE_SANDBOX=none: submitted code is compiled WITHOUT isolation. Development only.');
+    app.log.warn(
+      'COMPILE_SANDBOX=none: submitted code is compiled WITHOUT isolation. Development only.',
+    );
   }
 
   app.get('/health', async () => ({ status: 'ok', sandbox: config.sandbox, toolchain }));

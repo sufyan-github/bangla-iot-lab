@@ -26,8 +26,7 @@ export type EditError =
   | 'invalid-value';
 
 export type EditResult =
-  | { ok: true; circuit: CircuitDocument; id: string }
-  | { ok: false; error: EditError };
+  { ok: true; circuit: CircuitDocument; id: string } | { ok: false; error: EditError };
 
 /** Longest distance a part's leads can stretch, in hole pitches. */
 export const MAX_LEAD_SPAN = { resistor: 12, led: 4 } as const;
@@ -70,6 +69,12 @@ function endpointExists(circuit: CircuitDocument, endpoint: string): boolean {
   if (!terminal) return false;
   const owner = circuit.components.find((c) => c.id === terminal.componentId);
   return owner?.type === 'battery' && BATTERY_TERMINALS.some((pin) => pin === terminal.pin);
+}
+
+/** Why a new wire end cannot go on `endpoint`, or null when it can. */
+export function attachError(circuit: CircuitDocument, endpoint: string): EditError | null {
+  if (!endpointExists(circuit, endpoint)) return 'unknown-endpoint';
+  return occupiedHoles(circuit).has(endpoint) ? 'hole-occupied' : null;
 }
 
 export function addBattery(circuit: CircuitDocument, voltage = 9): EditResult {

@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/anek-bangla';
+
+/*
+ * Visual language: an electronics workbench. The work surface is a green
+ * cutting mat; everything around it is quiet paper so the circuit stays the
+ * loudest thing on screen. Amber marks what the student is acting on.
+ */
+@theme {
+  --font-sans: 'Anek Bangla Variable', 'Noto Sans Bengali', system-ui, sans-serif;
+
+  --color-mat: #1d5a4e;
+  --color-mat-deep: #174a40;
+  --color-mat-line: #2a6c5f;
+  --color-paper: #f4f7f5;
+  --color-surface: #ffffff;
+  --color-ink: #13231f;
+  --color-ink-soft: #4b5d57;
+  --color-line: #d3dcd7;
+  --color-amber: #e8a21a;
+  --color-amber-deep: #8a5a00;
+  --color-amber-soft: #fdf1d6;
+  --color-danger: #b8281f;
+  --color-danger-soft: #fbe6e3;
+  --color-ok: #17753f;
+  --color-ok-soft: #e1f3e8;
+  --color-lcd: #c9d6ba;
+  --color-lcd-ink: #1b2a1d;
+}
+
+html {
+  font-family: var(--font-sans);
+  /* Bangla conjuncts and vowel signs need more vertical room than Latin text. */
+  line-height: 1.6;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-amber);
+  outline-offset: 2px;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+/* Moving dashes on a wire show conventional current, from + towards −. */
+@keyframes current-flow {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+.wire-flow {
+  animation: current-flow 0.7s linear infinite;
+}
+.wire-flow-reverse {
+  animation-direction: reverse;
+}
+
+@keyframes led-glow-in {
+  from {
+    opacity: 0;
+  }
+}
+.led-glow {
+  animation: led-glow-in 0.35s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wire-flow,
+  .led-glow {
+    animation: none;
+  }
+}
+
+/* Tap targets over breadboard holes and battery terminals. */
+.tap-target {
+  fill: transparent;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .tap-target:hover {
+    fill: rgba(232, 162, 26, 0.55);
+  }
+}
+.drag-handle {
+  touch-action: none;
+  cursor: grab;
+}

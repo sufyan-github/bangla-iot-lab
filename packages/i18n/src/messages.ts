@@ -47,7 +47,8 @@ export const bn = {
   'tool.battery': 'ব্যাটারি',
   'tool.resistor': 'রেজিস্টর',
   'tool.led': 'LED',
-  'hint.select': 'কোনো যন্ত্রাংশে ট্যাপ করে বাছাই করো। টেনে সরানো যায়, পায়ের গোল বিন্দু টেনে পা সরানো যায়।',
+  'hint.select':
+    'কোনো যন্ত্রাংশে ট্যাপ করে বাছাই করো। টেনে সরানো যায়, পায়ের গোল বিন্দু টেনে পা সরানো যায়।',
   'hint.wire.start': 'তারের প্রথম মাথা কোথায় বসবে? একটা ছিদ্রে বা ব্যাটারির প্রান্তে ট্যাপ করো।',
   'hint.wire.end': 'এবার দ্বিতীয় মাথার জায়গায় ট্যাপ করো।',
   'hint.resistor': 'রেজিস্টর বসাতে বোর্ডের একটা ছিদ্রে ট্যাপ করো।',
@@ -100,6 +101,10 @@ export const bn = {
     '{id}-এ বেশি কারেন্ট যাচ্ছে ({current})। ২০ mA-র কাছাকাছি রাখা ভালো। আরও বড় মানের রেজিস্টর লাগাও।',
   'diag.led-burned':
     '{id} পুড়ে গেছে! এত কারেন্ট ({current}) LED সইতে পারে না। সাথে উপযুক্ত রেজিস্টর লাগাও।',
+  'diag.led-bypassed':
+    '{id} জ্বলছে না, কারণ কারেন্ট এর ভেতর দিয়ে যাচ্ছে না। কারেন্ট হয়তো পাশের সহজ পথ দিয়ে চলে যাচ্ছে, নয়তো LED-র একটা পা সার্কিটে যুক্ত নেই। তারগুলো কোন কলামে বসেছে মিলিয়ে দেখো।',
+  'diag.led-low-voltage':
+    '{id} জ্বালানোর মতো ভোল্টেজ পাচ্ছে না। বেশি ভোল্টেজের ব্যাটারি নাও, অথবা ছোট মানের রেজিস্টর লাগাও।',
   'diag.legs-in-same-strip':
     '{id}-এর দুই পা একই সারিতে। বোর্ডের ভেতরে ওই পাঁচটা ছিদ্র জোড়া, তাই কারেন্ট একে পাশ কাটিয়ে যায়। একটা পা অন্য কলামে নাও।',
   'diag.solver-failed': 'এই সার্কিটটা হিসাব করা যায়নি। সংযোগগুলো আবার দেখো।',
@@ -234,6 +239,10 @@ export const en: Record<MessageKey, string> = {
     'Too much current through {id} ({current}). Keep it near 20 mA: use a larger resistor.',
   'diag.led-burned':
     '{id} has burned out! An LED cannot survive this much current ({current}). Add a suitable resistor.',
+  'diag.led-bypassed':
+    '{id} is dark because no current goes through it. The current may be taking an easier path beside it, or one leg is not connected. Check which columns the wires are in.',
+  'diag.led-low-voltage':
+    '{id} is not getting enough voltage to light. Use a higher-voltage battery or a smaller resistor.',
   'diag.legs-in-same-strip':
     'Both legs of {id} are in the same row of five. Those holes are joined inside the board, so current bypasses the part. Move one leg to another column.',
   'diag.solver-failed': 'This circuit could not be calculated. Check the connections again.',

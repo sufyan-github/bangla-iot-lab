@@ -5,6 +5,7 @@ import {
   ledCircuitExample,
   LED_COLORS,
   movePin,
+  moveWireEnd,
   removeItem,
   updateProps,
   type CircuitDocument,
@@ -62,7 +63,9 @@ describe('the first LED circuit', () => {
 describe('LED models', () => {
   it.each(LED_COLORS)('%s LED has its datasheet forward voltage at 20 mA', (color) => {
     // Choose the resistor that should give exactly 20 mA at the nominal forward voltage.
-    const resistance = (9 - 0.5 * LED_RATED_CURRENT - 4 * 0.01 * LED_RATED_CURRENT - LED_FORWARD_VOLTAGE[color]) / LED_RATED_CURRENT;
+    const resistance =
+      (9 - 0.5 * LED_RATED_CURRENT - 4 * 0.01 * LED_RATED_CURRENT - LED_FORWARD_VOLTAGE[color]) /
+      LED_RATED_CURRENT;
     let document = ok(updateProps(ledCircuitExample(), 'LED1', { color }));
     document = ok(updateProps(document, 'R1', { resistance }));
     const led = simulate(document).readings.LED1!;
@@ -96,6 +99,9 @@ describe('diagnostics for common mistakes', () => {
     const document = ok(removeItem(ledCircuitExample(), 'W4'));
     const result = simulate(document);
     expect(result.readings.LED1!.led!.state).toBe('off');
+    // An unconnected LED must read 0 V, not a voltage invented by the solver.
+    expect(result.readings.LED1!.voltage).toBeCloseTo(0, 9);
+    expect(result.readings.R1!.voltage).toBeCloseTo(0, 9);
     expect(result.diagnostics).toEqual([{ code: 'open-circuit', severity: 'info' }]);
   });
 
@@ -123,6 +129,35 @@ describe('diagnostics for common mistakes', () => {
     expect(codes(document)).toEqual(['legs-in-same-strip', 'open-circuit']);
   });
 
+  it('LED bypassed by a wire that returns from the wrong column', () => {
+    // The return wire leaves column 9 (before the LED) instead of column 10 (after it).
+    const document = ok(moveWireEnd(ledCircuitExample(), 'W4', 'from', 'a9'));
+    const result = simulate(document);
+    expect(result.readings.R1!.current).toBeGreaterThan(0.025);
+    expect(result.readings.LED1!.led!.state).toBe('off');
+    expect(result.diagnostics).toEqual([
+      { code: 'led-bypassed', severity: 'warning', componentId: 'LED1' },
+    ]);
+  });
+
+  it('battery voltage too low for the LED colour', () => {
+    let document = ok(updateProps(ledCircuitExample(), 'LED1', { color: 'blue' }));
+    document = ok(updateProps(document, 'BAT1', { voltage: 1.5 }));
+    const result = simulate(document);
+    expect(result.readings.LED1!.led!.state).toBe('off');
+    // The loop is complete, so this is not an open circuit: the LED sees 1.5 V and needs 3 V.
+    expect(result.readings.LED1!.voltage).toBeCloseTo(1.5, 3);
+    expect(result.diagnostics.map((d) => d.code)).toEqual(['led-low-voltage']);
+
+    // 3 V reaches a red LED but only barely moves a white one.
+    document = ok(updateProps(ledCircuitExample(), 'LED1', { color: 'white' }));
+    document = ok(updateProps(document, 'BAT1', { voltage: 3 }));
+    document = ok(updateProps(document, 'R1', { resistance: 100_000 }));
+    expect(simulate(document).diagnostics).toEqual([
+      { code: 'led-low-voltage', severity: 'warning', componentId: 'LED1' },
+    ]);
+  });
+
   it('no battery', () => {
     expect(codes(ok(removeItem(ledCircuitExample(), 'BAT1')))).toEqual(['no-battery']);
   });
@@ -141,9 +176,7 @@ describe('diagnostics for common mistakes', () => {
 describe('breadboard connectivity', () => {
   it('does not connect across the centre trench', () => {
     // Move the return wire from the top half of column 10 to the bottom half.
-    const document = ok(
-      addWire(ok(removeItem(ledCircuitExample(), 'W4')), 'f10', 'tn8'),
-    );
+    const document = ok(addWire(ok(removeItem(ledCircuitExample(), 'W4')), 'f10', 'tn8'));
     expect(codes(document)).toEqual(['open-circuit']);
   });
 
@@ -173,7 +206,12 @@ describe('breadboard connectivity', () => {
       components: [
         ...document.components,
         { id: 'R2', type: 'resistor', pins: { a: 'h5', b: 'h9' }, props: { resistance: 1000 } },
-        { id: 'LED2', type: 'led', pins: { anode: 'i9', cathode: 'i10' }, props: { color: 'green' } },
+        {
+          id: 'LED2',
+          type: 'led',
+          pins: { anode: 'i9', cathode: 'i10' },
+          props: { color: 'green' },
+        },
       ],
     };
     document = ok(addWire(document, 'tp5', 'j5'));

@@ -23,7 +23,11 @@ export const GOLDEN_CASES: GoldenCase[] = [
     description: '9 V across 1 kΩ and 2 kΩ in series',
     build: () => ({
       nodeCount: 3,
-      devices: [voltageSource('V1', 1, 0, 9), resistor('R1', 1, 2, 1000), resistor('R2', 2, 0, 2000)],
+      devices: [
+        voltageSource('V1', 1, 0, 9),
+        resistor('R1', 1, 2, 1000),
+        resistor('R2', 2, 0, 2000),
+      ],
     }),
   },
   {
@@ -59,7 +63,11 @@ export const GOLDEN_CASES: GoldenCase[] = [
     description: '5 V source, 330 Ω resistor and a blue LED in series',
     build: () => ({
       nodeCount: 3,
-      devices: [voltageSource('V1', 1, 0, 5), resistor('R1', 1, 2, 330), diode('D1', 2, 0, BLUE_LED)],
+      devices: [
+        voltageSource('V1', 1, 0, 5),
+        resistor('R1', 1, 2, 330),
+        diode('D1', 2, 0, BLUE_LED),
+      ],
     }),
   },
   {
@@ -67,7 +75,11 @@ export const GOLDEN_CASES: GoldenCase[] = [
     description: 'Red LED connected backwards: almost no current flows',
     build: () => ({
       nodeCount: 3,
-      devices: [voltageSource('V1', 1, 0, 9), resistor('R1', 1, 2, 220), diode('D1', 0, 2, RED_LED)],
+      devices: [
+        voltageSource('V1', 1, 0, 9),
+        resistor('R1', 1, 2, 220),
+        diode('D1', 0, 2, RED_LED),
+      ],
     }),
   },
   {
@@ -75,7 +87,11 @@ export const GOLDEN_CASES: GoldenCase[] = [
     description: 'Red LED straight across a 9 V battery: only internal resistance limits current',
     build: () => ({
       nodeCount: 3,
-      devices: [voltageSource('V1', 1, 0, 9), resistor('Rint', 1, 2, 0.5), diode('D1', 2, 0, RED_LED)],
+      devices: [
+        voltageSource('V1', 1, 0, 9),
+        resistor('Rint', 1, 2, 0.5),
+        diode('D1', 2, 0, RED_LED),
+      ],
     }),
   },
   {
