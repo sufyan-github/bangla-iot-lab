@@ -3,6 +3,7 @@ import { solveDc } from './dc';
 import {
   diode,
   limitJunctionVoltage,
+  npnTransistor,
   resistor,
   theveninSource,
   voltageSource,
@@ -149,6 +150,52 @@ describe('DC operating point', () => {
         expect(result.ok, `${volts} V, ${ohms} Ω`).toBe(true);
       }
     }
+  });
+});
+
+describe('NPN transistor', () => {
+  const model = { saturationCurrent: 1e-14, forwardGain: 200, reverseGain: 2 };
+
+  it('amplifies: collector current is beta times base current in the active region', () => {
+    const q = npnTransistor('Q1', 2, 3, 0, model);
+    const { solution } = solved({
+      nodeCount: 4,
+      devices: [
+        voltageSource('V1', 1, 0, 9),
+        resistor('RC', 1, 2, 100),
+        resistor('RB', 1, 3, 1_000_000), // tiny base current keeps it out of saturation
+        q,
+      ],
+    });
+    const ib = q.baseCurrent(solution);
+    expect(ib).toBeGreaterThan(7e-6);
+    expect(q.current(solution) / ib).toBeCloseTo(200, 1);
+    expect(q.voltage(solution)).toBeGreaterThan(1); // well above saturation
+  });
+
+  it('saturates as a switch and obeys Kirchhoff at its three terminals', () => {
+    const q = npnTransistor('Q1', 2, 3, 0, model);
+    const load = resistor('RL', 1, 2, 25);
+    const baseResistor = resistor('RB', 4, 3, 1000);
+    const { solution } = solved({
+      nodeCount: 5,
+      devices: [voltageSource('V1', 1, 0, 9), voltageSource('V2', 4, 0, 5), load, baseResistor, q],
+    });
+    expect(q.voltage(solution)).toBeLessThan(0.2); // collector pulled almost to the emitter
+    expect(load.current(solution)).toBeGreaterThan(0.34); // nearly 9 V / 25 Ω
+    expect(q.current(solution)).toBeCloseTo(load.current(solution), 9);
+    expect(q.baseCurrent(solution)).toBeCloseTo(baseResistor.current(solution), 9);
+  });
+
+  it('passes almost nothing with no base drive, and solves with the base left open', () => {
+    const q = npnTransistor('Q1', 2, 3, 0, model);
+    const { solution } = solved({
+      nodeCount: 4,
+      devices: [voltageSource('V1', 1, 0, 9), resistor('RL', 1, 2, 25), q],
+    });
+    // Only leakage: the picoamperes through the collector junction, multiplied by the gain.
+    expect(Math.abs(q.current(solution))).toBeLessThan(1e-8);
+    expect(() => npnTransistor('Q', 1, 2, 0, { ...model, forwardGain: 0 })).toThrow(RangeError);
   });
 });
 

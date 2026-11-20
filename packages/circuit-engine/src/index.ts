@@ -2,6 +2,7 @@ export { solveDc, solveTimeStep, type Circuit, type DcOptions, type DcResult } f
 export {
   capacitor,
   diode,
+  npnTransistor,
   resistor,
   theveninSource,
   voltageSource,
@@ -11,8 +12,10 @@ export {
   type Device,
   type Diode,
   type DiodeModel,
+  type NpnTransistor,
   type Resistor,
   type TheveninSource,
+  type TransistorModel,
   type VoltageSource,
 } from './devices';
 export { Solution } from './mna';

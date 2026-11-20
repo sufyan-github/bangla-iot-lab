@@ -1,0 +1,15 @@
+{
+  "name": "transistor-switch",
+  "engine": "ngspice-45.2",
+  "deck": "* transistor-switch\nVV1 1 0 DC 9\nRRL 1 2 25\nVP9 xP9 0 DC 5\nRP9 3 xP9 25\nRRB 3 4 1000\nQQ1 2 4 0 MQ1\n.model MQ1 NPN(IS=1e-14 BF=200 BR=2)\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 9,
+    "2": 0.1131785791973002,
+    "3": 4.89774455717273,
+    "4": 0.8075268440818757
+  },
+  "sourceCurrents": {
+    "P9": -0.004090217713090816,
+    "V1": -0.355472856832108
+  }
+}

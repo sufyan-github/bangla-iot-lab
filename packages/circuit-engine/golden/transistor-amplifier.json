@@ -1,0 +1,14 @@
+{
+  "name": "transistor-amplifier",
+  "engine": "ngspice-45.2",
+  "deck": "* transistor-amplifier\nVV1 1 0 DC 12\nRR1 1 2 47000\nRR2 2 0 10000\nRRC 1 3 2200\nRRE 4 0 470\nQQ1 3 2 4 MQ1\n.model MQ1 NPN(IS=1e-14 BF=200 BR=2)\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 12,
+    "2": 1.9909682663865442,
+    "3": 5.901028600241091,
+    "4": 1.3094768778091594
+  },
+  "sourceCurrents": {
+    "V1": -0.0029852178491549153
+  }
+}

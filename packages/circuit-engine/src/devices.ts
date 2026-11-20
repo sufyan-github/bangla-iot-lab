@@ -17,7 +17,8 @@ export const GMIN = 1e-12;
  */
 export interface Device {
   readonly id: string;
-  readonly kind: 'resistor' | 'voltage-source' | 'thevenin-source' | 'diode' | 'capacitor';
+  readonly kind:
+    'resistor' | 'voltage-source' | 'thevenin-source' | 'diode' | 'capacitor' | 'npn-transistor';
   /** Nodes this device connects, first terminal first. */
   readonly nodes: readonly number[];
   /** Extra MNA unknowns this device needs (voltage sources need one). */
@@ -312,4 +313,134 @@ export function limitJunctionVoltage(
     return nVt * Math.log(vNew / nVt);
   }
   return vNew;
+}
+
+export interface TransistorModel {
+  /** Transport saturation current Is, amperes. */
+  saturationCurrent: number;
+  /** Forward current gain (beta): collector current over base current in normal use. */
+  forwardGain: number;
+  /** Reverse current gain, for a transistor used backwards. */
+  reverseGain: number;
+}
+
+export interface NpnTransistor extends Device {
+  readonly kind: 'npn-transistor';
+  readonly collector: number;
+  readonly base: number;
+  readonly emitter: number;
+  readonly model: TransistorModel;
+  /** Current flowing into the base terminal. */
+  baseCurrent(solution: Solution): number;
+}
+
+/**
+ * NPN bipolar transistor, Ebers-Moll transport model (what SPICE's BJT reduces
+ * to with its default parameters: no Early effect, no parasitic resistances):
+ *
+ *   If = Is·(exp(Vbe/Vt) − 1)      Ir = Is·(exp(Vbc/Vt) − 1)
+ *   Ic = If − Ir·(1 + 1/βr)        Ib = If/βf + Ir/βr
+ *
+ * `current()` is the collector current (into the collector) and `voltage()` is
+ * collector minus emitter. Both junctions are step-limited like a diode.
+ */
+export function npnTransistor(
+  id: string,
+  collector: number,
+  base: number,
+  emitter: number,
+  model: TransistorModel,
+): NpnTransistor {
+  const { saturationCurrent: is, forwardGain: bf, reverseGain: br } = model;
+  if (!(is > 0) || !(bf > 0) || !(br > 0)) {
+    throw new RangeError(`Transistor ${id}: saturation current and gains must be > 0`);
+  }
+  const vt = THERMAL_VOLTAGE;
+  const vCritical = vt * Math.log(vt / (Math.SQRT2 * is));
+  let previousVbe = 0;
+  let previousVbc = 0;
+  let firstIteration = true;
+
+  const currents = (vbe: number, vbc: number) => {
+    const forward = is * Math.expm1(vbe / vt);
+    const reverse = is * Math.expm1(vbc / vt);
+    return {
+      collector: forward - reverse * (1 + 1 / br) - GMIN * vbc,
+      base: forward / bf + reverse / br + GMIN * (vbe + vbc),
+    };
+  };
+  const junctions = (s: Solution) => ({
+    vbe: s.voltage(base) - s.voltage(emitter),
+    vbc: s.voltage(base) - s.voltage(collector),
+  });
+
+  return {
+    id,
+    kind: 'npn-transistor',
+    nodes: [collector, base, emitter],
+    collector,
+    base,
+    emitter,
+    model,
+    branchCount: 0,
+    branch: -1,
+    reset() {
+      previousVbe = 0;
+      previousVbc = 0;
+      firstIteration = true;
+    },
+    stamp(system, previous) {
+      let vbe: number;
+      let vbc: number;
+      let limited: boolean;
+      if (firstIteration) {
+        // Start with the base-emitter junction at its knee and the collector junction off.
+        vbe = vCritical;
+        vbc = 0;
+        firstIteration = false;
+        limited = true;
+      } else {
+        const raw = junctions(previous);
+        vbe = limitJunctionVoltage(raw.vbe, previousVbe, vt, vCritical);
+        vbc = limitJunctionVoltage(raw.vbc, previousVbc, vt, vCritical);
+        limited = vbe !== raw.vbe || vbc !== raw.vbc;
+      }
+      previousVbe = vbe;
+      previousVbc = vbc;
+
+      const { collector: ic, base: ib } = currents(vbe, vbc);
+      // Slopes of the two junction currents.
+      const gForward = (is / vt) * Math.exp(vbe / vt);
+      const gReverse = (is / vt) * Math.exp(vbc / vt);
+      const dIcDvbe = gForward;
+      const dIcDvbc = -gReverse * (1 + 1 / br) - GMIN;
+      const dIbDvbe = gForward / bf + GMIN;
+      const dIbDvbc = gReverse / br + GMIN;
+
+      const c = system.nodeIndex(collector);
+      const b = system.nodeIndex(base);
+      const e = system.nodeIndex(emitter);
+      /** Stamps one terminal current i ≈ i0 + gbe·(vbe − vbe0) + gbc·(vbc − vbc0), leaving `row`'s node. */
+      const stampTerminal = (row: number, i0: number, gbe: number, gbc: number) => {
+        system.add(row, b, gbe + gbc);
+        system.add(row, e, -gbe);
+        system.add(row, c, -gbc);
+        system.addRhs(row, -(i0 - gbe * vbe - gbc * vbc));
+      };
+      stampTerminal(c, ic, dIcDvbe, dIcDvbc);
+      stampTerminal(b, ib, dIbDvbe, dIbDvbc);
+      // Whatever enters the collector and base leaves through the emitter.
+      stampTerminal(e, -(ic + ib), -(dIcDvbe + dIbDvbe), -(dIcDvbc + dIbDvbc));
+      return limited;
+    },
+    voltage: (s) => s.voltage(collector) - s.voltage(emitter),
+    current: (s) => {
+      const { vbe, vbc } = junctions(s);
+      return currents(vbe, vbc).collector;
+    },
+    baseCurrent: (s) => {
+      const { vbe, vbc } = junctions(s);
+      return currents(vbe, vbc).base;
+    },
+  };
 }

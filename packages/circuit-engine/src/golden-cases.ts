@@ -1,5 +1,13 @@
 import type { Circuit } from './dc';
-import { diode, resistor, theveninSource, voltageSource, type DiodeModel } from './devices';
+import {
+  diode,
+  npnTransistor,
+  resistor,
+  theveninSource,
+  voltageSource,
+  type DiodeModel,
+  type TransistorModel,
+} from './devices';
 
 /**
  * Reference circuits solved by both this engine and ngspice.
@@ -15,6 +23,7 @@ export interface GoldenCase {
 // LED models fitted so the forward voltage at 20 mA matches typical datasheets.
 const RED_LED: DiodeModel = { saturationCurrent: 1.557e-17, emissionCoefficient: 2 };
 const BLUE_LED: DiodeModel = { saturationCurrent: 1.296e-27, emissionCoefficient: 2 };
+const NPN: TransistorModel = { saturationCurrent: 1e-14, forwardGain: 200, reverseGain: 2 };
 const SILICON: DiodeModel = { saturationCurrent: 1e-14, emissionCoefficient: 1 };
 
 export const GOLDEN_CASES: GoldenCase[] = [
@@ -171,6 +180,53 @@ export const GOLDEN_CASES: GoldenCase[] = [
         theveninSource('VCC', 2, 0, 5, 0.2),
         resistor('R2', 2, 3, 7_500),
         resistor('R3', 3, 0, 2_500),
+      ],
+    }),
+  },
+  {
+    name: 'transistor-switch',
+    description:
+      'NPN switching a 25 Ω load from 9 V, base driven by a 5 V pin through 1 kΩ (saturated)',
+    build: () => ({
+      nodeCount: 5,
+      devices: [
+        voltageSource('V1', 1, 0, 9),
+        resistor('RL', 1, 2, 25),
+        theveninSource('P9', 3, 0, 5, 25),
+        resistor('RB', 3, 4, 1000),
+        npnTransistor('Q1', 2, 4, 0, NPN),
+      ],
+    }),
+  },
+  {
+    name: 'transistor-amplifier',
+    description: 'NPN in its active region: divider bias, collector and emitter resistors',
+    build: () => ({
+      nodeCount: 5,
+      devices: [
+        voltageSource('V1', 1, 0, 12),
+        resistor('R1', 1, 2, 47_000),
+        resistor('R2', 2, 0, 10_000),
+        resistor('RC', 1, 3, 2_200),
+        resistor('RE', 4, 0, 470),
+        npnTransistor('Q1', 3, 2, 4, NPN),
+      ],
+    }),
+  },
+  {
+    // An "off" transistor is deliberately not a reference case: its collector node is set
+    // only by picoampere leakage, where simulators legitimately differ by tens of millivolts.
+    name: 'transistor-emitter-follower',
+    description: 'NPN emitter follower lighting a red LED through 330 Ω from a 3 V base level',
+    build: () => ({
+      nodeCount: 5,
+      devices: [
+        voltageSource('V1', 1, 0, 9),
+        resistor('R1', 1, 2, 20_000),
+        resistor('R2', 2, 0, 10_000),
+        npnTransistor('Q1', 1, 2, 3, NPN),
+        resistor('RE', 3, 4, 330),
+        diode('D1', 4, 0, RED_LED),
       ],
     }),
   },

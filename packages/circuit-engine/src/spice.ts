@@ -1,6 +1,13 @@
 import { THERMAL_VOLTAGE } from './devices';
 import type { Circuit } from './dc';
-import type { Capacitor, Diode, Resistor, TheveninSource, VoltageSource } from './devices';
+import type {
+  Capacitor,
+  Diode,
+  NpnTransistor,
+  Resistor,
+  TheveninSource,
+  VoltageSource,
+} from './devices';
 
 /**
  * Writes a circuit as a SPICE deck so the same netlist can be solved by ngspice
@@ -24,6 +31,12 @@ export function toSpiceDeck(
     } else if (device.kind === 'voltage-source') {
       const v = device as VoltageSource;
       lines.push(`V${name} ${v.positive} ${v.negative} DC ${v.volts}`);
+    } else if (device.kind === 'npn-transistor') {
+      const q = device as NpnTransistor;
+      lines.push(`Q${name} ${q.collector} ${q.base} ${q.emitter} M${name}`);
+      models.push(
+        `.model M${name} NPN(IS=${q.model.saturationCurrent} BF=${q.model.forwardGain} BR=${q.model.reverseGain})`,
+      );
     } else if (device.kind === 'capacitor') {
       const c = device as Capacitor;
       lines.push(`C${name} ${c.a} ${c.b} ${c.capacitance} IC=${c.storedVoltage}`);

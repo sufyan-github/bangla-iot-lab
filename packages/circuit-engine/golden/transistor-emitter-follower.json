@@ -1,0 +1,14 @@
+{
+  "name": "transistor-emitter-follower",
+  "engine": "ngspice-45.2",
+  "deck": "* transistor-emitter-follower\nVV1 1 0 DC 9\nRR1 1 2 20000\nRR2 2 0 10000\nQQ1 1 2 3 MQ1\nRRE 3 4 330\nDD1 4 0 MD1\n.model MQ1 NPN(IS=1e-14 BF=200 BR=2)\n.model MD1 D(IS=1.557e-17 N=2)\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 9,
+    "2": 2.940214318470773,
+    "3": 2.269985908175398,
+    "4": 1.6751479117544115
+  },
+  "sourceCurrents": {
+    "V1": -0.002096560823940996
+  }
+}
