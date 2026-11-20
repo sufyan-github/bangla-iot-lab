@@ -1,10 +1,12 @@
 import type { MessageKey } from '@banglalab/i18n';
+import { proxy } from 'comlink';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useT } from '../i18n';
 import { simulation } from '../sim/client';
 import { projectStore } from '../storage/projects';
 import { Canvas } from './Canvas';
+import { CodePanel } from './CodePanel';
 import { Palette } from './Palette';
 import { Inspector, Messages, Meter } from './panels';
 import { useLab } from './store';
@@ -42,15 +44,21 @@ function useAutosave(enabled: boolean) {
     const save = () => {
       clearTimeout(timer);
       timer = undefined;
-      const { projectId, name, circuit, setSaveState } = useLab.getState();
+      const { projectId, name, circuit, programs, setSaveState } = useLab.getState();
       if (!projectId) return;
-      projectStore.save(projectId, { name, circuit }).then(
+      projectStore.save(projectId, { name, circuit, programs }).then(
         () => setSaveState('saved'),
         () => setSaveState('error'),
       );
     };
     const unsubscribe = useLab.subscribe((state, previous) => {
-      if (state.circuit === previous.circuit && state.name === previous.name) return;
+      if (
+        state.circuit === previous.circuit &&
+        state.name === previous.name &&
+        state.programs === previous.programs
+      ) {
+        return;
+      }
       if (state.projectId !== previous.projectId) return; // a project was just opened
       state.setSaveState('saving');
       clearTimeout(timer);
@@ -68,29 +76,36 @@ function useAutosave(enabled: boolean) {
   }, [enabled]);
 }
 
-/** While running, re-solves the circuit after every change. */
+/**
+ * While the circuit is switched on, keeps the simulation worker in step with
+ * the editor: edits, held buttons and uploaded programs are passed along, and
+ * readings come back about thirty times a second.
+ */
 function useLiveSimulation() {
   const running = useLab((s) => s.running);
-  const circuit = useLab((s) => s.circuit);
   useEffect(() => {
     if (!running) return;
-    let stale = false;
-    simulation()
-      .simulate(circuit)
-      .catch(() => ({
-        ok: false,
-        readings: {},
-        wireCurrents: {},
-        diagnostics: [{ code: 'solver-failed' as const, severity: 'error' as const }],
-        iterations: 0,
-      }))
-      .then((result) => {
-        if (!stale) useLab.getState().setResult(result);
-      });
+    const { circuit, pressed, programs, receiveFrame } = useLab.getState();
+    const firmware: Record<string, string> = {};
+    for (const [boardId, program] of Object.entries(programs)) {
+      if (program.hex) firmware[boardId] = program.hex;
+    }
+    void simulation().start(circuit, pressed, firmware, proxy(receiveFrame));
+
+    const unsubscribe = useLab.subscribe((state, previous) => {
+      if (state.circuit !== previous.circuit || state.pressed !== previous.pressed) {
+        void simulation().update(state.circuit, state.pressed);
+      }
+      for (const [boardId, count] of Object.entries(state.uploads)) {
+        const hex = state.programs[boardId]?.hex;
+        if (hex && count !== previous.uploads[boardId]) void simulation().upload(boardId, hex);
+      }
+    });
     return () => {
-      stale = true;
+      unsubscribe();
+      void simulation().stop();
     };
-  }, [running, circuit]);
+  }, [running]);
 }
 
 function useKeyboardShortcuts() {
@@ -112,6 +127,7 @@ const EDIT_MESSAGES: Partial<Record<string, MessageKey>> = {
   'lead-too-long': 'edit.lead-too-long',
   'same-point': 'edit.same-point',
   'battery-limit': 'edit.battery-limit',
+  'board-limit': 'edit.board-limit',
 };
 
 function Notice() {
@@ -144,6 +160,9 @@ export function LabPage() {
   const name = useLab((s) => s.name);
   const running = useLab((s) => s.running);
   const saveState = useLab((s) => s.saveState);
+  const boardId = useLab((s) => s.circuit.components.find((c) => c.type === 'uno')?.id);
+  const [tab, setTab] = useState<'circuit' | 'code'>('circuit');
+  const showCode = tab === 'code' && boardId !== undefined;
   const { setName, setRunning } = useLab.getState();
   const { t } = useT();
 
@@ -211,10 +230,39 @@ export function LabPage() {
         </div>
       </div>
 
-      <aside className="w-full shrink-0 overflow-y-auto border-line bg-surface lg:w-[21rem] lg:border-l">
-        <Messages />
-        <Meter />
-        <Inspector />
+      <aside
+        className={`w-full shrink-0 overflow-y-auto border-line bg-surface lg:border-l ${showCode ? 'lg:w-[34rem]' : 'lg:w-[21rem]'}`}
+      >
+        {boardId && (
+          <div role="tablist" className="flex border-b border-line">
+            {(['circuit', 'code'] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                data-testid={`tab-${id}`}
+                aria-selected={tab === id}
+                onClick={() => setTab(id)}
+                className={`min-h-12 flex-1 border-b-4 text-base font-semibold ${
+                  tab === id
+                    ? 'border-amber text-ink'
+                    : 'border-transparent text-ink-soft hover:text-ink'
+                }`}
+              >
+                {t(id === 'circuit' ? 'code.tabCircuit' : 'code.tabCode')}
+              </button>
+            ))}
+          </div>
+        )}
+        {showCode ? (
+          <CodePanel boardId={boardId} />
+        ) : (
+          <>
+            <Messages />
+            <Meter />
+            <Inspector />
+          </>
+        )}
       </aside>
     </main>
   );

@@ -42,7 +42,17 @@ export async function buildServer(config: WorkerConfig) {
     );
   }
 
-  app.get('/health', async () => ({ status: 'ok', sandbox: config.sandbox, toolchain }));
+  // Build the Arduino core before accepting requests, so the first sketch is not slow.
+  // Without the core the worker still serves plain C and says why sketches cannot build.
+  const arduino = await compiler.prepareArduino().then(
+    () => 'ready' as const,
+    (error: Error) => {
+      app.log.warn(error.message);
+      return 'unavailable' as const;
+    },
+  );
+
+  app.get('/health', async () => ({ status: 'ok', sandbox: config.sandbox, toolchain, arduino }));
 
   app.post(
     '/compile',

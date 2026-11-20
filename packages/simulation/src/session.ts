@@ -139,7 +139,8 @@ export class SimulationSession {
         // Nothing plugged in: a pull-up reads HIGH, a bare input reads LOW.
         const voltage = sample ? sample.voltage : board.drives[pin] === 'pullup' ? 5 : 0;
         const previous = board.inputLevel[pin];
-        const level = voltage > LOGIC_HIGH ? true : voltage < LOGIC_LOW ? false : (previous ?? false);
+        const level =
+          voltage > LOGIC_HIGH ? true : voltage < LOGIC_LOW ? false : (previous ?? false);
         if (level !== previous) {
           board.inputLevel[pin] = level;
           board.emulator.setDigitalInput(pin, level);
@@ -206,7 +207,11 @@ export class SimulationSession {
         timeMs: this.time - board.startedAt,
         drives: [...board.drives],
         highFraction: board.highTime.map((high, pin) =>
-          sinceLastFrame > 0 ? Math.min(1, high / sinceLastFrame) : board.drives[pin] === 'high' ? 1 : 0,
+          sinceLastFrame > 0
+            ? Math.min(1, high / sinceLastFrame)
+            : board.drives[pin] === 'high'
+              ? 1
+              : 0,
         ),
         serial: board.serial,
       };

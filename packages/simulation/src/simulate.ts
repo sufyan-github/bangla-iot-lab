@@ -234,7 +234,12 @@ export class Observation {
       const [componentId, name] = socket.split('.') as [string, string];
       const peak = extreme((s) => Math.abs(s.sockets[socket]!.current), Math.max);
       if (name !== '5v' && peak > PIN_MAX_CURRENT) {
-        result.diagnostics.push({ code: 'pin-overcurrent', severity: 'error', componentId, socket: name });
+        result.diagnostics.push({
+          code: 'pin-overcurrent',
+          severity: 'error',
+          componentId,
+          socket: name,
+        });
       }
     }
 
@@ -267,7 +272,11 @@ export class Observation {
         } else if (state === 'burned') {
           result.diagnostics.push({ code: 'led-burned', severity: 'error', componentId: id });
         } else if (state === 'overcurrent') {
-          result.diagnostics.push({ code: 'led-overcurrent', severity: 'warning', componentId: id });
+          result.diagnostics.push({
+            code: 'led-overcurrent',
+            severity: 'warning',
+            componentId: id,
+          });
         }
       }
       result.readings[id] = reading;
@@ -317,7 +326,10 @@ export class Observation {
  * Solves the steady behaviour of a circuit and explains what it found.
  * Pure and synchronous. For a circuit with a running program use `SimulationSession`.
  */
-export function simulate(document: CircuitDocument, state: CircuitState = IDLE_STATE): SimulationResult {
+export function simulate(
+  document: CircuitDocument,
+  state: CircuitState = IDLE_STATE,
+): SimulationResult {
   const observation = new Observation();
   if (document.components.length > 0) observation.add(solveState(document, state), 1);
   return observation.interpret(document, { programRunning: false });

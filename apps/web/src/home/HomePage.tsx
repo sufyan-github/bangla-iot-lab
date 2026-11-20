@@ -1,16 +1,22 @@
-import { emptyCircuit, ledCircuitExample, type CircuitDocument } from '@banglalab/shared';
+import {
+  emptyCircuit,
+  ledCircuitExample,
+  unoCircuitExample,
+  type CircuitDocument,
+} from '@banglalab/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
 import { useT } from '../i18n';
-import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../lab/geometry';
+import { CANVAS_WIDTH, canvasHeight } from '../lab/geometry';
+import { starterProgram } from '../lab/starters';
 import { Scene } from '../lab/Scene';
-import { projectStore, type ProjectRecord } from '../storage/projects';
+import { projectStore, type ProjectContent, type ProjectRecord } from '../storage/projects';
 
 function Thumbnail({ circuit }: { circuit: CircuitDocument }) {
   const { quantity } = useT();
   return (
     <svg
-      viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+      viewBox={`0 0 ${CANVAS_WIDTH} ${canvasHeight(circuit)}`}
       className="block w-full rounded-lg"
       aria-hidden
     >
@@ -32,8 +38,7 @@ export function HomePage() {
   const projects = useQuery({ queryKey: ['projects'], queryFn: projectStore.list });
 
   const create = useMutation({
-    mutationFn: (input: { name: string; circuit: CircuitDocument }) =>
-      projectStore.create(input.name, input.circuit),
+    mutationFn: (content: ProjectContent) => projectStore.create(content),
     onSuccess: (project) => navigate(`/lab/${project.id}`),
   });
   const remove = useMutation({
@@ -56,7 +61,9 @@ export function HomePage() {
             <button
               type="button"
               data-testid="new-project"
-              onClick={() => create.mutate({ name: t('home.untitled'), circuit: emptyCircuit() })}
+              onClick={() =>
+                create.mutate({ name: t('home.untitled'), circuit: emptyCircuit(), programs: {} })
+              }
               className="min-h-12 rounded-xl bg-amber px-5 text-lg font-semibold text-ink hover:brightness-105"
             >
               + {t('home.new')}
@@ -65,11 +72,29 @@ export function HomePage() {
               type="button"
               data-testid="open-example"
               onClick={() =>
-                create.mutate({ name: t('home.exampleName'), circuit: ledCircuitExample() })
+                create.mutate({
+                  name: t('home.exampleName'),
+                  circuit: ledCircuitExample(),
+                  programs: {},
+                })
               }
               className="min-h-12 rounded-xl border-2 border-paper/70 px-5 text-lg font-medium hover:bg-paper/10"
             >
               {t('home.example')}
+            </button>
+            <button
+              type="button"
+              data-testid="open-example-uno"
+              onClick={() =>
+                create.mutate({
+                  name: t('home.exampleUnoName'),
+                  circuit: unoCircuitExample(),
+                  programs: { UNO1: starterProgram('blink') },
+                })
+              }
+              className="min-h-12 rounded-xl border-2 border-paper/70 px-5 text-lg font-medium hover:bg-paper/10"
+            >
+              {t('home.exampleUno')}
             </button>
           </div>
         </div>

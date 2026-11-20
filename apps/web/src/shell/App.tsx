@@ -1,5 +1,4 @@
 import { NavLink, Route, Routes } from 'react-router';
-import { BenchPage } from '../bench/BenchPage';
 import { HomePage } from '../home/HomePage';
 import { useLocale, useT } from '../i18n';
 import { LabPage } from '../lab/LabPage';
@@ -22,9 +21,6 @@ function Header() {
         <nav className="flex gap-1">
           <NavLink to="/" end className={link}>
             {t('nav.projects')}
-          </NavLink>
-          <NavLink to="/bench" className={link}>
-            {t('nav.bench')}
           </NavLink>
         </nav>
         <button
@@ -58,7 +54,6 @@ export function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/lab/:projectId" element={<LabPage />} />
-          <Route path="/bench" element={<BenchPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </div>

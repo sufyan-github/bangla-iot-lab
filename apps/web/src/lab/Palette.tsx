@@ -10,7 +10,7 @@ const stroke = {
   strokeLinecap: 'round',
 } as const;
 
-const ICONS: Record<Tool | 'battery', ReactNode> = {
+const ICONS: Record<Tool | 'battery' | 'uno', ReactNode> = {
   select: <path d="M7 4l11 9-5 .8 3 6-2.4 1.2-3-6L7 18z" fill="currentColor" />,
   wire: (
     <>
@@ -32,9 +32,25 @@ const ICONS: Record<Tool | 'battery', ReactNode> = {
       <path d="M10 8.5v7M14 8.5v7" {...stroke} strokeWidth={1.6} />
     </>
   ),
-  led: (
+  led: <path d="M8 14V9a4 4 0 0 1 8 0v5zM6.5 14h11M10 14v7M14 14v5" {...stroke} />,
+  button: (
     <>
-      <path d="M8 14V9a4 4 0 0 1 8 0v5zM6.5 14h11M10 14v7M14 14v5" {...stroke} />
+      <rect x="5" y="7" width="14" height="12" rx="2" {...stroke} />
+      <circle cx="12" cy="13" r="3" fill="currentColor" />
+      <path d="M12 3v4" {...stroke} />
+    </>
+  ),
+  potentiometer: (
+    <>
+      <circle cx="12" cy="11" r="7" {...stroke} />
+      <path d="M12 11l4-4M7 18v3M12 18v3M17 18v3" {...stroke} />
+    </>
+  ),
+  uno: (
+    <>
+      <rect x="3" y="6" width="18" height="13" rx="2" {...stroke} />
+      <path d="M7 6V3.5M10 6V3.5M13 6V3.5M16 6V3.5M9 19v2.5M12 19v2.5M15 19v2.5" {...stroke} />
+      <rect x="10" y="10.5" width="7" height="4" fill="currentColor" />
     </>
   ),
 };
@@ -44,17 +60,19 @@ const HINTS: Record<Tool, MessageKey> = {
   wire: 'hint.wire.start',
   resistor: 'hint.resistor',
   led: 'hint.led',
+  button: 'hint.button',
+  potentiometer: 'hint.potentiometer',
 };
 
 /** Tool and part picker. One tap picks a tool; the hint says what to do next. */
 export function Palette() {
   const tool = useLab((s) => s.tool);
   const wireStart = useLab((s) => s.wireStart);
-  const { setTool, addBattery } = useLab.getState();
+  const { setTool, addBattery, addUno } = useLab.getState();
   const { t } = useT();
 
   const hint = tool === 'wire' && wireStart ? 'hint.wire.end' : HINTS[tool];
-  const tools: Tool[] = ['select', 'wire', 'resistor', 'led'];
+  const tools: Tool[] = ['select', 'wire', 'resistor', 'led', 'button', 'potentiometer'];
 
   return (
     <div className="border-b border-line bg-surface">
@@ -80,6 +98,13 @@ export function Palette() {
           active={false}
           onClick={addBattery}
           testId="tool-battery"
+        />
+        <ToolButton
+          icon={ICONS.uno}
+          label={t('tool.uno')}
+          active={false}
+          onClick={addUno}
+          testId="tool-uno"
         />
         {tools.slice(2).map((item) => (
           <ToolButton

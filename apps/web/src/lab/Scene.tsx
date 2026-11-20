@@ -7,26 +7,35 @@ import {
   holeCoordinates,
   type CircuitDocument,
 } from '@banglalab/shared';
-import type { SimulationResult } from '@banglalab/simulation';
+import type { BoardStatus, SimulationResult } from '@banglalab/simulation';
 import { memo } from 'react';
 import {
   BOARD_X,
   BOARD_Y,
-  CANVAS_HEIGHT,
   CANVAS_WIDTH,
   HOLE_POINTS,
   PITCH,
   batteryBox,
   batteryTerminalPoint,
+  canvasHeight,
   endpointPoint,
   holePoint,
 } from './geometry';
-import { BatteryView, LED_PAINT, LedView, ResistorView, WireView } from './parts';
+import {
+  BatteryView,
+  ButtonView,
+  LED_PAINT,
+  LedView,
+  PotentiometerView,
+  ResistorView,
+  UnoView,
+  WireView,
+} from './parts';
 
 const rowY = (row: string) => BOARD_Y + holeCoordinates(`${row}1`).y * PITCH;
 
 /** The empty breadboard on its mat. Never changes, so it renders once. */
-const Board = memo(function Board({ detailed }: { detailed: boolean }) {
+const Board = memo(function Board({ detailed, height }: { detailed: boolean; height: number }) {
   const left = BOARD_X + PITCH * 0.4;
   const right = BOARD_X + (BOARD_WIDTH - 0.4) * PITCH;
   return (
@@ -51,9 +60,9 @@ const Board = memo(function Board({ detailed }: { detailed: boolean }) {
           </radialGradient>
         ))}
       </defs>
-      <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill="#1d5a4e" />
-      <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill="url(#mat-fine)" />
-      <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill="url(#mat-coarse)" />
+      <rect width={CANVAS_WIDTH} height={height} fill="#1d5a4e" />
+      <rect width={CANVAS_WIDTH} height={height} fill="url(#mat-fine)" />
+      <rect width={CANVAS_WIDTH} height={height} fill="url(#mat-coarse)" />
 
       <rect
         x={BOARD_X}
@@ -151,6 +160,10 @@ export interface SceneProps {
   circuit: CircuitDocument;
   result: SimulationResult | null;
   selectedId?: string | null;
+  /** Push buttons being held down. */
+  pressed?: readonly string[];
+  /** Status of boards with a running program. */
+  boards?: Record<string, BoardStatus>;
   /** False for thumbnails: leaves out the holes and lettering, which are invisible at that size. */
   detailed?: boolean;
   /** Text for a battery's label, e.g. "9 V". */
@@ -167,6 +180,8 @@ export function Scene({
   circuit,
   result,
   selectedId,
+  pressed = [],
+  boards = {},
   detailed = true,
   batteryLabel,
   readingLabel,
@@ -174,7 +189,7 @@ export function Scene({
   let batteryCount = 0;
   return (
     <>
-      <Board detailed={detailed} />
+      <Board detailed={detailed} height={canvasHeight(circuit)} />
       {circuit.components.map((component) => {
         const selected = component.id === selectedId;
         const reading = result?.readings[component.id];
@@ -199,6 +214,43 @@ export function Scene({
                 a={holePoint(component.pins.a)}
                 b={holePoint(component.pins.b)}
                 resistance={component.props.resistance}
+                selected={selected}
+              />
+            </g>
+          );
+        }
+        if (component.type === 'uno') {
+          return (
+            <g key={component.id} data-part={component.id}>
+              <UnoView
+                ledLevel={boards[component.id]?.highFraction[13] ?? 0}
+                powered={result !== null}
+                selected={selected}
+              />
+            </g>
+          );
+        }
+        if (component.type === 'button') {
+          const held = pressed.includes(component.id);
+          return (
+            <g key={component.id} data-part={component.id} data-pressed={held}>
+              <ButtonView
+                a={holePoint(component.pins.a)}
+                b={holePoint(component.pins.b)}
+                pressed={held}
+                selected={selected}
+              />
+            </g>
+          );
+        }
+        if (component.type === 'potentiometer') {
+          return (
+            <g key={component.id} data-part={component.id}>
+              <PotentiometerView
+                a={holePoint(component.pins.a)}
+                wiper={holePoint(component.pins.wiper)}
+                b={holePoint(component.pins.b)}
+                position={component.props.position}
                 selected={selected}
               />
             </g>
@@ -244,7 +296,8 @@ export function Scene({
         <g pointerEvents="none" fontSize={11.5} fontWeight={600} textAnchor="middle">
           {circuit.components.map((component) => {
             const reading = result.readings[component.id];
-            if (!reading || component.type === 'battery') return null;
+            if (!reading || (component.type !== 'resistor' && component.type !== 'led'))
+              return null;
             const [first, second] = Object.values(component.pins).map(holePoint) as [
               { x: number; y: number },
               { x: number; y: number },

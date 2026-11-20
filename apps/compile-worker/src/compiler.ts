@@ -160,6 +160,8 @@ export class Compiler {
   /** Builds the Arduino core on first use (a few seconds), then reuses it. */
   prepareArduino(): Promise<ArduinoCore> {
     this.core ??= ensureArduinoCore(this.config.cacheDir, this.toolchain);
+    // A failed attempt is not remembered, so fetching the core later fixes it without a restart.
+    this.core.catch(() => (this.core = undefined));
     return this.core;
   }
 

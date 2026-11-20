@@ -1,12 +1,12 @@
 import { wrap, type Remote } from 'comlink';
-import type { SimulationApi } from './sim.worker';
+import type { LabWorkerApi } from './lab.worker';
 
-let remote: Remote<SimulationApi> | undefined;
+let remote: Remote<LabWorkerApi> | undefined;
 
 /** The simulation worker, started the first time a circuit is run. */
-export function simulation(): Remote<SimulationApi> {
-  remote ??= wrap<SimulationApi>(
-    new Worker(new URL('./sim.worker.ts', import.meta.url), { type: 'module', name: 'simulation' }),
+export function simulation(): Remote<LabWorkerApi> {
+  remote ??= wrap<LabWorkerApi>(
+    new Worker(new URL('./lab.worker.ts', import.meta.url), { type: 'module', name: 'simulation' }),
   );
   return remote;
 }

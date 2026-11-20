@@ -137,7 +137,10 @@ describe('UNO board, button and potentiometer', () => {
     expect(ok(updateProps(circuit, 'POT1', { position: 1 })).components[0]).toMatchObject({
       props: { position: 1 },
     });
-    expect(updateProps(circuit, 'POT1', { position: 1.2 })).toEqual({ ok: false, error: 'invalid-value' });
+    expect(updateProps(circuit, 'POT1', { position: 1.2 })).toEqual({
+      ok: false,
+      error: 'invalid-value',
+    });
   });
 
   it('places the other leads to the left when there is no room on the right', () => {

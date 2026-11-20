@@ -124,7 +124,9 @@ describe('PWM on pin 9', () => {
     expect(Math.min(...currents)).toBeLessThan(LED_ON_CURRENT * 0.1);
     // Average current is proportional to the time the pin spends high.
     for (let i = 0; i < frames.length; i++) {
-      expect(Math.abs(currents[i]! - duty[i]! * LED_ON_CURRENT)).toBeLessThan(LED_ON_CURRENT * 0.03);
+      expect(Math.abs(currents[i]! - duty[i]! * LED_ON_CURRENT)).toBeLessThan(
+        LED_ON_CURRENT * 0.03,
+      );
     }
     // It rises, then falls: the brightest frame is not at either end.
     const peak = currents.indexOf(Math.max(...currents));
@@ -146,7 +148,12 @@ describe('Potentiometer on A0', () => {
 
     // Lead a is on 5 V and position 0.25 puts a quarter of the track above the wiper.
     expect(frames.at(-1)!.result.sockets['UNO1.a0']!.voltage).toBeCloseTo(3.75, 2);
-    const printed = frames.map((f) => f.boards.UNO1!.serial).join('').trim().split(/\r?\n/).map(Number);
+    const printed = frames
+      .map((f) => f.boards.UNO1!.serial)
+      .join('')
+      .trim()
+      .split(/\r?\n/)
+      .map(Number);
     expect(printed.length).toBeGreaterThanOrEqual(3);
     for (const value of printed) expect(Math.abs(value - 767)).toBeLessThanOrEqual(2);
     expect(frames.at(-1)!.boards.UNO1!.highFraction[9]).toBeCloseTo(191 / 255, 1);
@@ -155,7 +162,12 @@ describe('Potentiometer on A0', () => {
     const before = session.timeMs;
     session.update(ok(updateProps(document, 'POT1', { position: 1 })));
     frames = run(session, 300);
-    const later = frames.map((f) => f.boards.UNO1!.serial).join('').trim().split(/\r?\n/).map(Number);
+    const later = frames
+      .map((f) => f.boards.UNO1!.serial)
+      .join('')
+      .trim()
+      .split(/\r?\n/)
+      .map(Number);
     expect(later.at(-1)).toBeLessThanOrEqual(1);
     expect(frames.at(-1)!.boards.UNO1!.timeMs).toBeCloseTo(before + 300, 3);
   });

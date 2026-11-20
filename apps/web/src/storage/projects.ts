@@ -1,5 +1,14 @@
-import { isCircuitDocument, type CircuitDocument } from '@banglalab/shared';
+import { isCircuitDocument, migrateCircuit, type CircuitDocument } from '@banglalab/shared';
 import Dexie, { type Table } from 'dexie';
+
+/** The program written for one board, and the firmware last uploaded to it. */
+export interface BoardProgram {
+  source: string;
+  /** Compiled firmware (Intel HEX), kept so the circuit runs again without a network. */
+  hex: string | null;
+  /** The source `hex` was built from; differs from `source` when there are unuploaded edits. */
+  hexSource: string | null;
+}
 
 /** A circuit saved on this device. */
 export interface ProjectRecord {
@@ -8,44 +17,54 @@ export interface ProjectRecord {
   createdAt: number;
   updatedAt: number;
   circuit: CircuitDocument;
+  /** Programs by board id. Missing in projects saved before boards existed. */
+  programs: Record<string, BoardProgram>;
 }
+
+export type ProjectContent = Pick<ProjectRecord, 'name' | 'circuit' | 'programs'>;
 
 class LabDatabase extends Dexie {
   projects!: Table<ProjectRecord, string>;
 
   constructor() {
     super('banglalab');
-    // Changing this needs a new version() with an upgrade; never edit version 1.
+    // Changing an index needs a new version() with an upgrade; never edit version 1.
+    // Unindexed fields (such as `programs`) may be added without one.
     this.version(1).stores({ projects: 'id, updatedAt' });
   }
 }
 
 const database = new LabDatabase();
 
+/** Brings a stored record up to the current shape, or rejects it. */
+function restore(record: ProjectRecord | undefined): ProjectRecord | undefined {
+  if (!record) return undefined;
+  const circuit = migrateCircuit(record.circuit);
+  return circuit ? { ...record, circuit, programs: record.programs ?? {} } : undefined;
+}
+
 /**
  * Local project storage (IndexedDB). This is the source of truth while offline;
  * server sync arrives with accounts in Phase 2.
  */
 export const projectStore = {
-  /** Newest first. Records that fail validation are left out rather than crashing the list. */
+  /** Newest first. Records that cannot be opened are left out rather than crashing the list. */
   async list(): Promise<ProjectRecord[]> {
     const records = await database.projects.orderBy('updatedAt').reverse().toArray();
-    return records.filter((record) => isCircuitDocument(record.circuit));
+    return records.map(restore).filter((record) => record !== undefined);
   },
 
   async get(id: string): Promise<ProjectRecord | undefined> {
-    const record = await database.projects.get(id);
-    return record && isCircuitDocument(record.circuit) ? record : undefined;
+    return restore(await database.projects.get(id));
   },
 
-  async create(name: string, circuit: CircuitDocument): Promise<ProjectRecord> {
+  async create(content: ProjectContent): Promise<ProjectRecord> {
     const now = Date.now();
     const record: ProjectRecord = {
       id: crypto.randomUUID(),
-      name,
       createdAt: now,
       updatedAt: now,
-      circuit,
+      ...content,
     };
     await database.projects.add(record);
     // Ask the browser not to evict saved work under storage pressure.
@@ -54,13 +73,18 @@ export const projectStore = {
   },
 
   /** Saves changes to an existing project. Refuses documents the app could not reopen. */
-  async save(id: string, changes: { name: string; circuit: CircuitDocument }): Promise<void> {
-    if (!isCircuitDocument(changes.circuit)) throw new Error('Refusing to save an invalid circuit');
-    const updated = await database.projects.update(id, { ...changes, updatedAt: Date.now() });
+  async save(id: string, content: ProjectContent): Promise<void> {
+    if (!isCircuitDocument(content.circuit)) throw new Error('Refusing to save an invalid circuit');
+    const updated = await database.projects.update(id, { ...content, updatedAt: Date.now() });
     if (updated === 0) throw new Error(`Project ${id} no longer exists`);
   },
 
   async remove(id: string): Promise<void> {
     await database.projects.delete(id);
+  },
+
+  /** Test hook: writes a record exactly as given, as an older app version would have. */
+  async putRaw(record: unknown): Promise<void> {
+    await database.projects.put(record as ProjectRecord);
   },
 };

@@ -116,7 +116,14 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
       case 'resistor':
         partDevice.set(
           id,
-          add(resistor(id, node(component.pins.a), node(component.pins.b), component.props.resistance)),
+          add(
+            resistor(
+              id,
+              node(component.pins.a),
+              node(component.pins.b),
+              component.props.resistance,
+            ),
+          ),
         );
         break;
       case 'led':

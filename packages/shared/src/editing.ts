@@ -29,8 +29,7 @@ export type EditError =
   | 'invalid-value';
 
 export type EditResult =
-  | { ok: true; circuit: CircuitDocument; id: string }
-  | { ok: false; error: EditError };
+  { ok: true; circuit: CircuitDocument; id: string } | { ok: false; error: EditError };
 
 export type BoardPartType = BoardPart['type'];
 
@@ -185,7 +184,11 @@ function replaceComponent(circuit: CircuitDocument, next: CircuitComponent): Cir
   };
 }
 
-function withPins(circuit: CircuitDocument, part: BoardPart, pins: Record<string, HoleId>): EditResult {
+function withPins(
+  circuit: CircuitDocument,
+  part: BoardPart,
+  pins: Record<string, HoleId>,
+): EditResult {
   const shape = PART_SHAPES[part.type];
   const holes = shape.pins.map((pin) => pins[pin]!);
   if (holes.some((h) => !isHole(h))) return fail('no-room');
@@ -258,7 +261,8 @@ function checkWire(circuit: CircuitDocument, wire: Wire): EditError | null {
 export function suggestWireColor(circuit: CircuitDocument, from: string, to: string): string {
   const pins = [from, to].map((e) => parseTerminal(e)?.pin);
   if (pins.some((pin) => pin === 'pos' || pin === '5v')) return WIRE_COLORS.red;
-  if (pins.some((pin) => pin === 'neg' || pin === 'gnd' || pin === 'gnd2')) return WIRE_COLORS.black;
+  if (pins.some((pin) => pin === 'neg' || pin === 'gnd' || pin === 'gnd2'))
+    return WIRE_COLORS.black;
   if ([from, to].some((e) => /^(tp|bp)\d/.test(e))) return WIRE_COLORS.red;
   if ([from, to].some((e) => /^(tn|bn)\d/.test(e))) return WIRE_COLORS.black;
   const cycle = [WIRE_COLORS.yellow, WIRE_COLORS.blue, WIRE_COLORS.green];

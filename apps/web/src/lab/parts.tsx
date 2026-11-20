@@ -1,6 +1,6 @@
 import type { LedColor } from '@banglalab/shared';
 import type { LedState } from '@banglalab/simulation';
-import { PITCH, type Point } from './geometry';
+import { PITCH, UNO_BOX, UNO_SOCKETS, type Point } from './geometry';
 import { resistorBands } from './resistor-bands';
 
 /** Drawings of the parts. Pure SVG: no state, no event handling. */
@@ -240,6 +240,155 @@ export function WireView(props: {
       )}
       <circle cx={props.from.x} cy={props.from.y} r={4.2} fill="#2a2f31" />
       <circle cx={props.to.x} cy={props.to.y} r={4.2} fill="#2a2f31" />
+    </g>
+  );
+}
+
+/** Tactile push button seen from above. The cap sinks and darkens while held. */
+export function ButtonView(props: { a: Point; b: Point; pressed: boolean; selected: boolean }) {
+  const { length, transform } = between(props.a, props.b);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <line x1={-length / 2} x2={length / 2} stroke={LEG} strokeWidth={2.6} strokeLinecap="round" />
+      <rect x={-13} y={-13} width={26} height={26} rx={4} fill="#2c3133" stroke="#15191b" />
+      <circle
+        r={props.pressed ? 7.5 : 9}
+        fill={props.pressed ? '#9d241c' : '#e0493e'}
+        stroke="rgba(0,0,0,.4)"
+      />
+      {!props.pressed && <circle cx={-2.5} cy={-3} r={2.4} fill="#fff" opacity={0.35} />}
+    </g>
+  );
+}
+
+/** Potentiometer seen from above: the pointer shows where the knob is turned to. */
+export function PotentiometerView(props: {
+  a: Point;
+  wiper: Point;
+  b: Point;
+  position: number;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.a, props.b);
+  // Fully towards lead a at position 0, fully towards lead b at position 1.
+  const angle = -135 + 270 * props.position;
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <rect
+        x={-length / 2 - 9}
+        y={-15}
+        width={length + 18}
+        height={30}
+        rx={5}
+        fill="#2b62b0"
+        stroke="#1b3f73"
+      />
+      {[-length / 2, 0, length / 2].map((x) => (
+        <circle key={x} cx={x} cy={11} r={2.4} fill={LEG} />
+      ))}
+      <circle r={12} fill="#e9ecea" stroke="#8d9396" strokeWidth={1.5} />
+      <line
+        y2={-10}
+        stroke="#13231f"
+        strokeWidth={3}
+        strokeLinecap="round"
+        transform={`rotate(${angle})`}
+      />
+    </g>
+  );
+}
+
+/** The UNO board with its two rows of sockets. `ledLevel` is how bright the pin 13 LED is, 0 to 1. */
+export function UnoView(props: { ledLevel: number; powered: boolean; selected: boolean }) {
+  const { x, y, width, height } = UNO_BOX;
+  return (
+    <g>
+      {props.selected && (
+        <rect
+          x={x - 6}
+          y={y - 6}
+          width={width + 12}
+          height={height + 12}
+          rx={16}
+          fill={SELECTION}
+          opacity={0.4}
+        />
+      )}
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        rx={10}
+        fill="#0f7a86"
+        stroke="#0a5a63"
+        strokeWidth={2}
+      />
+      {/* USB socket, power jack and the processor */}
+      <rect x={x - 12} y={y + 38} width={58} height={44} rx={3} fill="#b9c0c4" stroke="#8d9396" />
+      <rect x={x - 6} y={y + 122} width={46} height={40} rx={3} fill="#22282b" />
+      <rect x={x + 250} y={y + 96} width={170} height={34} rx={3} fill="#1b1f21" />
+      <text x={x + 335} y={y + 117} textAnchor="middle" fontSize={10} fill="#8b979c">
+        ATmega328P
+      </text>
+      <text
+        x={x + 150}
+        y={y + 112}
+        textAnchor="middle"
+        fontSize={22}
+        fontWeight={700}
+        fill="#d7f0f2"
+      >
+        UNO
+      </text>
+
+      {/* Power light and the LED wired to pin 13 */}
+      <rect
+        x={x + 66}
+        y={y + 136}
+        width={11}
+        height={7}
+        rx={2}
+        fill={props.powered ? '#7dff9b' : '#2f5d3a'}
+      />
+      <text x={x + 82} y={y + 143} fontSize={9} fill="#d7f0f2">
+        ON
+      </text>
+      {props.ledLevel > 0 && (
+        <circle cx={x + 71} cy={y + 59} r={18} fill="#ffb52e" opacity={0.5 * props.ledLevel} />
+      )}
+      <rect x={x + 66} y={y + 55} width={11} height={7} rx={2} fill="#6a5a2c" />
+      <rect
+        x={x + 66}
+        y={y + 55}
+        width={11}
+        height={7}
+        rx={2}
+        fill="#ffd45e"
+        opacity={props.ledLevel}
+      />
+      <text x={x + 82} y={y + 62} fontSize={9} fill="#d7f0f2">
+        L
+      </text>
+
+      {UNO_SOCKETS.map(({ terminal, point, label, top }) => (
+        <g key={terminal}>
+          <rect x={point.x - 8} y={point.y - 8} width={16} height={16} rx={2} fill="#15191b" />
+          <rect x={point.x - 3.5} y={point.y - 3.5} width={7} height={7} rx={1} fill="#4a5256" />
+          <text
+            x={point.x}
+            y={point.y + (top ? 22 : -14)}
+            textAnchor="middle"
+            fontSize={9}
+            fontWeight={600}
+            fill="#d7f0f2"
+          >
+            {label}
+          </text>
+        </g>
+      ))}
     </g>
   );
 }

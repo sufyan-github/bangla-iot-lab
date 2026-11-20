@@ -2,6 +2,7 @@ import type { MessageKey } from '@banglalab/i18n';
 import { LED_COLORS, type CircuitComponent, type LedColor } from '@banglalab/shared';
 import {
   BATTERY_VOLTAGES,
+  POTENTIOMETER_VALUES,
   RESISTOR_VALUES,
   type Diagnostic,
   type Reading,
@@ -88,6 +89,40 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </label>
     );
   }
+  if (part.type === 'potentiometer') {
+    return (
+      <div className="space-y-3">
+        <label className="block">
+          <span className="mb-1.5 block text-sm text-ink-soft">{t('inspector.position')}</span>
+          <input
+            type="range"
+            data-testid="knob"
+            min={0}
+            max={1}
+            step={0.01}
+            value={part.props.position}
+            onChange={(event) => setProps(part.id, { position: Number(event.target.value) })}
+            className="h-11 w-full accent-amber"
+          />
+        </label>
+        <fieldset>
+          <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.resistance')}</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {POTENTIOMETER_VALUES.map((ohms) => (
+              <Choice
+                key={ohms}
+                selected={part.props.resistance === ohms}
+                onClick={() => setProps(part.id, { resistance: ohms })}
+              >
+                {quantity(ohms, 'Ω')}
+              </Choice>
+            ))}
+          </div>
+        </fieldset>
+      </div>
+    );
+  }
+  if (part.type !== 'led') return null;
   return (
     <fieldset>
       <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.color')}</legend>
@@ -240,25 +275,34 @@ const TONE = {
 export function Messages() {
   const result = useLab((s) => s.result);
   const running = useLab((s) => s.running);
+  const programRunning = useLab((s) => Object.keys(s.boards).length > 0);
   const { select } = useLab.getState();
   const { t, quantity } = useT();
 
   let items: { key: string; tone: keyof typeof TONE; text: string; partId?: string }[] = [];
   if (result) {
     items = result.diagnostics.map((diagnostic: Diagnostic, index) => ({
-      key: `${diagnostic.code}-${diagnostic.componentId ?? index}`,
+      key: `${diagnostic.code}-${diagnostic.socket ?? diagnostic.componentId ?? index}`,
       tone: diagnostic.severity,
       partId: diagnostic.componentId,
       text: t(`diag.${diagnostic.code}` as MessageKey, {
         id: diagnostic.componentId ?? '',
-        current: diagnostic.componentId
-          ? quantity(result.readings[diagnostic.componentId]?.current ?? 0, 'A')
-          : '',
+        socket: diagnostic.socket?.toUpperCase() ?? '',
+        current: quantity(
+          diagnostic.socket
+            ? (result.sockets[`${diagnostic.componentId}.${diagnostic.socket}`]?.current ?? 0)
+            : (result.readings[diagnostic.componentId ?? '']?.current ?? 0),
+          'A',
+        ),
       }),
     }));
     const readings = Object.values(result.readings);
     const problem = result.diagnostics.some((d) => d.severity !== 'info');
-    if (readings.some((r) => r.led?.state === 'on')) {
+    if (programRunning) {
+      // A blinking LED would make "the LED is lit" flash on and off; say the steady fact instead.
+      if (!problem)
+        items.unshift({ key: 'program-running', tone: 'ok', text: t('diag.program-running') });
+    } else if (readings.some((r) => r.led?.state === 'on')) {
       items.unshift({ key: 'led-on', tone: 'ok', text: t('diag.led-on') });
     } else if (items.length === 0 && !problem && readings.length > 0) {
       items.push({ key: 'all-good', tone: 'ok', text: t('diag.all-good') });

@@ -1,4 +1,5 @@
 import {
+  hasFlexibleLeads,
   moveWireEnd,
   movePart,
   movePin,
@@ -9,10 +10,12 @@ import {
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useT } from '../i18n';
 import {
-  CANVAS_HEIGHT,
   CANVAS_WIDTH,
   HOLE_POINTS,
   PITCH,
+  UNO_BOX,
+  UNO_SOCKETS,
+  canvasHeight,
   endpointNear,
   endpointPoint,
   holeNear,
@@ -48,7 +51,11 @@ export function Canvas() {
   const tool = useLab((s) => s.tool);
   const selectedId = useLab((s) => s.selectedId);
   const wireStart = useLab((s) => s.wireStart);
-  const { select, tapEndpoint, replaceCircuit, setNotice } = useLab.getState();
+  const running = useLab((s) => s.running);
+  const pressed = useLab((s) => s.pressed);
+  const boards = useLab((s) => s.boards);
+  const { select, tapEndpoint, replaceCircuit, setNotice, setPressed } = useLab.getState();
+  const height = canvasHeight(circuit);
   const { t, quantity } = useT();
 
   const frameRef = useRef<HTMLDivElement>(null);
@@ -152,9 +159,9 @@ export function Canvas() {
           ref={svgRef}
           role="img"
           aria-label={t('lab.canvasLabel')}
-          viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+          viewBox={`0 0 ${CANVAS_WIDTH} ${height}`}
           width={CANVAS_WIDTH * zoom}
-          height={CANVAS_HEIGHT * zoom}
+          height={height * zoom}
           className="mx-auto block select-none"
           style={{ cursor: selecting ? 'default' : 'crosshair' }}
           onPointerMove={onPointerMove}
@@ -166,6 +173,8 @@ export function Canvas() {
             circuit={circuit}
             result={result}
             selectedId={selectedId}
+            pressed={pressed}
+            boards={boards}
             batteryLabel={(volts) => quantity(volts, 'V')}
             readingLabel={(amperes) => quantity(amperes, 'A')}
           />
@@ -173,15 +182,17 @@ export function Canvas() {
           {selecting && (
             <g>
               {circuit.components.map((component) => {
-                if (component.type === 'battery') {
-                  const top = endpointPoint(circuit, `${component.id}.pos`)!;
+                if (component.type === 'battery' || component.type === 'uno') {
+                  const top = endpointPoint(circuit, `${component.id}.pos`);
+                  const box =
+                    component.type === 'uno'
+                      ? UNO_BOX
+                      : { x: 20, y: (top?.y ?? 0) - 50, width: 116, height: 168 };
                   return (
                     <rect
                       key={component.id}
-                      x={20}
-                      y={top.y - 50}
-                      width={116}
-                      height={168}
+                      data-hit={component.id}
+                      {...box}
                       fill="transparent"
                       style={{ cursor: 'pointer' }}
                       onPointerDown={(event) => {
@@ -191,10 +202,9 @@ export function Canvas() {
                     />
                   );
                 }
-                const [first, second] = Object.values(component.pins).map(holePoint) as [
-                  Point,
-                  Point,
-                ];
+                const leads = Object.values(component.pins).map(holePoint);
+                const first = leads[0]!;
+                const second = leads.at(-1)!;
                 const length = Math.hypot(second.x - first.x, second.y - first.y);
                 const angle = (Math.atan2(second.y - first.y, second.x - first.x) * 180) / Math.PI;
                 return (
@@ -215,6 +225,35 @@ export function Canvas() {
                   />
                 );
               })}
+              {running &&
+                circuit.components.map((component) => {
+                  if (component.type !== 'button') return null;
+                  const a = holePoint(component.pins.a);
+                  const b = holePoint(component.pins.b);
+                  const release = () => setPressed(component.id, false);
+                  // While the circuit runs, touching a button presses it instead of moving it.
+                  return (
+                    <circle
+                      key={component.id}
+                      className="drag-handle"
+                      data-press={component.id}
+                      cx={(a.x + b.x) / 2}
+                      cy={(a.y + b.y) / 2}
+                      r={15}
+                      fill="transparent"
+                      style={{ cursor: 'pointer' }}
+                      onPointerDown={(event) => {
+                        event.stopPropagation();
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                        select(component.id);
+                        setPressed(component.id, true);
+                      }}
+                      onPointerUp={release}
+                      onPointerCancel={release}
+                      onLostPointerCapture={release}
+                    />
+                  );
+                })}
               {circuit.wires.map((wire) => {
                 const from = endpointPoint(circuit, wire.from);
                 const to = endpointPoint(circuit, wire.to);
@@ -239,6 +278,7 @@ export function Canvas() {
 
               {selectedPart &&
                 'pins' in selectedPart &&
+                hasFlexibleLeads(selectedPart.type) &&
                 Object.entries(selectedPart.pins).map(([pin, hole]) => (
                   <Handle
                     key={pin}
@@ -310,6 +350,22 @@ export function Canvas() {
                         />
                       );
                     }),
+                  )}
+              {tool === 'wire' &&
+                circuit.components
+                  .filter((c) => c.type === 'uno')
+                  .flatMap((board) =>
+                    UNO_SOCKETS.map(({ terminal, point }) => (
+                      <circle
+                        key={terminal}
+                        className="tap-target"
+                        data-endpoint={`${board.id}.${terminal}`}
+                        cx={point.x}
+                        cy={point.y}
+                        r={10.5}
+                        onClick={() => tapEndpoint(`${board.id}.${terminal}`)}
+                      />
+                    )),
                   )}
               {startPoint && (
                 <g pointerEvents="none">
