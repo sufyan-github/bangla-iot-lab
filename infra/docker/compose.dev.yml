@@ -1,0 +1,48 @@
+# Local development services. Not for production: credentials here are throwaway
+# and every port is bound to localhost only.
+name: banglalab-dev
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: banglalab
+      POSTGRES_PASSWORD: banglalab_dev
+      POSTGRES_DB: banglalab_dev
+    ports:
+      - '127.0.0.1:55440:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U banglalab -d banglalab_dev']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Optional: the compile worker in its container, as it will run in production.
+  # Start with: docker compose -f infra/docker/compose.dev.yml --profile worker up --build
+  compile-worker:
+    profiles: [worker]
+    build:
+      context: ../..
+      dockerfile: apps/compile-worker/Dockerfile
+    environment:
+      COMPILE_SANDBOX: container
+      COMPILE_WORKER_HOST: 0.0.0.0
+      COMPILE_CACHE_DIR: /cache
+    ports:
+      - '127.0.0.1:4100:4100'
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    volumes:
+      - compile-cache:/cache
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+
+volumes:
+  pgdata:
+  compile-cache:
