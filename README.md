@@ -10,9 +10,10 @@ what is still missing from Phase 1, the test results and the known limitations.
 
 ## What works today
 
-- Breadboard editor with 17 parts: battery, resistor, LED, button, switch, potentiometer,
-  capacitor, diode, transistor, buzzer, motor, relay, LDR and temperature, soil and IR sensors.
-- An Arduino UNO beside the board: write a sketch, upload it, and it drives the circuit.
+- Breadboard editor with all 20 planned parts, from resistors and LEDs to a transistor,
+  relay, servo, 16 × 2 LCD and five kinds of sensor.
+- An Arduino UNO beside the board: write a sketch (the Servo and LiquidCrystal libraries
+  are available), upload it, and it drives the circuit.
 - Circuit simulation checked against ngspice (15 steady and 3 time-dependent reference circuits).
 - Live readings, an oscilloscope, a logic analyser and a serial monitor.
 - Plain-language explanations of common mistakes, in Bangla and English.
@@ -34,7 +35,7 @@ On Ubuntu: `sudo apt install gcc-avr avr-libc binutils-avr bubblewrap`.
 
 ```bash
 pnpm install
-pnpm --filter @banglalab/compile-worker core:fetch   # Arduino core, pinned release (once)
+pnpm --filter @banglalab/compile-worker core:fetch   # Arduino core and libraries, pinned (once)
 pnpm db:up          # PostgreSQL 18 in Docker on 127.0.0.1:55440
 pnpm db:migrate     # create the tables
 pnpm dev            # web :5173, API :4000, compile worker :4100

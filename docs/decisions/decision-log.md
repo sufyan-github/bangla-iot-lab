@@ -193,3 +193,36 @@ or measured motor current.
 
 Adds ten part types. Any older version is upgraded on read; versions only ever
 add part types, so the upgrade is a change of number.
+
+## D-029 — Arduino libraries are built into the core archive
+
+Servo 1.3.0 and LiquidCrystal 1.0.7 are fetched at pinned commits by the same
+script as the core, compiled once with it, and placed in the same static
+archive. Every sketch gets their include paths and the linker takes only what
+it uses, so no include scanning or per-sketch library build is needed. **Revisit**
+when a library with a large footprint or conflicting symbols is added.
+
+## D-030 — Parts that work by timing are modelled beside the circuit, not in it
+
+A servo reads pulse widths, an ultrasonic sensor answers a trigger with an echo,
+an LCD takes data clocked on its E pin. None of that is visible to a circuit
+solver that exchanges values with the processor once a millisecond. These parts
+are handed every pin change with its exact time. A sensor's reply is scheduled
+as a board input at an exact time, and the processor is run up to precisely that
+moment before it is delivered. With an ultrasonic sensor present the exchange
+interval drops to 0.25 ms, shorter than the sensor's 0.46 ms response delay, so
+a reply can never be due before it is known. Each part is found by following
+wires and board strips from its signal legs to a board pin, so it must be wired
+directly, not through another part. Electrically these parts are only a supply
+load (and the echo line a 5 V source), and they do nothing unless their supply
+is above 4 V.
+
+## D-031 — The LCD has its real sixteen pins but forgiving behaviour
+
+The part matches the physical module pin for pin so that wiring practice
+transfers, but contrast, backlight and the RW pin are not enforced. A lesson or
+the tutor should say that RW goes to ground and V0 needs a contrast voltage.
+
+## D-032 — Circuit schema version 4
+
+Adds the servo, ultrasonic sensor and LCD. Older versions are upgraded on read.

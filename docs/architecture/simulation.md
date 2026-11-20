@@ -43,6 +43,7 @@ sockets become nodes.
 | DC motor                            | 25 Ω resistor; speed shown in proportion to voltage                   |
 | Relay                               | 70 Ω coil; a 50 mΩ contact that closes at 50 mA and opens below 15 mA |
 | Temperature, soil, IR sensor        | 10 kΩ divider from supply to ground, output at the tap                |
+| Servo, ultrasonic sensor, LCD       | a supply load only; their behaviour is modelled by timing (below)     |
 | UNO 5V socket                       | 5 V source with 0.2 Ω in series                                       |
 | UNO pin, output HIGH / LOW          | 5 V source with 25 Ω in series / 25 Ω to ground                       |
 | UNO pin, input / input with pull-up | 100 MΩ to ground / 5 V source with 35 kΩ in series                    |
@@ -118,6 +119,21 @@ are compared with ngspice transient analysis; agreement is within 12 mV.
 
 Signals for the oscilloscope and logic analyser are recorded by the session as
 (time, value) pairs, one per change, so pin edges are exact.
+
+## Parts that work by timing
+
+`packages/simulation/src/peripherals.ts` and `hd44780.ts`. See decision D-030.
+
+| Part              | What it watches                                           | What it does                                            |
+| ----------------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| Servo             | width of each HIGH pulse on its signal pin                | 544 µs is 0°, 2400 µs is 180°; other widths are ignored |
+| Ultrasonic sensor | a HIGH pulse of at least 8 µs on Trig                     | 0.46 ms later holds Echo HIGH for 58 µs per centimetre  |
+| LCD               | each falling edge on E, with RS and D4–D7 at that instant | runs the HD44780 command set and shows the two lines    |
+
+Verified with the real Arduino libraries compiled in the sandbox: the Servo
+library sweeps the horn through 0–180° in the sketch's 10° steps, LiquidCrystal's
+start-up handshake and printing produce the expected text, and `pulseIn()`
+measures the echo to within 1 cm or 1 %.
 
 ## Known limitations (do not overstate)
 

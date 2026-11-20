@@ -16,11 +16,14 @@ or pick a program, upload it, and watch the program drive the circuit:
   through a 25 Ω pin model; inputs read the circuit's voltages (with pull-ups
   and logic thresholds); `analogRead` sees the real node voltage. PWM is
   averaged the way the eye and a meter see it.
-- **Seventeen of the twenty parts:** battery, resistor, LED, push button,
-  switch, potentiometer, capacitor, diode, NPN transistor, buzzer (with sound
-  and a mute button), DC motor, relay, LDR, temperature sensor, soil-moisture
-  sensor, IR obstacle sensor, and the UNO board. While the circuit runs,
-  buttons can be held, switches flipped and sensors changed by touching them.
+- **All twenty parts:** battery, resistor, LED, push button, switch,
+  potentiometer, capacitor, diode, NPN transistor, buzzer (with sound and a mute
+  button), DC motor, relay, servo, 16 × 2 LCD, LDR, temperature sensor,
+  soil-moisture sensor, IR obstacle sensor, ultrasonic distance sensor, and the
+  UNO board. While the circuit runs, buttons can be held, switches flipped and
+  sensors changed by touching them.
+- **Arduino libraries:** `Servo` and `LiquidCrystal` are built in the sandbox, so
+  the standard tutorials for those parts compile unchanged.
 - **Time-dependent behaviour:** capacitors charge and discharge in real time.
 - **Instruments:** oscilloscope (two voltage channels, four time spans, lowest /
   highest / average) and logic analyser (every wired board pin).
@@ -34,7 +37,7 @@ or pick a program, upload it, and watch the program drive the circuit:
 | #   | Task                                           | Status                                                                                        |
 | --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | 1   | Circuit data structures and netlist generation | Done for the parts listed above                                                               |
-| 2   | Component models                               | **Partial — 17 of 20.** Missing: servo, ultrasonic sensor, LCD                                |
+| 2   | Component models                               | Done: all 20 parts                                                                            |
 | 3   | Connection and validation rules                | Done for those parts                                                                          |
 | 4   | MNA DC solver                                  | Done (Phase 0), extended with source-with-resistance                                          |
 | 5   | Compare against ngspice                        | Done: 15 DC and 3 transient reference circuits                                                |
@@ -54,18 +57,11 @@ or pick a program, upload it, and watch the program drive the circuit:
 
 ## 3. What remains before the Phase 1 gate
 
-1. Three parts, each of which needs more than an electrical model:
-   - **Servo** and **LCD** need their Arduino libraries (Servo, LiquidCrystal)
-     fetched and built in the sandbox, plus a model that decodes pulses or the
-     display protocol from pin activity.
-   - **Ultrasonic sensor** needs microsecond-accurate echo pulses fed back into
-     the running program, which the present 1 ms exchange between processor and
-     circuit cannot deliver without a dedicated path.
-2. Blockly, block-to-code generation, and the rule for how blocks and hand-edited
+1. Blockly, block-to-code generation, and the rule for how blocks and hand-edited
    text coexist without overwriting a student's work.
-3. Pico: a time-boxed trial of rp2040js with MicroPython firmware, then a go/no-go.
-4. Pause and single-step controls; free-probe multimeter.
-5. Real-board upload (also listed under Phase 3).
+2. Pico: a time-boxed trial of rp2040js with MicroPython firmware, then a go/no-go.
+3. Pause and single-step controls; free-probe multimeter.
+4. Real-board upload (also listed under Phase 3).
 
 ## 4. Phase 1 acceptance, as far as it can be judged today
 
@@ -81,12 +77,12 @@ of section 3.
 
 ## 5. Test results (20 November 2026)
 
-| Suite                                                          | Result                          |
-| -------------------------------------------------------------- | ------------------------------- |
-| ESLint, Prettier, TypeScript                                   | clean                           |
-| Unit                                                           | 181 passed, 0 failed, 0 skipped |
-| Integration (PostgreSQL 18, avr-gcc, bubblewrap, Arduino core) | 20 passed                       |
-| End to end (Chromium; desktop and phone profiles)              | 30 passed                       |
+| Suite                                                                        | Result                          |
+| ---------------------------------------------------------------------------- | ------------------------------- |
+| ESLint, Prettier, TypeScript                                                 | clean                           |
+| Unit                                                                         | 196 passed, 0 failed, 0 skipped |
+| Integration (PostgreSQL 18, avr-gcc, bubblewrap, Arduino core and libraries) | 21 passed                       |
+| End to end (Chromium; desktop and phone profiles)                            | 36 passed                       |
 
 Electrical agreement with ngspice 45.2: DC within 1 µV / 1 nA on 15 circuits
 (including an NPN transistor saturated, in its active region and as a follower);
@@ -94,7 +90,9 @@ transient within 12 mV on three circuits (the limit is set by the first-order
 time-stepping method, and is stated per circuit in `transient-cases.ts`).
 
 Timing checked on the emulated UNO: `delay(500)` within 5 ms per second;
-`analogWrite` duty within 5 % on all three timers; PWM on pin 9 at 490 Hz.
+`analogWrite` duty within 5 % on all three timers; PWM on pin 9 at 490 Hz; the
+Servo library's 90° pulse at 1472 µs; ultrasonic echo pulses exact to the
+microsecond, with `pulseIn()` reading them about 0.7 % short as it does on real hardware.
 
 ## 6. Known issues and limitations
 
@@ -115,14 +113,21 @@ Simulation
 - The relay has no switching delay, contact bounce or coil inductance, and only
   its normally-open contact.
 - The transistor has no Early effect or parasitic resistance, and one fixed gain of 200.
+- The servo jumps to its angle instantly and draws a fixed small current; it has
+  no speed limit, torque or stall behaviour.
+- The LCD is driven through its 4-bit interface only. It ignores the contrast pin,
+  backlight, display shifting and custom characters, and does not require RW to
+  be grounded, so a wiring that works here could still show a blank screen on a
+  real module with the contrast set wrong.
+- The ultrasonic sensor always sees one clean obstacle at the set distance: no
+  beam angle, soft surfaces or missed echoes.
 - Node voltages held only by leakage (for example between two LEDs wired back to
   back) are accurate only to about 1 %; currents are unaffected.
 
 Editor
 
 - No undo/redo. The UNO and batteries cannot be repositioned. One UNO per circuit.
-- The palette now holds 17 tools in one scrolling row; it needs categories or
-  search before more are added.
+- The palette now holds 20 tools in one scrolling row and needs categories or search.
 - The UNO sits below the breadboard, so on most screens you scroll to see it.
 - The logic analyser's rows are inside the oscilloscope picture and are not
   yet readable by screen readers; the oscilloscope has no cursors or trigger.
