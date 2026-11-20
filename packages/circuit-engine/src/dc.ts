@@ -47,6 +47,7 @@ function islandAnchors(circuit: Circuit): number[] {
     return node;
   };
   for (const device of circuit.devices) {
+    if (device.isOpen?.()) continue; // an open device joins nothing
     const first = find(device.nodes[0]);
     for (const node of device.nodes) parent[find(node)] = first;
   }
@@ -60,10 +61,30 @@ function islandAnchors(circuit: Circuit): number[] {
 }
 
 /**
- * DC operating point by Newton-Raphson iteration over the MNA equations.
- * Parts that are not connected to anything solve to "no current" instead of failing.
+ * DC operating point: the state the circuit settles into when nothing changes.
+ * Capacitors are open circuits. Parts that are not connected to anything solve
+ * to "no current" instead of failing.
  */
 export function solveDc(circuit: Circuit, options: DcOptions = {}): DcResult {
+  for (const device of circuit.devices) device.beginStep?.(null);
+  return newtonSolve(circuit, options);
+}
+
+/**
+ * Advances the circuit by one time step of `dt` seconds (backward Euler) from
+ * the state its capacitors hold, and stores the new state in them. Call
+ * repeatedly to follow the circuit through time.
+ */
+export function solveTimeStep(circuit: Circuit, dt: number, options: DcOptions = {}): DcResult {
+  if (!(dt > 0)) throw new RangeError('Time step must be positive');
+  for (const device of circuit.devices) device.beginStep?.(dt);
+  const result = newtonSolve(circuit, options);
+  if (result.ok) for (const device of circuit.devices) device.acceptStep?.(result.solution);
+  return result;
+}
+
+/** Newton-Raphson iteration over the MNA equations, shared by DC and time-step solves. */
+function newtonSolve(circuit: Circuit, options: DcOptions): DcResult {
   const opts = { ...DEFAULTS, ...options };
   const { nodeCount, devices } = circuit;
   if (nodeCount < 2) return { ok: false, reason: 'empty', iterations: 0 };

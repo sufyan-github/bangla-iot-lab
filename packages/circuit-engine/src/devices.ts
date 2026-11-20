@@ -17,7 +17,7 @@ export const GMIN = 1e-12;
  */
 export interface Device {
   readonly id: string;
-  readonly kind: 'resistor' | 'voltage-source' | 'thevenin-source' | 'diode';
+  readonly kind: 'resistor' | 'voltage-source' | 'thevenin-source' | 'diode' | 'capacitor';
   /** Nodes this device connects, first terminal first. */
   readonly nodes: readonly number[];
   /** Extra MNA unknowns this device needs (voltage sources need one). */
@@ -34,6 +34,15 @@ export interface Device {
   stamp(system: MnaSystem, previous: Solution): boolean;
   current(solution: Solution): number;
   voltage(solution: Solution): number;
+  /**
+   * Only for devices with memory (capacitors). Called before each solve with
+   * the time step in seconds, or null for a DC solve (where time stands still).
+   */
+  beginStep?(dt: number | null): void;
+  /** Called after a time step has been solved, to remember the new state. */
+  acceptStep?(solution: Solution): void;
+  /** True when the device currently conducts nothing at all (a capacitor at DC). */
+  isOpen?(): boolean;
 }
 
 export interface Resistor extends Device {
@@ -151,6 +160,67 @@ export function theveninSource(
     voltage: (s) => s.voltage(positive) - s.voltage(negative),
     current: (s) => (s.voltage(positive) - s.voltage(negative) - volts) * g,
   };
+}
+
+export interface Capacitor extends Device {
+  readonly kind: 'capacitor';
+  readonly a: number;
+  readonly b: number;
+  readonly capacitance: number;
+  /** Voltage across the capacitor (a minus b) at the end of the last accepted step. */
+  storedVoltage: number;
+}
+
+/**
+ * Ideal capacitor. In a time step it is replaced by its backward-Euler
+ * companion: a conductance C/dt in parallel with a current source that
+ * remembers the previous voltage. Backward Euler is first-order accurate and
+ * never rings, which suits a teaching simulator. In a DC solve it is an open circuit.
+ */
+export function capacitor(
+  id: string,
+  a: number,
+  b: number,
+  capacitance: number,
+  initialVoltage = 0,
+): Capacitor {
+  if (!(capacitance > 0) || !Number.isFinite(capacitance)) {
+    throw new RangeError(`Capacitor ${id}: capacitance must be a positive number of farads`);
+  }
+  let dt: number | null = null;
+  let lastCurrent = 0;
+  const device: Capacitor = {
+    id,
+    kind: 'capacitor',
+    nodes: [a, b],
+    a,
+    b,
+    capacitance,
+    storedVoltage: initialVoltage,
+    branchCount: 0,
+    branch: -1,
+    reset() {},
+    beginStep(step) {
+      dt = step;
+    },
+    isOpen: () => dt === null,
+    stamp(system) {
+      if (dt === null) return false;
+      const g = capacitance / dt;
+      system.stampConductance(a, b, g);
+      // i = g·(v − vPrevious): the source pushes g·vPrevious from b to a.
+      system.stampCurrentSource(b, a, g * device.storedVoltage);
+      return false;
+    },
+    acceptStep(solution) {
+      const voltage = solution.voltage(a) - solution.voltage(b);
+      lastCurrent = dt === null ? 0 : (capacitance / dt) * (voltage - device.storedVoltage);
+      device.storedVoltage = voltage;
+    },
+    voltage: (s) => s.voltage(a) - s.voltage(b),
+    current: () => lastCurrent,
+  };
+  return device;
 }
 
 export interface DiodeModel {
