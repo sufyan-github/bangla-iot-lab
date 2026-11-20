@@ -1,5 +1,5 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "noUncheckedIndexedAccess": false, "types": ["node"] },
+  "compilerOptions": { "types": ["node"] },
   "include": ["src", "scripts"]
 }

@@ -151,7 +151,7 @@ describe('editing rules', () => {
 
   it('never mutates the document it was given', () => {
     const circuit = ledCircuitExample();
-    const snapshot = structuredClone(circuit);
+    const snapshot = JSON.parse(JSON.stringify(circuit));
     placePart(circuit, 'led', 'h3');
     addWire(circuit, 'g1', 'g2');
     removeItem(circuit, 'R1');

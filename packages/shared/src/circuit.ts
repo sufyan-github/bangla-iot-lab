@@ -33,7 +33,15 @@ export const LedSchema = Type.Object({
   id: Id,
   type: Type.Literal('led'),
   pins: Type.Object({ anode: Hole, cathode: Hole }),
-  props: Type.Object({ color: Type.Union(LED_COLORS.map((c) => Type.Literal(c))) }),
+  props: Type.Object({
+    color: Type.Union([
+      Type.Literal('red'),
+      Type.Literal('yellow'),
+      Type.Literal('green'),
+      Type.Literal('blue'),
+      Type.Literal('white'),
+    ]),
+  }),
 });
 
 export const ComponentSchema = Type.Union([BatterySchema, ResistorSchema, LedSchema]);
