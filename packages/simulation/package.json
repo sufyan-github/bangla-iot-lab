@@ -1,0 +1,11 @@
+{
+  "name": "@banglalab/simulation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": { "@banglalab/circuit-engine": "workspace:*", "@banglalab/shared": "workspace:*" }
+}

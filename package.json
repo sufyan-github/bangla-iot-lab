@@ -1,0 +1,42 @@
+{
+  "name": "bangla-iot-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Bangla-first virtual electronics laboratory for Class 6-12 students",
+  "packageManager": "pnpm@12.4.2",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "dev:web": "pnpm --filter @banglalab/web dev",
+    "build": "pnpm --filter @banglalab/web build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "pnpm --filter @banglalab/web e2e",
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
+    "db:up": "docker compose -f infra/docker/compose.dev.yml up -d --wait postgres",
+    "db:down": "docker compose -f infra/docker/compose.dev.yml down",
+    "db:generate": "pnpm --filter @banglalab/api db:generate",
+    "db:migrate": "pnpm --filter @banglalab/api db:migrate",
+    "golden:regen": "pnpm --filter @banglalab/circuit-engine golden:regen",
+    "fixtures:firmware": "pnpm --filter @banglalab/board-emulators fixtures:build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.15.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.1"
+  }
+}

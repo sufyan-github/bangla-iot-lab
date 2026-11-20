@@ -1,0 +1,23 @@
+import { CIRCUIT_SCHEMA_VERSION, type CircuitDocument } from './circuit';
+import { WIRE_COLORS } from './editing';
+
+/**
+ * The first circuit every student builds: a 9 V battery, a 330 Ω resistor and a
+ * red LED in one loop. Also the reference circuit for the Phase 0 acceptance test.
+ */
+export function ledCircuitExample(): CircuitDocument {
+  return {
+    schemaVersion: CIRCUIT_SCHEMA_VERSION,
+    components: [
+      { id: 'BAT1', type: 'battery', props: { voltage: 9 } },
+      { id: 'R1', type: 'resistor', pins: { a: 'c5', b: 'c9' }, props: { resistance: 330 } },
+      { id: 'LED1', type: 'led', pins: { anode: 'd9', cathode: 'd10' }, props: { color: 'red' } },
+    ],
+    wires: [
+      { id: 'W1', from: 'BAT1.pos', to: 'tp1', color: WIRE_COLORS.red },
+      { id: 'W2', from: 'BAT1.neg', to: 'tn1', color: WIRE_COLORS.black },
+      { id: 'W3', from: 'tp4', to: 'a5', color: WIRE_COLORS.red },
+      { id: 'W4', from: 'a10', to: 'tn8', color: WIRE_COLORS.black },
+    ],
+  };
+}

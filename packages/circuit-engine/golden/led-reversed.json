@@ -1,0 +1,12 @@
+{
+  "name": "led-reversed",
+  "engine": "ngspice-45.2",
+  "deck": "* led-reversed\nVV1 1 0 DC 9\nRR1 1 2 220\nDD1 0 2 MD1\n.model MD1 D(IS=1.557e-17 N=2)\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 9,
+    "2": 8.999999998019996
+  },
+  "sourceCurrents": {
+    "V1": -9.000016010229928e-12
+  }
+}

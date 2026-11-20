@@ -1,0 +1,12 @@
+{
+  "name": "silicon-diode-clamp",
+  "engine": "ngspice-45.2",
+  "deck": "* silicon-diode-clamp\nVV1 1 0 DC 12\nRR1 1 2 1000\nRR2 2 0 4700\nDD1 2 0 MD1\n.model MD1 D(IS=1e-14 N=1)\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 12,
+    "2": 0.717442932006764
+  },
+  "sourceCurrents": {
+    "V1": -0.011282557067993236
+  }
+}
