@@ -155,3 +155,41 @@ prototypes with a small scanner that understands comments, strings, macros and
 brace depth, rather than running a full C++ parser. It handles ordinary
 functions; templates and function-pointer return types must be declared by
 hand. **Revisit** if real sketches trip it.
+
+## D-024 — Parts with a loose end are removed from the equations
+
+Found while adding the relay: an LED whose resistor led to an open contact made
+the solver iterate forever for one particular LED model. A loose node is held
+only by picoampere leakage next to ordinary resistances; the equations are then
+so ill-conditioned that round-off noise exceeds the convergence tolerance. The
+solver now peels dangling resistors and diodes away before solving (they carry
+no current, so the loose end simply follows the connected end), and accepts an
+iteration that has stalled below 1 mV for six rounds. Recorded because every
+test passed until a specific parameter value hit it. **Revisit** the wire model
+(D-006) if leakage-held nodes ever need better than about 1 % voltage accuracy.
+
+## D-025 — Three-pin sensor modules are voltage dividers
+
+Temperature, soil-moisture and IR modules are modelled as a 10 kΩ divider from
+supply to ground with the output at the tap. Output is exact at 5 V, falls to
+zero when the module is unpowered, and needs no new solver device. The cost: the
+temperature sensor's output scales with supply, which the real part's does not.
+
+## D-026 — The relay remembers its position
+
+The contact closes at 50 mA of coil current and opens below 15 mA. The settled
+solve repeats until contacts and coil currents agree (at most four rounds, so a
+relay wired to interrupt itself cannot loop forever), and a running session
+carries each relay's position from one solve to the next.
+
+## D-027 — The motor is a resistor
+
+25 Ω winding resistance, no back-EMF or inertia. This gets right the fact that
+matters for teaching — a pin cannot drive a motor, a transistor can — and
+overstates the running current. **Revisit** when a lesson needs speed control
+or measured motor current.
+
+## D-028 — Circuit schema version 3
+
+Adds ten part types. Any older version is upgraded on read; versions only ever
+add part types, so the upgrade is a change of number.

@@ -10,9 +10,10 @@ what is still missing from Phase 1, the test results and the known limitations.
 
 ## What works today
 
-- Breadboard editor: battery, resistor, LED, push button, potentiometer, capacitor and wires.
+- Breadboard editor with 17 parts: battery, resistor, LED, button, switch, potentiometer,
+  capacitor, diode, transistor, buzzer, motor, relay, LDR and temperature, soil and IR sensors.
 - An Arduino UNO beside the board: write a sketch, upload it, and it drives the circuit.
-- Circuit simulation checked against ngspice (12 steady and 3 time-dependent reference circuits).
+- Circuit simulation checked against ngspice (15 steady and 3 time-dependent reference circuits).
 - Live readings, an oscilloscope, a logic analyser and a serial monitor.
 - Plain-language explanations of common mistakes, in Bangla and English.
 - Automatic saving on the device; the app installs as a PWA and reopens projects, with their programs, offline.

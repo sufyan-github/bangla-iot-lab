@@ -27,18 +27,26 @@ when their strip names match.
 `packages/simulation/src/netlist.ts`. Strips, battery terminals and board
 sockets become nodes.
 
-| Part                                | Becomes                                                              |
-| ----------------------------------- | -------------------------------------------------------------------- |
-| Battery                             | source with 0.5 Ω in series                                          |
-| Resistor                            | resistor                                                             |
-| LED                                 | Shockley diode fitted to the colour's forward voltage at 20 mA       |
-| Push button                         | 50 mΩ resistor while held, nothing otherwise                         |
-| Potentiometer                       | two resistors that add up to its value, split at the knob position   |
-| Capacitor                           | capacitor (open circuit in a settled solve)                          |
-| UNO 5V socket                       | 5 V source with 0.2 Ω in series                                      |
-| UNO pin, output HIGH / LOW          | 5 V source with 25 Ω in series / 25 Ω to ground                      |
-| UNO pin, input / input with pull-up | 100 MΩ to ground / 5 V source with 35 kΩ in series                   |
-| Wire                                | 10 mΩ resistor (so each wire's current is known and can be animated) |
+| Part                                | Becomes                                                               |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| Battery                             | source with 0.5 Ω in series                                           |
+| Resistor                            | resistor                                                              |
+| LED                                 | Shockley diode fitted to the colour's forward voltage at 20 mA        |
+| Push button                         | 50 mΩ resistor while held, nothing otherwise                          |
+| Potentiometer                       | two resistors that add up to its value, split at the knob position    |
+| Capacitor                           | capacitor (open circuit in a settled solve)                           |
+| Switch                              | 50 mΩ resistor while on, nothing otherwise                            |
+| Diode                               | Shockley diode, 1N4007 parameters (about 0.7 V at 20 mA)              |
+| NPN transistor                      | Ebers-Moll transistor, gain 200                                       |
+| LDR                                 | resistor from 1 MΩ (dark) to 1 kΩ (bright), on a log scale            |
+| Buzzer                              | 200 Ω resistor; sounds above 2.5 V                                    |
+| DC motor                            | 25 Ω resistor; speed shown in proportion to voltage                   |
+| Relay                               | 70 Ω coil; a 50 mΩ contact that closes at 50 mA and opens below 15 mA |
+| Temperature, soil, IR sensor        | 10 kΩ divider from supply to ground, output at the tap                |
+| UNO 5V socket                       | 5 V source with 0.2 Ω in series                                       |
+| UNO pin, output HIGH / LOW          | 5 V source with 25 Ω in series / 25 Ω to ground                       |
+| UNO pin, input / input with pull-up | 100 MΩ to ground / 5 V source with 35 kΩ in series                    |
+| Wire                                | 10 mΩ resistor (so each wire's current is known and can be animated)  |
 
 Ground is the UNO's GND if there is a board, otherwise the negative terminal of
 the first battery. Only sockets with a wire in them get a device.
@@ -52,12 +60,13 @@ SPICE's `pnjlim` rule so the exponential cannot overflow. The linear system is
 solved by dense Gaussian elimination with partial pivoting — at school-circuit
 sizes (tens of unknowns) this is faster than a sparse solver.
 
-Two things keep beginner circuits solvable:
+Three things keep beginner circuits solvable:
 
 - Each junction has GMIN (1 pS) in parallel, as in SPICE.
+- A resistor or diode with one end connected to nothing is removed before
+  solving; its loose end follows its connected end (see decision D-024).
 - Any group of nodes with no path to ground is tied to ground at one node. No
-  current can flow between unconnected groups, so this changes no current. An
-  unconnected LED therefore reads 0 V and 0 A rather than failing or inventing a voltage.
+  current can flow between unconnected groups, so this changes no current.
 
 Convergence: relative 1e-9, 1 nV, 1 pA; at most 200 iterations. The LED example
 converges in 5 iterations and about 19 µs on a laptop.
@@ -114,8 +123,7 @@ Signals for the oscilloscope and logic analyser are recorded by the session as
 
 - **Time steps are fixed and first-order.** 0.1 ms with backward Euler. Fast
   time constants (below about 1 ms) are followed only roughly.
-- **Only the capacitor has memory.** No inductors; no transistor or other
-  three-terminal semiconductor yet.
+- **Only the capacitor has memory.** No inductors, so no motor inertia or relay coil kick.
 - **LED model is an ideal Shockley diode.** It matches the nominal forward
   voltage at 20 mA exactly but real LEDs have series resistance, so current at
   high drive is overestimated. Reverse breakdown is not modelled.
