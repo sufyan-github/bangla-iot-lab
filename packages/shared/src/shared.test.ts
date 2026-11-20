@@ -68,7 +68,7 @@ describe('circuit document', () => {
 
   it('rejects malformed documents', () => {
     const example = ledCircuitExample();
-    expect(isCircuitDocument({ ...example, schemaVersion: 4 })).toBe(false);
+    expect(isCircuitDocument({ ...example, schemaVersion: 5 })).toBe(false);
     expect(isCircuitDocument({ ...example, wires: [{ id: 'W1', from: 'a1' }] })).toBe(false);
     expect(
       isCircuitDocument({
@@ -188,6 +188,25 @@ describe('the rest of the parts library', () => {
     });
     expect(placed('soil')).toMatchObject({ id: 'SOIL1', props: { moisture: 0.3 } });
     expect(placed('ir')).toMatchObject({ id: 'IR1', props: { detected: false } });
+    expect(placed('servo')).toMatchObject({
+      id: 'SRV1',
+      pins: { gnd: 'c10', vcc: 'c11', signal: 'c12' },
+    });
+    expect(placed('ultrasonic')).toMatchObject({
+      id: 'US1',
+      pins: { vcc: 'c10', trig: 'c11', echo: 'c12', gnd: 'c13' },
+      props: { distance: 50 },
+    });
+    const lcd = placed('lcd');
+    expect(lcd).toMatchObject({
+      id: 'LCD1',
+      pins: { vss: 'c10', rs: 'c13', e: 'c15', d4: 'c20', d7: 'c23', k: 'c25' },
+    });
+    expect(Object.keys((lcd as { pins: object }).pins)).toHaveLength(16);
+    // Sixteen pins need sixteen free columns: near the right edge it goes leftwards instead.
+    expect(ok(placePart(emptyCircuit(), 'lcd', 'c20')).components[0]).toMatchObject({
+      pins: { vss: 'c20', k: 'c5' },
+    });
   });
 
   it('keeps three-lead parts rigid and validates their settings', () => {

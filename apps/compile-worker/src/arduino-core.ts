@@ -6,9 +6,25 @@ import { runTool } from './sandbox';
 /** Release of ArduinoCore-avr fetched by scripts/fetch-arduino-core.sh. */
 export const ARDUINO_CORE_VERSION = '1.8.8';
 
-const CORE_ROOT = path.resolve(import.meta.dirname, '../vendor/ArduinoCore-avr');
+const VENDOR_DIR = path.resolve(import.meta.dirname, '../vendor');
+const CORE_ROOT = path.join(VENDOR_DIR, 'ArduinoCore-avr');
 export const CORE_SOURCE_DIR = path.join(CORE_ROOT, 'cores/arduino');
 export const VARIANT_DIR = path.join(CORE_ROOT, 'variants/standard');
+
+/**
+ * Libraries a sketch may `#include`, fetched by the same script as the core.
+ * They are compiled into the core archive, so the linker takes only what a
+ * sketch actually uses.
+ */
+export const ARDUINO_LIBRARIES = [
+  { name: 'Servo', version: '1.3.0', include: 'Servo/src', sources: ['Servo/src/avr/Servo.cpp'] },
+  {
+    name: 'LiquidCrystal',
+    version: '1.0.7',
+    include: 'LiquidCrystal/src',
+    sources: ['LiquidCrystal/src/LiquidCrystal.cpp'],
+  },
+] as const;
 
 /** Flags shared by the core and by sketches, for an UNO (ATmega328P at 16 MHz). */
 export const ARDUINO_FLAGS = [
@@ -24,6 +40,7 @@ export const ARDUINO_FLAGS = [
   '-fno-diagnostics-show-caret',
   `-I${CORE_SOURCE_DIR}`,
   `-I${VARIANT_DIR}`,
+  ...ARDUINO_LIBRARIES.map((library) => `-I${path.join(VENDOR_DIR, library.include)}`),
 ];
 export const CXX_FLAGS = [
   '-std=gnu++11',
@@ -51,12 +68,20 @@ export async function ensureArduinoCore(cacheDir: string, toolchain: string): Pr
     );
   });
   const key = createHash('sha256')
-    .update(JSON.stringify([ARDUINO_CORE_VERSION, toolchain, ARDUINO_FLAGS, CXX_FLAGS]))
+    .update(
+      JSON.stringify([
+        ARDUINO_CORE_VERSION,
+        ARDUINO_LIBRARIES,
+        toolchain,
+        ARDUINO_FLAGS,
+        CXX_FLAGS,
+      ]),
+    )
     .digest('hex')
     .slice(0, 16);
   const dir = path.join(cacheDir, 'arduino-core', key);
   const archive = path.join(dir, 'core.a');
-  const core = { archive, readOnlyPaths: [CORE_ROOT, dir] };
+  const core = { archive, readOnlyPaths: [VENDOR_DIR, dir] };
   if (
     await access(archive).then(
       () => true,
@@ -68,7 +93,19 @@ export async function ensureArduinoCore(cacheDir: string, toolchain: string): Pr
   const buildDir = `${dir}.build-${process.pid}`;
   await rm(buildDir, { recursive: true, force: true });
   await mkdir(buildDir, { recursive: true });
-  const sources = (await readdir(CORE_SOURCE_DIR)).filter((f) => /\.(c|cpp|S)$/.test(f));
+  for (const library of ARDUINO_LIBRARIES) {
+    await access(path.join(VENDOR_DIR, library.sources[0])).catch(() => {
+      throw new Error(
+        `Arduino library ${library.name} is missing. Run: bash apps/compile-worker/scripts/fetch-arduino-core.sh`,
+      );
+    });
+  }
+  const sources = [
+    ...(await readdir(CORE_SOURCE_DIR))
+      .filter((f) => /\.(c|cpp|S)$/.test(f))
+      .map((f) => path.join(CORE_SOURCE_DIR, f)),
+    ...ARDUINO_LIBRARIES.flatMap((library) => library.sources.map((f) => path.join(VENDOR_DIR, f))),
+  ];
   const compileOne = async (file: string) => {
     const flags = file.endsWith('.cpp')
       ? [...ARDUINO_FLAGS, ...CXX_FLAGS]
@@ -76,10 +113,11 @@ export async function ensureArduinoCore(cacheDir: string, toolchain: string): Pr
         ? [...ARDUINO_FLAGS, '-x', 'assembler-with-cpp']
         : [...ARDUINO_FLAGS, '-std=gnu11'];
     const tool = file.endsWith('.cpp') ? 'avr-g++' : 'avr-gcc';
-    const args = [...flags, '-w', '-c', path.join(CORE_SOURCE_DIR, file), '-o', `${file}.o`];
+    const object = `${path.basename(file)}.o`;
+    const args = [...flags, '-w', '-c', file, '-o', object];
     const result = await runTool('none', buildDir, tool, args, 120_000);
     if (result.exitCode !== 0) throw new Error(`Arduino core: ${file} failed\n${result.stderr}`);
-    return `${file}.o`;
+    return object;
   };
   const objects: string[] = [];
   for (let i = 0; i < sources.length; i += 4) {

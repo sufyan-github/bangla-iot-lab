@@ -2,6 +2,7 @@ import { holeAt, holeCoordinates, holeDistance, isHole, type HoleId } from './br
 import {
   BATTERY_TERMINALS,
   ComponentSchema,
+  LCD_PINS,
   UNO_TERMINALS,
   componentHoles,
   parseTerminal,
@@ -58,6 +59,9 @@ export const PART_SHAPES: Record<
   soil: { idPrefix: 'SOIL', pins: ['vcc', 'out', 'gnd'], offsets: [0, 1, 2] },
   ir: { idPrefix: 'IR', pins: ['vcc', 'out', 'gnd'], offsets: [0, 1, 2] },
   relay: { idPrefix: 'K', pins: ['coil1', 'coil2', 'com', 'no'], offsets: [0, 1, 3, 4] },
+  servo: { idPrefix: 'SRV', pins: ['gnd', 'vcc', 'signal'], offsets: [0, 1, 2] },
+  ultrasonic: { idPrefix: 'US', pins: ['vcc', 'trig', 'echo', 'gnd'], offsets: [0, 1, 2, 3] },
+  lcd: { idPrefix: 'LCD', pins: LCD_PINS, offsets: LCD_PINS.map((_, i) => i) },
 };
 
 const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['props'] } = {
@@ -76,6 +80,9 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
   soil: { moisture: 0.3 },
   ir: { detected: false },
   relay: {},
+  servo: {},
+  ultrasonic: { distance: 50 },
+  lcd: {},
 };
 
 export const MAX_BATTERIES = 2;

@@ -35,6 +35,10 @@ export interface Reading {
    * a relay's contact is closed, and a motor's speed from −1 (full speed backwards) to 1.
    */
   activity?: number;
+  /** Servo horn position in degrees (0-180), once a program has set it. */
+  angle?: number;
+  /** What a character LCD is showing: its two lines of sixteen characters. */
+  lcd?: { lines: [string, string] };
 }
 
 export type DiagnosticCode =

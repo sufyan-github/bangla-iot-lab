@@ -419,3 +419,206 @@ describe('relay', () => {
     expect([...problems]).toEqual([]);
   });
 });
+
+describe('servo', () => {
+  const servo: CircuitComponent = {
+    id: 'SRV1',
+    type: 'servo',
+    pins: { gnd: 'c10', vcc: 'c11', signal: 'c12' },
+    props: {},
+  };
+  const wired = circuit(
+    [uno, servo],
+    [
+      ['UNO1.gnd', 'a10'],
+      ['UNO1.5v', 'a11'],
+      ['UNO1.d9', 'a12'],
+    ],
+  );
+
+  it('sweeps from 0° to 180° and back under the Servo library', () => {
+    const session = new SimulationSession(wired);
+    session.loadFirmware('UNO1', firmware('servo'));
+    const angles: number[] = [];
+    for (let i = 0; i < 80; i++) {
+      session.advance(50);
+      const angle = session.frame().result.readings.SRV1!.angle;
+      if (angle !== undefined) angles.push(angle);
+    }
+    expect(Math.min(...angles)).toBeLessThan(2);
+    expect(Math.max(...angles)).toBeGreaterThan(178);
+    // The sketch moves in 10° steps: every reported angle is close to a multiple of ten.
+    for (const angle of angles)
+      expect(Math.abs(angle - Math.round(angle / 10) * 10)).toBeLessThan(1.5);
+    // It goes up and then comes back down.
+    const peak = angles.indexOf(Math.max(...angles));
+    expect(angles.at(-1)!).toBeLessThan(angles[peak]!);
+  });
+
+  it('does not move without power, and ignores a pin that is merely blinking', () => {
+    const unpowered = new SimulationSession(circuit([uno, servo], [['UNO1.d9', 'a12']]));
+    unpowered.loadFirmware('UNO1', firmware('servo'));
+    unpowered.advance(500);
+    expect(unpowered.frame().result.readings.SRV1!.angle).toBeUndefined();
+
+    const blinking = new SimulationSession(
+      circuit(
+        [uno, servo],
+        [
+          ['UNO1.gnd', 'a10'],
+          ['UNO1.5v', 'a11'],
+          ['UNO1.d13', 'a12'],
+        ],
+      ),
+    );
+    blinking.loadFirmware('UNO1', firmware('blink'));
+    blinking.advance(2500);
+    expect(blinking.frame().result.readings.SRV1!.angle).toBeUndefined();
+  });
+});
+
+describe('ultrasonic distance sensor', () => {
+  const sensor = (distance: number): CircuitComponent => ({
+    id: 'US1',
+    type: 'ultrasonic',
+    pins: { vcc: 'c10', trig: 'c11', echo: 'c12', gnd: 'c13' },
+    props: { distance },
+  });
+  const wired = (distance: number) =>
+    circuit(
+      [uno, sensor(distance)],
+      [
+        ['UNO1.5v', 'a10'],
+        ['UNO1.d7', 'a11'],
+        ['UNO1.d6', 'a12'],
+        ['UNO1.gnd', 'a13'],
+      ],
+    );
+  /** Runs the distance sketch and returns the numbers it prints. */
+  function measure(session: SimulationSession, milliseconds: number): number[] {
+    let printed = '';
+    for (let t = 0; t < milliseconds; t += 50) {
+      session.advance(50);
+      printed += session.frame().boards.UNO1!.serial;
+    }
+    return printed.trim().split(/\r?\n/).filter(Boolean).map(Number);
+  }
+
+  it.each([5, 50, 123, 300])('pulseIn() measures %i cm', (distance) => {
+    const session = new SimulationSession(wired(distance));
+    session.loadFirmware('UNO1', firmware('distance'));
+    const readings = measure(session, 700);
+    expect(readings.length).toBeGreaterThanOrEqual(2);
+    // The echo delivered is exact (checked below). Arduino's pulseIn() itself reads about
+    // 0.7 % short, as it does on a real board, so allow 1 cm or 1 %.
+    const allowed = Math.max(1, distance * 0.01);
+    for (const reading of readings)
+      expect(Math.abs(reading - distance)).toBeLessThanOrEqual(allowed);
+  });
+
+  it('follows the obstacle when it is moved while the program runs', () => {
+    const session = new SimulationSession(wired(40));
+    session.loadFirmware('UNO1', firmware('distance'));
+    expect(Math.abs(measure(session, 500).at(-1)! - 40)).toBeLessThanOrEqual(1);
+    session.update(wired(150));
+    expect(Math.abs(measure(session, 600).at(-1)! - 150)).toBeLessThanOrEqual(1);
+  });
+
+  it('shows the trigger and echo pulses on the recorded signals', () => {
+    const session = new SimulationSession(wired(100));
+    session.setProbes(['socket:UNO1.d7', 'socket:UNO1.d6']);
+    session.loadFirmware('UNO1', firmware('distance'));
+    const times: number[] = [];
+    const echo: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      session.advance(50);
+      const { trace } = session.frame();
+      times.push(...trace!.times);
+      echo.push(...trace!.values[1]!);
+    }
+    const rise = times.find((_, i) => i > 0 && echo[i]! > 4 && echo[i - 1]! < 1)!;
+    const fall = times.find((t, i) => t > rise && echo[i]! < 1)!;
+    expect(fall - rise).toBeCloseTo(100 * 0.058, 2); // 5.8 ms for one metre
+  });
+
+  it('gives no echo when unpowered, so the program reads zero', () => {
+    const session = new SimulationSession(
+      circuit(
+        [uno, sensor(50)],
+        [
+          ['UNO1.d7', 'a11'],
+          ['UNO1.d6', 'a12'],
+        ],
+      ),
+    );
+    session.loadFirmware('UNO1', firmware('distance'));
+    // pulseIn gives up after one second and returns 0.
+    expect(measure(session, 2600)).toContain(0);
+  });
+});
+
+describe('character LCD', () => {
+  const pins = Object.fromEntries(
+    [
+      'vss',
+      'vdd',
+      'v0',
+      'rs',
+      'rw',
+      'e',
+      'd0',
+      'd1',
+      'd2',
+      'd3',
+      'd4',
+      'd5',
+      'd6',
+      'd7',
+      'a',
+      'k',
+    ].map((pin, i) => [pin, `h${i + 5}`]),
+  );
+  const lcd = { id: 'LCD1', type: 'lcd', pins, props: {} } as CircuitComponent;
+  /** The wiring from the LiquidCrystal tutorial: RS 12, E 11, D4-D7 on 5, 4, 3, 2. */
+  const signalWires: [string, string][] = [
+    ['UNO1.d12', 'j8'],
+    ['UNO1.d11', 'j10'],
+    ['UNO1.d5', 'j15'],
+    ['UNO1.d4', 'j16'],
+    ['UNO1.d3', 'j17'],
+    ['UNO1.d2', 'j18'],
+  ];
+  const powerWires: [string, string][] = [
+    ['UNO1.gnd', 'j5'],
+    ['UNO1.5v', 'j6'],
+  ];
+
+  it('shows what the LiquidCrystal library prints, and keeps updating', () => {
+    const session = new SimulationSession(circuit([uno, lcd], [...powerWires, ...signalWires]));
+    session.loadFirmware('UNO1', firmware('lcd'));
+    session.advance(600);
+    let shown = session.frame().result.readings.LCD1!.lcd!;
+    expect(shown.lines[0]).toBe('Hello, Bangla!  ');
+    expect(shown.lines[1].trim()).toBe('0 s');
+
+    session.advance(2600);
+    shown = session.frame().result.readings.LCD1!.lcd!;
+    expect(shown.lines[1].trim()).toBe('3 s');
+    expect(session.frame().result.diagnostics).toEqual([]);
+  });
+
+  it('shows nothing without power or with a data wire missing', () => {
+    const unpowered = new SimulationSession(circuit([uno, lcd], signalWires));
+    unpowered.loadFirmware('UNO1', firmware('lcd'));
+    unpowered.advance(600);
+    expect(unpowered.frame().result.readings.LCD1!.lcd).toBeUndefined();
+
+    // Without D4 the handshake still passes, but the text comes out wrong.
+    const miswired = new SimulationSession(
+      circuit([uno, lcd], [...powerWires, ...signalWires.filter(([from]) => from !== 'UNO1.d5')]),
+    );
+    miswired.loadFirmware('UNO1', firmware('lcd'));
+    miswired.advance(600);
+    expect(miswired.frame().result.readings.LCD1?.lcd?.lines[0]).not.toBe('Hello, Bangla!  ');
+  });
+});

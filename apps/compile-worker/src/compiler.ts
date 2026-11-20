@@ -6,6 +6,7 @@ import type { WorkerConfig } from './config';
 import {
   ARDUINO_CORE_VERSION,
   ARDUINO_FLAGS,
+  ARDUINO_LIBRARIES,
   CXX_FLAGS,
   ensureArduinoCore,
   type ArduinoCore,
@@ -122,7 +123,9 @@ export class Compiler {
    */
   cacheKey(request: CompileRequest): string {
     const recipe =
-      request.language === 'arduino' ? [ARDUINO_CORE_VERSION, ARDUINO_FLAGS, CXX_FLAGS] : GCC_FLAGS;
+      request.language === 'arduino'
+        ? [ARDUINO_CORE_VERSION, ARDUINO_LIBRARIES, ARDUINO_FLAGS, CXX_FLAGS]
+        : GCC_FLAGS;
     const parts = [RECIPE_VERSION, this.toolchain, recipe, request.board, request.language];
     return createHash('sha256')
       .update(JSON.stringify(parts))

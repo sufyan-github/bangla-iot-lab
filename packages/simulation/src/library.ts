@@ -124,3 +124,16 @@ export function sensorOutputFraction(
 export const RELAY_COIL_RESISTANCE = 70;
 export const RELAY_PULL_IN_CURRENT = 0.05;
 export const RELAY_DROP_OUT_CURRENT = 0.015;
+
+/** What each powered module draws from its supply, as a resistance at 5 V. */
+export const MODULE_SUPPLY_RESISTANCE = { servo: 500, ultrasonic: 330, lcd: 2500 } as const;
+/** A module counts as powered above this supply voltage. */
+export const MODULE_MIN_SUPPLY = 4;
+
+/** Arduino's Servo library: 544 µs is 0° and 2400 µs is 180°. */
+export const SERVO_MIN_PULSE_US = 544;
+export const SERVO_MAX_PULSE_US = 2400;
+/** HC-SR04: the echo starts about 460 µs after the trigger and lasts 58 µs per centimetre. */
+export const ULTRASONIC_ECHO_DELAY_MS = 0.46;
+export const ULTRASONIC_MS_PER_CM = 0.058;
+export const ULTRASONIC_MIN_TRIGGER_MS = 0.008;

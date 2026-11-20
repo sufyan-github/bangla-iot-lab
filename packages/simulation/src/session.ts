@@ -1,8 +1,9 @@
 import { UNO_PIN_COUNT, UnoBoard, type PinDrive } from '@banglalab/board-emulators';
 import { solveTimeStep, type Capacitor } from '@banglalab/circuit-engine';
 import type { CircuitDocument } from '@banglalab/shared';
-import { LOGIC_HIGH, LOGIC_LOW } from './library';
+import { LOGIC_HIGH, LOGIC_LOW, MODULE_MIN_SUPPLY } from './library';
 import { buildNetlist, type CircuitState, type Netlist } from './netlist';
+import { Peripherals, type ScheduledInput } from './peripherals';
 import {
   Observation,
   readSolution,
@@ -14,6 +15,8 @@ import {
 
 /** How long the processor runs between exchanges with the circuit, in simulated milliseconds. */
 const SLICE_MS = 1;
+/** Slice used when a part needs pulses timed more finely (an ultrasonic sensor's echo). */
+const FINE_SLICE_MS = 0.25;
 /** Longest time step used while capacitors are charging, in simulated milliseconds. */
 const CAPACITOR_STEP_MS = 0.1;
 
@@ -108,6 +111,12 @@ export class SimulationSession {
   private latest: StateSolution | null = null;
   /** Which relay contacts are closed; a relay remembers its position between solves. */
   private relays: Record<string, boolean> = {};
+  /** Servos, ultrasonic sensors and LCDs, which work by timing rather than voltage. */
+  private readonly peripherals = new Peripherals();
+  /** Input pulses sensors have promised, earliest first. */
+  private scheduled: ScheduledInput[] = [];
+  /** Ultrasonic sensors whose echo line is HIGH right now. */
+  private echo: Record<string, boolean> = {};
 
   /** Number of times the circuit was actually solved; exposed for tests and tuning. */
   solveCount = 0;
@@ -145,6 +154,8 @@ export class SimulationSession {
     for (const id of this.stored.keys()) {
       if (!document.components.some((c) => c.id === id)) this.stored.delete(id);
     }
+    this.peripherals.rewire(document);
+    this.scheduled = this.scheduled.filter((input) => this.boards.has(input.boardId));
     this.feedInputs();
   }
 
@@ -182,7 +193,21 @@ export class SimulationSession {
       events: [],
     };
     emulator.onPinChange((pin, drive, timeMs) => {
-      board.events.push({ timeMs: board.startedAt + timeMs, pin, drive });
+      const at = board.startedAt + timeMs;
+      board.events.push({ timeMs: at, pin, drive });
+      // Timing-based parts hear about the change at once, so a sensor's reply can be
+      // delivered at exactly the right moment later in this same run.
+      const replies = this.peripherals.pinChanged(
+        boardId,
+        pin,
+        drive === 'high',
+        at,
+        (other) => emulator.pinDrive(other) === 'high',
+      );
+      if (replies.length > 0) {
+        this.scheduled.push(...replies);
+        this.scheduled.sort((a, b) => a.timeMs - b.timeMs);
+      }
     });
     emulator.onSerial((text) => (board.serial += text));
     this.boards.set(boardId, board);
@@ -198,6 +223,7 @@ export class SimulationSession {
       boards,
       stored: Object.fromEntries(this.stored),
       relays: this.relays,
+      echo: this.echo,
     };
   }
 
@@ -205,6 +231,7 @@ export class SimulationSession {
     let key = '';
     for (const [id, board] of this.boards) key += `${id}:${board.drives.join(',')};`;
     for (const [id, closed] of Object.entries(this.relays)) if (closed) key += `${id};`;
+    for (const [id, high] of Object.entries(this.echo)) if (high) key += `${id}^;`;
     return key;
   }
 
@@ -272,8 +299,17 @@ export class SimulationSession {
   private feedInputs(): void {
     if (this.boards.size === 0) return;
     const solution = this.hasCapacitors ? this.latest : this.solveSteady();
+    this.peripherals.setPowered((id) => (solution?.parts[id]?.voltage ?? 0) >= MODULE_MIN_SUPPLY);
     for (const [id, board] of this.boards) {
       for (let pin = 0; pin < UNO_PIN_COUNT; pin++) {
+        if (this.peripherals.sensorInputs.has(`${id}:${pin}`)) {
+          // This input is driven by a sensor's timed pulses; it idles LOW.
+          if (board.inputLevel[pin] === undefined) {
+            board.inputLevel[pin] = false;
+            board.emulator.setDigitalInput(pin, false);
+          }
+          continue;
+        }
         const socket = `${id}.${pin < 14 ? `d${pin}` : `a${pin - 14}`}`;
         const sample = solution?.sockets[socket];
         // Nothing plugged in: a pull-up reads HIGH, a bare input reads LOW.
@@ -299,22 +335,42 @@ export class SimulationSession {
       this.time = end;
       return;
     }
+    const slice = this.peripherals.needsFineTiming ? FINE_SLICE_MS : SLICE_MS;
     while (this.time < end - 1e-9) {
-      const sliceEnd = Math.min(end, this.time + SLICE_MS);
-      const events: (RunningBoard['events'][number] & { board: RunningBoard })[] = [];
-      for (const board of this.boards.values()) {
+      const sliceEnd = Math.min(end, this.time + slice);
+      /** Everything that changes the circuit during this slice, to be replayed in order. */
+      const changes: { timeMs: number; apply(): void }[] = [];
+      for (const [boardId, board] of this.boards) {
+        // Run up to each promised sensor pulse, deliver it, and carry on.
+        for (;;) {
+          const input = this.scheduled.find((s) => s.boardId === boardId);
+          if (!input || input.timeMs > sliceEnd) break;
+          this.scheduled.splice(this.scheduled.indexOf(input), 1);
+          board.emulator.runUntil(input.timeMs - board.startedAt);
+          board.emulator.setDigitalInput(input.pin, input.level);
+          board.inputLevel[input.pin] = input.level;
+          changes.push({
+            timeMs: input.timeMs,
+            apply: () => (this.echo = { ...this.echo, [input.sensorId]: input.level }),
+          });
+        }
         board.emulator.runUntil(sliceEnd - board.startedAt);
-        for (const event of board.events) events.push({ ...event, board });
+        for (const event of board.events) {
+          changes.push({
+            timeMs: event.timeMs,
+            apply: () => (board.drives[event.pin] = event.drive),
+          });
+        }
         board.events = [];
       }
-      if (this.boards.size > 1) events.sort((a, b) => a.timeMs - b.timeMs);
+      changes.sort((a, b) => a.timeMs - b.timeMs);
 
       let cursor = this.time;
-      for (const event of events) {
-        const at = Math.min(event.timeMs, sliceEnd);
+      for (const change of changes) {
+        const at = Math.min(change.timeMs, sliceEnd);
         this.hold(at - cursor);
         cursor = Math.max(cursor, at);
-        event.board.drives[event.pin] = event.drive;
+        change.apply();
       }
       this.hold(sliceEnd - cursor);
       this.time = sliceEnd;
@@ -332,6 +388,9 @@ export class SimulationSession {
     const result = this.observation.interpret(this.document, {
       timeDependent: this.isTimeDependent,
     });
+    for (const [id, status] of Object.entries(this.peripherals.status())) {
+      if (result.readings[id]) Object.assign(result.readings[id], status);
+    }
     const sinceLastFrame = this.time - this.lastFrameAt;
     this.observation = new Observation();
     this.lastFrameAt = this.time;

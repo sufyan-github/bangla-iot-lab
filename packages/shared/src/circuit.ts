@@ -12,10 +12,11 @@ import { Value } from 'typebox/value';
  * 2 — adds the UNO board, push button, potentiometer and capacitor.
  * 3 — adds the switch, diode, LDR, buzzer, motor, NPN transistor, relay and
  *     the temperature, soil-moisture and IR sensor modules.
+ * 4 — adds the servo, ultrasonic distance sensor and character LCD.
  * Each version only adds part types, so an older document is valid in a newer
  * version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 3;
+export const CIRCUIT_SCHEMA_VERSION = 4;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -169,6 +170,55 @@ export const RelaySchema = Type.Object({
   props: noProps,
 });
 
+/** Hobby servo: its horn turns to the angle set by the width of the pulses on `signal`. */
+export const ServoSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('servo'),
+  pins: Type.Object({ gnd: Hole, vcc: Hole, signal: Hole }),
+  props: noProps,
+});
+
+/** Ultrasonic distance sensor (HC-SR04). `distance` is how far away the obstacle is, in cm. */
+export const UltrasonicSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('ultrasonic'),
+  pins: Type.Object({ vcc: Hole, trig: Hole, echo: Hole, gnd: Hole }),
+  props: Type.Object({ distance: Type.Number({ minimum: 2, maximum: 400 }) }),
+});
+
+/** Pins of a 16×2 character LCD (HD44780), in the order printed on the real module. */
+export const LCD_PINS = [
+  'vss',
+  'vdd',
+  'v0',
+  'rs',
+  'rw',
+  'e',
+  'd0',
+  'd1',
+  'd2',
+  'd3',
+  'd4',
+  'd5',
+  'd6',
+  'd7',
+  'a',
+  'k',
+] as const;
+
+/** 16×2 character LCD, driven through its 4-bit interface. */
+export const LcdSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('lcd'),
+  pins: Type.Object(
+    Object.fromEntries(LCD_PINS.map((pin) => [pin, Hole])) as Record<
+      (typeof LCD_PINS)[number],
+      typeof Hole
+    >,
+  ),
+  props: noProps,
+});
+
 /** Arduino UNO-compatible board. It sits beside the breadboard; wires plug into its sockets. */
 export const UnoSchema = Type.Object({
   id: Id,
@@ -193,6 +243,9 @@ export const ComponentSchema = Type.Union([
   SoilSensorSchema,
   IrSensorSchema,
   RelaySchema,
+  ServoSchema,
+  UltrasonicSchema,
+  LcdSchema,
   UnoSchema,
 ]);
 

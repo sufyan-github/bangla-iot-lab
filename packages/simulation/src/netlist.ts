@@ -24,6 +24,7 @@ import {
   PIN_INPUT_RESISTANCE,
   PIN_OUTPUT_RESISTANCE,
   PIN_PULLUP_RESISTANCE,
+  MODULE_SUPPLY_RESISTANCE,
   RELAY_COIL_RESISTANCE,
   SENSOR_RESISTANCE,
   SILICON_DIODE,
@@ -44,6 +45,8 @@ export interface CircuitState {
   stored?: Readonly<Record<string, number>>;
   /** Relays whose contact is closed at the moment. */
   relays?: Readonly<Record<string, boolean>>;
+  /** Ultrasonic sensors whose echo output is HIGH at the moment. */
+  echo?: Readonly<Record<string, boolean>>;
 }
 
 export const IDLE_STATE: CircuitState = { pressed: [], boards: {} };
@@ -62,7 +65,7 @@ export interface Netlist {
 }
 
 /** The electrical net an endpoint belongs to: a board strip or a terminal. */
-function netName(endpoint: string): string {
+export function netName(endpoint: string): string {
   if (isHole(endpoint)) return stripOf(endpoint);
   // An UNO's two ground sockets are the same piece of copper.
   return `terminal:${endpoint.replace(/\.gnd2$/, '.gnd')}`;
@@ -221,6 +224,29 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           ),
         );
         break;
+      case 'servo':
+      case 'ultrasonic':
+      case 'lcd': {
+        // Electrically these modules are a supply load; their signal pins are read by the
+        // peripheral models in the session rather than by the circuit solver.
+        const [supply, ground] =
+          component.type === 'lcd'
+            ? [component.pins.vdd, component.pins.vss]
+            : [component.pins.vcc, component.pins.gnd];
+        partDevice.set(
+          id,
+          add(resistor(id, node(supply), node(ground), MODULE_SUPPLY_RESISTANCE[component.type])),
+        );
+        if (component.type === 'ultrasonic') {
+          const echo = node(component.pins.echo);
+          add(
+            state.echo?.[id]
+              ? theveninSource(`${id}:echo`, echo, node(ground), UNO_VCC, 100)
+              : resistor(`${id}:echo`, echo, node(ground), 100),
+          );
+        }
+        break;
+      }
       case 'relay':
         partDevice.set(
           id,
