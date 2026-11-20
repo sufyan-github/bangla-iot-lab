@@ -16,7 +16,12 @@ const MAX_OUTPUT_BYTES = 256 * 1024;
  * job directory mounted at /work. There is no network, no /etc, no /home and
  * no environment, so `#include "/etc/passwd"` or `.incbin` have nothing to read.
  */
-function bwrapArgs(jobDir: string, tool: string, args: string[]): string[] {
+function bwrapArgs(
+  jobDir: string,
+  tool: string,
+  args: string[],
+  readOnlyPaths: string[],
+): string[] {
   return [
     '--unshare-all',
     '--die-with-parent',
@@ -43,6 +48,8 @@ function bwrapArgs(jobDir: string, tool: string, args: string[]): string[] {
     '/dev',
     '--tmpfs',
     '/tmp',
+    // Extra read-only inputs (the Arduino core), visible at their real paths.
+    ...readOnlyPaths.flatMap((dir) => ['--ro-bind', dir, dir]),
     '--bind',
     jobDir,
     '/work',
@@ -63,9 +70,10 @@ export function runTool(
   tool: string,
   args: string[],
   timeoutMs: number,
+  readOnlyPaths: string[] = [],
 ): Promise<RunResult> {
   const [command, commandArgs] =
-    mode === 'bwrap' ? ['bwrap', bwrapArgs(jobDir, tool, args)] : [tool, args];
+    mode === 'bwrap' ? ['bwrap', bwrapArgs(jobDir, tool, args, readOnlyPaths)] : [tool, args];
 
   return new Promise((resolve, reject) => {
     execFile(

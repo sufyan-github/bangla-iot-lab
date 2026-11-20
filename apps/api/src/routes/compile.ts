@@ -5,7 +5,7 @@ import type { AppDependencies } from '../app';
 const CompileBody = Type.Object(
   {
     board: Type.Literal('uno'),
-    language: Type.Literal('c'),
+    language: Type.Union([Type.Literal('c'), Type.Literal('arduino')]),
     source: Type.String({ minLength: 1, maxLength: 64 * 1024 }),
   },
   { additionalProperties: false },

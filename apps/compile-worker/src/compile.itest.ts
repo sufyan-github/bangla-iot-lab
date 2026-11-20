@@ -41,10 +41,10 @@ describe('compile worker (bubblewrap sandbox)', () => {
 
     const board = new UnoBoard(body.hex);
     const toggles: number[] = [];
-    board.onPinChange((pin, _high, timeMs) => pin === 13 && toggles.push(timeMs));
+    board.onPinChange((pin, _drive, timeMs) => pin === 13 && toggles.push(timeMs));
     board.runFor(1200);
-    expect(toggles).toHaveLength(3);
-    expect(toggles[1]! - toggles[0]!).toBeCloseTo(500, 0);
+    expect(toggles).toHaveLength(4); // becomes an output, then high, low, high
+    expect(toggles[2]! - toggles[1]!).toBeCloseTo(500, 0);
   });
 
   it('serves an identical request from the content-addressed cache', async () => {

@@ -3,11 +3,20 @@ import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { WorkerConfig } from './config';
-import { runTool } from './sandbox';
+import {
+  ARDUINO_CORE_VERSION,
+  ARDUINO_FLAGS,
+  CXX_FLAGS,
+  ensureArduinoCore,
+  type ArduinoCore,
+} from './arduino-core';
+import { runTool, type RunResult } from './sandbox';
+import { sketchToCpp } from './sketch';
 
 export interface CompileRequest {
   board: 'uno';
-  language: 'c';
+  /** `c`: plain avr-libc C. `arduino`: an Arduino sketch with setup() and loop(). */
+  language: 'c' | 'arduino';
   source: string;
 }
 
@@ -45,13 +54,15 @@ const GCC_FLAGS = [
   '-fno-diagnostics-show-caret',
 ];
 /** Bump when the build recipe changes in a way the flags do not capture. */
-const RECIPE_VERSION = 1;
+const RECIPE_VERSION = 2;
 
 /** Turns gcc's "sketch.c:12:5: error: ..." lines into structured diagnostics. */
 export function parseGccDiagnostics(stderr: string): CompileDiagnostic[] {
   const diagnostics: CompileDiagnostic[] = [];
   for (const line of stderr.split('\n')) {
-    const match = /^sketch\.c:(\d+):(?:(\d+):)? (?:fatal )?(error|warning): (.*)$/.exec(line);
+    const match = /^sketch\.(?:c|ino):(\d+):(?:(\d+):)? (?:fatal )?(error|warning): (.*)$/.exec(
+      line,
+    );
     if (!match) continue;
     diagnostics.push({
       line: Number(match[1]),
@@ -110,7 +121,9 @@ export class Compiler {
    * toolchain with identical flags always produces identical firmware.
    */
   cacheKey(request: CompileRequest): string {
-    const parts = [RECIPE_VERSION, this.toolchain, GCC_FLAGS, request.board, request.language];
+    const recipe =
+      request.language === 'arduino' ? [ARDUINO_CORE_VERSION, ARDUINO_FLAGS, CXX_FLAGS] : GCC_FLAGS;
+    const parts = [RECIPE_VERSION, this.toolchain, recipe, request.board, request.language];
     return createHash('sha256')
       .update(JSON.stringify(parts))
       .update('\0')
@@ -142,35 +155,71 @@ export class Compiler {
     return { ...outcome, cached: false, toolchain: this.toolchain };
   }
 
+  private core: Promise<ArduinoCore> | undefined;
+
+  /** Builds the Arduino core on first use (a few seconds), then reuses it. */
+  prepareArduino(): Promise<ArduinoCore> {
+    this.core ??= ensureArduinoCore(this.config.cacheDir, this.toolchain);
+    return this.core;
+  }
+
   private async build(request: CompileRequest): Promise<CompileOutcome> {
     const { sandbox, timeoutMs } = this.config;
     const jobDir = await mkdtemp(path.join(tmpdir(), 'banglalab-compile-'));
+    const run = (tool: string, args: string[], readOnly: string[] = []) =>
+      runTool(sandbox, jobDir, tool, args, timeoutMs, readOnly);
     try {
-      await writeFile(path.join(jobDir, 'sketch.c'), request.source);
-
-      const gcc = await runTool(
-        sandbox,
-        jobDir,
-        'avr-gcc',
-        [...GCC_FLAGS, '-o', 'sketch.elf', 'sketch.c'],
-        timeoutMs,
-      );
-      if (gcc.timedOut) return { ok: false, reason: 'timeout', diagnostics: [] };
-      if (gcc.exitCode !== 0) {
+      let compiled: RunResult;
+      if (request.language === 'arduino') {
+        const core = await this.prepareArduino();
+        await writeFile(path.join(jobDir, 'sketch.cpp'), sketchToCpp(request.source));
+        compiled = await run(
+          'avr-g++',
+          [...ARDUINO_FLAGS, ...CXX_FLAGS, '-Wall', '-c', 'sketch.cpp', '-o', 'sketch.o'],
+          core.readOnlyPaths,
+        );
+        if (compiled.exitCode === 0 && !compiled.timedOut) {
+          const warnings = compiled.stderr;
+          compiled = await run(
+            'avr-gcc',
+            [
+              '-mmcu=atmega328p',
+              '-Os',
+              '-Wl,--gc-sections',
+              '-o',
+              'sketch.elf',
+              'sketch.o',
+              core.archive,
+              '-lm',
+            ],
+            core.readOnlyPaths,
+          );
+          compiled.stderr = warnings + compiled.stderr;
+        }
+      } else {
+        await writeFile(path.join(jobDir, 'sketch.c'), request.source);
+        compiled = await run('avr-gcc', [...GCC_FLAGS, '-o', 'sketch.elf', 'sketch.c']);
+      }
+      if (compiled.timedOut) return { ok: false, reason: 'timeout', diagnostics: [] };
+      if (compiled.exitCode !== 0) {
         // The linker refuses programs that overflow the chip's memory regions.
-        if (/is not within region|region \S+ overflowed|will not fit in region/.test(gcc.stderr)) {
+        if (
+          /is not within region|region \S+ overflowed|will not fit in region/.test(compiled.stderr)
+        ) {
           return { ok: false, reason: 'program-too-large', diagnostics: [] };
         }
-        const diagnostics = parseGccDiagnostics(gcc.stderr);
+        const diagnostics = parseGccDiagnostics(compiled.stderr).filter(
+          (d) => d.severity === 'error',
+        );
         if (diagnostics.length === 0) {
           // Linker errors and the like carry no source position.
-          const message = gcc.stderr.trim().split('\n').slice(-3).join(' ').slice(0, 500);
+          const message = explainLinkError(compiled.stderr);
           diagnostics.push({ line: 1, column: 1, severity: 'error', message });
         }
         return { ok: false, reason: 'compile-error', diagnostics };
       }
 
-      const size = await runTool(sandbox, jobDir, 'avr-size', ['sketch.elf'], timeoutMs);
+      const size = await run('avr-size', ['sketch.elf']);
       const sizes = /^\s*(\d+)\s+(\d+)\s+(\d+)/m.exec(size.stdout);
       if (size.exitCode !== 0 || !sizes) throw new Error(`avr-size failed: ${size.stderr}`);
       const [text, data, bss] = sizes.slice(1).map(Number) as [number, number, number];
@@ -180,13 +229,14 @@ export class Compiler {
         return { ok: false, reason: 'program-too-large', diagnostics: [] };
       }
 
-      const objcopy = await runTool(
-        sandbox,
-        jobDir,
-        'avr-objcopy',
-        ['-O', 'ihex', '-R', '.eeprom', 'sketch.elf', 'sketch.hex'],
-        timeoutMs,
-      );
+      const objcopy = await run('avr-objcopy', [
+        '-O',
+        'ihex',
+        '-R',
+        '.eeprom',
+        'sketch.elf',
+        'sketch.hex',
+      ]);
       if (objcopy.exitCode !== 0) throw new Error(`avr-objcopy failed: ${objcopy.stderr}`);
 
       const hex = await readFile(path.join(jobDir, 'sketch.hex'), 'utf8');
@@ -195,4 +245,11 @@ export class Compiler {
       await rm(jobDir, { recursive: true, force: true });
     }
   }
+}
+
+/** Shortens a linker failure to the part a student can act on. */
+function explainLinkError(stderr: string): string {
+  const undefinedSymbol = /undefined reference to `([^']+)'/.exec(stderr);
+  if (undefinedSymbol) return `undefined reference to '${undefinedSymbol[1]}'`;
+  return stderr.trim().split('\n').slice(-3).join(' ').slice(0, 500);
 }

@@ -23,15 +23,16 @@ describe('Intel HEX parser', () => {
 describe('UNO emulator running the blink firmware', () => {
   it('toggles pin 13 every 500 ms of simulated time', () => {
     const board = new UnoBoard(blinkHex);
-    const changes: { high: boolean; timeMs: number }[] = [];
-    board.onPinChange((pin, high, timeMs) => {
-      if (pin === 13) changes.push({ high, timeMs });
+    const changes: { drive: string; timeMs: number }[] = [];
+    board.onPinChange((pin, drive, timeMs) => {
+      if (pin === 13) changes.push({ drive, timeMs });
     });
 
     board.runFor(2100);
 
-    expect(changes.map((c) => c.high)).toEqual([true, false, true, false, true]);
-    for (let i = 1; i < changes.length; i++) {
+    // The pin first becomes an output (driving low), then the program toggles it.
+    expect(changes.map((c) => c.drive)).toEqual(['low', 'high', 'low', 'high', 'low', 'high']);
+    for (let i = 2; i < changes.length; i++) {
       const period = changes[i]!.timeMs - changes[i - 1]!.timeMs;
       expect(Math.abs(period - 500)).toBeLessThan(1); // within 0.2 % of the programmed delay
     }
@@ -51,6 +52,9 @@ describe('UNO emulator running the blink firmware', () => {
     const board = new UnoBoard(blinkHex);
     board.runFor(10);
     expect(board.digitalRead(12)).toBe(false);
+    expect(board.pinDrive(12)).toBe('input'); // pins start as high-impedance inputs
+    expect(board.pinDrive(13)).toBe('high');
     expect(() => board.digitalRead(20)).toThrow(RangeError);
+    expect(() => board.setAnalogInput(6, 1)).toThrow(RangeError);
   });
 });
