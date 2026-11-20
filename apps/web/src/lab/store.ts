@@ -14,9 +14,10 @@ import {
   type EditError,
   type EditResult,
 } from '@banglalab/shared';
-import type { BoardStatus, SimulationFrame, SimulationResult } from '@banglalab/simulation';
+import type { BoardStatus, Probe, SimulationFrame, SimulationResult } from '@banglalab/simulation';
 import { create } from 'zustand';
 import type { BoardProgram, ProjectContent } from '../storage/projects';
+import { signals } from './signals';
 import { starterProgram } from './starters';
 
 export type Tool = 'select' | 'wire' | BoardPartType;
@@ -46,6 +47,8 @@ interface LabState {
   uploads: Record<string, number>;
   /** Serial output received from each board since the circuit was started. */
   serial: Record<string, string>;
+  /** Signals the instruments are recording. */
+  probes: Probe[];
   /** Why the last edit was refused, shown briefly to the student. */
   notice: EditError | null;
   saveState: SaveState;
@@ -69,6 +72,7 @@ interface LabState {
   /** Puts firmware on the board; a running circuit restarts that board's program. */
   uploadProgram(boardId: string, program: BoardProgram): void;
   setPressed(id: string, down: boolean): void;
+  setProbes(probes: Probe[]): void;
   setNotice(notice: EditError | null): void;
   setRunning(running: boolean): void;
   receiveFrame(frame: SimulationFrame): void;
@@ -95,6 +99,7 @@ export const useLab = create<LabState>((set, get) => {
     circuit: emptyCircuit(),
     programs: {},
     uploads: {},
+    probes: [],
     selectedId: null,
     tool: 'select',
     wireStart: null,
@@ -181,8 +186,12 @@ export const useLab = create<LabState>((set, get) => {
       if (down) pressed.push(id);
       if (pressed.length !== get().pressed.length) set({ pressed });
     },
+    setProbes: (probes) => set({ probes }),
     setNotice: (notice) => set({ notice }),
-    setRunning: (running) => set(running ? { running } : STOPPED),
+    setRunning(running) {
+      if (running) signals.reset(get().probes);
+      set(running ? { running } : STOPPED);
+    },
 
     receiveFrame(frame) {
       if (!get().running) return; // a frame that was already on its way when the circuit stopped
@@ -194,6 +203,7 @@ export const useLab = create<LabState>((set, get) => {
           [boardId]: ((serial[boardId] ?? '') + board.serial).slice(-SERIAL_LIMIT),
         };
       }
+      signals.append(frame.trace, frame.timeMs);
       set({ result: frame.result, boards: frame.boards, serial });
     },
     clearSerial: (boardId) => set({ serial: { ...get().serial, [boardId]: '' } }),

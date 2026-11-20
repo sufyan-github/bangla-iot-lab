@@ -1,5 +1,5 @@
 import type { CircuitDocument } from '@banglalab/shared';
-import { SimulationSession, type SimulationFrame } from '@banglalab/simulation';
+import { SimulationSession, type Probe, type SimulationFrame } from '@banglalab/simulation';
 import { expose } from 'comlink';
 
 /** Simulated time never runs ahead of real time by more than this per tick. */
@@ -11,6 +11,7 @@ let report: ((frame: SimulationFrame) => void) | null = null;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let lastTick = 0;
 let tickCount = 0;
+let probes: Probe[] = [];
 
 function tick() {
   if (!session || !report) return;
@@ -48,6 +49,7 @@ const api = {
     onFrame: (frame: SimulationFrame) => void,
   ): string[] {
     session = new SimulationSession(document, pressed);
+    session.setProbes(probes);
     report = onFrame;
     const failed: string[] = [];
     for (const [boardId, hex] of Object.entries(firmware)) {
@@ -77,6 +79,12 @@ const api = {
     }
     schedule();
     return true;
+  },
+
+  /** Chooses the signals recorded for the oscilloscope; remembered across runs. */
+  setProbes(next: Probe[]): void {
+    probes = next;
+    session?.setProbes(next);
   },
 
   stop(): void {

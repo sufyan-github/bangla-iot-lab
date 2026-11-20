@@ -9,6 +9,7 @@ import { Canvas } from './Canvas';
 import { CodePanel } from './CodePanel';
 import { Palette } from './Palette';
 import { Inspector, Messages, Meter } from './panels';
+import { SignalsPanel } from './SignalsPanel';
 import { useLab } from './store';
 
 const SAVE_DELAY_MS = 400;
@@ -90,12 +91,14 @@ function useLiveSimulation() {
     for (const [boardId, program] of Object.entries(programs)) {
       if (program.hex) firmware[boardId] = program.hex;
     }
+    void simulation().setProbes(useLab.getState().probes);
     void simulation().start(circuit, pressed, firmware, proxy(receiveFrame));
 
     const unsubscribe = useLab.subscribe((state, previous) => {
       if (state.circuit !== previous.circuit || state.pressed !== previous.pressed) {
         void simulation().update(state.circuit, state.pressed);
       }
+      if (state.probes !== previous.probes) void simulation().setProbes(state.probes);
       for (const [boardId, count] of Object.entries(state.uploads)) {
         const hex = state.programs[boardId]?.hex;
         if (hex && count !== previous.uploads[boardId]) void simulation().upload(boardId, hex);
@@ -150,6 +153,12 @@ function Notice() {
   );
 }
 
+const TAB_LABELS = {
+  circuit: 'code.tabCircuit',
+  code: 'code.tabCode',
+  signals: 'code.tabSignals',
+} as const;
+
 export function LabPage() {
   const { projectId } = useParams();
   const status = useProject(projectId);
@@ -161,7 +170,7 @@ export function LabPage() {
   const running = useLab((s) => s.running);
   const saveState = useLab((s) => s.saveState);
   const boardId = useLab((s) => s.circuit.components.find((c) => c.type === 'uno')?.id);
-  const [tab, setTab] = useState<'circuit' | 'code'>('circuit');
+  const [tab, setTab] = useState<'circuit' | 'code' | 'signals'>('circuit');
   const showCode = tab === 'code' && boardId !== undefined;
   const { setName, setRunning } = useLab.getState();
   const { t } = useT();
@@ -233,9 +242,10 @@ export function LabPage() {
       <aside
         className={`w-full shrink-0 overflow-y-auto border-line bg-surface lg:border-l ${showCode ? 'lg:w-[34rem]' : 'lg:w-[21rem]'}`}
       >
-        {boardId && (
-          <div role="tablist" className="flex border-b border-line">
-            {(['circuit', 'code'] as const).map((id) => (
+        <div role="tablist" className="flex border-b border-line">
+          {(['circuit', 'code', 'signals'] as const)
+            .filter((id) => id !== 'code' || boardId !== undefined)
+            .map((id) => (
               <button
                 key={id}
                 type="button"
@@ -249,13 +259,14 @@ export function LabPage() {
                     : 'border-transparent text-ink-soft hover:text-ink'
                 }`}
               >
-                {t(id === 'circuit' ? 'code.tabCircuit' : 'code.tabCode')}
+                {t(TAB_LABELS[id])}
               </button>
             ))}
-          </div>
-        )}
+        </div>
         {showCode ? (
           <CodePanel boardId={boardId} />
+        ) : tab === 'signals' ? (
+          <SignalsPanel />
         ) : (
           <>
             <Messages />

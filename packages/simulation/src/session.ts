@@ -28,11 +28,28 @@ export interface BoardStatus {
   serial: string;
 }
 
+/**
+ * A signal to record over time, as an instrument probe would: the voltage
+ * across a part ("part:LED1") or on a board socket ("socket:UNO1.d9").
+ */
+export type Probe = `part:${string}` | `socket:${string}`;
+
+/** What the probes saw since the previous frame. Each value holds until the next time. */
+export interface SignalTrace {
+  probes: Probe[];
+  /** Simulated time of each sample, milliseconds. */
+  times: number[];
+  /** values[p][i] is probe p at times[i], in volts. */
+  values: number[][];
+}
+
 export interface SimulationFrame {
   /** Simulated time since the session started, milliseconds. */
   timeMs: number;
   result: SimulationResult;
   boards: Record<string, BoardStatus>;
+  /** Present only while probes are set. */
+  trace?: SignalTrace;
 }
 
 interface RunningBoard {
@@ -91,6 +108,11 @@ export class SimulationSession {
   /** Number of times the circuit was actually solved; exposed for tests and tuning. */
   solveCount = 0;
 
+  private probes: Probe[] = [];
+  private trace: SignalTrace = { probes: [], times: [], values: [] };
+  /** Time reached by the recording, which runs ahead of `time` inside a slice. */
+  private clock = 0;
+
   constructor(document: CircuitDocument, pressed: readonly string[] = []) {
     this.document = document;
     this.pressed = pressed;
@@ -120,6 +142,27 @@ export class SimulationSession {
       if (!document.components.some((c) => c.id === id)) this.stored.delete(id);
     }
     this.feedInputs();
+  }
+
+  /** Chooses which signals to record for the oscilloscope and logic analyser. */
+  setProbes(probes: readonly Probe[]): void {
+    this.probes = [...probes];
+    this.trace = { probes: this.probes, times: [], values: this.probes.map(() => []) };
+  }
+
+  /** Adds a sample to the trace, unless nothing changed since the last one. */
+  private record(solution: StateSolution | null): void {
+    if (this.probes.length === 0) return;
+    const { times, values } = this.trace;
+    const sample = this.probes.map((probe) => {
+      const id = probe.slice(probe.indexOf(':') + 1);
+      const source = probe.startsWith('part:') ? solution?.parts[id] : solution?.sockets[id];
+      return source?.voltage ?? 0;
+    });
+    const last = times.length - 1;
+    if (last >= 0 && sample.every((v, p) => Math.abs(v - values[p]![last]!) < 1e-6)) return;
+    times.push(this.clock);
+    sample.forEach((v, p) => values[p]!.push(v));
   }
 
   /** Uploads a program to a board and starts it from reset. Throws if the firmware is not valid. */
@@ -190,11 +233,17 @@ export class SimulationSession {
   private hold(milliseconds: number): void {
     if (milliseconds <= 0) return;
     if (!this.hasCapacitors) {
-      this.observation.add(this.solveSteady(), milliseconds);
+      const solution = this.solveSteady();
+      this.record(solution);
+      this.observation.add(solution, milliseconds);
+      this.clock += milliseconds;
     } else {
       for (let remaining = milliseconds; remaining > 1e-9;) {
         const step = Math.min(remaining, CAPACITOR_STEP_MS);
-        this.observation.add(this.stepCapacitors(step), step);
+        const solution = this.stepCapacitors(step);
+        this.clock += step;
+        this.record(solution); // the state reached at the end of the step
+        this.observation.add(solution, step);
         remaining -= step;
       }
     }
@@ -230,6 +279,7 @@ export class SimulationSession {
   /** Moves simulated time forward. */
   advance(milliseconds: number): void {
     const end = this.time + milliseconds;
+    this.clock = this.time;
     if (!this.isTimeDependent) {
       this.hold(milliseconds);
       this.time = end;
@@ -290,6 +340,11 @@ export class SimulationSession {
       board.highTime.fill(0);
       board.serial = '';
     }
-    return { timeMs: this.time, result, boards };
+    const frame: SimulationFrame = { timeMs: this.time, result, boards };
+    if (this.probes.length > 0) {
+      frame.trace = this.trace;
+      this.trace = { probes: this.probes, times: [], values: this.probes.map(() => []) };
+    }
+    return frame;
   }
 }

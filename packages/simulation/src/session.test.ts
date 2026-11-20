@@ -242,16 +242,16 @@ describe('capacitors charge and discharge over time', () => {
     const session = new SimulationSession(rcCircuit());
     expect(session.isTimeDependent).toBe(true);
     session.advance(100);
-    let frame = session.frame();
+    session.frame(); // start a fresh observation, so the next frame is an instant, not an average
     session.advance(1);
-    frame = session.frame();
+    let frame = session.frame();
     // After one time constant: 63 % of 9 V.
     expect(frame.result.readings.C1!.voltage).toBeCloseTo(9 * (1 - Math.exp(-1)), 1);
     expect(frame.result.readings.C1!.current).toBeCloseTo(frame.result.readings.R1!.current, 9);
     expect(frame.result.readings.R1!.current).toBeGreaterThan(0.003);
 
     session.advance(900);
-    frame = session.frame();
+    session.frame();
     session.advance(1);
     frame = session.frame();
     expect(frame.result.readings.C1!.voltage).toBeCloseTo(9, 2);
@@ -324,5 +324,71 @@ describe('capacitors charge and discharge over time', () => {
     expect(settled.readings.C1!.voltage).toBeCloseTo(9, 6);
     expect(settled.readings.R1!.current).toBeCloseTo(0, 9);
     expect(settled.diagnostics).toEqual([]);
+  });
+});
+
+describe('signal recording for the oscilloscope and logic analyser', () => {
+  it('records the exact moments a pin changes', () => {
+    const session = new SimulationSession(unoCircuitExample());
+    session.setProbes(['socket:UNO1.d13', 'part:LED1']);
+    session.loadFirmware('UNO1', firmware('blink'));
+    const times: number[] = [];
+    const pin: number[] = [];
+    const ledVolts: number[] = [];
+    for (const frame of run(session, 1600)) {
+      times.push(...frame.trace!.times);
+      pin.push(...frame.trace!.values[0]!);
+      ledVolts.push(...frame.trace!.values[1]!);
+    }
+    // Each frame opens with one sample; beyond that there is one per change and nothing in
+    // between: input at reset, then high, low, high, low.
+    const changes = pin.filter((v, i) => i === 0 || Math.abs(v - pin[i - 1]!) > 1e-6);
+    expect(changes.length).toBeLessThanOrEqual(6);
+    expect(pin.length).toBeLessThanOrEqual(32 + 6);
+    const rises = times.filter((_, i) => i > 0 && pin[i]! > 4 && pin[i - 1]! < 4);
+    const falls = times.filter((_, i) => i > 0 && pin[i]! < 1 && pin[i - 1]! > 4);
+    expect(rises[1]! - rises[0]!).toBeCloseTo(1000, 0);
+    expect(falls[0]! - rises[0]!).toBeCloseTo(500, 0);
+    expect(Math.max(...ledVolts)).toBeCloseTo(1.78, 1);
+  });
+
+  it('samples a PWM pin at its real frequency and duty cycle', () => {
+    const session = new SimulationSession(ledOnPin9());
+    session.setProbes(['socket:UNO1.d9']);
+    session.loadFirmware('UNO1', firmware('knob')); // knob at half: analogWrite(9, 127)
+    run(session, 300);
+    const { times, values } = (session.advance(100), session.frame()).trace!;
+    const rising = times.filter((_, i) => i > 0 && values[0]![i]! > 4 && values[0]![i - 1]! < 1);
+    const period = (rising.at(-1)! - rising[0]!) / (rising.length - 1);
+    expect(1000 / period).toBeCloseTo(490, -1); // Arduino PWM on pin 9 is about 490 Hz
+  });
+
+  it('records a capacitor charging as a smooth curve', () => {
+    const document: CircuitDocument = {
+      ...emptyCircuit(),
+      components: [
+        { id: 'BAT1', type: 'battery', props: { voltage: 9 } },
+        { id: 'R1', type: 'resistor', pins: { a: 'a1', b: 'a5' }, props: { resistance: 1000 } },
+        { id: 'C1', type: 'capacitor', pins: { a: 'b5', b: 'b7' }, props: { capacitance: 100e-6 } },
+      ],
+      wires: [
+        { id: 'W1', from: 'BAT1.pos', to: 'b1', color: '#000000' },
+        { id: 'W2', from: 'c7', to: 'BAT1.neg', color: '#000000' },
+      ],
+    };
+    const session = new SimulationSession(document);
+    session.setProbes(['part:C1']);
+    session.advance(100);
+    const { times, values } = session.frame().trace!;
+    expect(times.length).toBeGreaterThan(500);
+    for (let i = 1; i < times.length; i++)
+      expect(values[0]![i]!).toBeGreaterThan(values[0]![i - 1]!);
+    expect(values[0]!.at(-1)).toBeCloseTo(9 * (1 - Math.exp(-1)), 1);
+  });
+
+  it('adds no trace when no probes are set', () => {
+    const session = new SimulationSession(unoCircuitExample());
+    session.advance(10);
+    expect(session.frame().trace).toBeUndefined();
   });
 });

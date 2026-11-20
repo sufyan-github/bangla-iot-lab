@@ -1,6 +1,12 @@
 export * from './library';
 export { IDLE_STATE, buildNetlist, type CircuitState, type Netlist } from './netlist';
-export { SimulationSession, type BoardStatus, type SimulationFrame } from './session';
+export {
+  SimulationSession,
+  type BoardStatus,
+  type Probe,
+  type SignalTrace,
+  type SimulationFrame,
+} from './session';
 export {
   simulate,
   type Diagnostic,

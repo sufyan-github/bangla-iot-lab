@@ -148,3 +148,64 @@ test('uploading is clearly unavailable offline, and ready-made programs still wo
   await page.getByTestId('starter').selectOption('blink');
   await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
 });
+
+test('the oscilloscope and logic analyser show the blinking pin', async ({ page }) => {
+  await openUnoExample(page);
+  await page.getByTestId('tab-signals').click();
+  await expect(page.getByTestId('channel-1')).toHaveValue('part:LED1');
+  await page.getByTestId('run').click();
+
+  // LED voltage swings between dark (about 0 V) and lit (about 1.78 V), half the time each.
+  const stats = page.getByTestId('stats-1');
+  await expect
+    .poll(async () => Number(await stats.getAttribute('data-max')), { timeout: 6000 })
+    .toBeGreaterThan(1.7);
+  expect(Number(await stats.getAttribute('data-max'))).toBeLessThan(1.9);
+  await page.getByTestId('span-5000').click();
+  // Over several blinks the average settles near half the lit voltage (about 0.9 V).
+  await expect
+    .poll(
+      async () => {
+        const average = Number(await stats.getAttribute('data-average'));
+        return average > 0.6 && average < 1.2;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(true);
+  expect(Math.abs(Number(await stats.getAttribute('data-min')))).toBeLessThan(0.05);
+
+  // A second channel on the pin itself: 0 V to nearly 5 V.
+  await page.getByTestId('channel-2').selectOption('socket:UNO1.d13');
+  const pin = page.getByTestId('stats-2');
+  await expect
+    .poll(async () => Number(await pin.getAttribute('data-max')), { timeout: 6000 })
+    .toBeGreaterThan(4.5);
+});
+
+test('a capacitor charges over time on the oscilloscope', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await page.getByTestId('tool-battery').click();
+  await page.getByTestId('tool-resistor').click();
+  await tap(page, 'a5');
+  await page.getByTestId('tool-capacitor').click();
+  await tap(page, 'b9');
+  await page.getByTestId('tool-wire').click();
+  for (const [from, to] of [
+    ['BAT1.pos', 'c5'],
+    ['c11', 'BAT1.neg'],
+  ]) {
+    await tap(page, from);
+    await tap(page, to);
+  }
+  // 330 Ω and 100 µF: time constant 33 ms, so it is full within a fraction of a second.
+  await page.getByTestId('tab-signals').click();
+  await expect(page.getByTestId('channel-1')).toHaveValue('part:C1');
+  await page.getByTestId('run').click();
+  const stats = page.getByTestId('stats-1');
+  await expect
+    .poll(async () => Number(await stats.getAttribute('data-max')), { timeout: 6000 })
+    .toBeGreaterThan(8.9);
+  expect(Number(await stats.getAttribute('data-max'))).toBeLessThanOrEqual(9.001);
+  expect(Number(await stats.getAttribute('data-min'))).toBeLessThan(2); // it started empty
+});
