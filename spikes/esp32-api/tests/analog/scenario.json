@@ -1,0 +1,31 @@
+{
+  "runMs": 2500,
+  "script": ["0 a 34 0", "500 a 34 3300", "1000 a 34 2000", "1500 a 34 1000", "2000 a 34 5000"],
+  "expect": [
+    {
+      "serial": "raw 0 mv 0 percent 0\\n"
+    },
+    {
+      "serial": "raw 4095 mv 3300 percent 100\\n",
+      "count": 4
+    },
+    {
+      "serial": "raw 2481 mv 2000 percent 60\\n"
+    },
+    {
+      "serial": "raw 1240 mv 1000 percent 30\\n"
+    },
+    {
+      "level": [26, 400, 0]
+    },
+    {
+      "level": [26, 700, 1]
+    },
+    {
+      "level": [26, 1300, 1]
+    },
+    {
+      "level": [26, 1700, 0]
+    }
+  ]
+}

@@ -16,6 +16,7 @@ export default tseslint.config(
       'private/**',
       'data/private/**',
       'apps/api/drizzle/**',
+      '.claude/worktrees/**',
     ],
   },
   js.configs.recommended,

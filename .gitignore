@@ -16,3 +16,6 @@ vendor
 private
 data/private
 apps/web/public/licences
+
+# Working copies made by tools for side tasks.
+.claude/worktrees

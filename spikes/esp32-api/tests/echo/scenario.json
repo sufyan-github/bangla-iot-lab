@@ -1,0 +1,21 @@
+{
+  "runMs": 2000,
+  "script": ["500 s   set 42  ", "1000 s 73 volts"],
+  "expect": [
+    {
+      "serial": "^ready\\r\\n"
+    },
+    {
+      "serial": "got: SET 42\\r\\n"
+    },
+    {
+      "serial": "length 6, number 0, starts with s: 1"
+    },
+    {
+      "serial": "joined set/3\\.14/FF"
+    },
+    {
+      "serial": "length 8, number 73, starts with s: 0"
+    }
+  ]
+}

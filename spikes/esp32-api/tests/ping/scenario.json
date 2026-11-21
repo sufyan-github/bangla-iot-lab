@@ -1,0 +1,17 @@
+{
+  "runMs": 2000,
+  "script": ["0 pulse 19 583", "1000 pulse 19 0"],
+  "expect": [
+    {
+      "serial": "583 us, 10\\.0 cm\\n",
+      "count": 5
+    },
+    {
+      "serial": "no echo",
+      "count": 5
+    },
+    {
+      "highFor": [18, 10, 4]
+    }
+  ]
+}
