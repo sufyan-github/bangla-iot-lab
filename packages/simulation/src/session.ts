@@ -72,6 +72,8 @@ const EMPTY_SOLUTION: StateSolution = {
   parts: {},
   wires: {},
   sockets: {},
+  nodes: {},
+  legs: {},
   shorted: [],
   delivering: false,
   bridged: [],

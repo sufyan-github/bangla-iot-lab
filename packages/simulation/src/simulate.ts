@@ -1,4 +1,4 @@
-import { solveDc, type Solution } from '@banglalab/circuit-engine';
+import { solveDc, type Device, type NpnTransistor, type Solution } from '@banglalab/circuit-engine';
 import { UNO_TERMINALS, type CircuitDocument } from '@banglalab/shared';
 import {
   BUZZER_ON_VOLTAGE,
@@ -72,6 +72,16 @@ export interface SimulationResult {
   wireCurrents: Record<string, number>;
   /** Board sockets in use, keyed "UNO1.d13": volts above GND and amperes flowing out of the socket. */
   sockets: Record<string, { voltage: number; current: number }>;
+  /**
+   * Average volts above ground at every net that something is connected to,
+   * keyed by `netName`. A hole that is missing here is joined to nothing.
+   */
+  nodeVoltages: Record<string, number>;
+  /**
+   * Average amperes flowing into each part through each of its legs, keyed
+   * "R1.a" or "UNO1.d13". A part's legs add up to zero: what goes in comes out.
+   */
+  legCurrents: Record<string, number>;
   diagnostics: Diagnostic[];
   iterations: number;
 }
@@ -86,6 +96,10 @@ export interface StateSolution {
   parts: Record<string, Sample>;
   wires: Record<string, number>;
   sockets: Record<string, Sample>;
+  /** Volts at every net, by net name. */
+  nodes: Record<string, number>;
+  /** Amperes into each part through each leg, keyed "R1.a". */
+  legs: Record<string, number>;
   /** Batteries pushed below half their voltage, or a board supply past its limit. */
   shorted: string[];
   /** True when any source is delivering or absorbing a noticeable current. */
@@ -163,6 +177,8 @@ export function readSolution(
     parts: {},
     wires: {},
     sockets: {},
+    nodes: {},
+    legs: {},
     shorted: [],
     delivering: false,
     bridged: netlist.bridgedParts,
@@ -235,6 +251,58 @@ export function readSolution(
   for (const wire of document.wires) {
     result.wires[wire.id] = netlist.wireDevice.get(wire.id)?.current(solution) ?? 0;
   }
+
+  for (const [name, node] of netlist.nodeNames) result.nodes[name] = solution.voltage(node);
+
+  // Current into a device at one of its nodes. A device's current runs from its first
+  // terminal to its second; a transistor has a collector and a base current, and the
+  // emitter carries both back out.
+  const entering = (device: Device, node: number): number => {
+    const [first, second, third] = device.nodes;
+    if (third !== undefined && 'baseCurrent' in device) {
+      const collector = device.current(solution);
+      const base = (device as NpnTransistor).baseCurrent(solution);
+      return (
+        (first === node ? collector : 0) +
+        (second === node ? base : 0) -
+        (third === node ? collector + base : 0)
+      );
+    }
+    const current = device.current(solution);
+    return (first === node ? current : 0) - (second === node ? current : 0);
+  };
+  for (const component of document.components) {
+    const { id } = component;
+    if (component.type === 'battery') {
+      const current = netlist.partDevice.get(id)?.current(solution) ?? 0;
+      result.legs[`${id}.pos`] = current;
+      result.legs[`${id}.neg`] = -current;
+    } else if (component.type === 'uno') {
+      let total = 0;
+      for (const [socket, device] of netlist.socketDevice) {
+        if (!socket.startsWith(`${id}.`)) continue;
+        result.legs[socket] = device.current(solution);
+        total += result.legs[socket];
+      }
+      // Whatever goes into the board through its pins comes back out through ground.
+      result.legs[`${id}.gnd`] = -total;
+    } else {
+      // A part may be several devices (a potentiometer is two resistors): add up those at each leg.
+      const own = netlist.circuit.devices.filter(
+        (device) => device.id === id || device.id.startsWith(`${id}:`),
+      );
+      const counted = new Set<number>();
+      for (const [pin, hole] of Object.entries(component.pins)) {
+        const node = netlist.nodeOf(hole);
+        // Legs sharing a strip share a node; its current is reported once, on the first of them.
+        const fresh = node >= 0 && !counted.has(node);
+        counted.add(node);
+        result.legs[`${id}.${pin}`] = fresh
+          ? own.reduce((sum, device) => sum + entering(device, node), 0)
+          : 0;
+      }
+    }
+  }
   return result;
 }
 
@@ -264,6 +332,8 @@ export class Observation {
       readings: {},
       wireCurrents: {},
       sockets: {},
+      nodeVoltages: {},
+      legCurrents: {},
       diagnostics: [],
       iterations: 0,
     };
@@ -369,6 +439,12 @@ export class Observation {
 
     for (const wire of document.wires) {
       result.wireCurrents[wire.id] = average((s) => s.wires[wire.id] ?? 0);
+    }
+    for (const name of Object.keys(first.nodes)) {
+      result.nodeVoltages[name] = average((s) => s.nodes[name] ?? 0);
+    }
+    for (const leg of Object.keys(first.legs)) {
+      result.legCurrents[leg] = average((s) => s.legs[leg] ?? 0);
     }
 
     // The "why is this LED dark?" explanations assume a steady circuit. While a program is

@@ -62,7 +62,15 @@ or pick a program, upload it, and watch the program drive the circuit:
   A circuit built round the board is drawn as a person would draw it: board on
   the left, each pin leading off through its parts, supply and ground as symbols.
 
-Not done: the diagram cannot be edited. A connection that closes a loop in the
+- **Multimeter probes.** A probe tool puts a red and a black probe on any hole,
+  terminal or socket; a meter on the canvas shows the voltage between them, or
+  above ground with one probe. Pointing at a hole with a mouse while the circuit
+  runs shows its voltage too.
+- **Current flow in the diagram.** While the circuit runs, moving dashes show
+  where current flows and which way, splitting at branches.
+
+Not done: the probes measure voltage only, not current or resistance.
+The diagram cannot be edited. A connection that closes a loop in the
 drawing is shown by a named flag at both ends instead of a wire. Hover and drag-to-wire need a mouse or pen; on touch there is no hover
 and wiring stays tap-tap. None of this has been tried on a real phone.
 
@@ -116,9 +124,9 @@ of section 3.
 | Suite                                                                                       | Result                          |
 | ------------------------------------------------------------------------------------------- | ------------------------------- |
 | ESLint, Prettier, TypeScript                                                                | clean                           |
-| Unit                                                                                        | 232 passed, 0 failed, 0 skipped |
+| Unit                                                                                        | 244 passed, 0 failed, 0 skipped |
 | Integration (PostgreSQL 18, avr-gcc, bubblewrap, Arduino core and libraries, Pico firmware) | 28 passed                       |
-| End to end (Chromium; desktop and phone profiles)                                           | 58 passed                       |
+| End to end (Chromium; desktop and phone profiles)                                           | 64 passed                       |
 
 Electrical agreement with ngspice 45.2: DC within 1 µV / 1 nA on 15 circuits
 (including an NPN transistor saturated, in its active region and as a follower);

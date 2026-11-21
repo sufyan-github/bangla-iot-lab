@@ -26,6 +26,7 @@ import {
 } from 'react';
 import { useT } from '../i18n';
 import { describeEndpoint, joinedHoles } from './endpoints';
+import { meterReading, voltageAt } from './meter';
 import {
   CANVAS_WIDTH,
   HOLE_POINTS,
@@ -118,6 +119,7 @@ export function Canvas() {
   const running = useLab((s) => s.running);
   const pressed = useLab((s) => s.pressed);
   const boards = useLab((s) => s.boards);
+  const meter = useLab((s) => s.meter);
   const canUndo = useLab((s) => s.past.length > 0);
   const canRedo = useLab((s) => s.future.length > 0);
   const {
@@ -135,6 +137,7 @@ export function Canvas() {
     removeSelected,
     flipSelected,
     straightenSelected,
+    clearMeter,
   } = useLab.getState();
   const height = canvasHeight(circuit);
   const { t, quantity, number } = useT();
@@ -497,7 +500,8 @@ export function Canvas() {
 
   // While a part tool is held over a hole, show the part where it would go.
   const ghost = useMemo(() => {
-    if (tool === 'select' || tool === 'wire' || !hover || !isHole(hover)) return null;
+    if (tool === 'select' || tool === 'wire' || tool === 'probe') return null;
+    if (!hover || !isHole(hover)) return null;
     const placed = placePart(circuit, tool, hover);
     if (!placed.ok) return { part: null, hole: hover };
     const part = placed.circuit.components.find((c) => c.id === placed.id);
@@ -508,6 +512,13 @@ export function Canvas() {
   const hoverInfo = hover ? describeEndpoint(circuit, hover) : null;
   const hoverPoint = hover ? endpointPoint(circuit, hover) : null;
   const hoverIsFree = hover !== null && attachError(circuit, hover) === null;
+  // While the circuit runs, pointing at a place also shows its voltage above ground.
+  const hoverVolts = result && hover ? voltageAt(result, hover) : undefined;
+  const reading = meterReading(result, meter);
+  const probeName = (endpoint: string | null) => {
+    const info = endpoint ? describeEndpoint(circuit, endpoint) : null;
+    return info ? [info.lead, info.name].filter(Boolean).join(' ') : 'GND';
+  };
   const previewEnd =
     hover && hoverPoint && hover !== wireStart && !hoverRefused ? hoverPoint : pointer;
 
@@ -730,7 +741,9 @@ export function Canvas() {
             </g>
           )}
 
-          {!selecting && <TapTargets circuit={circuit} wiring={tool === 'wire'} />}
+          {!selecting && (
+            <TapTargets circuit={circuit} wiring={tool === 'wire' || tool === 'probe'} />
+          )}
 
           <g pointerEvents="none">
             {/* Holes a carried part will drop into. */}
@@ -780,12 +793,53 @@ export function Canvas() {
               </>
             )}
 
+            {/* The multimeter's probes: black leans left and red right, so they can sit side by side. */}
+            {(['black', 'red'] as const).map((which) => {
+              const endpoint = meter[which];
+              const at = endpoint ? endpointPoint(circuit, endpoint) : null;
+              return (
+                at && (
+                  <g
+                    key={which}
+                    data-testid={`probe-${which}`}
+                    data-probe={endpoint}
+                    transform={`translate(${at.x} ${at.y})${which === 'black' ? ' scale(-1 1)' : ''}`}
+                    strokeLinecap="round"
+                  >
+                    <path
+                      d="M10 -15L30 -48"
+                      stroke="#000"
+                      strokeWidth={11}
+                      opacity={0.25}
+                      transform="translate(2 3)"
+                    />
+                    <path d="M0 0L10 -16" stroke="#6f787c" strokeWidth={3.4} />
+                    <path d="M0 0L10 -16" stroke="#e6ebed" strokeWidth={1.3} />
+                    <path
+                      d="M10 -16L30 -49"
+                      stroke={which === 'red' ? '#c92a20' : '#1d2224'}
+                      strokeWidth={10}
+                    />
+                    <path d="M10 -16L14 -22.6" stroke="#0c0e0f" strokeWidth={10} />
+                    <path
+                      d="M15 -27L27 -46.8"
+                      stroke="#fff"
+                      strokeWidth={1.6}
+                      opacity={0.3}
+                      transform="translate(-2.2 -1.2)"
+                    />
+                  </g>
+                )
+              );
+            })}
+
             {hover && hoverPoint && hoverInfo && !lift && (
               <HoverMark
                 endpoint={hover}
                 point={hoverPoint}
                 lead={hoverInfo.lead}
                 name={hoverInfo.name}
+                detail={hoverVolts === undefined ? undefined : quantity(hoverVolts, 'V')}
                 refused={hoverRefused || ghost?.part === null}
               />
             )}
@@ -793,39 +847,89 @@ export function Canvas() {
         </svg>
       </div>
 
-      {selecting && (selectedPart || selectedWire) && !lift && !floating && (
-        <div className="quick-actions absolute bottom-3 left-3 flex items-center gap-1 rounded-xl border border-line bg-surface p-1 shadow-md">
-          <span className="px-2 text-sm font-semibold text-ink">{selectedId}</span>
-          {selectedPart && 'pins' in selectedPart && (
-            <button
-              type="button"
-              data-testid="quick-flip"
-              onClick={flipSelected}
-              className="min-h-10 rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
-            >
-              {t('inspector.flip')}
-            </button>
-          )}
-          {selectedWire?.bends && (
-            <button
-              type="button"
-              data-testid="quick-straighten"
-              onClick={straightenSelected}
-              className="min-h-10 rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
-            >
-              {t('lab.straighten')}
-            </button>
-          )}
-          <button
-            type="button"
-            data-testid="quick-remove"
-            onClick={removeSelected}
-            className="min-h-10 rounded-lg px-3 text-sm font-medium text-danger hover:bg-danger-soft"
+      {/* Bottom-left overlays, newest on top. On a narrow screen they sit above the zoom buttons. */}
+      <div className="pointer-events-none absolute bottom-3 left-3 flex flex-col-reverse items-start gap-2 max-sm:bottom-[4.5rem]">
+        {(meter.red || meter.black) && (
+          <div
+            className="quick-actions pointer-events-auto flex items-center gap-1 rounded-xl border border-line bg-surface p-1 shadow-md"
+            data-testid="probe-meter"
           >
-            {t('inspector.remove')}
-          </button>
-        </div>
-      )}
+            <div className="min-w-36 rounded-lg bg-lcd px-3 py-1 text-lcd-ink shadow-[inset_0_2px_5px_rgba(0,0,0,.22)]">
+              <p
+                className="text-2xl leading-tight font-semibold tabular-nums"
+                data-testid="probe-reading"
+                data-state={reading?.state ?? 'none'}
+                data-volts={reading?.state === 'ok' ? reading.volts.toFixed(3) : undefined}
+              >
+                {reading?.state === 'ok' ? quantity(reading.volts, 'V') : '— V'}
+              </p>
+              <p className="flex items-center gap-1.5 text-xs font-medium">
+                {reading === null ? (
+                  t('meter.needRed')
+                ) : reading.state === 'off' ? (
+                  t('meter.idle')
+                ) : reading.state === 'open' ? (
+                  t('meter.open')
+                ) : (
+                  <>
+                    <span className="h-2 w-2 rounded-full bg-[#c92a20]" aria-hidden />
+                    {probeName(meter.red)}
+                    <span className="mx-0.5 opacity-60" aria-hidden>
+                      −
+                    </span>
+                    <span className="h-2 w-2 rounded-full bg-[#1d2224]" aria-hidden />
+                    {probeName(meter.black)}
+                  </>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              data-testid="probe-clear"
+              aria-label={t('meter.clear')}
+              title={t('meter.clear')}
+              onClick={clearMeter}
+              className="h-10 w-10 rounded-lg text-xl text-ink-soft hover:bg-paper hover:text-ink"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {selecting && (selectedPart || selectedWire) && !lift && !floating && (
+          <div className="quick-actions pointer-events-auto flex items-center gap-1 rounded-xl border border-line bg-surface p-1 shadow-md">
+            <span className="px-2 text-sm font-semibold text-ink">{selectedId}</span>
+            {selectedPart && 'pins' in selectedPart && (
+              <button
+                type="button"
+                data-testid="quick-flip"
+                onClick={flipSelected}
+                className="min-h-10 rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
+              >
+                {t('inspector.flip')}
+              </button>
+            )}
+            {selectedWire?.bends && (
+              <button
+                type="button"
+                data-testid="quick-straighten"
+                onClick={straightenSelected}
+                className="min-h-10 rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
+              >
+                {t('lab.straighten')}
+              </button>
+            )}
+            <button
+              type="button"
+              data-testid="quick-remove"
+              onClick={removeSelected}
+              className="min-h-10 rounded-lg px-3 text-sm font-medium text-danger hover:bg-danger-soft"
+            >
+              {t('inspector.remove')}
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="absolute top-3 right-3 flex overflow-hidden rounded-xl border border-line bg-surface shadow-md">
         <HistoryButton testId="undo" label={t('lab.undo')} enabled={canUndo} onClick={undo}>
@@ -930,13 +1034,15 @@ const HoverMark = memo(function HoverMark(props: {
   point: Point;
   lead: string | undefined;
   name: string;
+  /** A measurement to show after the name, such as the voltage there. */
+  detail?: string;
   refused: boolean;
 }) {
-  const { point, lead, name, refused } = props;
+  const { point, lead, name, detail, refused } = props;
   const color = refused ? DANGER : AMBER;
   // Holes in one strip are joined inside the board; the band shows which ones.
   const joined = joinedHoles(props.endpoint);
-  const text = lead ? `${lead}  ${name}` : name;
+  const text = [lead, name, detail].filter(Boolean).join('  ');
   const width = Math.max(30, text.length * 7.2 + 16);
   const x = Math.min(CANVAS_WIDTH - width / 2 - 4, Math.max(width / 2 + 4, point.x));
   const y = point.y < 52 ? point.y + 30 : point.y - 24;
@@ -972,6 +1078,7 @@ const HoverMark = memo(function HoverMark(props: {
       <text x={x} y={y + 1.5} textAnchor="middle" fontSize={12} fontWeight={600} fill="#f4f7f5">
         {lead && <tspan>{lead} </tspan>}
         <tspan fill={lead ? '#f3c869' : '#f4f7f5'}>{name}</tspan>
+        {detail && <tspan fill="#9fe3b4"> {detail}</tspan>}
       </text>
     </g>
   );

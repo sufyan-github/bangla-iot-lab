@@ -22,7 +22,15 @@ import { settleOffBoardPart } from './geometry';
 import { signals } from './signals';
 import { starterProgram } from './starters';
 
-export type Tool = 'select' | 'wire' | BoardPartType;
+export type Tool = 'select' | 'wire' | 'probe' | BoardPartType;
+
+/** Where the multimeter's two probes are touching; `last` is the one placed most recently. */
+export interface MeterProbes {
+  red: string | null;
+  black: string | null;
+  last: 'red' | 'black';
+}
+const NO_PROBES: MeterProbes = { red: null, black: null, last: 'black' };
 export type SaveState = 'saved' | 'saving' | 'error';
 
 /** Serial text is kept to this many characters per board. */
@@ -61,6 +69,8 @@ interface LabState {
   serial: Record<string, string>;
   /** Signals the instruments are recording. */
   probes: Probe[];
+  /** The multimeter's probes. Not part of the saved circuit. */
+  meter: MeterProbes;
   /** Why the last edit was refused, shown briefly to the student. */
   notice: EditError | null;
   saveState: SaveState;
@@ -77,6 +87,8 @@ interface LabState {
   tapEndpoint(endpoint: string): void;
   /** Drops the wire being drawn; `toSelect` also puts the wire tool away. */
   endWire(toSelect: boolean): void;
+  /** Takes both multimeter probes off the circuit. */
+  clearMeter(): void;
   addBattery(): void;
   addUno(): void;
   removeSelected(): void;
@@ -176,6 +188,7 @@ export const useLab = create<LabState>((set, get) => {
     tool: 'select',
     wireStart: null,
     notice: null,
+    meter: NO_PROBES,
     saveState: 'saved',
     past: [],
     future: [],
@@ -184,6 +197,7 @@ export const useLab = create<LabState>((set, get) => {
     open(project) {
       lastEdit = null;
       set({
+        meter: NO_PROBES,
         past: [],
         future: [],
         projectId: project.id,
@@ -206,9 +220,24 @@ export const useLab = create<LabState>((set, get) => {
     select: (selectedId) => set({ selectedId }),
 
     tapEndpoint(endpoint) {
-      const { tool, circuit, wireStart } = get();
+      const { tool, circuit, wireStart, meter } = get();
       if (tool === 'select') return;
-      if (tool === 'wire') {
+      if (tool === 'probe') {
+        // A tap on a probe lifts it. Otherwise the probes take turns: red first, then black.
+        if (meter.red === endpoint) set({ meter: { ...meter, red: null, last: 'black' } });
+        else if (meter.black === endpoint) set({ meter: { ...meter, black: null, last: 'red' } });
+        else {
+          const next =
+            meter.red === null
+              ? 'red'
+              : meter.black === null
+                ? 'black'
+                : meter.last === 'red'
+                  ? 'black'
+                  : 'red';
+          set({ meter: { ...meter, [next]: endpoint, last: next } });
+        }
+      } else if (tool === 'wire') {
         if (wireStart === null) {
           const error = attachError(circuit, endpoint);
           set(error ? { notice: error } : { wireStart: endpoint, notice: null });
@@ -223,6 +252,7 @@ export const useLab = create<LabState>((set, get) => {
       }
     },
 
+    clearMeter: () => set({ meter: NO_PROBES }),
     endWire: (toSelect) =>
       set(toSelect ? { wireStart: null, tool: 'select' } : { wireStart: null }),
 

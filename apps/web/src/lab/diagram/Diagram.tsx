@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT } from '../../i18n';
 import { LED_PAINT } from '../parts';
 import { useLab } from '../store';
+import { currentFlows } from './flow';
 import { layoutDiagram, type DiagramNet, type DiagramPart } from './layout';
 import { PartSymbol, type SymbolState } from './symbols';
 
@@ -43,6 +44,12 @@ export function Diagram() {
   const { select } = useLab.getState();
   const { t, quantity } = useT();
   const layout = useMemo(() => layoutDiagram(circuit), [circuit]);
+  // While the circuit runs, moving dashes show where current flows and which way.
+  const legCurrents = result?.legCurrents;
+  const flows = useMemo(
+    () => (legCurrents ? currentFlows(layout, legCurrents) : []),
+    [layout, legCurrents],
+  );
 
   const frameRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -131,6 +138,25 @@ export function Diagram() {
               )}
             </g>
           ))}
+
+          {flows.length > 0 && (
+            <g
+              data-testid="diagram-flow"
+              stroke="#e8a21a"
+              strokeWidth={3.4}
+              strokeDasharray="5 9"
+              pointerEvents="none"
+            >
+              {flows.map((flow, index) => (
+                <path
+                  key={index}
+                  className="wire-flow"
+                  data-ma={(flow.amperes * 1000).toFixed(2)}
+                  d={`M${flow.from.x} ${flow.from.y}L${flow.to.x} ${flow.to.y}`}
+                />
+              ))}
+            </g>
+          )}
 
           {layout.terminals.map((terminal, index) => {
             const net = layout.nets[terminal.net]!;

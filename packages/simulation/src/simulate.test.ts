@@ -6,14 +6,16 @@ import {
   LED_COLORS,
   movePin,
   moveWireEnd,
+  placePart,
   removeItem,
+  unoCircuitExample,
   updateProps,
   type CircuitDocument,
   type EditResult,
 } from '@banglalab/shared';
 import { describe, expect, it } from 'vitest';
 import { LED_FORWARD_VOLTAGE, LED_RATED_CURRENT } from './library';
-import { buildNetlist } from './netlist';
+import { buildNetlist, netName } from './netlist';
 import { simulate } from './simulate';
 
 function ok(result: EditResult): CircuitDocument {
@@ -57,6 +59,61 @@ describe('the first LED circuit', () => {
   it("obeys Ohm's law at the resistor", () => {
     const { R1 } = result.readings;
     expect(R1!.voltage / R1!.current).toBeCloseTo(330, 6);
+  });
+});
+
+describe('what a probe and a current arrow can read', () => {
+  const circuit = ledCircuitExample();
+  const result = simulate(circuit);
+  const current = result.readings.LED1!.current;
+
+  it('reports the voltage at every net something is connected to', () => {
+    const at = (endpoint: string) => result.nodeVoltages[netName(endpoint)];
+    expect(at('BAT1.neg')).toBe(0);
+    expect(at('BAT1.pos')).toBeCloseTo(9, 1);
+    // Along the loop: nearly 9 V before the resistor, the LED's 1.8 V after it, 0 V at the end.
+    expect(at('c5')).toBeCloseTo(9, 1);
+    expect(at('c9')! - at('d10')!).toBeCloseTo(result.readings.LED1!.voltage, 6);
+    expect(at('c5')! - at('c9')!).toBeCloseTo(result.readings.R1!.voltage, 6);
+    // A hole in the same strip reads the same; a strip nothing touches has no reading.
+    expect(at('e9')).toBe(at('c9'));
+    expect(at('h20')).toBeUndefined();
+  });
+
+  it('reports the current into each leg, and every part passes on what it takes in', () => {
+    const legs = result.legCurrents;
+    expect(legs['R1.a']).toBeCloseTo(current, 9);
+    expect(legs['R1.b']).toBeCloseTo(-current, 9);
+    expect(legs['LED1.anode']).toBeCloseTo(current, 9);
+    expect(legs['LED1.cathode']).toBeCloseTo(-current, 9);
+    // The battery pushes current out of + and takes it back in at −.
+    expect(legs['BAT1.pos']).toBeCloseTo(-current, 9);
+    expect(legs['BAT1.neg']).toBeCloseTo(current, 9);
+  });
+
+  it('balances the legs of three-leg parts and of the board', () => {
+    let board = unoCircuitExample();
+    board = ok(placePart(board, 'transistor', 'h8')); // C h8, B h9, E h10
+    board = ok(placePart(board, 'resistor', 'j1')); // R2: j1 to j5
+    board = ok(addWire(board, 'UNO1.d5', 'i1'));
+    board = ok(addWire(board, 'i5', 'i9')); // resistor to the base
+    board = ok(addWire(board, 'tp2', 'i8')); // 5 V straight to the collector
+    board = ok(addWire(board, 'i10', 'tn2')); // emitter to ground
+    const drives = Array<'input' | 'high'>(20).fill('input');
+    drives[5] = 'high';
+    const on = simulate(board, { pressed: [], boards: { UNO1: drives } });
+    const legs = on.legCurrents;
+    const sum = (...names: string[]) => names.reduce((total, name) => total + legs[name]!, 0);
+
+    expect(legs['Q1.base']).toBeGreaterThan(1e-3);
+    expect(legs['Q1.collector']).toBeGreaterThan(legs['Q1.base']!);
+    expect(sum('Q1.collector', 'Q1.base', 'Q1.emitter')).toBeCloseTo(0, 9);
+    expect(sum('POT1.a', 'POT1.wiper', 'POT1.b')).toBeCloseTo(0, 9);
+    expect(legs['POT1.a']).toBeGreaterThan(0);
+    // Pin 5 drives the base through the resistor: the same current leaves the pin and enters R2.
+    expect(legs['UNO1.d5']).toBeCloseTo(-legs['R2.a']!, 9);
+    const boardLegs = Object.keys(legs).filter((leg) => leg.startsWith('UNO1.'));
+    expect(sum(...boardLegs)).toBeCloseTo(0, 9);
   });
 });
 

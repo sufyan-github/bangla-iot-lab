@@ -60,6 +60,8 @@ export interface Netlist {
   socketDevice: Map<string, Device>;
   /** Solver node of a hole or terminal, or -1 if nothing in the circuit touches it. */
   nodeOf(endpoint: string): number;
+  /** Every node by the name of its net (see `netName`); ground is node 0. */
+  nodeNames: ReadonlyMap<string, number>;
   /** Parts whose leads all sit in one strip, so the board shorts them out. */
   bridgedParts: string[];
 }
@@ -335,5 +337,6 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
     socketDevice,
     bridgedParts,
     nodeOf: (endpoint) => nodes.get(netName(endpoint)) ?? -1,
+    nodeNames: nodes,
   };
 }

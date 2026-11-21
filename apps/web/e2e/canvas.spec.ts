@@ -345,3 +345,52 @@ test('a wire can be bent around parts and straightened again', async ({ page }) 
   expect(await path.getAttribute('d')).toBe(straight);
   await expect(page.locator('[data-part="LED1"]')).toHaveAttribute('data-led-state', 'on');
 });
+
+test('the multimeter probes read the voltage between two points', async ({ page }) => {
+  await openExample(page, 'open-example');
+  const reading = page.getByTestId('probe-reading');
+  await page.getByTestId('tool-probe').click();
+
+  // Red probe on the battery's +: nothing to read until the circuit is switched on.
+  await page.locator('[data-endpoint="BAT1.pos"]').click();
+  await expect(page.getByTestId('probe-red')).toHaveAttribute('data-probe', 'BAT1.pos');
+  await expect(reading).toHaveAttribute('data-state', 'off');
+  await page.getByTestId('run').click();
+  await expect(reading).toHaveAttribute('data-state', 'ok');
+  expect(Number(await reading.getAttribute('data-volts'))).toBeCloseTo(9, 1);
+
+  // Black probe after the resistor: the meter now shows the drop across the resistor.
+  await page.locator('[data-endpoint="e9"]').click();
+  await expect(page.getByTestId('probe-black')).toHaveAttribute('data-probe', 'e9');
+  await expect(reading).toHaveAttribute('data-volts', /^7\.\d+$/);
+  const drop = Number(await reading.getAttribute('data-volts'));
+  expect(drop).toBeCloseTo(
+    Number(await page.locator('[data-part="R1"]').getAttribute('data-voltage')),
+    2,
+  );
+
+  // A probe on a strip nothing is connected to reads nothing.
+  await page.locator('[data-endpoint="h20"]').click();
+  await expect(page.getByTestId('probe-red')).toHaveAttribute('data-probe', 'h20');
+  await expect(reading).toHaveAttribute('data-state', 'open');
+
+  // The probes stay while other tools are used, until they are taken off.
+  await page.getByTestId('tool-select').click();
+  await expect(page.getByTestId('probe-black')).toBeVisible();
+  await page.getByTestId('probe-clear').click();
+  await expect(page.getByTestId('probe-meter')).toHaveCount(0);
+  await expect(page.getByTestId('probe-red')).toHaveCount(0);
+});
+
+test('pointing at a hole while the circuit runs shows its voltage', async ({ page }) => {
+  await openExample(page, 'open-example');
+  const at = await places(page, ['a5', 'j12']);
+  await page.getByTestId('run').click();
+  await expect(page.locator('[data-part="LED1"]')).toHaveAttribute('data-led-state', 'on');
+  await pointAt(page, at.a5!);
+  await expect(hoverMark(page).locator('text')).toContainText('V');
+  // A strip nothing is joined to has a name but no voltage.
+  await pointAt(page, at.j12!);
+  await expect(hoverMark(page)).toHaveAttribute('data-hover', 'j12');
+  await expect(hoverMark(page).locator('text')).not.toContainText('V');
+});

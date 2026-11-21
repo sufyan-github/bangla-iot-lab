@@ -337,3 +337,35 @@ Every layout is checked by one property test (`expectSound` in
 `layout.test.ts`) on several circuits: wires are horizontal or vertical, every
 leg of a net is joined by wire or by a shared terminal, wires of different nets
 never run along each other, no wire crosses a symbol, and symbols do not overlap.
+
+## D-042 — The simulator reports node voltages and per-leg currents
+
+Two things the solver always knew are now part of every result: the voltage at
+each net, keyed by net name, and the current into each part through each of its
+legs. Leg currents are worked out from the solver's devices, not by reasoning
+from part readings: a part's devices are found by name, and a device's current
+is added at whichever of its nodes a leg sits on. So a potentiometer's wiper or
+a transistor's emitter is right without a special case, and a part's legs always
+add up to zero. Both are averaged over a frame like every other reading.
+
+## D-043 — The multimeter is two probes, and measures voltage only
+
+The probe tool places a red and a black probe on any hole, terminal or socket;
+the meter shows red minus black. With only the red probe down, black counts as
+resting on ground, so a single tap already gives a useful reading. A probe on a
+net nothing is joined to reads "nothing connected", not zero, because a floating
+point has no voltage and a real meter there shows noise. Probes are not saved
+with the circuit and are not undo steps: measuring changes nothing.
+
+Current is not measured with the probes. A real meter measures current in
+series, which means breaking the circuit; the lab already shows every part's
+current directly, so that lesson is left for when it is asked for.
+
+## D-044 — Current flow in the diagram follows the drawn wires
+
+Each drawn net is a tree of wire pieces. The current in a piece is what the legs
+on one side of it put into the net, so a branch visibly splits the flow and the
+numbers add up. Dashes also run through two-leg parts and up through a battery,
+so the eye follows one path from the source round and back. Currents under
+5 µA are not drawn, which keeps input pins quiet. Flow is not drawn through
+modules, the board or a transistor, whose inside paths the diagram does not show.

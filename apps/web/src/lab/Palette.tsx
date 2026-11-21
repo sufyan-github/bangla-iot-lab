@@ -22,6 +22,13 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <circle cx="19" cy="7" r="2.2" fill="currentColor" />
     </>
   ),
+  probe: (
+    <>
+      <path d="M4 20l7-9" {...stroke} strokeWidth={1.6} />
+      <path d="M11 11l6-8" {...stroke} strokeWidth={4.4} />
+      <circle cx="4" cy="20" r="1.6" fill="currentColor" />
+    </>
+  ),
   battery: (
     <>
       <rect x="6" y="6" width="12" height="15" rx="2" {...stroke} />
@@ -149,7 +156,7 @@ const ICONS: Record<PaletteItem, ReactNode> = {
 
 /** Tools in the order they are shown; each inner list is one group. */
 const GROUPS: PaletteItem[][] = [
-  ['select', 'wire'],
+  ['select', 'wire', 'probe'],
   ['battery', 'uno'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
   ['buzzer', 'motor', 'relay', 'servo', 'lcd'],
@@ -160,6 +167,7 @@ const GROUPS: PaletteItem[][] = [
 const HINTS: Partial<Record<Tool, MessageKey>> = {
   select: 'hint.select',
   wire: 'hint.wire.start',
+  probe: 'hint.probe',
   resistor: 'hint.resistor',
   led: 'hint.led',
   button: 'hint.button',

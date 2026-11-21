@@ -56,6 +56,9 @@ export const bn = {
 
   'tool.select': 'বাছাই',
   'tool.wire': 'তার',
+  'tool.probe': 'মিটার প্রোব',
+  'hint.probe':
+    'যেখানে ভোল্টেজ মাপবে সেখানে ট্যাপ করো: প্রথমে লাল প্রোব, তারপর কালো। কালো না বসালে GND থেকে মাপা হয়।',
   'tool.battery': 'ব্যাটারি',
   'tool.resistor': 'রেজিস্টর',
   'tool.led': 'LED',
@@ -180,6 +183,9 @@ export const bn = {
   'meter.current': 'কারেন্ট',
   'meter.power': 'ক্ষমতা',
   'meter.part': 'যন্ত্রাংশ',
+  'meter.clear': 'প্রোব সরিয়ে নাও',
+  'meter.open': 'প্রোব যেখানে আছে সেখানে কিছু যুক্ত নেই',
+  'meter.needRed': 'লাল প্রোবটা কোথাও বসাও',
 
   'messages.title': 'সার্কিটে কী ঘটছে',
   'messages.idle': 'সার্কিট বন্ধ আছে।',
@@ -313,6 +319,9 @@ export const en: Record<MessageKey, string> = {
 
   'tool.select': 'Select',
   'tool.wire': 'Wire',
+  'tool.probe': 'Probe',
+  'hint.probe':
+    'Tap where you want to measure voltage: the red probe first, then the black. Without the black probe, it measures from GND.',
   'tool.battery': 'Battery',
   'tool.resistor': 'Resistor',
   'tool.led': 'LED',
@@ -441,6 +450,9 @@ export const en: Record<MessageKey, string> = {
   'meter.current': 'Current',
   'meter.power': 'Power',
   'meter.part': 'Part',
+  'meter.clear': 'Take the probes off',
+  'meter.open': 'Nothing is connected where a probe is',
+  'meter.needRed': 'Put the red probe somewhere',
 
   'messages.title': 'What the circuit is doing',
   'messages.idle': 'The circuit is switched off.',

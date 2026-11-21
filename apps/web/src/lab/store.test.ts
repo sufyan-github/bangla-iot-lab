@@ -1,5 +1,7 @@
 import { emptyCircuit, ledCircuitExample, movePart, unoCircuitExample } from '@banglalab/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { simulate } from '@banglalab/simulation';
+import { meterReading } from './meter';
 import { useLab } from './store';
 
 const lab = () => useLab.getState();
@@ -94,6 +96,8 @@ describe('lab editor state', () => {
         ok: true,
         readings: {},
         wireCurrents: {},
+        nodeVoltages: {},
+        legCurrents: {},
         sockets: {},
         diagnostics: [],
         iterations: 1,
@@ -236,5 +240,59 @@ describe('undo and redo', () => {
     lab().open(project());
     expect(lab().past).toHaveLength(0);
     expect(lab().future).toHaveLength(0);
+  });
+});
+
+describe('multimeter probes', () => {
+  const result = simulate(ledCircuitExample());
+
+  it('places red first, then black, and then they take turns', () => {
+    lab().open(project(ledCircuitExample()));
+    lab().setTool('probe');
+    lab().tapEndpoint('a5');
+    expect(lab().meter).toMatchObject({ red: 'a5', black: null });
+    lab().tapEndpoint('a9');
+    expect(lab().meter).toMatchObject({ red: 'a5', black: 'a9' });
+    lab().tapEndpoint('BAT1.pos'); // red was placed longest ago, so red moves
+    expect(lab().meter).toMatchObject({ red: 'BAT1.pos', black: 'a9' });
+    lab().tapEndpoint('tn1');
+    expect(lab().meter).toMatchObject({ red: 'BAT1.pos', black: 'tn1' });
+    // Probing changes nothing in the circuit and is not an undo step.
+    expect(lab().circuit).toEqual(ledCircuitExample());
+    expect(lab().past).toHaveLength(0);
+  });
+
+  it('lifts a probe that is tapped, and clears both', () => {
+    lab().setTool('probe');
+    lab().tapEndpoint('a5');
+    lab().tapEndpoint('a9');
+    lab().tapEndpoint('a5');
+    expect(lab().meter).toMatchObject({ red: null, black: 'a9' });
+    lab().tapEndpoint('b5'); // the free probe goes down again
+    expect(lab().meter).toMatchObject({ red: 'b5', black: 'a9' });
+    lab().clearMeter();
+    expect(lab().meter).toMatchObject({ red: null, black: null });
+  });
+
+  it('reads red above black, or above ground with one probe', () => {
+    const probes = (red: string | null, black: string | null) => ({
+      red,
+      black,
+      last: 'red' as const,
+    });
+    expect(meterReading(result, probes(null, 'a5'))).toBeNull();
+    expect(meterReading(null, probes('a5', null))).toEqual({ state: 'off' });
+    expect(meterReading(result, probes('h20', null))).toEqual({ state: 'open' });
+
+    const battery = meterReading(result, probes('BAT1.pos', null));
+    expect(battery).toMatchObject({ state: 'ok' });
+    expect((battery as { volts: number }).volts).toBeCloseTo(9, 1);
+    // Across the LED: its forward voltage, with either sign depending on which way round.
+    const across = meterReading(result, probes('d9', 'd10')) as { volts: number };
+    expect(across.volts).toBeCloseTo(result.readings.LED1!.voltage, 6);
+    const reversed = meterReading(result, probes('d10', 'd9')) as { volts: number };
+    expect(reversed.volts).toBeCloseTo(-across.volts, 9);
+    // Two holes in one strip are the same point.
+    expect((meterReading(result, probes('a9', 'e9')) as { volts: number }).volts).toBe(0);
   });
 });

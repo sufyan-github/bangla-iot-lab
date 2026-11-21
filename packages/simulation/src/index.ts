@@ -1,5 +1,5 @@
 export * from './library';
-export { IDLE_STATE, buildNetlist, type CircuitState, type Netlist } from './netlist';
+export { IDLE_STATE, buildNetlist, netName, type CircuitState, type Netlist } from './netlist';
 export {
   SimulationSession,
   type BoardStatus,
