@@ -1,8 +1,8 @@
 # ESP32 board library: study prototype
 
-**This is a prototype for the [ESP32 feasibility study](../../docs/decisions/esp32-study.md),
-not part of the lab.** It exists to measure one of the study's three options. No
-decision has been made, and nothing here is used by the application.
+**This began as a prototype for the [ESP32 feasibility study](../../docs/decisions/esp32-study.md).
+Since 22 November 2026 the lab uses the board library here, as an experiment, to
+run ESP32 programs in the editor.** The study itself has not reached its decision.
 
 ## What it is
 
@@ -52,8 +52,8 @@ student:
   different answer from a real board.
 - **Interrupts arrive only while time is passing**, that is inside a library
   call or a delay, not in the middle of a calculation.
-- **The analog converter is ideal and linear.** The real one is not. A proper
-  model is being prepared separately.
+- **In the study's two test worlds the analog converter is ideal and linear.** In
+  the lab's simulation it follows the chip's calibration curve instead.
 - **Chip facts are fixed values** (`ESP.getFreeHeap()` and the like).
 - **`ESP.restart()` ends the run.**
 
@@ -63,11 +63,12 @@ The tests need `g++` and, for the WebAssembly half, clang with the wasm32-wasi
 target, `wasm-ld`, wasi-libc and libc++ for wasm32. On Ubuntu:
 
 ```bash
-sudo apt-get install clang lld wasi-libc libc++-dev-wasm32 libclang-rt-dev-wasm32
+sudo apt-get install clang lld wasi-libc libc++-dev-wasm32 libclang-rt-dev-wasm32 binaryen
 ```
 
 If those packages are unpacked somewhere else instead of installed, name that
-folder in `WASI_ROOT`. The tests fail, and say what is missing, when the
+folder in `WASI_ROOT` (the study's tools) and `ESP32_TOOLCHAIN_ROOT` (the compile
+worker). The tests fail, and say what is missing, when the
 toolchain is not there; they are never skipped.
 
 ```bash

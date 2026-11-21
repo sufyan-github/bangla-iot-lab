@@ -27,8 +27,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: sudo apt-get update && sudo apt-get install -y gcc-avr avr-libc binutils-avr bubblewrap
-      # For the ESP32 board library prototype, which is built as WebAssembly.
-      - run: sudo apt-get install -y clang-18 lld-18 wasi-libc libc++-18-dev-wasm32 libc++abi-18-dev-wasm32 libclang-rt-18-dev-wasm32
+      # For ESP32 sketches, which are built as WebAssembly and made pausable.
+      - run: sudo apt-get install -y clang-18 lld-18 wasi-libc libc++-18-dev-wasm32 libc++abi-18-dev-wasm32 libclang-rt-18-dev-wasm32 binaryen
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @banglalab/compile-worker core:fetch
       - run: pnpm --filter @banglalab/board-emulators pico:fetch

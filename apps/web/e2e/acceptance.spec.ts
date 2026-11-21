@@ -189,7 +189,17 @@ test('the application carries its licence notices and the firmware source offer'
   await expect(firmware).toContainText('LGPL-2.1-or-later');
   await expect(firmware.locator('a[href*="third_party/arduino-avr"]')).toHaveCount(1);
   // The licence texts are served with the application itself.
-  for (const file of ['LICENSE.txt', 'NOTICE.txt', 'LGPL-2.1.txt', 'THIRD_PARTY_LICENSES.md']) {
+  // ESP32 programs carry a C and a C++ library; their notices are here too.
+  await expect(notices.locator('[data-notice="wasi-libc"]')).toBeVisible();
+  await expect(notices.locator('[data-notice="llvm"]')).toContainText('LLVM-exception');
+  for (const file of [
+    'LICENSE.txt',
+    'NOTICE.txt',
+    'LGPL-2.1.txt',
+    'THIRD_PARTY_LICENSES.md',
+    'wasi-libc.txt',
+    'LLVM.txt',
+  ]) {
     const response = await request.get(`/licences/${file}`);
     expect(response.ok(), file).toBe(true);
   }

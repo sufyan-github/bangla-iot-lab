@@ -28,12 +28,27 @@ under other licences. Each is kept apart from the Apache-2.0 code.
    third_party/arduino-avr/README.md. In the application, any starter program
    can be changed and re-uploaded from the code tab.
 
-2. Anek Bangla font (SIL Open Font License 1.1)
+2. Ready-made ESP32 programs (experimental)
+
+   The files packages/board-emulators/fixtures/esp32-starters/*.wasm.base64 are
+   WebAssembly modules, and the compile server builds the same kind of module
+   from a student's sketch. Each is a combined work of:
+
+   - a sketch (for the shipped ones, the .ino file beside it, Apache-2.0);
+   - this project's own ESP32 board library (spikes/esp32-api, Apache-2.0). It
+     contains no code from Espressif's ESP32 Arduino core;
+   - wasi-libc, the C library, whose parts are under the permissive licences
+     listed in LICENSES/wasi-libc.txt (MIT, BSD, ISC, Apache-2.0, CC0 and
+     public domain);
+   - libc++, libc++abi and compiler-rt from the LLVM project, under the Apache
+     License 2.0 with LLVM Exceptions (LICENSES/LLVM.txt).
+
+3. Anek Bangla font (SIL Open Font License 1.1)
 
    Copyright 2021 The Anek Project Authors. Distributed unmodified through the
    @fontsource-variable/anek-bangla package. See LICENSES/OFL-1.1-AnekBangla.txt.
 
-3. JavaScript dependencies
+4. JavaScript dependencies
 
    Listed with their licence texts in THIRD_PARTY_LICENSES.md.
 

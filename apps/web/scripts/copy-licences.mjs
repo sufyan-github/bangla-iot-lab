@@ -12,6 +12,8 @@ for (const [from, to] of [
   ['THIRD_PARTY_LICENSES.md', 'THIRD_PARTY_LICENSES.md'],
   ['LICENSES/LGPL-2.1.txt', 'LGPL-2.1.txt'],
   ['LICENSES/avr-libc.txt', 'avr-libc.txt'],
+  ['LICENSES/wasi-libc.txt', 'wasi-libc.txt'],
+  ['LICENSES/LLVM.txt', 'LLVM.txt'],
   ['LICENSES/OFL-1.1-AnekBangla.txt', 'OFL-1.1-AnekBangla.txt'],
 ]) {
   cpSync(path.join(root, from), path.join(target, to));

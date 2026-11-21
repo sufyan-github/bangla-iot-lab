@@ -19,8 +19,9 @@ The files are the **parts master**: the single list of parts, built or not.
 
 ## Status today
 
-64 definitions: 19 simulated, 6 generic stand-ins, 34 planned and 5 accessories
-that will not be simulated. The ESP32 board is on the list as planned.
+64 definitions: 20 simulated, 6 generic stand-ins, 33 planned and 5 accessories
+that will not be simulated. The ESP32 board is simulated as an experiment, and its
+definition says what that leaves out.
 
 ## The fields
 

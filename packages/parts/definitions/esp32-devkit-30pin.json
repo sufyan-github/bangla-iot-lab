@@ -1,9 +1,9 @@
 {
   "formatVersion": 1,
   "id": "esp32-devkit-30pin",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet. How it will be emulated is the subject of the ESP32 feasibility study.",
+  "simulates": "esp32",
+  "status": "simulated",
+  "statusNote": "Experimental. Programs run on the lab's own model of the board, not on the board's real software. No display, DHT sensor, servo or Wi-Fi yet. Nothing has been checked against a real board.",
   "family": "board",
   "tier": 1,
   "name": {
@@ -15,8 +15,15 @@
     "en": "The default board of the projects and the school kit."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "Programs run against the lab's own board library: the code a student writes runs exactly, and what the board does in answer is a model.",
+      "Code takes no time to run; each library call is charged two microseconds.",
+      "An interrupt is delivered up to a millisecond after its edge.",
+      "A PWM output faster than 2 kHz is shown switching at 2 kHz, with its duty kept.",
+      "The analog converter is a nominal chip from Espressif's calibration curve; real chips differ by several percent.",
+      "Pins are sources with a fixed output resistance; no brown-out, no noise, no damage from 5 V."
+    ]
   },
   "validation": {
     "state": "not-checked",

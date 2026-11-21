@@ -8,6 +8,18 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **ESP32 development board in the editor (experimental).** The 30-pin board can
+  be added, moved, wired and probed, and is drawn in the diagram view; its pins
+  work at 3.3 V with pull-ups, pull-downs and input-only pins, from the pin model.
+  Programs run on the lab's own board library, built into a WebAssembly module:
+  four ready-made programs (blink, button, fade, knob) work offline, and a
+  student's own sketch is compiled by the sandboxed compile worker. The editor
+  says that this is a model of the board, what works and what does not. Nothing
+  has been checked against a real board.
+- Circuit format version 7 (adds the ESP32 board). A circuit has one board, of
+  either kind.
+- The simulation runs any board through one interface, from a table of each
+  board's electrical behaviour.
 - `packages/catalog`: imports a supplier's export into dated snapshots, keeping
   the original data, validating it and reporting issues; computes project and
   budget totals; word-prefix search; comparison of two snapshots. No catalogue

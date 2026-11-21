@@ -1,0 +1,144 @@
+import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { Esp32SketchBoard } from '@banglalab/simulation';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { loadConfig } from './config';
+import { buildServer } from './server';
+
+/**
+ * ESP32 sketches (experimental): compiled in the sandbox against the lab's own
+ * board library into a pausable WebAssembly module, then run on the board the
+ * simulation uses. Needs clang with the wasm32-wasi target, wasm-ld, wasi-libc,
+ * libc++ for wasm32, binaryen and bubblewrap. ESP32_TOOLCHAIN_ROOT names where
+ * they are, when not installed in /usr.
+ */
+const startersDir = new URL(
+  '../../../packages/board-emulators/fixtures/esp32-starters/',
+  import.meta.url,
+);
+
+let cacheDir: string;
+let server: Awaited<ReturnType<typeof buildServer>>;
+
+beforeAll(async () => {
+  cacheDir = await mkdtemp(path.join(tmpdir(), 'banglalab-cache-'));
+  server = await buildServer({ ...loadConfig({ LOG_LEVEL: 'silent' }), cacheDir });
+}, 120_000);
+afterAll(async () => {
+  await server.close();
+  await rm(cacheDir, { recursive: true, force: true });
+});
+
+async function compile(source: string, language = 'arduino') {
+  return server.inject({
+    method: 'POST',
+    url: '/compile',
+    payload: { board: 'esp32', language, source },
+  });
+}
+/** Compiles a sketch and runs it on the board for a while; returns what it printed. */
+async function run(source: string, milliseconds: number) {
+  const result = (await compile(source)).json();
+  if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+  const board = new Esp32SketchBoard(Buffer.from(result.hex, 'base64'));
+  let serial = '';
+  board.onSerial((text) => (serial += text));
+  const changes: { pin: number; drive: string; timeMs: number }[] = [];
+  board.onPinChange((pin, drive, timeMs) => changes.push({ pin, drive, timeMs }));
+  for (let t = 1; t <= milliseconds; t++) board.runUntil(t);
+  return { board, serial, changes, result };
+}
+
+describe('ESP32 sketches through the compile worker', () => {
+  it('reports the ESP32 toolchain as ready', async () => {
+    const health = (await server.inject({ method: 'GET', url: '/health' })).json();
+    expect(health.esp32).toBe('ready');
+  });
+
+  it('builds a sketch that runs: pins change at the times the sketch says', async () => {
+    const { changes, result } = await run(
+      'void setup() { pinMode(2, OUTPUT); }\nvoid loop() { digitalWrite(2, HIGH); delay(100); digitalWrite(2, LOW); delay(100); }\n',
+      450,
+    );
+    expect(result.flashBytes).toBeGreaterThan(1000);
+    expect(result.flashBytes).toBeLessThan(200_000);
+    const pin2 = changes.filter((change) => change.pin === 2 && change.drive !== 'input');
+    expect(pin2.map((change) => change.drive).slice(0, 5)).toEqual([
+      'low', // made an output
+      'high',
+      'low',
+      'high',
+      'low',
+    ]);
+    expect(pin2[2]!.timeMs - pin2[1]!.timeMs).toBeCloseTo(100, 1);
+  }, 60_000);
+
+  it('declares functions for the student, as the Arduino IDE does', async () => {
+    const { serial } = await run(
+      `void setup() {
+  Serial.begin(115200);
+  Serial.println(twice(21));
+}
+void loop() { delay(10); }
+int twice(int n) { return n * 2; }
+`,
+      20,
+    );
+    expect(serial).toBe('42\r\n');
+  }, 60_000);
+
+  it('reports a mistake at the line of the sketch it is on', async () => {
+    const result = (
+      await compile('void setup() {\n  pinMode(2, OUTPUT)\n}\nvoid loop() {}\n')
+    ).json();
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('compile-error');
+    expect(result.diagnostics[0].line).toBe(2);
+    expect(result.diagnostics[0].message).toMatch(/expected ';'/);
+  }, 60_000);
+
+  it('says so when a sketch uses something the board library does not have yet', async () => {
+    const missingHeader = (
+      await compile('#include <WiFi.h>\nvoid setup() {}\nvoid loop() {}\n')
+    ).json();
+    expect(missingHeader.ok).toBe(false);
+    expect(missingHeader.diagnostics[0].message).toMatch(/WiFi\.h/);
+    const missingFunction = (
+      await compile('void setup() { esp_deep_sleep_start(); }\nvoid loop() {}\n')
+    ).json();
+    expect(missingFunction.ok).toBe(false);
+    expect(JSON.stringify(missingFunction.diagnostics)).toMatch(/esp_deep_sleep_start/);
+  }, 60_000);
+
+  it('gives the sandbox nothing to read', async () => {
+    const result = (
+      await compile('#include "/etc/passwd"\nvoid setup() {}\nvoid loop() {}\n')
+    ).json();
+    expect(result.ok).toBe(false);
+    expect(JSON.stringify(result)).not.toContain('root:');
+  }, 60_000);
+
+  it('takes Arduino sketches only', async () => {
+    const response = await compile('int main(void) { return 0; }', 'c');
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('answers the same sketch from its cache', async () => {
+    const source = 'void setup() {}\nvoid loop() { delay(7); }\n';
+    const first = (await compile(source)).json();
+    const second = (await compile(source)).json();
+    expect(first.cached).toBe(false);
+    expect(second.cached).toBe(true);
+    expect(second.hex).toBe(first.hex);
+  }, 60_000);
+
+  it('every shipped starter still builds and runs', async () => {
+    const sketches = (await readdir(startersDir)).filter((file) => file.endsWith('.ino'));
+    expect(sketches.length).toBe(4);
+    for (const sketch of sketches) {
+      const { board } = await run(await readFile(new URL(sketch, startersDir), 'utf8'), 200);
+      expect(board.stopped, sketch).toBeNull();
+    }
+  }, 120_000);
+});

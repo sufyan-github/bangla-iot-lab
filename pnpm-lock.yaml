@@ -249,6 +249,9 @@ importers:
       '@banglalab/board-emulators':
         specifier: workspace:*
         version: link:../../packages/board-emulators
+      '@banglalab/simulation':
+        specifier: workspace:*
+        version: link:../../packages/simulation
 
   apps/web:
     dependencies:

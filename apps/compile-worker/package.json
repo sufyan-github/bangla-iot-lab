@@ -18,6 +18,7 @@
     "typebox": "^1.4.7"
   },
   "devDependencies": {
-    "@banglalab/board-emulators": "workspace:*"
+    "@banglalab/board-emulators": "workspace:*",
+    "@banglalab/simulation": "workspace:*"
   }
 }

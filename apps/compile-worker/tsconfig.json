@@ -1,5 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "types": ["node"] },
+  "compilerOptions": {
+    // WebWorker: the tests load the ESP32 sketch board, which uses WebAssembly.
+    "lib": ["ES2023", "WebWorker"],
+    "types": ["node"]
+  },
   "include": ["src", "scripts"]
 }

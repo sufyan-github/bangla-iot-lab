@@ -388,3 +388,46 @@ been measured.
 A digital input between the two datasheet thresholds keeps its last level, as
 the UNO-compatible board's pins already do. The datasheet gives no hysteresis
 figure, so any single switching voltage would have been invented.
+
+## D-046 — Both ways of running ESP32 programs are offered in the editor, as experiments
+
+The ESP32 feasibility study was to compare three ways of running ESP32 programs
+and then choose one. On 22 November 2026, with its measurements on a laptop done
+and nothing yet measured on a phone, the owner asked for the ESP32 to be put in
+the editor with both browser options, switchable: the lab's own board library
+(option C) and an emulator of the whole chip (option A, esp32sim). Both are
+labelled experimental in the editor, with what each gets wrong.
+
+The first is built. It was chosen to go first because it runs offline, its
+modules are tens of kilobytes, and its worst case is several times faster than a
+real board on a laptop; its cost is that it is our model of the board, and the
+study has already found four places where the model was wrong. The second is
+not built yet: it needs the whole ESP32 toolchain on the compile server for
+every sketch, and a third of the reference sketches ran five times slower than
+a real board in its native build.
+
+The study's own decision (step 6) is still open, and still waits for a
+measurement on a real low-cost phone.
+
+## D-047 — A sketch is made pausable, not run in a worker that blocks
+
+A sketch's `loop()` never returns and its `delay()` must let time pass, while
+the simulation runs a board a millisecond at a time and must stay able to take a
+button press. The sketch module is therefore rewritten after compiling so that
+it can be stopped inside a call that lets time pass and carried on later
+(binaryen's asyncify). The alternative was to run the sketch in a worker that
+blocks, and to pass inputs through shared memory; that needs every page of the
+site to be served with headers that isolate it, changes how the lab is hosted,
+and would have made a run depend on real time. The chosen way keeps a run exact
+and repeatable, lets the tests drive a sketch without a clock, and costs about a
+quarter more module size.
+
+One consequence is shared with the UNO: the board is shown the circuit once a
+millisecond, so a sketch reads an input up to a millisecond late.
+
+## D-048 — A circuit has one board, of either kind
+
+The UNO-compatible board and the ESP32 share the limit of one board per
+circuit. Two boards at 5 V and 3.3 V on one breadboard is a real and useful
+circuit (it needs a level shifter), but the ground reference, the program
+panel and the saved programs all assume one. Lifting the limit is separate work.

@@ -73,7 +73,7 @@ program a student has written.
 
 ```bash
 pnpm check              # lint, format, types, licence check, unit tests (no services needed)
-pnpm test:integration   # needs `pnpm db:up`, avr-gcc, bubblewrap, g++ and a WebAssembly toolchain (see spikes/esp32-api)
+pnpm test:integration   # needs `pnpm db:up`, avr-gcc, bubblewrap, g++, a WebAssembly toolchain and binaryen (see spikes/esp32-api)
 pnpm test:e2e           # builds the app and drives it in Chromium (desktop and phone sizes)
 ```
 

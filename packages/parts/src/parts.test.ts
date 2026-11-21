@@ -52,12 +52,13 @@ describe('part definitions', () => {
     expect(definitionProblems({ ...real, id: 'Not An Id' }).length).toBeGreaterThan(0);
   });
 
-  it('has the default board of the plan on the list, honestly marked as not built', () => {
-    expect(partDefinition('esp32-devkit-30pin')).toMatchObject({
-      status: 'planned',
-      simulates: null,
-      tier: 1,
-    });
+  it('has the default board of the plan on the list, honestly marked as an experiment', () => {
+    const board = partDefinition('esp32-devkit-30pin');
+    expect(board).toMatchObject({ status: 'simulated', simulates: 'esp32', tier: 1 });
+    // It runs on the lab's own model of the board and has not been checked on one.
+    expect(board.statusNote).toMatch(/^Experimental/);
+    expect(board.model.simplified.length).toBeGreaterThanOrEqual(4);
+    expect(board.validation.state).toBe('not-checked');
     expect(() => partDefinition('no-such-part')).toThrow(/No part definition/);
   });
 });
