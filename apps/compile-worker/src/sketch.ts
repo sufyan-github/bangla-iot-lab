@@ -7,7 +7,8 @@
  * messages pointing at the student's own line numbers.
  *
  * The scanner is deliberately simple: it handles ordinary functions, which is
- * what school sketches contain. Templates and functions that return function
+ * what school sketches contain. It skips comments, strings and raw strings, so
+ * a web page kept in the sketch is never mistaken for code. Templates and functions that return function
  * pointers are left alone and must be declared before use.
  */
 
@@ -29,6 +30,15 @@ function blankNonCode(source: string): string {
     } else if (two === '/*') {
       const end = source.indexOf('*/', i + 2);
       const stop = end < 0 ? source.length : end + 2;
+      blank(i, stop);
+      i = stop;
+    } else if (ch === 'R' && source[i + 1] === '"' && isRawStringPrefix(source, i)) {
+      // A raw string, R"tag( ... )tag", may run over many lines and hold anything,
+      // such as a web page with JavaScript functions in it. None of it is C++.
+      const open = source.indexOf('(', i + 2);
+      const tag = open < 0 ? '' : source.slice(i + 2, open);
+      const close = open < 0 || /[\s\\()"]/.test(tag) ? -1 : source.indexOf(`)${tag}"`, open + 1);
+      const stop = close < 0 ? source.length : close + tag.length + 2;
       blank(i, stop);
       i = stop;
     } else if (ch === '"' || ch === "'") {
@@ -54,6 +64,16 @@ function blankNonCode(source: string): string {
     lineStart = false;
   }
   return out.join('');
+}
+
+/**
+ * True when the `R` at `index` starts a raw string and is not the last letter of
+ * a longer name. A raw string may carry an encoding prefix: u8R, uR, UR or LR.
+ */
+function isRawStringPrefix(source: string, index: number): boolean {
+  let start = index;
+  while (start > 0 && /\w/.test(source[start - 1]!)) start--;
+  return ['', 'u8', 'u', 'U', 'L'].includes(source.slice(start, index));
 }
 
 const NOT_FUNCTIONS = new Set(['if', 'for', 'while', 'switch', 'return', 'else', 'do', 'sizeof']);

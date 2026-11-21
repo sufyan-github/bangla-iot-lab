@@ -39,6 +39,50 @@ void loop() { }
     expect(prototypes(source)).toEqual(['void setup();', 'void loop();']);
   });
 
+  it('ignores a web page kept in a raw string, JavaScript functions and all', () => {
+    const source = [
+      'const char PAGE[] PROGMEM = R"HTML(',
+      '<script>',
+      'async function load() {',
+      '  const r = await fetch("/data");',
+      '}',
+      'function show(x) { return x; }',
+      '</script>',
+      ')HTML";',
+      'enum Gesture { TAP, HOLD };',
+      'Gesture readGesture() { return TAP; }',
+      'void setup() { }',
+      'void loop() { }',
+    ].join('\n');
+    expect(prototypes(source)).toEqual(['Gesture readGesture();', 'void setup();', 'void loop();']);
+
+    // The declarations go in just before the first real function, so after the type they use.
+    const lines = sketchToCpp(source).split('\n');
+    expect(lines.indexOf('Gesture readGesture();')).toBeGreaterThan(
+      lines.indexOf('enum Gesture { TAP, HOLD };'),
+    );
+    // The page itself is passed through untouched.
+    expect(sketchToCpp(source)).toContain('async function load() {');
+  });
+
+  it('reads every form of raw string, and survives one that is never closed', () => {
+    expect(prototypes('const char* a = R"(void fake() { })";\nvoid real() { }')).toEqual([
+      'void real();',
+    ]);
+    expect(prototypes('auto b = u8R"x(int fake() { })x";\nvoid real() { }')).toEqual([
+      'void real();',
+    ]);
+    // A ")" inside the text does not end it; only ")tag" followed by a quote does.
+    expect(prototypes('auto c = R"js(f(); void fake() { } )" )js";\nvoid real() { }')).toEqual([
+      'void real();',
+    ]);
+    expect(prototypes('void real() { }\nconst char* d = R"(void fake() { }')).toEqual([
+      'void real();',
+    ]);
+    // A name that merely ends in R, followed by an ordinary string, is not a raw string.
+    expect(prototypes('const char* e = LETTER"x";\nvoid real() { }')).toEqual(['void real();']);
+  });
+
   it('keeps compiler messages on the original line numbers', () => {
     const source =
       'int pin = 13;\n\nvoid setup() {\n  later();\n}\nvoid loop() {}\nvoid later() {}\n';

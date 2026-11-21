@@ -120,6 +120,27 @@ describe('Arduino sketches on the emulated UNO', () => {
     expect(result.ok).toBe(true);
   });
 
+  it('builds a sketch that keeps a web page with JavaScript in a raw string', async () => {
+    // The page's JavaScript functions must not be mistaken for functions of the sketch.
+    const board = await boardRunning(`
+const char PAGE[] PROGMEM = R"HTML(
+<script>
+async function load() { const r = await fetch("/data"); }
+function show(x) { return x; }
+</script>
+)HTML";
+enum Level { LOW_LEVEL, HIGH_LEVEL };
+void setup() { Serial.begin(9600); report(level()); }
+void loop() { }
+Level level() { return HIGH_LEVEL; }
+void report(Level value) { Serial.println(value == HIGH_LEVEL ? "page ok" : "bad"); }
+`);
+    let text = '';
+    board.onSerial((chunk) => (text += chunk));
+    board.runFor(50);
+    expect(text).toContain('page ok');
+  });
+
   it('reports errors on the line the student wrote', async () => {
     const result = await compile(
       'void setup() {\n  pinMode(13, OUTPUT);\n  digitalWrit(13, HIGH);\n}\nvoid loop() {}\n',

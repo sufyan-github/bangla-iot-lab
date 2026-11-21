@@ -19,6 +19,12 @@ make no promise of compatibility, except that saved circuits are always migrated
 - Resistor, LED and HC-SR04 now take their breadboard shape from their
   definitions.
 
+### Fixed
+
+- A sketch that keeps a web page in a raw string (`R"HTML( … )HTML"`) no longer
+  fails to compile. The JavaScript functions in the page were being mistaken for
+  functions of the sketch.
+
 ## [0.1.0] - 2026-11-21
 
 First public version. Everything listed is implemented and covered by automated
