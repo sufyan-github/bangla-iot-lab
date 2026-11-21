@@ -23,6 +23,11 @@ make no promise of compatibility, except that saved circuits are always migrated
   (`spikes/esp32-api`) with its own tests, built natively and as WebAssembly,
   and a speed test page for a browser or a phone. A study prototype, not part of
   the lab; no decision has been made.
+- ESP32 development board (30 pins), groundwork only: an electrical model of its
+  pins with every number sourced and labelled (`packages/simulation`,
+  `docs/engineering/esp32-pin-model.md`), and a drawing of the board with its
+  pin positions for two row spacings (`apps/web/src/lab/esp32`). Not yet in the
+  editor or the simulation; nothing checked on real hardware.
 
 ### Fixed
 

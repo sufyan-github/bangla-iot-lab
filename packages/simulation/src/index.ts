@@ -1,3 +1,4 @@
+export * from './esp32-pins';
 export * from './library';
 export { IDLE_STATE, buildNetlist, netName, type CircuitState, type Netlist } from './netlist';
 export {

@@ -30,7 +30,9 @@
     "licences:write": "node scripts/licences.mjs write",
     "catalog:import": "pnpm --filter @banglalab/catalog run import",
     "catalog:verify": "pnpm --filter @banglalab/catalog run verify",
-    "parts:coverage": "pnpm --filter @banglalab/parts run coverage"
+    "parts:coverage": "pnpm --filter @banglalab/parts run coverage",
+    "esp32:charts": "node scripts/esp32-charts.mjs",
+    "esp32:board": "pnpm --filter @banglalab/web exec tsx scripts/export-esp32-board.tsx"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

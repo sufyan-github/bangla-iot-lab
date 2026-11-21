@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" width="760" height="440" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+<title>Output pin voltage against load current</title>
+<desc>Driving HIGH, the pin falls from 3.3 V to 2.64 V at 20 mA at the default drive strength and at 40 mA at the highest. Driving LOW, it rises to 0.495 V at 14 mA at the default strength and at 28 mA at the highest.</desc>
+<rect width="760" height="440" fill="#fcfcfb"/>
+<text x="72" y="26" font-size="16" font-weight="600" fill="#0b0b0b">Output pin voltage against load current</text>
+<text x="72" y="46" font-size="12" fill="#52514e">Voltage source behind a resistor, fitted to the datasheet test points (dots).</text>
+<line x1="72" x2="732" y1="382" y2="382" stroke="#e3e2dd"/>
+<text x="64" y="386" font-size="11" text-anchor="end" fill="#52514e">0</text>
+<line x1="72" x2="732" y1="333.82" y2="333.82" stroke="#e3e2dd"/>
+<text x="64" y="337.82" font-size="11" text-anchor="end" fill="#52514e">0.5</text>
+<line x1="72" x2="732" y1="285.64" y2="285.64" stroke="#e3e2dd"/>
+<text x="64" y="289.64" font-size="11" text-anchor="end" fill="#52514e">1</text>
+<line x1="72" x2="732" y1="237.45" y2="237.45" stroke="#e3e2dd"/>
+<text x="64" y="241.45" font-size="11" text-anchor="end" fill="#52514e">1.5</text>
+<line x1="72" x2="732" y1="189.27" y2="189.27" stroke="#e3e2dd"/>
+<text x="64" y="193.27" font-size="11" text-anchor="end" fill="#52514e">2</text>
+<line x1="72" x2="732" y1="141.09" y2="141.09" stroke="#e3e2dd"/>
+<text x="64" y="145.09" font-size="11" text-anchor="end" fill="#52514e">2.5</text>
+<line x1="72" x2="732" y1="92.91" y2="92.91" stroke="#e3e2dd"/>
+<text x="64" y="96.91" font-size="11" text-anchor="end" fill="#52514e">3</text>
+<line x1="72" x2="732" y1="64" y2="64" stroke="#e3e2dd"/>
+<text x="64" y="68" font-size="11" text-anchor="end" fill="#52514e">3.3</text>
+<line x1="72" x2="72" y1="382" y2="387" stroke="#9b9a94"/>
+<text x="72" y="401" font-size="11" text-anchor="middle" fill="#52514e">0</text>
+<line x1="154.5" x2="154.5" y1="382" y2="387" stroke="#9b9a94"/>
+<text x="154.5" y="401" font-size="11" text-anchor="middle" fill="#52514e">5</text>
+<line x1="237" x2="237" y1="382" y2="387" stroke="#9b9a94"/>
+<text x="237" y="401" font-size="11" text-anchor="middle" fill="#52514e">10</text>
+<line x1="319.5" x2="319.5" y1="382" y2="387" stroke="#9b9a94"/>
+<text x="319.5" y="401" font-size="11" text-anchor="middle" fill="#52514e">15</text>
+<line x1="402" x2="402" y1="382" y2="387" stroke="#9b9a94"/>
+<text x="402" y="401" font-size="11" text-anchor="middle" fill="#52514e">20</text>
+<line x1="484.5" x2="484.5" y1="382" y2="387" stroke="#9b9a94"/>
+<text x="484.5" y="401" font-size="11" text-anchor="middle" fill="#52514e">25</text>
+<line x1="567" x2="567" y1="382" y2="387" stroke="#9b9a94"/>
+<text x="567" y="401" font-size="11" text-anchor="middle" fill="#52514e">30</text>
+<line x1="649.5" x2="649.5" y1="382" y2="387" stroke="#9b9a94"/>
+<text x="649.5" y="401" font-size="11" text-anchor="middle" fill="#52514e">35</text>
+<line x1="732" x2="732" y1="382" y2="387" stroke="#9b9a94"/>
+<text x="732" y="401" font-size="11" text-anchor="middle" fill="#52514e">40</text>
+<line x1="72" x2="732" y1="382" y2="382" stroke="#9b9a94"/>
+<text x="402" y="426" font-size="12" text-anchor="middle" fill="#52514e">Load current (mA)</text>
+<text transform="translate(18 223) rotate(-90)" font-size="12" text-anchor="middle" fill="#52514e">Pin voltage (V)</text>
+<line x1="72" x2="732" y1="127.6" y2="127.6" stroke="#7a7974" stroke-dasharray="5 4"/>
+<text x="517.5" y="142.6" font-size="11.5" font-weight="400" text-anchor="start" fill="#52514e">V_OH minimum 2.64 V</text>
+<line x1="72" x2="732" y1="350.2" y2="350.2" stroke="#7a7974" stroke-dasharray="5 4"/>
+<text x="727.05" y="365.2" font-size="11.5" font-weight="400" text-anchor="end" fill="#52514e">V_OL maximum 0.33 V</text>
+<polyline points="72,64 88.5,67.18 105,70.36 121.5,73.54 138,76.72 154.5,79.9 171,83.08 187.5,86.26 204,89.44 220.5,92.62 237,95.8 253.5,98.98 270,102.16 286.5,105.34 303,108.52 319.5,111.7 336,114.88 352.5,118.06 369,121.24 385.5,124.42 402,127.6 418.5,130.78 435,133.96 451.5,137.14 468,140.32 484.5,143.5 501,146.68 517.5,149.86 534,153.04 550.5,156.22 567,159.4 583.5,162.58 600,165.76 616.5,168.94 633,172.12 649.5,175.3 666,178.48 682.5,181.66 699,184.84 715.5,188.02 732,191.2" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<polyline points="72,382 88.5,378.59 105,375.19 121.5,371.78 138,368.37 154.5,364.96 171,361.56 187.5,358.15 204,354.74 220.5,351.34 237,347.93 253.5,344.52 270,341.11 286.5,337.71 303,334.3 319.5,330.89 336,327.49 352.5,324.08 369,320.67 385.5,317.26 402,313.86 418.5,310.45 435,307.04 451.5,303.64 468,300.23 484.5,296.82 501,293.41 517.5,290.01 534,286.6 550.5,283.19 567,279.79 583.5,276.38 600,272.97 616.5,269.56 633,266.16 649.5,262.75 666,259.34 682.5,255.94 699,252.53 715.5,249.12 732,245.71" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<polyline points="72,64 88.5,65.59 105,67.18 121.5,68.77 138,70.36 154.5,71.95 171,73.54 187.5,75.13 204,76.72 220.5,78.31 237,79.9 253.5,81.49 270,83.08 286.5,84.67 303,86.26 319.5,87.85 336,89.44 352.5,91.03 369,92.62 385.5,94.21 402,95.8 418.5,97.39 435,98.98 451.5,100.57 468,102.16 484.5,103.75 501,105.34 517.5,106.93 534,108.52 550.5,110.11 567,111.7 583.5,113.29 600,114.88 616.5,116.47 633,118.06 649.5,119.65 666,121.24 682.5,122.83 699,124.42 715.5,126.01 732,127.6" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<polyline points="72,382 88.5,380.3 105,378.59 121.5,376.89 138,375.19 154.5,373.48 171,371.78 187.5,370.08 204,368.37 220.5,366.67 237,364.96 253.5,363.26 270,361.56 286.5,359.85 303,358.15 319.5,356.45 336,354.74 352.5,353.04 369,351.34 385.5,349.63 402,347.93 418.5,346.23 435,344.52 451.5,342.82 468,341.11 484.5,339.41 501,337.71 517.5,336 534,334.3 550.5,332.6 567,330.89 583.5,329.19 600,327.49 616.5,325.78 633,324.08 649.5,322.38 666,320.67 682.5,318.97 699,317.26 715.5,315.56 732,313.86" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<circle cx="402" cy="127.6" r="4.5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<circle cx="732" cy="127.6" r="4.5" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"/>
+<circle cx="534" cy="334.3" r="4.5" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"/>
+<text x="154.5" y="119.89" font-size="11.5" font-weight="600" text-anchor="start" fill="#0b0b0b">driving HIGH</text>
+<text x="154.5" y="322.25" font-size="11.5" font-weight="600" text-anchor="start" fill="#0b0b0b">driving LOW</text>
+<text x="616.5" y="186.94" font-size="11.5" font-weight="400" text-anchor="start" fill="#52514e">33 Ω</text>
+<text x="616.5" y="108.47" font-size="11.5" font-weight="400" text-anchor="start" fill="#52514e">16.5 Ω</text>
+<text x="616.5" y="259.56" font-size="11.5" font-weight="400" text-anchor="start" fill="#52514e">35.4 Ω</text>
+<text x="616.5" y="343.78" font-size="11.5" font-weight="400" text-anchor="start" fill="#52514e">17.7 Ω</text>
+<line x1="88.5" x2="110.5" y1="199.73" y2="199.73" stroke="#2a78d6" stroke-width="2" />
+<text x="116.5" y="203.73" font-size="11.5" font-weight="400" text-anchor="start" fill="#52514e">Default drive strength (2, about 20 mA)</text>
+<line x1="88.5" x2="110.5" y1="219.73" y2="219.73" stroke="#eb6834" stroke-width="2" />
+<text x="116.5" y="223.73" font-size="11.5" font-weight="400" text-anchor="start" fill="#52514e">Highest drive strength (3, about 40 mA)</text>
+</svg>
