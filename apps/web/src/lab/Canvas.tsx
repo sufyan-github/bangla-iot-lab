@@ -31,7 +31,7 @@ import {
   CANVAS_WIDTH,
   HOLE_POINTS,
   PITCH,
-  UNO_SOCKETS,
+  BOARD_SOCKETS,
   canvasHeight,
   distanceToSegment,
   endpointNear,
@@ -592,7 +592,7 @@ export function Canvas() {
               })}
 
               {circuit.components.map((component) => {
-                if (component.type === 'battery' || component.type === 'uno') {
+                if (!('pins' in component)) {
                   const box = partBox(circuit, component);
                   const reach = component.type === 'battery' ? 28 : 0;
                   return (
@@ -989,24 +989,25 @@ const TapTargets = memo(function TapTargets(props: { circuit: CircuitDocument; w
       ))}
       {wiring &&
         offBoardParts(circuit).flatMap((part) =>
-          (part.type === 'battery' ? ['pos', 'neg'] : UNO_SOCKETS.map((s) => s.terminal)).map(
-            (pin) => {
-              const endpoint = `${part.id}.${pin}`;
-              const point = endpointPoint(circuit, endpoint);
-              return (
-                point && (
-                  <circle
-                    key={endpoint}
-                    className="tap-target"
-                    data-endpoint={endpoint}
-                    cx={point.x}
-                    cy={point.y}
-                    r={part.type === 'battery' ? 15 : 10.5}
-                  />
-                )
-              );
-            },
-          ),
+          (part.type === 'battery'
+            ? ['pos', 'neg']
+            : BOARD_SOCKETS[part.type].map((s) => s.terminal)
+          ).map((pin) => {
+            const endpoint = `${part.id}.${pin}`;
+            const point = endpointPoint(circuit, endpoint);
+            return (
+              point && (
+                <circle
+                  key={endpoint}
+                  className="tap-target"
+                  data-endpoint={endpoint}
+                  cx={point.x}
+                  cy={point.y}
+                  r={part.type === 'battery' ? 15 : 10.5}
+                />
+              )
+            );
+          }),
         )}
     </g>
   );

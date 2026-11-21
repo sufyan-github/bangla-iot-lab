@@ -11,22 +11,17 @@ import {
   type CircuitDocument,
   type EditResult,
   type Position,
+  type ProgrammableType,
   type Wire,
 } from '@banglalab/shared';
+import { esp32BoardLayout } from './esp32/geometry';
+import { PITCH, type Box, type Point } from './units';
 
-/** Canvas layout in SVG user units. One breadboard pitch is 24 units. */
-export const PITCH = 24;
+export { PITCH, type Box, type Point } from './units';
 export const BOARD_X = 190;
 export const BOARD_Y = 28;
 export const CANVAS_WIDTH = BOARD_X + BOARD_WIDTH * PITCH + 26;
 const BREADBOARD_BOTTOM = BOARD_Y + BOARD_HEIGHT * PITCH;
-
-export interface Box {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 
 export const BREADBOARD_BOX: Box = {
   x: BOARD_X,
@@ -41,6 +36,16 @@ export const BREADBOARD_BOX: Box = {
  */
 export const UNO_BOX: Box = { x: BOARD_X, y: BREADBOARD_BOTTOM + 40, width: 474, height: 188 };
 const SOCKET_PITCH = 22;
+const ESP32_LAYOUT = esp32BoardLayout();
+/** The ESP32 board takes the same place until it is moved. A circuit has one board or the other. */
+export const ESP32_BOX: Box = {
+  x: UNO_BOX.x,
+  y: UNO_BOX.y,
+  width: ESP32_LAYOUT.width,
+  height: ESP32_LAYOUT.height,
+};
+/** Where each kind of board sits until it is moved. Socket positions are given for this place. */
+export const BOARD_HOME: Record<ProgrammableType, Box> = { uno: UNO_BOX, esp32: ESP32_BOX };
 const BATTERY_SIZE = { width: 104, height: 156 };
 /** How far a battery's terminals stick out to its right. */
 const BATTERY_TERMINAL_REACH = 16;
@@ -49,17 +54,17 @@ const BATTERY_TERMINAL_REACH = 16;
 const SURFACE_BOTTOM = UNO_BOX.y + UNO_BOX.height + 28 + PITCH * 10;
 const MARGIN = 6;
 
-export type OffBoardPart = Extract<CircuitComponent, { type: 'battery' | 'uno' }>;
+export type OffBoardPart = Extract<CircuitComponent, { type: 'battery' | ProgrammableType }>;
 
 export function offBoardParts(circuit: CircuitDocument): OffBoardPart[] {
   return circuit.components.filter(
-    (c): c is OffBoardPart => c.type === 'battery' || c.type === 'uno',
+    (c): c is OffBoardPart => c.type === 'battery' || c.type === 'uno' || c.type === 'esp32',
   );
 }
 
 /** Where a battery or board is drawn: where the student put it, or its usual place. */
 export function partBox(circuit: CircuitDocument, part: OffBoardPart): Box {
-  const size = part.type === 'uno' ? UNO_BOX : BATTERY_SIZE;
+  const size = part.type === 'battery' ? BATTERY_SIZE : BOARD_HOME[part.type];
   if (part.at) {
     return {
       x: BOARD_X + part.at.x * PITCH,
@@ -68,7 +73,7 @@ export function partBox(circuit: CircuitDocument, part: OffBoardPart): Box {
       height: size.height,
     };
   }
-  if (part.type === 'uno') return UNO_BOX;
+  if (part.type !== 'battery') return BOARD_HOME[part.type];
   // Batteries start beside the board, stacked in the order they were added.
   const index = circuit.components.filter((c) => c.type === 'battery').indexOf(part);
   return { x: 26, y: 56 + Math.max(0, index) * 206, ...BATTERY_SIZE };
@@ -76,9 +81,10 @@ export function partBox(circuit: CircuitDocument, part: OffBoardPart): Box {
 
 /** The room a part takes up, including what sticks out of its body. */
 function footprint(type: OffBoardPart['type'], box: Box): Box {
-  return type === 'uno'
-    ? { x: box.x - 12, y: box.y, width: box.width + 12, height: box.height }
-    : { ...box, width: box.width + BATTERY_TERMINAL_REACH + 9 };
+  // A board's USB socket overhangs its left edge.
+  return type === 'battery'
+    ? { ...box, width: box.width + BATTERY_TERMINAL_REACH + 9 }
+    : { x: box.x - 12, y: box.y, width: box.width + 12, height: box.height };
 }
 
 const overlaps = (a: Box, b: Box, gap: number) =>
@@ -133,11 +139,6 @@ export function canvasHeight(circuit: CircuitDocument): number {
   return Math.max(BREADBOARD_BOTTOM, ...bottoms) + 28;
 }
 
-export interface Point {
-  x: number;
-  y: number;
-}
-
 export function holePoint(hole: string): Point {
   const { x, y } = holeCoordinates(hole);
   return { x: BOARD_X + x * PITCH, y: BOARD_Y + y * PITCH };
@@ -184,12 +185,7 @@ function socketLabel(terminal: string): string {
   return [3, 5, 6, 9, 10, 11].includes(Number(pin)) ? `~${pin}` : pin; // ~ marks PWM pins
 }
 
-export const UNO_SOCKETS: readonly {
-  terminal: string;
-  point: Point;
-  label: string;
-  top: boolean;
-}[] = UNO_HEADERS.flatMap((header, row) => {
+export const UNO_SOCKETS: readonly BoardSocket[] = UNO_HEADERS.flatMap((header, row) => {
   let x = header.x;
   return header.groups.flatMap((group) => {
     const sockets = group.map((terminal, i) => ({
@@ -202,12 +198,39 @@ export const UNO_SOCKETS: readonly {
     return sockets;
   });
 });
-const UNO_SOCKET_POINT = new Map(UNO_SOCKETS.map((s) => [s.terminal, s.point]));
+
+export interface BoardSocket {
+  terminal: string;
+  /** Where the socket is when the board is in its usual place. */
+  point: Point;
+  label: string;
+  /** True for the row along the top edge of the board. */
+  top: boolean;
+}
+
+/** The ESP32 board's 30 pins, from its drawing. */
+export const ESP32_SOCKETS: readonly BoardSocket[] = ESP32_LAYOUT.pins.map((pin) => ({
+  terminal: pin.id,
+  point: { x: ESP32_BOX.x + pin.point.x, y: ESP32_BOX.y + pin.point.y },
+  label: pin.label,
+  top: pin.row === 'top',
+}));
+
+/** Every socket of a kind of board, with the board in its usual place. */
+export const BOARD_SOCKETS: Record<ProgrammableType, readonly BoardSocket[]> = {
+  uno: UNO_SOCKETS,
+  esp32: ESP32_SOCKETS,
+};
+const SOCKET_POINT: Record<ProgrammableType, Map<string, Point>> = {
+  uno: new Map(UNO_SOCKETS.map((s) => [s.terminal, s.point])),
+  esp32: new Map(ESP32_SOCKETS.map((s) => [s.terminal, s.point])),
+};
 
 /** How far a moved board is from the place its socket positions are given for. */
-export function unoShift(circuit: CircuitDocument, board: OffBoardPart): Point {
+export function boardShift(circuit: CircuitDocument, board: OffBoardPart): Point {
   const box = partBox(circuit, board);
-  return { x: box.x - UNO_BOX.x, y: box.y - UNO_BOX.y };
+  const home = board.type === 'battery' ? box : BOARD_HOME[board.type];
+  return { x: box.x - home.x, y: box.y - home.y };
 }
 
 export function batteryTerminalPoint(box: Box, pin: string): Point {
@@ -224,9 +247,9 @@ export function endpointPoint(circuit: CircuitDocument, endpoint: string): Point
   if (owner.type === 'battery') {
     return batteryTerminalPoint(partBox(circuit, owner), terminal.pin);
   }
-  const socket = UNO_SOCKET_POINT.get(terminal.pin);
+  const socket = SOCKET_POINT[owner.type].get(terminal.pin);
   if (!socket) return null;
-  const shift = unoShift(circuit, owner);
+  const shift = boardShift(circuit, owner);
   return { x: socket.x + shift.x, y: socket.y + shift.y };
 }
 
@@ -240,8 +263,8 @@ export function endpointNear(circuit: CircuitDocument, point: Point): string | u
         if (within(batteryTerminalPoint(box, pin), PITCH * 0.8)) return `${part.id}.${pin}`;
       }
     } else {
-      const shift = unoShift(circuit, part);
-      const socket = UNO_SOCKETS.find((s) =>
+      const shift = boardShift(circuit, part);
+      const socket = BOARD_SOCKETS[part.type].find((s) =>
         within({ x: s.point.x + shift.x, y: s.point.y + shift.y }, SOCKET_PITCH * 0.55),
       );
       if (socket) return `${part.id}.${socket.terminal}`;

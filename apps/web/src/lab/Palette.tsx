@@ -11,7 +11,7 @@ const stroke = {
 } as const;
 const lead = <path d="M2 12h4M18 12h4" {...stroke} />;
 
-type PaletteItem = Tool | 'battery' | 'uno';
+type PaletteItem = Tool | 'battery' | 'uno' | 'esp32';
 
 const ICONS: Record<PaletteItem, ReactNode> = {
   select: <path d="M7 4l11 9-5 .8 3 6-2.4 1.2-3-6L7 18z" fill="currentColor" />,
@@ -40,6 +40,16 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <rect x="3" y="6" width="18" height="13" rx="2" {...stroke} />
       <path d="M7 6V3.5M10 6V3.5M13 6V3.5M16 6V3.5M9 19v2.5M12 19v2.5M15 19v2.5" {...stroke} />
       <rect x="10" y="10.5" width="7" height="4" fill="currentColor" />
+    </>
+  ),
+  esp32: (
+    <>
+      <rect x="3" y="6" width="18" height="12" rx="1.5" {...stroke} />
+      <path
+        d="M6 6V3.5M9 6V3.5M12 6V3.5M15 6V3.5M18 6V3.5M6 18v2.5M9 18v2.5M12 18v2.5M15 18v2.5M18 18v2.5"
+        {...stroke}
+      />
+      <rect x="11" y="8.5" width="8" height="7" fill="currentColor" />
     </>
   ),
   resistor: (
@@ -157,7 +167,7 @@ const ICONS: Record<PaletteItem, ReactNode> = {
 /** Tools in the order they are shown; each inner list is one group. */
 const GROUPS: PaletteItem[][] = [
   ['select', 'wire', 'probe'],
-  ['battery', 'uno'],
+  ['battery', 'uno', 'esp32'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
   ['buzzer', 'motor', 'relay', 'servo', 'lcd'],
   ['ldr', 'temperature', 'soil', 'ir', 'ultrasonic'],
@@ -181,7 +191,7 @@ export function Palette() {
   const wireStart = useLab((s) => s.wireStart);
   const running = useLab((s) => s.running);
   const wireSelected = useLab((s) => s.circuit.wires.some((wire) => wire.id === s.selectedId));
-  const { setTool, addBattery, addUno } = useLab.getState();
+  const { setTool, addBattery, addUno, addEsp32 } = useLab.getState();
   const { t } = useT();
 
   const hint: MessageKey =
@@ -193,7 +203,13 @@ export function Palette() {
           ? 'hint.running'
           : (HINTS[tool] ?? 'hint.place');
   const choose = (item: PaletteItem) =>
-    item === 'battery' ? addBattery() : item === 'uno' ? addUno() : setTool(item);
+    item === 'battery'
+      ? addBattery()
+      : item === 'uno'
+        ? addUno()
+        : item === 'esp32'
+          ? addEsp32()
+          : setTool(item);
 
   return (
     <div className="border-b border-line bg-surface">

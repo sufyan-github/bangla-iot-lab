@@ -1,4 +1,9 @@
-import { UNO_TERMINALS, unoPinNumber, type CircuitDocument } from '@banglalab/shared';
+import {
+  boardPinNumber,
+  boardTerminals,
+  isProgrammable,
+  type CircuitDocument,
+} from '@banglalab/shared';
 import { Hd44780 } from './hd44780';
 import {
   SERVO_MAX_PULSE_US,
@@ -41,9 +46,9 @@ function boardPinFinder(document: CircuitDocument): (endpoint: string) => PinKey
   }
   const pinOfNet = new Map<string, PinKey>();
   for (const component of document.components) {
-    if (component.type !== 'uno') continue;
-    for (const terminal of UNO_TERMINALS) {
-      const pin = unoPinNumber(terminal);
+    if (!isProgrammable(component)) continue;
+    for (const terminal of boardTerminals(component.type)) {
+      const pin = boardPinNumber(component.type, terminal);
       if (pin !== null)
         pinOfNet.set(find(netName(`${component.id}.${terminal}`)), pinKey(component.id, pin));
     }

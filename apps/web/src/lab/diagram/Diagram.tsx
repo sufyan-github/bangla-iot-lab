@@ -84,7 +84,7 @@ export function Diagram() {
       ? 'GND'
       : net.source?.type === 'battery'
         ? `+${quantity(net.source.voltage, 'V')}`
-        : '5V';
+        : (net.source?.label ?? '5V');
 
   if (circuit.components.length === 0) {
     return (

@@ -8,7 +8,12 @@ import {
   type CircuitComponent,
   type CircuitDocument,
 } from '@banglalab/shared';
-import type { BoardStatus, Reading, SimulationResult } from '@banglalab/simulation';
+import {
+  ESP32_LED_GPIO,
+  type BoardStatus,
+  type Reading,
+  type SimulationResult,
+} from '@banglalab/simulation';
 import { memo } from 'react';
 import {
   BOARD_X,
@@ -21,7 +26,7 @@ import {
   endpointPoint,
   holePoint,
   partBox,
-  unoShift,
+  boardShift,
   wireBends,
   type Point,
 } from './geometry';
@@ -47,6 +52,7 @@ import {
   UnoView,
   WireView,
 } from './parts';
+import { Esp32BoardView } from './esp32/Esp32BoardView';
 import { ShadingDefs } from './shading';
 
 const rowY = (row: string) => BOARD_Y + holeCoordinates(`${row}1`).y * PITCH;
@@ -475,8 +481,24 @@ export function Scene({
             </g>
           );
         }
+        if (component.type === 'esp32') {
+          const box = partBox(circuit, component);
+          return (
+            <g
+              key={component.id}
+              data-part={component.id}
+              transform={`translate(${box.x} ${box.y})`}
+            >
+              <Esp32BoardView
+                ledLevel={boards[component.id]?.highFraction[ESP32_LED_GPIO] ?? 0}
+                powered={result !== null}
+                selected={selected}
+              />
+            </g>
+          );
+        }
         if (component.type === 'uno') {
-          const shift = unoShift(circuit, component);
+          const shift = boardShift(circuit, component);
           return (
             <g
               key={component.id}

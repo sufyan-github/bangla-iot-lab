@@ -1,6 +1,6 @@
 import { TERMINAL_ROWS, holeCoordinates, type TerminalRow } from '@banglalab/shared';
 import { ESP32_DEVKIT_PINS, ESP32_PINS_PER_ROW } from '@banglalab/simulation';
-import { PITCH, type Box, type Point } from '../geometry';
+import { PITCH, type Box, type Point } from '../units';
 
 /**
  * Size and pin positions of the 30-pin ESP32 development board, seen from

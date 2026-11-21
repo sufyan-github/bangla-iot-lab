@@ -1,4 +1,4 @@
-import type { CircuitComponent, CircuitDocument } from '@banglalab/shared';
+import { isProgrammable, type CircuitComponent, type CircuitDocument } from '@banglalab/shared';
 import {
   BOX_TYPES,
   SPARSE_BOX_TYPES,
@@ -72,7 +72,7 @@ export function layoutRails(circuit: CircuitDocument, analysis: Analysis): Diagr
       for (const leg of netLegs[net]!) place(leg.component, leg.pin);
     }
   };
-  const isSource = (c: CircuitComponent) => c.type === 'battery' || c.type === 'uno';
+  const isSource = (c: CircuitComponent) => c.type === 'battery' || isProgrammable(c);
   for (const component of circuit.components.filter(isSource)) place(component);
   drain();
   for (const component of circuit.components) {

@@ -15,10 +15,11 @@ import { Value } from 'typebox/value';
  * 4 — adds the servo, ultrasonic distance sensor and character LCD.
  * 5 — batteries and the board may carry `at`, where the student moved them to.
  * 6 — a wire may carry `bends`, the points the student routed it through.
+ * 7 — adds the ESP32 development board.
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 6;
+export const CIRCUIT_SCHEMA_VERSION = 7;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -241,6 +242,17 @@ export const UnoSchema = Type.Object({
   at: Type.Optional(PositionSchema),
 });
 
+/**
+ * ESP32 development board (30 pins). Like the UNO-compatible board it sits
+ * beside the breadboard and wires plug into its pins. Its pins work at 3.3 V.
+ */
+export const Esp32Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('esp32'),
+  props: Type.Object({}),
+  at: Type.Optional(PositionSchema),
+});
+
 export const ComponentSchema = Type.Union([
   BatterySchema,
   ResistorSchema,
@@ -262,6 +274,7 @@ export const ComponentSchema = Type.Union([
   UltrasonicSchema,
   LcdSchema,
   UnoSchema,
+  Esp32Schema,
 ]);
 
 export const MAX_WIRE_BENDS = 8;
@@ -288,6 +301,7 @@ export type Button = Static<typeof ButtonSchema>;
 export type Potentiometer = Static<typeof PotentiometerSchema>;
 export type Capacitor = Static<typeof CapacitorSchema>;
 export type Uno = Static<typeof UnoSchema>;
+export type Esp32 = Static<typeof Esp32Schema>;
 export type CircuitComponent = Static<typeof ComponentSchema>;
 /** A part whose leads plug into breadboard holes. */
 export type BoardPart = Extract<CircuitComponent, { pins: unknown }>;
@@ -334,6 +348,67 @@ export function unoPinNumber(terminal: string): number | null {
   const match = /^([da])(\d+)$/.exec(terminal);
   if (!match) return null;
   return Number(match[2]) + (match[1] === 'a' ? 14 : 0);
+}
+
+/**
+ * Pins of the 30-pin ESP32 development board, by the name printed beside each
+ * (in small letters): the left row then the right row, each from the antenna
+ * end. The electrical details of each pin are in the simulation package
+ * (esp32-pins.ts), and a test there keeps the two lists the same.
+ */
+export const ESP32_TERMINALS = [
+  ...['en', 'vp', 'vn', 'd34', 'd35', 'd32', 'd33', 'd25', 'd26', 'd27', 'd14', 'd12', 'd13'],
+  ...['gnd1', 'vin', 'd23', 'd22', 'tx0', 'rx0', 'd21', 'd19', 'd18', 'd5', 'tx2', 'rx2', 'd4'],
+  ...['d2', 'd15', 'gnd2', '3v3'],
+] as const;
+
+/** Pins whose printed name is not their GPIO number. */
+const ESP32_NAMED_GPIO: Record<string, number> = {
+  vp: 36,
+  vn: 39,
+  tx0: 1,
+  rx0: 3,
+  tx2: 17,
+  rx2: 16,
+};
+
+/** GPIO number of an ESP32 board pin, or null for EN and the power pins. */
+export function esp32GpioNumber(terminal: string): number | null {
+  const named = ESP32_NAMED_GPIO[terminal];
+  if (named !== undefined) return named;
+  const match = /^d(\d+)$/.exec(terminal);
+  return match ? Number(match[1]) : null;
+}
+
+/** The pin of an ESP32 board that carries a GPIO number, or null if none of the 30 does. */
+export function esp32TerminalOfGpio(gpio: number): string | null {
+  return ESP32_TERMINALS.find((terminal) => esp32GpioNumber(terminal) === gpio) ?? null;
+}
+
+/** The boards a program can be uploaded to. */
+export const PROGRAMMABLE_TYPES = ['uno', 'esp32'] as const;
+export type ProgrammableType = (typeof PROGRAMMABLE_TYPES)[number];
+export type ProgrammableBoard = Extract<CircuitComponent, { type: ProgrammableType }>;
+
+export function isProgrammable(component: CircuitComponent): component is ProgrammableBoard {
+  return component.type === 'uno' || component.type === 'esp32';
+}
+
+/** Arduino pin number behind a socket of either board, or null for power and other pins. */
+export function boardPinNumber(type: ProgrammableType, terminal: string): number | null {
+  return type === 'uno' ? unoPinNumber(terminal) : esp32GpioNumber(terminal);
+}
+
+/** The socket of a board that carries an Arduino pin number, or null. */
+export function boardSocketOfPin(type: ProgrammableType, pin: number): string | null {
+  if (type === 'esp32') return esp32TerminalOfGpio(pin);
+  if (pin < 0 || pin > 19) return null;
+  return pin < 14 ? `d${pin}` : `a${pin - 14}`;
+}
+
+/** Every socket of a board. */
+export function boardTerminals(type: ProgrammableType): readonly string[] {
+  return type === 'uno' ? UNO_TERMINALS : ESP32_TERMINALS;
 }
 
 export function terminalEndpoint(componentId: string, pin: string): string {

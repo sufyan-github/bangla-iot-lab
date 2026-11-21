@@ -4,7 +4,8 @@ import {
   BATTERY_TERMINALS,
   ComponentSchema,
   LCD_PINS,
-  UNO_TERMINALS,
+  boardTerminals,
+  isProgrammable,
   WireSchema,
   componentHoles,
   parseTerminal,
@@ -136,7 +137,7 @@ function findBoardPart(circuit: CircuitDocument, id: string): BoardPart | undefi
 /** Terminals a wire can plug into on a part that sits beside the board. */
 function terminalsOf(component: CircuitComponent): readonly string[] {
   if (component.type === 'battery') return BATTERY_TERMINALS;
-  if (component.type === 'uno') return UNO_TERMINALS;
+  if (isProgrammable(component)) return boardTerminals(component.type);
   return [];
 }
 
@@ -152,7 +153,7 @@ function endpointExists(circuit: CircuitDocument, endpoint: string): boolean {
 function holdsOneLead(circuit: CircuitDocument, endpoint: string): boolean {
   if (isHole(endpoint)) return true;
   const owner = circuit.components.find((c) => c.id === parseTerminal(endpoint)?.componentId);
-  return owner?.type === 'uno';
+  return owner !== undefined && isProgrammable(owner);
 }
 
 /** Holes and sockets that already hold a lead or a wire end. */
@@ -180,9 +181,10 @@ function addBeside(
   limit: number,
   limitError: EditError,
 ): EditResult {
-  if (circuit.components.filter((c) => c.type === component.type).length >= limit) {
-    return fail(limitError);
-  }
+  // The two kinds of board share one limit: a circuit has one board to program.
+  const sameKind = (other: CircuitComponent) =>
+    isProgrammable(component) ? isProgrammable(other) : other.type === component.type;
+  if (circuit.components.filter(sameKind).length >= limit) return fail(limitError);
   return {
     ok: true,
     id: component.id,
@@ -197,6 +199,11 @@ export function addBattery(circuit: CircuitDocument, voltage = 9): EditResult {
 
 export function addUno(circuit: CircuitDocument): EditResult {
   const board = { id: nextId(circuit, 'UNO'), type: 'uno', props: {} } as const;
+  return addBeside(circuit, board, MAX_BOARDS, 'board-limit');
+}
+
+export function addEsp32(circuit: CircuitDocument): EditResult {
+  const board = { id: nextId(circuit, 'ESP'), type: 'esp32', props: {} } as const;
   return addBeside(circuit, board, MAX_BOARDS, 'board-limit');
 }
 

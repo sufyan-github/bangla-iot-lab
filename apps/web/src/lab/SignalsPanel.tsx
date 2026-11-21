@@ -1,6 +1,6 @@
-import { parseTerminal, unoPinNumber } from '@banglalab/shared';
+import { boardPinNumber, isProgrammable, parseTerminal } from '@banglalab/shared';
 import type { Probe } from '@banglalab/simulation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useT } from '../i18n';
 import { signalStats, signals, type SignalStats } from './signals';
 import { useLab } from './store';
@@ -31,20 +31,30 @@ export function SignalsPanel() {
   const { setProbes } = useLab.getState();
   const { t, quantity, number } = useT();
 
-  const parts = circuit.components.filter((c) => c.type !== 'uno');
+  const parts = circuit.components.filter((c) => !isProgrammable(c));
+  /** The pin number behind a wire end that sits in a board's socket, or null. */
+  const pinOf = useCallback(
+    (end: string): number | null => {
+      const terminal = parseTerminal(end);
+      const owner = circuit.components.find((c) => c.id === terminal?.componentId);
+      return terminal && owner && isProgrammable(owner)
+        ? boardPinNumber(owner.type, terminal.pin)
+        : null;
+    },
+    [circuit.components],
+  );
   /** Board pins with a wire in them, in pin order. */
   const pinProbes = useMemo(() => {
     const sockets = new Set<string>();
     for (const wire of circuit.wires) {
       for (const end of [wire.from, wire.to]) {
-        const terminal = parseTerminal(end);
-        if (terminal && unoPinNumber(terminal.pin) !== null) sockets.add(end);
+        if (pinOf(end) !== null) sockets.add(end);
       }
     }
     return [...sockets]
-      .sort((a, b) => unoPinNumber(parseTerminal(a)!.pin)! - unoPinNumber(parseTerminal(b)!.pin)!)
+      .sort((a, b) => pinOf(a)! - pinOf(b)!)
       .map((socket): Probe => `socket:${socket}`);
-  }, [circuit.wires]);
+  }, [circuit.wires, pinOf]);
 
   const firstChoice =
     parts.find((c) => c.type === 'led') ?? parts.find((c) => c.type === 'capacitor') ?? parts[0];

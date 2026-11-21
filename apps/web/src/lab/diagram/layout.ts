@@ -1,4 +1,4 @@
-import type { CircuitDocument } from '@banglalab/shared';
+import { isProgrammable, type CircuitDocument } from '@banglalab/shared';
 import { analyse, type DiagramLayout } from './nets';
 import { layoutRails } from './rails';
 import { layoutTree } from './tree';
@@ -16,6 +16,6 @@ export * from './nets';
  */
 export function layoutDiagram(circuit: CircuitDocument): DiagramLayout {
   const analysis = analyse(circuit);
-  const board = circuit.components.find((component) => component.type === 'uno');
+  const board = circuit.components.find(isProgrammable);
   return board ? layoutTree(circuit, board, analysis) : layoutRails(circuit, analysis);
 }

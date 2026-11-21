@@ -1,7 +1,14 @@
-import { UNO_TERMINALS, type CircuitComponent, type CircuitDocument } from '@banglalab/shared';
+import {
+  boardTerminals,
+  isProgrammable,
+  type CircuitComponent,
+  type CircuitDocument,
+} from '@banglalab/shared';
 import {
   BOX_TYPES,
   SPARSE_BOX_TYPES,
+  isGroundLeg,
+  isSupplyLeg,
   pinLabel,
   pinNames,
   type Analysis,
@@ -542,8 +549,8 @@ export function layoutTree(
 
   // --- the board's pins, top to bottom, each with everything that hangs off it ---
   let cursor = MARGIN + 52;
-  for (const pin of UNO_TERMINALS) {
-    if (pin === '5v' || pin.startsWith('gnd')) continue;
+  for (const pin of isProgrammable(hub) ? boardTerminals(hub.type) : []) {
+    if (isSupplyLeg(hub, pin) || isGroundLeg(hub, pin)) continue;
     const net = netOfLeg(hub, pin);
     if (net === null || hubPinY.has(pin)) continue; // unused, or already a parallel line into a module
     let block: Block;

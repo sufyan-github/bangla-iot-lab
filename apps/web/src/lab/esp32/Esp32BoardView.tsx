@@ -1,4 +1,4 @@
-import type { Box } from '../geometry';
+import type { Box } from '../units';
 import {
   ESP32_DEFAULT_VARIANT,
   UNITS_PER_MM,

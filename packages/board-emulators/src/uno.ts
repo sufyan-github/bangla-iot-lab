@@ -16,6 +16,7 @@ import {
   usart0Config,
 } from 'avr8js';
 import { parseIntelHex } from './intel-hex';
+import type { PinDrive, PinListener, ProgrammableBoard } from './board';
 
 const FLASH_SIZE = 0x8000; // ATmega328P: 32 KiB
 const CLOCK_HZ = 16_000_000;
@@ -24,22 +25,12 @@ export const UNO_PIN_COUNT = 20;
 /** Supply voltage of the board's logic, volts. */
 export const UNO_VCC = 5;
 
-/**
- * What a pin is doing electrically:
- * - `low` / `high`: output, driving the pin to 0 V or 5 V
- * - `input`: high impedance
- * - `pullup`: input with the internal pull-up resistor to 5 V
- */
-export type PinDrive = 'low' | 'high' | 'input' | 'pullup';
-
 const DRIVE: Record<PinState, PinDrive> = {
   [PinState.Low]: 'low',
   [PinState.High]: 'high',
   [PinState.Input]: 'input',
   [PinState.InputPullUp]: 'pullup',
 };
-
-export type PinListener = (pin: number, drive: PinDrive, timeMs: number) => void;
 
 /**
  * An Arduino UNO-compatible board: an emulated ATmega328P at 16 MHz with its
@@ -49,7 +40,7 @@ export type PinListener = (pin: number, drive: PinDrive, timeMs: number) => void
  * and 14-19 are A0-A5 (port C). Not emulated: SPI, I²C, EEPROM, external
  * interrupts driven from the circuit.
  */
-export class UnoBoard {
+export class UnoBoard implements ProgrammableBoard {
   private readonly cpu: CPU;
   private readonly adc: AVRADC;
   private readonly ports: { port: AVRIOPort; firstPin: number; pinCount: number }[];
@@ -127,6 +118,11 @@ export class UnoBoard {
   setAnalogInput(channel: number, volts: number): void {
     if (channel < 0 || channel > 5) throw new RangeError(`UNO has no analog input A${channel}`);
     this.adc.channelValues[channel] = Math.min(UNO_VCC, Math.max(0, volts));
+  }
+
+  /** The voltage on a pin, for analog reads: only A0-A5 (pins 14-19) can measure. */
+  setPinVoltage(pin: number, volts: number): void {
+    if (pin >= 14 && pin <= 19) this.setAnalogInput(pin - 14, volts);
   }
 
   /** Called whenever a pin changes what it drives. Returns a function that stops listening. */

@@ -1,7 +1,13 @@
-import { UNO_PIN_COUNT, UnoBoard, type PinDrive } from '@banglalab/board-emulators';
+import { UnoBoard, type PinDrive, type ProgrammableBoard } from '@banglalab/board-emulators';
 import { solveTimeStep, type Capacitor } from '@banglalab/circuit-engine';
-import type { CircuitDocument } from '@banglalab/shared';
-import { LOGIC_HIGH, LOGIC_LOW, MODULE_MIN_SUPPLY } from './library';
+import {
+  boardSocketOfPin,
+  isProgrammable,
+  type CircuitDocument,
+  type ProgrammableType,
+} from '@banglalab/shared';
+import { BOARD_MODELS, type BoardModel } from './boards';
+import { MODULE_MIN_SUPPLY } from './library';
 import { buildNetlist, type CircuitState, type Netlist } from './netlist';
 import { Peripherals, type ScheduledInput } from './peripherals';
 import {
@@ -57,7 +63,9 @@ export interface SimulationFrame {
 }
 
 interface RunningBoard {
-  emulator: UnoBoard;
+  emulator: ProgrammableBoard;
+  type: ProgrammableType;
+  model: BoardModel;
   /** Session time at which this program started. */
   startedAt: number;
   drives: PinDrive[];
@@ -151,7 +159,10 @@ export class SimulationSession {
     this.stepping = null;
     this.hasCapacitors = document.components.some((c) => c.type === 'capacitor');
     for (const id of this.boards.keys()) {
-      if (!document.components.some((c) => c.id === id && c.type === 'uno')) this.boards.delete(id);
+      const board = this.boards.get(id)!;
+      if (!document.components.some((c) => c.id === id && c.type === board.type)) {
+        this.boards.delete(id);
+      }
     }
     for (const id of this.stored.keys()) {
       if (!document.components.some((c) => c.id === id)) this.stored.delete(id);
@@ -182,14 +193,29 @@ export class SimulationSession {
     sample.forEach((v, p) => values[p]!.push(v));
   }
 
-  /** Uploads a program to a board and starts it from reset. Throws if the firmware is not valid. */
+  /** Uploads a program to a UNO-compatible board and starts it from reset. Throws if the firmware is not valid. */
   loadFirmware(boardId: string, hex: string): void {
-    const emulator = new UnoBoard(hex);
+    this.loadProgram(boardId, new UnoBoard(hex));
+  }
+
+  /**
+   * Puts a board that is ready to run its program (from reset, at time zero) in
+   * the place of the circuit's board `boardId`. Throws if the circuit has no
+   * such board.
+   */
+  loadProgram(boardId: string, emulator: ProgrammableBoard): void {
+    const component = this.document.components.find((c) => c.id === boardId);
+    if (!component || !isProgrammable(component)) {
+      throw new Error(`the circuit has no board called ${boardId}`);
+    }
+    const model = BOARD_MODELS[component.type];
     const board: RunningBoard = {
       emulator,
+      type: component.type,
+      model,
       startedAt: this.time,
-      drives: Array.from({ length: UNO_PIN_COUNT }, (_, pin) => emulator.pinDrive(pin)),
-      highTime: new Array<number>(UNO_PIN_COUNT).fill(0),
+      drives: Array.from({ length: model.pinCount }, (_, pin) => emulator.pinDrive(pin)),
+      highTime: new Array<number>(model.pinCount).fill(0),
       serial: '',
       inputLevel: [],
       events: [],
@@ -291,7 +317,7 @@ export class SimulationSession {
       }
     }
     for (const board of this.boards.values()) {
-      for (let pin = 0; pin < UNO_PIN_COUNT; pin++) {
+      for (let pin = 0; pin < board.model.pinCount; pin++) {
         if (board.drives[pin] === 'high') board.highTime[pin]! += milliseconds;
       }
     }
@@ -303,7 +329,8 @@ export class SimulationSession {
     const solution = this.hasCapacitors ? this.latest : this.solveSteady();
     this.peripherals.setPowered((id) => (solution?.parts[id]?.voltage ?? 0) >= MODULE_MIN_SUPPLY);
     for (const [id, board] of this.boards) {
-      for (let pin = 0; pin < UNO_PIN_COUNT; pin++) {
+      const { model } = board;
+      for (let pin = 0; pin < model.pinCount; pin++) {
         if (this.peripherals.sensorInputs.has(`${id}:${pin}`)) {
           // This input is driven by a sensor's timed pulses; it idles LOW.
           if (board.inputLevel[pin] === undefined) {
@@ -312,18 +339,20 @@ export class SimulationSession {
           }
           continue;
         }
-        const socket = `${id}.${pin < 14 ? `d${pin}` : `a${pin - 14}`}`;
-        const sample = solution?.sockets[socket];
+        const terminal = boardSocketOfPin(board.type, pin);
+        // A pin number with no socket on this board (the ESP32's flash pins) is left alone.
+        if (terminal === null) continue;
+        const sample = solution?.sockets[`${id}.${terminal}`];
         // Nothing plugged in: a pull-up reads HIGH, a bare input reads LOW.
-        const voltage = sample ? sample.voltage : board.drives[pin] === 'pullup' ? 5 : 0;
+        const voltage = sample ? sample.voltage : board.drives[pin] === 'pullup' ? model.vcc : 0;
         const previous = board.inputLevel[pin];
         const level =
-          voltage > LOGIC_HIGH ? true : voltage < LOGIC_LOW ? false : (previous ?? false);
+          voltage > model.logicHigh ? true : voltage < model.logicLow ? false : (previous ?? false);
         if (level !== previous) {
           board.inputLevel[pin] = level;
           board.emulator.setDigitalInput(pin, level);
         }
-        if (pin >= 14) board.emulator.setAnalogInput(pin - 14, voltage);
+        board.emulator.setPinVoltage(pin, voltage);
       }
     }
   }

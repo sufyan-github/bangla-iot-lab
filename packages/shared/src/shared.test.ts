@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { allHoles, holeAt, holeCoordinates, parseHole, stripOf } from './breadboard';
 import {
+  CIRCUIT_SCHEMA_VERSION,
+  ESP32_TERMINALS,
   emptyCircuit,
+  esp32GpioNumber,
+  esp32TerminalOfGpio,
   isCircuitDocument,
   migrateCircuit,
   unoPinNumber,
@@ -9,6 +13,7 @@ import {
 } from './circuit';
 import {
   addBattery,
+  addEsp32,
   addUno,
   addWire,
   flipPart,
@@ -73,7 +78,10 @@ describe('circuit document', () => {
 
   it('rejects malformed documents', () => {
     const example = ledCircuitExample();
-    expect(isCircuitDocument({ ...example, schemaVersion: 7 })).toBe(false);
+    // A version newer than this build knows is not opened.
+    expect(isCircuitDocument({ ...example, schemaVersion: CIRCUIT_SCHEMA_VERSION + 1 })).toBe(
+      false,
+    );
     expect(isCircuitDocument({ ...example, wires: [{ id: 'W1', from: 'a1' }] })).toBe(false);
     expect(
       isCircuitDocument({
@@ -103,6 +111,61 @@ describe('document versions', () => {
     expect(migrateCircuit({ schemaVersion: 1, components: 'x', wires: [] })).toBeNull();
     expect(migrateCircuit('circuit')).toBeNull();
     expect(migrateCircuit(null)).toBeNull();
+  });
+});
+
+describe('ESP32 development board', () => {
+  it('has 30 pins, each named once', () => {
+    expect(ESP32_TERMINALS).toHaveLength(30);
+    expect(new Set(ESP32_TERMINALS).size).toBe(30);
+  });
+
+  it('knows the GPIO number behind each printed name', () => {
+    expect(esp32GpioNumber('d23')).toBe(23);
+    expect(esp32GpioNumber('vp')).toBe(36);
+    expect(esp32GpioNumber('vn')).toBe(39);
+    expect(esp32GpioNumber('rx2')).toBe(16);
+    expect(esp32GpioNumber('tx2')).toBe(17);
+    expect(esp32GpioNumber('tx0')).toBe(1);
+    expect(esp32GpioNumber('rx0')).toBe(3);
+    for (const power of ['3v3', 'vin', 'gnd1', 'gnd2', 'en'])
+      expect(esp32GpioNumber(power)).toBeNull();
+    expect(esp32TerminalOfGpio(36)).toBe('vp');
+    expect(esp32TerminalOfGpio(2)).toBe('d2');
+    // GPIO 0 and the flash pins are not on the 30-pin headers.
+    expect(esp32TerminalOfGpio(0)).toBeNull();
+    expect(esp32TerminalOfGpio(6)).toBeNull();
+  });
+
+  it('is added beside the breadboard and takes one wire per pin', () => {
+    const added = addEsp32(emptyCircuit());
+    const circuit = ok(added);
+    expect(circuit.components).toEqual([{ id: 'ESP1', type: 'esp32', props: {} }]);
+    expect(isCircuitDocument(circuit)).toBe(true);
+    const wired = ok(addWire(circuit, 'ESP1.d2', 'a1'));
+    expect(addWire(wired, 'ESP1.d2', 'a2')).toEqual({ ok: false, error: 'hole-occupied' });
+    expect(addWire(wired, 'ESP1.d6', 'a2')).toEqual({ ok: false, error: 'unknown-endpoint' });
+    expect(addWire(wired, 'ESP1.3v3', 'tp1').ok).toBe(true);
+    expect(ok(removeItem(wired, 'ESP1')).wires).toEqual([]);
+  });
+
+  it('shares the one-board limit with the UNO-compatible board', () => {
+    const withEsp = ok(addEsp32(emptyCircuit()));
+    expect(addUno(withEsp)).toEqual({ ok: false, error: 'board-limit' });
+    expect(addEsp32(withEsp)).toEqual({ ok: false, error: 'board-limit' });
+    const withUno = ok(addUno(emptyCircuit()));
+    expect(addEsp32(withUno)).toEqual({ ok: false, error: 'board-limit' });
+  });
+
+  it('can be moved, like the other parts beside the breadboard', () => {
+    const circuit = ok(moveOffBoardPart(ok(addEsp32(emptyCircuit())), 'ESP1', { x: 4, y: 20 }));
+    expect(circuit.components[0]).toMatchObject({ id: 'ESP1', at: { x: 4, y: 20 } });
+  });
+
+  it('opens a circuit saved before the board existed', () => {
+    expect(migrateCircuit({ ...unoCircuitExample(), schemaVersion: 6 })).toEqual(
+      unoCircuitExample(),
+    );
   });
 });
 

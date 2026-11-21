@@ -1,5 +1,6 @@
 import { solveDc, type Device, type NpnTransistor, type Solution } from '@banglalab/circuit-engine';
-import { UNO_TERMINALS, type CircuitDocument } from '@banglalab/shared';
+import { boardTerminals, isProgrammable, type CircuitDocument } from '@banglalab/shared';
+import { BOARD_MODELS } from './boards';
 import {
   BUZZER_ON_VOLTAGE,
   LED_BURN_CURRENT,
@@ -9,10 +10,8 @@ import {
   LED_VISIBLE_CURRENT,
   MOTOR_RATED_VOLTAGE,
   MOTOR_START_VOLTAGE,
-  PIN_MAX_CURRENT,
   RELAY_DROP_OUT_CURRENT,
   RELAY_PULL_IN_CURRENT,
-  SUPPLY_MAX_CURRENT,
 } from './library';
 import { IDLE_STATE, buildNetlist, type CircuitState, type Netlist } from './netlist';
 
@@ -207,14 +206,20 @@ export function readSolution(
         }
         break;
       }
-      case 'uno': {
+      case 'uno':
+      case 'esp32': {
+        const model = BOARD_MODELS[component.type];
         let current = 0;
-        for (const terminal of UNO_TERMINALS) {
+        for (const terminal of boardTerminals(component.type)) {
           current += Math.max(0, result.sockets[`${id}.${terminal}`]?.current ?? 0);
         }
-        const supply = result.sockets[`${id}.5v`];
-        result.parts[id] = { voltage: supply?.voltage ?? 5, current };
-        if ((supply?.current ?? 0) > SUPPLY_MAX_CURRENT) result.shorted.push(id);
+        const main = model.supplies[0]!;
+        const supply = result.sockets[`${id}.${main.terminal}`];
+        result.parts[id] = { voltage: supply?.voltage ?? main.volts, current };
+        const overloaded = model.supplies.some(
+          (s) => (result.sockets[`${id}.${s.terminal}`]?.current ?? 0) > s.maxCurrent,
+        );
+        if (overloaded) result.shorted.push(id);
         break;
       }
       case 'potentiometer':
@@ -277,7 +282,7 @@ export function readSolution(
       const current = netlist.partDevice.get(id)?.current(solution) ?? 0;
       result.legs[`${id}.pos`] = current;
       result.legs[`${id}.neg`] = -current;
-    } else if (component.type === 'uno') {
+    } else if (isProgrammable(component)) {
       let total = 0;
       for (const [socket, device] of netlist.socketDevice) {
         if (!socket.startsWith(`${id}.`)) continue;
@@ -359,12 +364,12 @@ export class Observation {
       result.diagnostics.push({ code: 'legs-in-same-strip', severity: 'warning', componentId });
     }
 
-    const sources = document.components.filter((c) => c.type === 'battery' || c.type === 'uno');
+    const sources = document.components.filter((c) => c.type === 'battery' || isProgrammable(c));
     if (sources.length === 0) result.diagnostics.push({ code: 'no-battery', severity: 'info' });
 
     const shorted = new Set(states.flatMap(([s]) => s.shorted));
     for (const componentId of shorted) {
-      const isBoard = document.components.some((c) => c.id === componentId && c.type === 'uno');
+      const isBoard = document.components.some((c) => c.id === componentId && isProgrammable(c));
       result.diagnostics.push({
         code: isBoard ? 'supply-short' : 'short-circuit',
         severity: 'error',
@@ -378,7 +383,10 @@ export class Observation {
       result.sockets[socket] = { voltage, current };
       const [componentId, name] = socket.split('.') as [string, string];
       const peak = extreme((s) => Math.abs(s.sockets[socket]!.current), Math.max);
-      if (name !== '5v' && peak > PIN_MAX_CURRENT) {
+      const owner = document.components.find((c) => c.id === componentId);
+      const model = owner && isProgrammable(owner) ? BOARD_MODELS[owner.type] : null;
+      const isSupply = model?.supplies.some((s) => s.terminal === name) ?? false;
+      if (model && !isSupply && peak > model.maxPinCurrent) {
         result.diagnostics.push({
           code: 'pin-overcurrent',
           severity: 'error',

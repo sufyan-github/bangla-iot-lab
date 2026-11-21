@@ -1,4 +1,4 @@
-import { UNO_VCC, type PinDrive } from '@banglalab/board-emulators';
+import type { PinDrive } from '@banglalab/board-emulators';
 import {
   capacitor,
   diode,
@@ -9,31 +9,32 @@ import {
   type Device,
 } from '@banglalab/circuit-engine';
 import {
-  UNO_TERMINALS,
+  boardPinNumber,
+  boardTerminals,
   isHole,
+  isProgrammable,
   stripOf,
-  unoPinNumber,
   type CircuitDocument,
 } from '@banglalab/shared';
+import { BOARD_MODELS } from './boards';
 import {
   BATTERY_INTERNAL_RESISTANCE,
   BUZZER_RESISTANCE,
   CONTACT_RESISTANCE,
   MOTOR_RESISTANCE,
   NPN_TRANSISTOR,
-  PIN_INPUT_RESISTANCE,
-  PIN_OUTPUT_RESISTANCE,
-  PIN_PULLUP_RESISTANCE,
   MODULE_SUPPLY_RESISTANCE,
   RELAY_COIL_RESISTANCE,
   SENSOR_RESISTANCE,
   SILICON_DIODE,
-  SUPPLY_RESISTANCE,
   WIRE_RESISTANCE,
   ldrResistance,
   ledDiodeModel,
   sensorOutputFraction,
 } from './library';
+
+/** An ultrasonic module's echo output is a 5 V signal whatever board reads it. */
+const ECHO_HIGH_VOLTS = 5;
 
 /** Everything that changes while a circuit runs, without the circuit itself being edited. */
 export interface CircuitState {
@@ -69,8 +70,8 @@ export interface Netlist {
 /** The electrical net an endpoint belongs to: a board strip or a terminal. */
 export function netName(endpoint: string): string {
   if (isHole(endpoint)) return stripOf(endpoint);
-  // An UNO's two ground sockets are the same piece of copper.
-  return `terminal:${endpoint.replace(/\.gnd2$/, '.gnd')}`;
+  // A board's ground sockets are the same piece of copper.
+  return `terminal:${endpoint.replace(/\.gnd[12]$/, '.gnd')}`;
 }
 
 /**
@@ -78,7 +79,7 @@ export function netName(endpoint: string): string {
  *
  * Board strips and terminals become nodes. Wires become small resistors rather
  * than merging nodes, so the current in each wire is known. Ground (0 V) is the
- * UNO's GND if there is a board, otherwise the first battery's negative terminal.
+ * board's GND if there is a board, otherwise the first battery's negative terminal.
  */
 export function buildNetlist(document: CircuitDocument, state: CircuitState = IDLE_STATE): Netlist {
   const nodes = new Map<string, number>();
@@ -94,10 +95,10 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
   };
 
   const reference =
-    document.components.find((c) => c.type === 'uno') ??
+    document.components.find(isProgrammable) ??
     document.components.find((c) => c.type === 'battery');
   if (reference) {
-    nodes.set(netName(`${reference.id}.${reference.type === 'uno' ? 'gnd' : 'neg'}`), 0);
+    nodes.set(netName(`${reference.id}.${reference.type === 'battery' ? 'neg' : 'gnd'}`), 0);
   }
 
   const wired = new Set(document.wires.flatMap((w) => [w.from, w.to]).map(netName));
@@ -243,7 +244,7 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           const echo = node(component.pins.echo);
           add(
             state.echo?.[id]
-              ? theveninSource(`${id}:echo`, echo, node(ground), UNO_VCC, 100)
+              ? theveninSource(`${id}:echo`, echo, node(ground), ECHO_HIGH_VOLTS, 100)
               : resistor(`${id}:echo`, echo, node(ground), 100),
           );
         }
@@ -294,28 +295,42 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         add(resistor(`${id}:lower`, wiper, node(component.pins.b), lower));
         break;
       }
-      case 'uno': {
+      case 'uno':
+      case 'esp32': {
+        const model = BOARD_MODELS[component.type];
         const ground = node(`${id}.gnd`);
         const drives = state.boards[id];
-        for (const terminal of UNO_TERMINALS) {
+        for (const terminal of boardTerminals(component.type)) {
           const socket = `${id}.${terminal}`;
-          if (!wired.has(netName(socket)) || terminal.startsWith('gnd')) continue;
+          if (!wired.has(netName(socket)) || model.grounds.includes(terminal)) continue;
           const pinNode = node(socket);
-          const pin = unoPinNumber(terminal);
-          const drive: PinDrive = pin === null ? 'high' : (drives?.[pin] ?? 'input');
+          const supply = model.supplies.find((s) => s.terminal === terminal);
+          if (supply) {
+            socketDevice.set(
+              socket,
+              add(theveninSource(socket, pinNode, ground, supply.volts, supply.resistance)),
+            );
+            continue;
+          }
+          const pin = boardPinNumber(component.type, terminal);
+          // A pin with no number (the ESP32's EN) and a pin that cannot drive are inputs.
+          const asked: PinDrive = pin === null ? 'input' : (drives?.[pin] ?? 'input');
+          const drive: PinDrive = pin !== null && model.canDrive(pin) ? asked : 'input';
           const device =
-            pin === null
-              ? theveninSource(socket, pinNode, ground, UNO_VCC, SUPPLY_RESISTANCE)
-              : drive === 'high'
-                ? theveninSource(socket, pinNode, ground, UNO_VCC, PIN_OUTPUT_RESISTANCE)
-                : drive === 'pullup'
-                  ? theveninSource(socket, pinNode, ground, UNO_VCC, PIN_PULLUP_RESISTANCE)
-                  : resistor(
-                      socket,
-                      pinNode,
-                      ground,
-                      drive === 'low' ? PIN_OUTPUT_RESISTANCE : PIN_INPUT_RESISTANCE,
-                    );
+            drive === 'high'
+              ? theveninSource(socket, pinNode, ground, model.vcc, model.sourceResistance)
+              : drive === 'pullup'
+                ? theveninSource(socket, pinNode, ground, model.vcc, model.pullResistance)
+                : resistor(
+                    socket,
+                    pinNode,
+                    ground,
+                    drive === 'low'
+                      ? model.sinkResistance
+                      : drive === 'pulldown'
+                        ? model.pullResistance
+                        : model.inputResistance,
+                  );
           socketDevice.set(socket, add(device));
         }
         break;

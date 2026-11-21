@@ -1,10 +1,11 @@
 import {
   BATTERY_TERMINALS,
   PART_SHAPES,
-  UNO_TERMINALS,
+  boardPinNumber,
+  boardTerminals,
+  isProgrammable,
   isHole,
   stripOf,
-  unoPinNumber,
   type CircuitComponent,
   type CircuitDocument,
 } from '@banglalab/shared';
@@ -61,7 +62,7 @@ export interface DiagramNet {
   /** "componentId.pin" of every leg on this net. */
   legs: string[];
   /** The source that names a rail: a battery's voltage or the board's 5 V. */
-  source: { type: 'battery'; voltage: number } | { type: 'uno' } | null;
+  source: { type: 'battery'; voltage: number } | { type: 'board'; label: string } | null;
   segments: Segment[];
   /** Where three or more wire ends meet. */
   dots: Point[];
@@ -104,13 +105,14 @@ export const BOX_TYPES = new Set([
   'ultrasonic',
   'lcd',
   'uno',
+  'esp32',
 ]);
 /** Boxes with so many legs that only the connected ones are drawn. */
-export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno']);
+export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno', 'esp32']);
 
 export function pinNames(component: CircuitComponent): readonly string[] {
   if (component.type === 'battery') return BATTERY_TERMINALS;
-  if (component.type === 'uno') return UNO_TERMINALS;
+  if (isProgrammable(component)) return boardTerminals(component.type);
   return PART_SHAPES[component.type].pins;
 }
 
@@ -118,19 +120,30 @@ export function pinLabel(component: CircuitComponent, pin: string): string {
   if (component.type === 'uno') {
     if (pin.startsWith('gnd')) return 'GND';
     if (pin === '5v') return '5V';
-    const number = unoPinNumber(pin);
+    const number = boardPinNumber('uno', pin);
     if (number === null) return pin.toUpperCase();
     return number >= 14 ? `A${number - 14}` : `D${number}`;
   }
+  // The ESP32's pins are named as printed on the board.
+  if (component.type === 'esp32') return pin.startsWith('gnd') ? 'GND' : pin.toUpperCase();
   const short: Record<string, string> = { anode: '+', cathode: '−', pos: '+', neg: '−' };
   return short[pin] ?? pin.toUpperCase();
 }
 
+/** Sockets of a board that give out a supply voltage, with the name written on its rail. */
+const BOARD_SUPPLIES: Record<string, Record<string, string>> = {
+  uno: { '5v': '5V' },
+  esp32: { '3v3': '3V3', vin: 'VIN' },
+};
 export const isSupplyLeg = (component: CircuitComponent, pin: string) =>
-  (component.type === 'battery' && pin === 'pos') || (component.type === 'uno' && pin === '5v');
+  (component.type === 'battery' && pin === 'pos') ||
+  BOARD_SUPPLIES[component.type]?.[pin] !== undefined;
 export const isGroundLeg = (component: CircuitComponent, pin: string) =>
   (component.type === 'battery' && pin === 'neg') ||
-  (component.type === 'uno' && pin.startsWith('gnd'));
+  (isProgrammable(component) && pin.startsWith('gnd'));
+/** A board has two ground sockets; the second is not drawn as a leg of its own. */
+const isSecondGround = (component: CircuitComponent, pin: string) =>
+  isProgrammable(component) && pin === 'gnd2';
 
 export interface Leg {
   component: CircuitComponent;
@@ -159,7 +172,10 @@ export function findNets(circuit: CircuitDocument): Leg[][] {
   const groups = new Map<string, Leg[]>();
   for (const component of circuit.components) {
     // The board's two ground sockets are one net inside the board.
-    if (component.type === 'uno') join(`${component.id}.gnd`, `${component.id}.gnd2`);
+    if (isProgrammable(component)) {
+      const [first, second] = boardTerminals(component.type).filter((pin) => pin.startsWith('gnd'));
+      join(`${component.id}.${first}`, `${component.id}.${second}`);
+    }
   }
   for (const component of circuit.components) {
     for (const pin of pinNames(component)) {
@@ -173,7 +189,7 @@ export function findNets(circuit: CircuitDocument): Leg[][] {
   }
   // The board's two ground sockets count as one leg; a net needs two legs to be worth drawing.
   return [...groups.values()]
-    .map((legs) => legs.filter((leg) => !(leg.component.type === 'uno' && leg.pin === 'gnd2')))
+    .map((legs) => legs.filter((leg) => !isSecondGround(leg.component, leg.pin)))
     .filter((legs) => legs.length >= 2);
 }
 
@@ -216,8 +232,8 @@ export function analyse(circuit: CircuitDocument): Analysis {
         source:
           supplyLeg?.component.type === 'battery'
             ? { type: 'battery', voltage: supplyLeg.component.props.voltage }
-            : supplyLeg?.component.type === 'uno'
-              ? { type: 'uno' }
+            : supplyLeg
+              ? { type: 'board', label: BOARD_SUPPLIES[supplyLeg.component.type]![supplyLeg.pin]! }
               : null,
       };
     },

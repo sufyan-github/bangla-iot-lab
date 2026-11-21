@@ -1,5 +1,5 @@
 import { ConsoleLogger, GPIOPinState, LogLevel, Simulator, USBCDC, type RP2040 } from 'rp2040js';
-import type { PinDrive } from './uno';
+import type { PinDrive } from './board';
 
 const FLASH_START = 0x10000000;
 const CLOCK_HZ = 125_000_000;

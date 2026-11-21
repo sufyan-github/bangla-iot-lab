@@ -1,6 +1,8 @@
 import {
   addBattery,
+  addEsp32,
   addUno,
+  isProgrammable,
   addWire,
   attachError,
   emptyCircuit,
@@ -91,6 +93,7 @@ interface LabState {
   clearMeter(): void;
   addBattery(): void;
   addUno(): void;
+  addEsp32(): void;
   removeSelected(): void;
   flipSelected(): void;
   /** Takes the bends out of the selected wire. */
@@ -152,7 +155,7 @@ export const useLab = create<LabState>((set, get) => {
    */
   const restore = (entry: HistoryEntry, stacks: Pick<LabState, 'past' | 'future'>) => {
     const { programs, uploads, selectedId } = get();
-    const boardIds = entry.circuit.components.filter((c) => c.type === 'uno').map((c) => c.id);
+    const boardIds = entry.circuit.components.filter(isProgrammable).map((c) => c.id);
     const nextPrograms: Record<string, BoardProgram> = {};
     const nextUploads = { ...uploads };
     for (const id of boardIds) {
@@ -270,6 +273,12 @@ export const useLab = create<LabState>((set, get) => {
       // A new board arrives with Blink already on it, as a real UNO does.
       set({ tool: 'select', selectedId: id, wireStart: null });
       get().uploadProgram(id, starterProgram('blink'));
+    },
+    addEsp32() {
+      const id = apply(addEsp32(get().circuit));
+      if (!id) return;
+      set({ circuit: settleOffBoardPart(get().circuit, id) });
+      set({ tool: 'select', selectedId: id, wireStart: null });
     },
     removeSelected() {
       const { selectedId, circuit, programs } = get();

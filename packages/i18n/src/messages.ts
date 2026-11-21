@@ -90,6 +90,7 @@ export const bn = {
   'tool.ultrasonic': 'দূরত্ব সেন্সর',
   'tool.lcd': 'LCD',
   'tool.uno': 'UNO বোর্ড',
+  'tool.esp32': 'ESP32 বোর্ড',
   'hint.button': 'বোতাম বসাতে একটা ছিদ্রে ট্যাপ করো। সার্কিট চালু থাকলে বোতামে চেপে ধরে রাখা যায়।',
   'hint.potentiometer': 'পটেনশিওমিটার বসাতে একটা ছিদ্রে ট্যাপ করো। তিনটা পা পাশাপাশি তিন কলামে বসবে।',
   'hint.select': 'যন্ত্রাংশ বা তারের মাথা টেনে সরাও। ফাঁকা ছিদ্র থেকে মাউস টানলে নতুন তার বের হয়।',
@@ -155,12 +156,15 @@ export const bn = {
   'part.lcd.about':
     'এই ডিসপ্লেতে ১৬ অক্ষরের দুই লাইন লেখা দেখানো যায়। LiquidCrystal লাইব্রেরি RS, E আর D4 থেকে D7 দিয়ে এটা চালায়। VSS আর RW GND-তে, VDD 5 V-তে লাগাও। এতে ইংরেজি অক্ষর আর সংখ্যা দেখানো যায়, বাংলা নয়।',
   'part.uno': 'UNO বোর্ড',
+  'part.esp32': 'ESP32 বোর্ড',
   'part.button.about':
     'চেপে ধরলে বোতামের দুই পা জুড়ে যায়, ছেড়ে দিলে আলাদা হয়ে যায়। সার্কিট চালু করে বোতামে চাপ দিয়ে দেখো।',
   'part.potentiometer.about':
     'নব ঘোরালে মাঝের পায়ের ভোল্টেজ দুই পাশের পায়ের ভোল্টেজের মাঝামাঝি যেকোনো মানে আনা যায়। আলো বা শব্দ কমানো-বাড়ানোর জন্য এটা লাগে।',
   'part.uno.about':
     'UNO একটা ছোট কম্পিউটার। তোমার লেখা প্রোগ্রাম অনুযায়ী এটা পিনগুলোতে 5 V বা 0 V দেয়, আর পিনের ভোল্টেজ পড়তে পারে। 5V আর GND থেকে সার্কিটে বিদ্যুৎ নেওয়া যায়।',
+  'part.esp32.about':
+    'ESP32 একটা ছোট কম্পিউটার, যাতে Wi-Fi আর ব্লুটুথ আছে। এর পিন 3.3 V-এ চলে, 5 V নয়: কোনো পিনে 5 V দিলে আসল বোর্ড নষ্ট হতে পারে। 3V3 আর GND থেকে সার্কিটে বিদ্যুৎ নেওয়া যায়। D34, D35, VP আর VN শুধু পড়তে পারে। ল্যাবে এই বোর্ড এখনো পরীক্ষামূলক।',
   'inspector.title': 'বাছাই করা যন্ত্রাংশ',
   'inspector.none': 'কোনো যন্ত্রাংশ বাছাই করা নেই। বোর্ডের কোনো যন্ত্রাংশে ট্যাপ করো।',
   'inspector.voltage': 'ভোল্টেজ',
@@ -362,6 +366,7 @@ export const en: Record<MessageKey, string> = {
   'tool.ultrasonic': 'Distance',
   'tool.lcd': 'LCD',
   'tool.uno': 'UNO board',
+  'tool.esp32': 'ESP32 board',
   'hint.button':
     'Tap a hole to place the button. While the circuit runs you can press and hold it.',
   'hint.potentiometer':
@@ -430,12 +435,15 @@ export const en: Record<MessageKey, string> = {
   'part.lcd.about':
     'This display shows two lines of 16 characters. The LiquidCrystal library drives it through RS, E and D4 to D7. Connect VSS and RW to GND and VDD to 5 V. It can show English letters and digits, not Bangla.',
   'part.uno': 'UNO board',
+  'part.esp32': 'ESP32 board',
   'part.button.about':
     'While you hold it down, the two legs are joined; when you let go they separate. Run the circuit and press it.',
   'part.potentiometer.about':
     'Turning the knob moves the middle leg’s voltage anywhere between the voltages of the two outer legs. It is used to turn light or sound up and down.',
   'part.uno.about':
     'The UNO is a small computer. Following your program it puts 5 V or 0 V on its pins and can read the voltage on a pin. 5V and GND can power your circuit.',
+  'part.esp32.about':
+    'The ESP32 is a small computer with Wi-Fi and Bluetooth. Its pins work at 3.3 V, not 5 V: putting 5 V on a pin can destroy a real board. 3V3 and GND can power your circuit. D34, D35, VP and VN can only read. In the lab this board is still experimental.',
   'inspector.title': 'Selected part',
   'inspector.none': 'Nothing selected. Tap a part on the board.',
   'inspector.voltage': 'Voltage',

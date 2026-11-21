@@ -1,4 +1,5 @@
 import type { MessageKey } from '@banglalab/i18n';
+import { isProgrammable } from '@banglalab/shared';
 import { proxy } from 'comlink';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -200,7 +201,7 @@ export function LabPage() {
   const name = useLab((s) => s.name);
   const running = useLab((s) => s.running);
   const saveState = useLab((s) => s.saveState);
-  const boardId = useLab((s) => s.circuit.components.find((c) => c.type === 'uno')?.id);
+  const boardId = useLab((s) => s.circuit.components.find(isProgrammable)?.id);
   const hasBuzzer = useLab((s) => s.circuit.components.some((c) => c.type === 'buzzer'));
   const [muted, setMuted] = useState(() => {
     try {

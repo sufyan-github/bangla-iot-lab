@@ -1,5 +1,6 @@
 import {
   allHoles,
+  esp32GpioNumber,
   isHole,
   parseTerminal,
   stripOf,
@@ -51,6 +52,14 @@ function socketName(terminal: string): string {
   return PWM_PINS.includes(pin) ? `D${pin} PWM` : `D${pin}`;
 }
 
+/** An ESP32 pin as printed on the board, with its GPIO number where the print hides it. */
+function esp32PinName(terminal: string): string {
+  if (terminal.startsWith('gnd')) return 'GND';
+  const printed = terminal.toUpperCase();
+  const gpio = esp32GpioNumber(terminal);
+  return gpio !== null && !/^D\d+$/.test(printed) ? `${printed} (GPIO${gpio})` : printed;
+}
+
 function holeName(hole: string): string {
   if (hole.startsWith('tp') || hole.startsWith('bp')) return '+';
   if (hole.startsWith('tn') || hole.startsWith('bn')) return '−';
@@ -80,6 +89,7 @@ export function describeEndpoint(circuit: CircuitDocument, endpoint: string): En
     return { name: legName(terminal.pin), lead: owner.id, used: wired };
   }
   if (owner.type === 'uno') return { name: socketName(terminal.pin), used: wired };
+  if (owner.type === 'esp32') return { name: esp32PinName(terminal.pin), used: wired };
   return null;
 }
 
