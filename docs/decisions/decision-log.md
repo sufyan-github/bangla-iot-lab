@@ -431,3 +431,20 @@ The UNO-compatible board and the ESP32 share the limit of one board per
 circuit. Two boards at 5 V and 3.3 V on one breadboard is a real and useful
 circuit (it needs a level shifter), but the ground reference, the program
 panel and the saved programs all assume one. Lifting the limit is separate work.
+
+## D-049 — The chip emulator is built from its source, with one file added, and none of it is kept here
+
+esp32sim is MIT, so the lab could copy it in. It does not: `third_party/esp32sim`
+holds a script that fetches one release, checks it is the commit the script was
+written for, adds one file and builds it. The file (`lab.rs`) exports pin, PWM,
+analog and register access that the emulator's core already has but its browser
+build does not offer. Keeping the addition that small means a new release of
+the emulator can be taken by changing two lines, and the addition can be
+offered back to its authors.
+
+The alternative was to use the emulator's own page protocol, which has no way
+to learn what an output pin is doing, or to download the module its authors
+publish, which cannot be checked against a source.
+
+The built module is not committed either. It is 4.5 MB, and the app does not
+use it yet.

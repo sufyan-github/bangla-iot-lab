@@ -1,5 +1,6 @@
 export * from './esp32-pins';
 export { BOARD_MODELS, type BoardModel } from './boards';
+export { Esp32SimBoard, type Esp32Emulator, type Esp32Firmware } from './esp32-sim-board';
 export { Esp32SketchBoard } from './esp32-sketch-board';
 export * from './library';
 export { IDLE_STATE, buildNetlist, netName, type CircuitState, type Netlist } from './netlist';

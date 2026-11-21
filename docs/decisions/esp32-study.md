@@ -421,7 +421,30 @@ The emulator used about 23 MB of memory.
   option C needs them written against its library.
 - The speed above to be acceptable, or sketches to be written with waits.
 
-Not measured: the emulator's browser build, and anything on a phone.
+### As WebAssembly, and as a board in the lab
+
+Added on 22 November 2026, after the owner asked for this option to be offered
+in the editor beside option C. The emulator was built from its source as a
+WebAssembly module (4.5 MB, 1.3 MB compressed), with one file added by the lab
+that exports pin, PWM, analog and register access its core already has
+(`third_party/esp32sim`). Run under Node, whose engine is the one Chrome uses:
+
+| Firmware                | Speed, as WebAssembly                                                  | Native build, for comparison |
+| ----------------------- | ---------------------------------------------------------------------- | ---------------------------- |
+| Blink, which waits      | 3.7 to 5.3 times faster than a real board, run a millisecond at a time | 9 times                      |
+| A loop that never waits | **0.18 times real time**                                               | 0.19 times                   |
+
+So the browser build is about as fast as the native one, and the slow case stays
+slow: one second of such a sketch takes five and a half seconds on this laptop.
+
+Put in the place of the board in the lab's simulation, the real firmware lit an
+LED through the solved circuit with the same 6.17 mA as option C, read a button
+through the chip's own pull-up, and read a potentiometer at half of 3.3 V as 1872. That is the value the lab's own pin model gives, so two models made
+independently agree in the middle of the range. This was tried by hand with
+firmware built on this laptop; it is not yet an automated test, because no
+firmware is built by the lab's server or kept in the repository.
+
+Not measured: a browser on a phone.
 
 ## Step 5 result: option B, QEMU on a server
 

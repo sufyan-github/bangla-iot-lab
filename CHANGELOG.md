@@ -17,6 +17,11 @@ make no promise of compatibility, except that saved circuits are always migrated
   says that this is a model of the board, what works and what does not, and
   links to a page (`/esp32`) with what has been measured and what has not.
   Nothing has been checked against a real board.
+- Groundwork for a second way to run ESP32 programs: `Esp32SimBoard` runs the
+  board's real firmware in esp32sim, an emulator of the whole chip, behind the
+  same interface as the other boards. `third_party/esp32sim` builds the emulator
+  from its pinned source with one file of the lab's added. **Not in the editor
+  yet:** no firmware is built for it or shipped.
 - Circuit format version 7 (adds the ESP32 board). A circuit has one board, of
   either kind.
 - The simulation runs any board through one interface, from a table of each
