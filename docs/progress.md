@@ -52,7 +52,9 @@ curriculum depend on that board.
 seconds for something the simulation does in real time (a servo sweep, a compile,
 a blink). On a computer that is busy with other work the simulation slows down
 and one of them can time out. Each passes when rerun on its own. They need limits
-tied to simulated time, not wall-clock time.
+tied to simulated time, not wall-clock time. The servo test failed this way once on GitHub's
+runner (22 November 2026) and now waits up to 30 s for each end of the sweep; the
+others are unchanged.
 
 ## History
 

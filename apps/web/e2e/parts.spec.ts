@@ -123,6 +123,10 @@ async function chooseStarter(page: Page, starter: string) {
 }
 
 test('a servo follows the angle its program sets', async ({ page }) => {
+  // The sweep takes about three seconds each way on a real board. A loaded
+  // machine emulates the board slower than that, and this test is about where
+  // the servo goes, not how fast: so it waits generously.
+  test.setTimeout(90_000);
   await newCircuit(page);
   await page.getByTestId('tool-uno').click();
   await place(page, 'servo', 'c10'); // legs: c10 ground, c11 supply, c12 signal
@@ -136,8 +140,8 @@ test('a servo follows the angle its program sets', async ({ page }) => {
   await page.getByTestId('run').click();
 
   const angle = async () => Number(await part(page, 'SRV1').getAttribute('data-angle'));
-  await expect.poll(angle, { timeout: 8000 }).toBeGreaterThan(150);
-  await expect.poll(angle, { timeout: 8000 }).toBeLessThan(30);
+  await expect.poll(angle, { timeout: 30_000 }).toBeGreaterThan(150);
+  await expect.poll(angle, { timeout: 30_000 }).toBeLessThan(30);
 });
 
 test('an ultrasonic sensor reports the distance set on its slider', async ({ page }) => {
