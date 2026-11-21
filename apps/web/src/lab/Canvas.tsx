@@ -19,6 +19,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import { useT } from '../i18n';
 import { describeEndpoint, joinedHoles } from './endpoints';
@@ -107,12 +108,17 @@ export function Canvas() {
   const running = useLab((s) => s.running);
   const pressed = useLab((s) => s.pressed);
   const boards = useLab((s) => s.boards);
+  const canUndo = useLab((s) => s.past.length > 0);
+  const canRedo = useLab((s) => s.future.length > 0);
   const {
     select,
     tapEndpoint,
     endWire,
     setTool,
     replaceCircuit,
+    commitDrag,
+    undo,
+    redo,
     setNotice,
     setPressed,
     setProps,
@@ -300,6 +306,7 @@ export function Canvas() {
     setLift(null);
     setFloating(null);
     showHover(null);
+    commitDrag(active.origin);
     // The part stays at the last valid place; say why it would not go further.
     if (active.error && active.kind !== 'off-board') setNotice(active.error);
   };
@@ -720,6 +727,15 @@ export function Canvas() {
         </div>
       )}
 
+      <div className="absolute top-3 right-3 flex overflow-hidden rounded-xl border border-line bg-surface shadow-md">
+        <HistoryButton testId="undo" label={t('lab.undo')} enabled={canUndo} onClick={undo}>
+          <path d="M9 7L4 12l5 5M4.5 12H14a5.5 5.5 0 0 1 0 11h-2" />
+        </HistoryButton>
+        <HistoryButton testId="redo" label={t('lab.redo')} enabled={canRedo} onClick={redo}>
+          <path d="M15 7l5 5-5 5M19.5 12H10a5.5 5.5 0 0 0 0 11h2" />
+        </HistoryButton>
+      </div>
+
       <div className="absolute right-3 bottom-3 flex overflow-hidden rounded-xl border border-line bg-surface shadow-md">
         <ZoomButton
           label={t('lab.zoomOut')}
@@ -879,6 +895,40 @@ function Handle(props: {
         strokeWidth={3.5}
       />
     </g>
+  );
+}
+
+function HistoryButton(props: {
+  testId: string;
+  label: string;
+  enabled: boolean;
+  onClick(): void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      data-testid={props.testId}
+      aria-label={props.label}
+      title={props.label}
+      disabled={!props.enabled}
+      onClick={props.onClick}
+      className="flex h-11 w-11 items-center justify-center text-ink hover:bg-paper disabled:text-line disabled:hover:bg-transparent"
+    >
+      <svg
+        viewBox="0 0 24 26"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        {props.children}
+      </svg>
+    </button>
   );
 }
 

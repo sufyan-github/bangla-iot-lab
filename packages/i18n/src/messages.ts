@@ -42,6 +42,8 @@ export const bn = {
   'lab.zoomIn': 'বড় করো',
   'lab.zoomOut': 'ছোট করো',
   'lab.zoomFit': 'পুরো বোর্ড দেখাও',
+  'lab.undo': 'আগের অবস্থায় ফেরো (Ctrl+Z)',
+  'lab.redo': 'আবার করো (Ctrl+Y)',
   'lab.canvasLabel': 'ব্রেডবোর্ড',
 
   'tool.select': 'বাছাই',
@@ -288,6 +290,8 @@ export const en: Record<MessageKey, string> = {
   'lab.zoomIn': 'Zoom in',
   'lab.zoomOut': 'Zoom out',
   'lab.zoomFit': 'Show the whole board',
+  'lab.undo': 'Undo (Ctrl+Z)',
+  'lab.redo': 'Redo (Ctrl+Y)',
   'lab.canvasLabel': 'Breadboard',
 
   'tool.select': 'Select',

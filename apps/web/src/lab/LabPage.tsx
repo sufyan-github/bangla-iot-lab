@@ -132,8 +132,20 @@ function useBuzzerSound(muted: boolean) {
 function useKeyboardShortcuts() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.target as HTMLElement).closest('input, select, textarea')) return;
+      // Typing, including in the program editor, keeps its own keys.
+      if ((event.target as HTMLElement).closest('input, select, textarea, [contenteditable]')) {
+        return;
+      }
       const lab = useLab.getState();
+      if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+        const key = event.key.toLowerCase();
+        if (key === 'z' || key === 'y') {
+          event.preventDefault();
+          if (key === 'y' || event.shiftKey) lab.redo();
+          else lab.undo();
+        }
+        return;
+      }
       if (event.key === 'Delete' || event.key === 'Backspace') lab.removeSelected();
       if (event.key === 'Escape') lab.setTool('select');
     };

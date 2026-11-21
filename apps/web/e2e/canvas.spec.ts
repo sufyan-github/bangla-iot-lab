@@ -245,3 +245,52 @@ test('a carried part follows the pointer and drops into the nearest holes', asyn
   await page.getByTestId('quick-remove').click();
   await expect(part).toHaveCount(0);
 });
+
+test('undo and redo step through edits, drags and removals', async ({ page }) => {
+  await openExample(page, 'open-example-uno');
+  const undo = page.getByTestId('undo');
+  const redo = page.getByTestId('redo');
+  const parts = page.locator('[data-part]');
+  await expect(undo).toBeDisabled();
+  await expect(redo).toBeDisabled();
+  await expect(parts).toHaveCount(5);
+
+  // Place a part, then take it back.
+  await page.getByTestId('tool-resistor').click();
+  await page.locator('[data-endpoint="h15"]').click();
+  await expect(parts).toHaveCount(6);
+  await undo.click();
+  await expect(parts).toHaveCount(5);
+  await redo.click();
+  await expect(parts).toHaveCount(6);
+  await undo.click();
+
+  // A whole drag is one step: the board goes back to where it started.
+  const before = await placeOf(page, 'UNO1');
+  await dragPart(page, 'UNO1', { x: 0.5, y: 0.6 }, { x: -60, y: 50 });
+  expect(await placeOf(page, 'UNO1')).not.toEqual(before);
+  await undo.click();
+  expect(await placeOf(page, 'UNO1')).toEqual(before);
+  await expect(undo).toBeDisabled();
+
+  // Removing the board takes its wires and program; the keyboard brings all of it back.
+  await page.locator('[data-hit="UNO1"]').click({ position: { x: 200, y: 100 } });
+  await page.getByTestId('quick-remove').click();
+  await expect(parts).toHaveCount(4);
+  await expect(wires(page)).toHaveCount(4);
+  await page.keyboard.press('Control+z');
+  await expect(parts).toHaveCount(5);
+  await expect(wires(page)).toHaveCount(9);
+  await page.getByTestId('run').click();
+  await expect(page.locator('[data-part="LED1"]')).toHaveAttribute('data-led-state', 'on', {
+    timeout: 10_000,
+  });
+
+  // Undo and redo also work while the circuit runs.
+  await page.keyboard.press('Control+y');
+  await expect(parts).toHaveCount(4);
+  await page.keyboard.press('Control+Shift+z');
+  await expect(parts).toHaveCount(4);
+  await page.keyboard.press('Control+z');
+  await expect(parts).toHaveCount(5);
+});

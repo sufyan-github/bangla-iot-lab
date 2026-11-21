@@ -44,6 +44,8 @@ or pick a program, upload it, and watch the program drive the circuit:
   ring and a name ("LED1 +", "D9 PWM"), and the holes joined to it inside the
   board light up as a band. A part tool shows the part where it would go.
 - **Carried parts follow the hand** and settle into the marked holes when let go.
+- **Undo and redo**, by buttons on the canvas and Ctrl+Z / Ctrl+Y, up to 100
+  steps. A drag is one step. The history is not kept after the circuit is closed.
 - Zoom with Ctrl + wheel, a button that fits the board to the window, and quick
   flip/remove buttons on the canvas for the selected item.
 
@@ -100,9 +102,9 @@ of section 3.
 | Suite                                                                                       | Result                          |
 | ------------------------------------------------------------------------------------------- | ------------------------------- |
 | ESLint, Prettier, TypeScript                                                                | clean                           |
-| Unit                                                                                        | 206 passed, 0 failed, 0 skipped |
+| Unit                                                                                        | 214 passed, 0 failed, 0 skipped |
 | Integration (PostgreSQL 18, avr-gcc, bubblewrap, Arduino core and libraries, Pico firmware) | 28 passed                       |
-| End to end (Chromium; desktop and phone profiles)                                           | 48 passed                       |
+| End to end (Chromium; desktop and phone profiles)                                           | 50 passed                       |
 
 Electrical agreement with ngspice 45.2: DC within 1 µV / 1 nA on 15 circuits
 (including an NPN transistor saturated, in its active region and as a follower);

@@ -26,6 +26,16 @@ export type SaveState = 'saved' | 'saving' | 'error';
 
 /** Serial text is kept to this many characters per board. */
 const SERIAL_LIMIT = 8_000;
+/** How many steps back the student can undo. */
+const HISTORY_LIMIT = 100;
+/** Changes to one setting this close together, as from a slider, undo as one step. */
+const MERGE_WINDOW_MS = 700;
+
+/** The circuit before an edit, with the programs its boards had then. */
+interface HistoryEntry {
+  circuit: CircuitDocument;
+  programs: Record<string, BoardProgram>;
+}
 
 interface LabState {
   projectId: string | null;
@@ -53,6 +63,9 @@ interface LabState {
   /** Why the last edit was refused, shown briefly to the student. */
   notice: EditError | null;
   saveState: SaveState;
+  /** Circuits to go back to, oldest first, and those undone that can be redone. */
+  past: HistoryEntry[];
+  future: HistoryEntry[];
 
   open(project: ProjectContent & { id: string }): void;
   close(): void;
@@ -70,6 +83,10 @@ interface LabState {
   setProps(id: string, props: Record<string, unknown>): void;
   /** Used while dragging, when the canvas has already validated the move. */
   replaceCircuit(circuit: CircuitDocument): void;
+  /** Ends a drag: everything since `origin` becomes one step that can be undone. */
+  commitDrag(origin: CircuitDocument): void;
+  undo(): void;
+  redo(): void;
   /** Changes the program text without touching what is on the board. */
   setSource(boardId: string, source: string): void;
   /** Puts firmware on the board; a running circuit restarts that board's program. */
@@ -86,14 +103,63 @@ interface LabState {
 const STOPPED = { running: false, result: null, boards: {}, serial: {}, pressed: [] as string[] };
 
 export const useLab = create<LabState>((set, get) => {
+  /** The setting changed by the last edit and when, for merging a slider's steps. */
+  let lastEdit: { key: string; time: number } | null = null;
+
+  /** Records the circuit as it is now, so the edit about to be made can be undone. */
+  const remember = (mergeKey?: string) => {
+    const now = Date.now();
+    const merges =
+      mergeKey !== undefined && lastEdit?.key === mergeKey && now - lastEdit.time < MERGE_WINDOW_MS;
+    lastEdit = mergeKey === undefined ? null : { key: mergeKey, time: now };
+    const { past, circuit, programs } = get();
+    set({
+      past: merges ? past : [...past, { circuit, programs }].slice(-HISTORY_LIMIT),
+      future: [],
+    });
+  };
+
   /** Commits a successful edit or reports why it was refused. */
-  const apply = (result: EditResult): string | null => {
+  const apply = (result: EditResult, mergeKey?: string): string | null => {
     if (!result.ok) {
       set({ notice: result.error });
       return null;
     }
+    remember(mergeKey);
     set({ circuit: result.circuit, notice: null });
     return result.id;
+  };
+
+  /**
+   * Goes to a circuit from the history. Programs follow their boards: a board
+   * that comes back gets the program it had, and a board that goes takes its
+   * program with it. Program text typed since is never rolled back.
+   */
+  const restore = (entry: HistoryEntry, stacks: Pick<LabState, 'past' | 'future'>) => {
+    const { programs, uploads, selectedId } = get();
+    const boardIds = entry.circuit.components.filter((c) => c.type === 'uno').map((c) => c.id);
+    const nextPrograms: Record<string, BoardProgram> = {};
+    const nextUploads = { ...uploads };
+    for (const id of boardIds) {
+      const program = programs[id] ?? entry.programs[id];
+      if (!program) continue;
+      nextPrograms[id] = program;
+      // A running circuit loads the program onto a board that has just come back.
+      if (!programs[id]) nextUploads[id] = (uploads[id] ?? 0) + 1;
+    }
+    const stillThere = [...entry.circuit.components, ...entry.circuit.wires].some(
+      (item) => item.id === selectedId,
+    );
+    lastEdit = null;
+    set({
+      circuit: entry.circuit,
+      programs: nextPrograms,
+      uploads: nextUploads,
+      selectedId: stillThere ? selectedId : null,
+      wireStart: null,
+      notice: null,
+      ...stacks,
+    });
   };
 
   return {
@@ -108,10 +174,15 @@ export const useLab = create<LabState>((set, get) => {
     wireStart: null,
     notice: null,
     saveState: 'saved',
+    past: [],
+    future: [],
     ...STOPPED,
 
     open(project) {
+      lastEdit = null;
       set({
+        past: [],
+        future: [],
         projectId: project.id,
         name: project.name,
         circuit: project.circuit,
@@ -125,7 +196,7 @@ export const useLab = create<LabState>((set, get) => {
       });
     },
     close() {
-      set({ projectId: null, selectedId: null, wireStart: null, ...STOPPED });
+      set({ projectId: null, selectedId: null, wireStart: null, past: [], future: [], ...STOPPED });
     },
     setName: (name) => set({ name }),
     setTool: (tool) => set({ tool, wireStart: null, selectedId: null, notice: null }),
@@ -178,8 +249,31 @@ export const useLab = create<LabState>((set, get) => {
       const { selectedId, circuit } = get();
       if (selectedId) apply(flipPart(circuit, selectedId));
     },
-    setProps: (id, props) => void apply(updateProps(get().circuit, id, props)),
+    setProps: (id, props) =>
+      void apply(
+        updateProps(get().circuit, id, props),
+        `${id}:${Object.keys(props).sort().join(',')}`,
+      ),
     replaceCircuit: (circuit) => set({ circuit, notice: null }),
+    commitDrag(origin) {
+      const { circuit, past, programs } = get();
+      // A drag that ended where it began changed nothing worth a step.
+      if (origin === circuit || JSON.stringify(origin) === JSON.stringify(circuit)) return;
+      lastEdit = null;
+      set({ past: [...past, { circuit: origin, programs }].slice(-HISTORY_LIMIT), future: [] });
+    },
+    undo() {
+      const { past, future, circuit, programs } = get();
+      const entry = past.at(-1);
+      if (!entry) return;
+      restore(entry, { past: past.slice(0, -1), future: [...future, { circuit, programs }] });
+    },
+    redo() {
+      const { past, future, circuit, programs } = get();
+      const entry = future.at(-1);
+      if (!entry) return;
+      restore(entry, { past: [...past, { circuit, programs }], future: future.slice(0, -1) });
+    },
     setSource(boardId, source) {
       const program = get().programs[boardId] ?? { hex: null, hexSource: null };
       set({ programs: { ...get().programs, [boardId]: { ...program, source } } });

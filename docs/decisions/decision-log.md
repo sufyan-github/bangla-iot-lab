@@ -269,3 +269,14 @@ when the nearest valid holes change, so a running simulation reacts during the
 drag and an invalid position is never stored. Batteries and the board have no
 holes to snap to and move continuously, sliding along an obstacle instead of
 stopping dead.
+
+## D-037 — Undo keeps whole circuits, and programs follow their boards
+
+The history is a list of earlier circuit documents (up to 100), not a list of
+inverse operations: documents are immutable and small, so keeping them is
+cheaper and safer than writing an inverse for every edit. One user action is one
+step: a whole drag, and a slider's stream of changes within 0.7 s. Undo does not
+roll back program text, which has its own undo in the editor. Each step does
+remember the programs the boards had, so a board that undo brings back gets its
+program again and a running circuit reloads it. The history is not saved with
+the project; it starts empty each time a circuit is opened.

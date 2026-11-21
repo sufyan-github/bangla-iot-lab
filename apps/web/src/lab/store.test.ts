@@ -1,4 +1,4 @@
-import { emptyCircuit, ledCircuitExample, unoCircuitExample } from '@banglalab/shared';
+import { emptyCircuit, ledCircuitExample, movePart, unoCircuitExample } from '@banglalab/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useLab } from './store';
 
@@ -111,5 +111,130 @@ describe('lab editor state', () => {
     expect(lab()).toMatchObject({ result: null, boards: {}, serial: {}, pressed: [] });
     lab().receiveFrame(frame('late\n')); // arrives after stopping: ignored
     expect(lab().result).toBeNull();
+  });
+});
+
+describe('undo and redo', () => {
+  it('steps back through edits and forward again', () => {
+    lab().open(project(ledCircuitExample()));
+    expect(lab().past).toHaveLength(0);
+    lab().setTool('led');
+    lab().tapEndpoint('h3');
+    lab().setTool('wire');
+    lab().tapEndpoint('g1');
+    lab().tapEndpoint('g2');
+    const built = lab().circuit;
+    expect(built.components).toHaveLength(4);
+    expect(built.wires).toHaveLength(5);
+
+    lab().undo();
+    expect(lab().circuit.wires).toHaveLength(4);
+    lab().undo();
+    expect(lab().circuit).toEqual(ledCircuitExample());
+    lab().undo(); // nothing further back
+    expect(lab().circuit).toEqual(ledCircuitExample());
+
+    lab().redo();
+    lab().redo();
+    expect(lab().circuit).toBe(built);
+    lab().redo(); // nothing further forward
+    expect(lab().circuit).toBe(built);
+  });
+
+  it('forgets what was undone once a new edit is made', () => {
+    lab().open(project(ledCircuitExample()));
+    lab().select('R1');
+    lab().removeSelected();
+    lab().undo();
+    expect(lab().future).toHaveLength(1);
+    lab().select('LED1');
+    lab().flipSelected();
+    expect(lab().future).toHaveLength(0);
+    lab().redo();
+    expect(lab().circuit.components.map((c) => c.id)).toContain('R1');
+  });
+
+  it('does not record refused edits or selection', () => {
+    lab().open(project(ledCircuitExample()));
+    lab().setTool('led');
+    lab().tapEndpoint('c5'); // taken
+    lab().setTool('select');
+    lab().select('R1');
+    expect(lab().past).toHaveLength(0);
+  });
+
+  it('treats a whole drag as one step, and a drag that goes nowhere as none', () => {
+    lab().open(project(ledCircuitExample()));
+    const origin = lab().circuit;
+    const moved = (dx: number) => {
+      const result = movePart(origin, 'R1', dx, 0);
+      if (!result.ok) throw new Error(result.error);
+      return result.circuit;
+    };
+    lab().replaceCircuit(moved(1));
+    lab().replaceCircuit(moved(2));
+    lab().replaceCircuit(moved(3));
+    lab().commitDrag(origin);
+    expect(lab().past).toHaveLength(1);
+    lab().undo();
+    expect(lab().circuit).toBe(origin);
+
+    lab().replaceCircuit(moved(1));
+    lab().replaceCircuit(moved(0)); // back where it began
+    lab().commitDrag(origin);
+    expect(lab().past).toHaveLength(0);
+  });
+
+  it('merges a slider being dragged into one step', () => {
+    lab().open(project(unoCircuitExample()));
+    for (const position of [0.4, 0.3, 0.2, 0.1]) lab().setProps('POT1', { position });
+    expect(lab().past).toHaveLength(1);
+    lab().setProps('R1', { resistance: 1000 }); // another setting is its own step
+    expect(lab().past).toHaveLength(2);
+    lab().undo();
+    lab().undo();
+    expect(lab().circuit).toEqual(unoCircuitExample());
+  });
+
+  it('brings a removed board back with its program, and reloads it if running', () => {
+    lab().addUno();
+    const program = lab().programs.UNO1!;
+    const uploadsBefore = lab().uploads.UNO1!;
+    lab().select('UNO1');
+    lab().removeSelected();
+    expect(lab().programs.UNO1).toBeUndefined();
+
+    lab().undo();
+    expect(lab().circuit.components.map((c) => c.id)).toEqual(['UNO1']);
+    expect(lab().programs.UNO1).toBe(program);
+    expect(lab().uploads.UNO1).toBe(uploadsBefore + 1);
+
+    lab().undo(); // back before the board was added
+    expect(lab().circuit.components).toHaveLength(0);
+    expect(lab().programs).toEqual({});
+    lab().redo();
+    expect(lab().programs.UNO1).toBe(program);
+  });
+
+  it('keeps program text typed after the step that is undone', () => {
+    lab().addUno();
+    lab().setTool('led');
+    lab().tapEndpoint('d9');
+    lab().setSource('UNO1', '// my own program');
+    lab().undo();
+    expect(lab().circuit.components.map((c) => c.id)).toEqual(['UNO1']);
+    expect(lab().programs.UNO1!.source).toBe('// my own program');
+  });
+
+  it('keeps a limited history and starts afresh when a project is opened', () => {
+    lab().open(project(ledCircuitExample()));
+    for (let i = 0; i < 130; i++) {
+      lab().select('LED1');
+      lab().flipSelected();
+    }
+    expect(lab().past).toHaveLength(100);
+    lab().open(project());
+    expect(lab().past).toHaveLength(0);
+    expect(lab().future).toHaveLength(0);
   });
 });
