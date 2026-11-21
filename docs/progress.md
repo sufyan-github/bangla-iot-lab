@@ -44,7 +44,7 @@ curriculum depend on that board.
 | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
 | Lint, formatting, types, licence check                                                                                             | Clean                                                        |
 | Unit tests                                                                                                                         | 346 passed                                                   |
-| Integration tests (database, compiler sandbox, emulators, firmware source, ESP32 board library, ESP32 compile path, chip emulator) | 87 passed                                                    |
+| Integration tests (database, compiler sandbox, emulators, firmware source, ESP32 board library, ESP32 compile path, chip emulator) | 78 passed                                                    |
 | Browser tests, desktop and phone sizes                                                                                             | 82 tests. Last full local run: 82 passed; see the note below |
 | Hardware tests                                                                                                                     | None run                                                     |
 
