@@ -1,8 +1,9 @@
 # ESP32 feasibility study
 
 **Status: in progress. Steps 1 and 2 of 6 are done. Step 3 is done except for one
-measurement that needs a real phone. Steps 4 and 5 have a survey but no
-measurement. No decision has been made.**
+measurement that needs a real phone. Steps 4 and 5 are measured on this laptop. Nothing is measured on a phone. The
+owner has since asked for both option A and option C to be offered in the
+editor, switchable, as experiments (22 November 2026).**
 
 ## The question
 
@@ -70,8 +71,8 @@ What this already tells us:
 | 1    | Sort the reference sketches by what they need                                                                                                                         | **Done**                                                                                                                                                           |
 | 2    | Baseline: compile every sketch with the real toolchain and record which succeed, so a later failure is known to be ours                                               | **Done**                                                                                                                                                           |
 | 3    | Option C prototype: the board library for levels 1 and 2, a sketch compiled to WebAssembly, pins connected to the existing circuit solver. Measure coverage and speed | **Done on a laptop:** built, run as WebAssembly in a browser, and connected to the circuit solver through a stand-in board. Still to do: the speed on a real phone |
-| 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | **Partly done:** what exists has been surveyed. No emulator has been run yet                                                                                       |
-| 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | **Partly done:** what Espressif's QEMU covers has been read from its documents. Nothing has been run                                                               |
+| 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | **Done natively:** esp32sim runs all 103 level 1 to 3 sketches. Its browser build and a phone are not measured                                                     |
+| 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | **Done on a laptop:** memory and processor cost measured. The delay over the internet is not                                                                       |
 | 6    | Score the options against the criteria and write the decision                                                                                                         | Not started                                                                                                                                                        |
 
 Speed will be measured on a laptop first. The figure that counts is from a real
@@ -348,6 +349,80 @@ QEMU as published would not reach it, so option B would rest on the community
 version or on our own additions to a GPL program, as well as on a server and an
 internet connection for every student.
 
+## Step 4 result: option A, an emulator of the whole chip
+
+Run on 22 November 2026 with esp32sim 0.4.0 (MIT), its checksum verified, inside
+a sandbox with no network. Each sketch was built with the real toolchain, as in
+the baseline, and booted as real firmware from the chip's own start-up code.
+This is the emulator's native build on this laptop, not its browser build.
+
+### Coverage
+
+| Level | Sketches | Build | Boot and run 5 s without a crash |
+| ----- | -------- | ----- | -------------------------------- |
+| 1     | 30       | 30    | 30                               |
+| 2     | 44       | 44    | 44                               |
+| 3     | 29       | 29    | 29                               |
+
+Running without a crash is a low bar at level 3: those sketches talk to a
+display, a sensor or a servo, and none was connected. Whether the emulator's
+I2C and timing would carry them was not tested.
+
+### Behaviour
+
+The scripted checks written for option C were given to the emulator where its
+tools allow: scripted pin levels, voltages and serial input, and a record of
+pin changes. Of 54 checks it could be held to, 41 hold. **None of the 13 that
+fail is a fault found in the emulator**:
+
+| Checks | Why they fail                                                                                                                            |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 7      | The check expects the ideal analog converter of the option C prototype. The emulator reads as Espressif's calibration says the chip does |
+| 1      | The check allows no slack on a first `delay()`. The board counts delays in 1 ms ticks, so the first can be up to 1 ms short              |
+| 4      | The input the check needs (a touch value, an echo pulse) could not be given with the emulator's script                                   |
+| 1      | The scenario left a sensor line unconnected; the two worlds read an unconnected input differently. The scenario has been corrected       |
+
+Nine more checks, on PWM duty over time, could not be observed with this tool
+and were set aside.
+
+So the emulator did what the real software does in every case examined, and it
+showed four places where the option C prototype does not: the analog converter,
+the 1 ms tick, the way numbers are written in other bases (`String(255, HEX)` is
+`ff` on the board; since fixed in the prototype), and a lamp pin name the plain
+board definition does not have. A library written by us will have faults of this
+kind until each is found; an emulator of the chip does not have them at all.
+
+Two models of the analog converter now disagree at the top of its range: the
+emulator reads 3.3 V as 3920, and the pin model in this repository says the
+reading sticks at 4095 above about 3.13 V. Neither has been checked on a board;
+hardware test C2 settles it.
+
+### Speed
+
+| Kind of sketch                          | Speed on this laptop, native build                                     |
+| --------------------------------------- | ---------------------------------------------------------------------- |
+| Waits between actions (68 of 103)       | 5 to 10 times faster than a real board                                 |
+| Has a loop that never waits (35 of 103) | 33 of them at about 0.2 times: five times **slower** than a real board |
+
+The emulator runs about 30 to 60 million instructions a second here, and a real
+ESP32 running flat out does far more. A third of the reference sketches are
+written with a loop that never waits. The browser build cannot be faster than
+the native one on the same machine, and a low-cost phone is several times slower
+again. The emulator's own authors report "real time" in a browser on a fast
+laptop for programs that mostly wait; that is their figure, not measured here.
+
+The emulator used about 23 MB of memory.
+
+### What option A would need
+
+- A build with the whole ESP32 toolchain for every sketch, on a server: about
+  4 s at the median in the baseline, with firmware of 260 kB or more.
+- Models of the kit's parts (display, sensors) written against the emulator, as
+  option C needs them written against its library.
+- The speed above to be acceptable, or sketches to be written with waits.
+
+Not measured: the emulator's browser build, and anything on a phone.
+
 ## Step 5 result: option B, QEMU on a server
 
 Run on 22 November 2026 with Espressif's QEMU, release
@@ -355,10 +430,10 @@ Run on 22 November 2026 with Espressif's QEMU, release
 inside a sandbox with no network. Two small sketches written for the test were
 built with the real toolchain and booted as real firmware.
 
-| Sketch | Result | Processor used | Memory |
-| ------ | ------ | -------------- | ------ |
-| Prints its clock once a second and waits in between | Boots and prints on time | About 20 % of one core | 172 MB |
-| The same, with a loop that never waits | Boots and prints on time | A little over one whole core, all the time | 172 MB |
+| Sketch                                              | Result                   | Processor used                             | Memory |
+| --------------------------------------------------- | ------------------------ | ------------------------------------------ | ------ |
+| Prints its clock once a second and waits in between | Boots and prints on time | About 20 % of one core                     | 172 MB |
+| The same, with a loop that never waits              | Boots and prints on time | A little over one whole core, all the time | 172 MB |
 
 What this shows:
 
