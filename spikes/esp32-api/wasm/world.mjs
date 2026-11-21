@@ -50,8 +50,15 @@ function decode(chunks) {
  * Runs a sketch module (its bytes) for `runMs` of virtual time with the given
  * script lines. Returns the serial text, the trace of pin events, and what the
  * run cost.
+ *
+ * With a `circuit`, the pins are connected to it instead of to the script: the
+ * world tells it each pin mode and output level as they happen, asks it for
+ * each input level and voltage at the moment the sketch reads, and tells it as
+ * time passes. Each of pinMode, write, read, millivolts and time is given the
+ * board time in microseconds. read and millivolts may return undefined for a
+ * pin the circuit does not know.
  */
-export function runModule(bytes, { runMs = 5000, script = [] } = {}) {
+export function runModule(bytes, { runMs = 5000, script = [] } = {}, circuit = null) {
   const compileStarted = performance.now();
   const module = new WebAssembly.Module(bytes);
   const compileMs = performance.now() - compileStarted;
@@ -109,6 +116,7 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}) {
       apply(events[next++]);
     }
     now = target;
+    circuit?.time(now);
     if (now >= limit) throw END;
   };
 
@@ -117,14 +125,17 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}) {
       if (!valid(pin)) return;
       modeOf[pin] = mode;
       trace.push(`M ${now} ${pin} ${mode}`);
+      circuit?.pinMode(pin, mode, outputLevel[pin], now);
     },
     host_digital_write(pin, level) {
       if (!valid(pin)) return;
       if (outputLevel[pin] !== level) trace.push(`D ${now} ${pin} ${level}`);
       outputLevel[pin] = level;
+      circuit?.write(pin, level, now);
     },
-    host_digital_read: (pin) => levelSeen(pin),
-    host_analog_millivolts: (pin) => (valid(pin) ? millivolts[pin] : 0),
+    host_digital_read: (pin) => circuit?.read(pin, now) ?? levelSeen(pin),
+    host_analog_millivolts: (pin) =>
+      circuit?.millivolts(pin, now) ?? (valid(pin) ? millivolts[pin] : 0),
     host_pwm(pin, duty, maxDuty, frequency) {
       trace.push(`W ${now} ${pin} ${duty >>> 0} ${maxDuty >>> 0} ${frequency.toFixed(0)}`);
     },

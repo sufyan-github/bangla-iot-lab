@@ -5,7 +5,11 @@ import { defineConfig } from 'vitest/config';
 // They fail loudly when a service is missing; they are never skipped.
 export default defineConfig({
   test: {
-    include: ['apps/*/src/**/*.itest.ts', 'packages/*/src/**/*.itest.ts', 'spikes/*/*.itest.mjs'],
+    include: [
+      'apps/*/src/**/*.itest.ts',
+      'packages/*/src/**/*.itest.ts',
+      'spikes/*/*.itest.{mjs,ts}',
+    ],
     environment: 'node',
     testTimeout: 30_000,
     fileParallelism: false,

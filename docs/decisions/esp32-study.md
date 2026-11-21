@@ -1,7 +1,7 @@
 # ESP32 feasibility study
 
-**Status: in progress. Steps 1 and 2 of 6 are done and step 3 is partly done. No
-decision has been made.**
+**Status: in progress. Steps 1 and 2 of 6 are done. Step 3 is done except for one
+measurement that needs a real phone. No decision has been made.**
 
 ## The question
 
@@ -64,14 +64,14 @@ What this already tells us:
 
 ## Method
 
-| Step | What                                                                                                                                                                  | State                                                                                                                                          |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Sort the reference sketches by what they need                                                                                                                         | **Done**                                                                                                                                       |
-| 2    | Baseline: compile every sketch with the real toolchain and record which succeed, so a later failure is known to be ours                                               | **Done**                                                                                                                                       |
-| 3    | Option C prototype: the board library for levels 1 and 2, a sketch compiled to WebAssembly, pins connected to the existing circuit solver. Measure coverage and speed | **Mostly done:** built, measured on a desk computer, and as WebAssembly in a browser. Not yet connected to the solver or timed on a real phone |
-| 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | Not started                                                                                                                                    |
-| 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | Not started                                                                                                                                    |
-| 6    | Score the options against the criteria and write the decision                                                                                                         | Not started                                                                                                                                    |
+| Step | What                                                                                                                                                                  | State                                                                                                                                                              |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1    | Sort the reference sketches by what they need                                                                                                                         | **Done**                                                                                                                                                           |
+| 2    | Baseline: compile every sketch with the real toolchain and record which succeed, so a later failure is known to be ours                                               | **Done**                                                                                                                                                           |
+| 3    | Option C prototype: the board library for levels 1 and 2, a sketch compiled to WebAssembly, pins connected to the existing circuit solver. Measure coverage and speed | **Done on a laptop:** built, run as WebAssembly in a browser, and connected to the circuit solver through a stand-in board. Still to do: the speed on a real phone |
+| 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | Not started                                                                                                                                                        |
+| 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | Not started                                                                                                                                                        |
+| 6    | Score the options against the criteria and write the decision                                                                                                         | Not started                                                                                                                                                        |
 
 Speed will be measured on a laptop first. The figure that counts is from a real
 low-cost phone, which needs the lab team; until then any speed result is marked
@@ -245,15 +245,46 @@ is a page that can be opened on a real phone (see the prototype's README). That
 measurement has not been made. And these figures have an almost empty world
 behind them; the circuit solver will add its own cost each time a pin changes.
 
+### Connected to the circuit solver
+
+Last, a sketch module was connected to the lab's own circuit solver in place of
+the scripted inputs. The lab has no ESP32 board part yet, so the circuit was the
+existing example built round the UNO-compatible board, used as a stand-in. This
+shows how a sketch module and the solver work together and what that costs. **It
+says nothing about how an ESP32 pin behaves electrically**; that needs the board
+part and its pin model, which are separate work.
+
+What the test shows, with a sketch that blinks an LED, reads a button and reads
+a potentiometer:
+
+- The LED carries the current the circuit gives it, within 2 % of the figure the
+  UNO emulator's own test expects for the same circuit.
+- The sketch reads the potentiometer's voltage and the button's level from the
+  solved circuit, including its own loaded output pin.
+- A pin change reaches the circuit at the moment the sketch makes it, and a
+  read sees the circuit as it is at that moment. The UNO emulator exchanges with
+  the circuit once a millisecond; this design has no such step.
+- Each distinct state of the circuit is solved once and remembered. Ten minutes
+  of board time, 2,402 pin changes and 2,399 reads, needed 5 solves and took
+  about 20 ms on this laptop.
+
+A circuit with capacitors has to be stepped through time whatever drives it, so
+there the cost is the solver's, as it is today with the UNO.
+
 ### Still to do in step 3
 
-Run the speed test page on a real low-cost phone; connect the sixteen world
-functions to the circuit solver, so a sketch drives a real simulated circuit,
-and measure again; decide how far up the levels to take the prototype before the
-options are compared. One design question is already visible: in the browser a
-sketch's `delay()` must also be able to wait in real time, so the student sees a
-lamp blink at the right pace. The world can do that from inside a worker; how is
-to be settled with the solver connection.
+One measurement: the speed test page on a real low-cost phone. It needs the
+phone and a person; the page and the procedure are ready (see the prototype's
+README).
+
+Two things were learned that belong to building the option, if it is chosen,
+rather than to choosing it:
+
+- In the browser a sketch's `delay()` must also be able to wait in real time, so
+  the student sees a lamp blink at the right pace. The world can do that from
+  inside a worker.
+- The solver knows one kind of board. An ESP32 needs its own board part, with a
+  3.3 V supply and its own pin behaviour.
 
 ## What the study will not do
 

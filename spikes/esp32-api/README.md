@@ -25,6 +25,10 @@ sketch against our own implementation of the board's functions.
   module. It needs nothing from Node, so it runs in a browser or a worker.
 - `wasm/bench/`: a page that runs the test sketches in a browser and reports how
   fast, for measuring a real phone.
+- `circuit.itest.ts`: a sketch module connected to the lab's circuit solver in
+  place of scripted inputs, with the UNO-compatible example circuit as a
+  stand-in board. It measures how the two work together, not how an ESP32 pin
+  behaves.
 - `tests/`: seven small sketches written for this project, each with a scenario
   (scripted inputs and what the sketch must then do). `api.itest.mjs` runs them
   natively and as WebAssembly, and requires both to give exactly the same pin
