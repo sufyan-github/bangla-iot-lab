@@ -12,7 +12,11 @@
       "serial": "length 6, number 0, starts with s: 1"
     },
     {
-      "serial": "joined set/3\\.14/FF"
+      "serial": "joined set/3\\.14/ff"
+    },
+    {
+      "serial": "bases FF FFFFFFFF 101 ffffffff",
+      "count": 2
     },
     {
       "serial": "length 8, number 73, starts with s: 0"

@@ -171,24 +171,34 @@ void EspClass::restart() {
 }
 
 // -------------------------------------------------------------------- String
-static std::string number(unsigned long long magnitude, bool negative, unsigned char base) {
+// The board's own software writes numbers in two ways, and the two differ:
+// String(255, HEX) is "ff" but Serial.print(255, HEX) is "FF". Only base 10 has
+// a minus sign; in any other base a negative number shows its 32 bits.
+static std::string number(unsigned long long magnitude, bool negative, unsigned char base,
+                          bool capitals) {
   if (base < 2) base = 10;
+  const char* letters = capitals ? "0123456789ABCDEF" : "0123456789abcdef";
   std::string digits;
   do {
-    digits.insert(digits.begin(), "0123456789ABCDEF"[magnitude % base]);
+    digits.insert(digits.begin(), letters[magnitude % base]);
     magnitude /= base;
   } while (magnitude > 0);
   return negative ? "-" + digits : digits;
+}
+static std::string whole(long long n, unsigned char base, bool capitals) {
+  if (n >= 0) return number((unsigned long long)n, false, base, capitals);
+  if (base == 10) return number((unsigned long long)(-(n + 1)) + 1, true, base, capitals);
+  return number((uint32_t)n, false, base, capitals); // int and long are 32 bits on the board
 }
 static std::string decimal(double value, unsigned int decimals) {
   char buffer[64];
   snprintf(buffer, sizeof buffer, "%.*f", (int)decimals, value);
   return buffer;
 }
-String::String(int n, unsigned char base) : value_(number(n < 0 ? -(long long)n : n, n < 0, base)) {}
-String::String(unsigned int n, unsigned char base) : value_(number(n, false, base)) {}
-String::String(long n, unsigned char base) : value_(number(n < 0 ? -(long long)n : n, n < 0, base)) {}
-String::String(unsigned long n, unsigned char base) : value_(number(n, false, base)) {}
+String::String(int n, unsigned char base) : value_(whole(n, base, false)) {}
+String::String(unsigned int n, unsigned char base) : value_(number(n, false, base, false)) {}
+String::String(long n, unsigned char base) : value_(whole(n, base, false)) {}
+String::String(unsigned long n, unsigned char base) : value_(number(n, false, base, false)) {}
 String::String(float n, unsigned int decimals) : value_(decimal(n, decimals)) {}
 String::String(double n, unsigned int decimals) : value_(decimal(n, decimals)) {}
 
@@ -271,15 +281,20 @@ size_t HardwareSerial::write(const uint8_t* buffer, size_t size) {
 size_t HardwareSerial::print(const String& text) { return write(text.c_str()); }
 size_t HardwareSerial::print(const char* text) { return write(text); }
 size_t HardwareSerial::print(char c) { return write((uint8_t)c); }
-size_t HardwareSerial::print(int n, int base) { return print(String(n, (unsigned char)base)); }
-size_t HardwareSerial::print(unsigned int n, int base) { return print(String(n, (unsigned char)base)); }
-size_t HardwareSerial::print(long n, int base) { return print(String(n, (unsigned char)base)); }
-size_t HardwareSerial::print(unsigned long n, int base) { return print(String(n, (unsigned char)base)); }
+size_t HardwareSerial::print(int n, int base) { return write(whole(n, (unsigned char)base, true).c_str()); }
+size_t HardwareSerial::print(unsigned int n, int base) {
+  return write(number(n, false, (unsigned char)base, true).c_str());
+}
+size_t HardwareSerial::print(long n, int base) { return write(whole(n, (unsigned char)base, true).c_str()); }
+size_t HardwareSerial::print(unsigned long n, int base) {
+  return write(number(n, false, (unsigned char)base, true).c_str());
+}
 size_t HardwareSerial::print(long long n, int base) {
-  return print(String(number(n < 0 ? (unsigned long long)(-(n + 1)) + 1 : n, n < 0, (unsigned char)base)));
+  if (n >= 0 || base == 10) return write(whole(n, (unsigned char)base, true).c_str());
+  return write(number((unsigned long long)n, false, (unsigned char)base, true).c_str());
 }
 size_t HardwareSerial::print(unsigned long long n, int base) {
-  return print(String(number(n, false, (unsigned char)base)));
+  return write(number(n, false, (unsigned char)base, true).c_str());
 }
 size_t HardwareSerial::print(double n, int decimals) { return print(String(n, (unsigned int)decimals)); }
 size_t HardwareSerial::println() { return write("\r\n"); }

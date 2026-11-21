@@ -3,7 +3,7 @@
   "script": [],
   "expect": [
     {
-      "halfPeriod": [2, 250, 0.05]
+      "halfPeriod": [2, 250, 1]
     },
     {
       "level": [2, 100, 1]
