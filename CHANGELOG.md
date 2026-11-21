@@ -6,6 +6,13 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ## [Unreleased]
 
+### Added
+
+- `packages/catalog`: imports a supplier's export into dated snapshots, keeping
+  the original data, validating it and reporting issues; computes project and
+  budget totals; word-prefix search; comparison of two snapshots. No catalogue
+  data is published.
+
 ## [0.1.0] - 2026-11-21
 
 First public version. Everything listed is implemented and covered by automated

@@ -27,7 +27,9 @@
     "golden:regen": "pnpm --filter @banglalab/circuit-engine golden:regen",
     "fixtures:firmware": "pnpm --filter @banglalab/board-emulators fixtures:build",
     "licences:check": "node scripts/licences.mjs check",
-    "licences:write": "node scripts/licences.mjs write"
+    "licences:write": "node scripts/licences.mjs write",
+    "catalog:import": "pnpm --filter @banglalab/catalog run import",
+    "catalog:verify": "pnpm --filter @banglalab/catalog run verify"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
