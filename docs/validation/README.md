@@ -162,6 +162,33 @@ Solar charging over a day, LoRa range and airtime, GSM peak current, and
 multi-board timing are tested when those models are built. They need outdoor
 time and a second board, so plan them separately.
 
+## Section P: phone speed (for the ESP32 study)
+
+This is not a test of a circuit. It measures how fast a real phone runs sketches
+built the way one option of the [ESP32 study](../decisions/esp32-study.md) would
+run them. The study cannot be decided without it.
+
+| No. | Test             | Set-up                                                                                                      | Record                                                                       | Pass when                                                                                       |
+| --- | ---------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| P1  | Low-cost phone   | The cheapest Android phone a student in the pilot is likely to use, in Chrome, on charge, other apps closed | Phone model, Android and Chrome versions; the text the page gives at the end | Every row says "correct", and the slowest sketch runs at least 5 times faster than a real board |
+| P2  | Same phone, warm | P1 run three times in a row without a pause                                                                 | The slowest figure of the three runs                                         | Still at least 5 times faster                                                                   |
+| P3  | A second phone   | Any other phone the team has, the older the better                                                          | As P1                                                                        | As P1                                                                                           |
+
+The factor of 5 is a proposed limit, not an agreed one: it leaves room for the
+circuit solver and the drawing, which this page does not include.
+
+**Procedure.** On a computer on the same Wi-Fi network as the phone, with the
+project and the tools in the prototype's
+[README](../../spikes/esp32-api/README.md) installed:
+
+```bash
+node scripts/esp32-study/bench.mjs --work /tmp/esp32-bench --serve 8080 --lan
+```
+
+Open the address it prints in the phone's browser. Wait for "Done". Copy the
+text from the box at the bottom into the record. Stop the command with Ctrl+C;
+while it runs, the page can be opened by anyone on that network.
+
 ## Record format
 
 One file per test run in `records/`, named `<test id>-<yyyy-mm-dd>.md`, from
@@ -182,3 +209,4 @@ One file per test run in `records/`, named `<test id>-<yyyy-mm-dd>.md`, from
 | A       | 10    | 0   | 0      | 0      |
 | B       | 10    | 0   | 0      | 0      |
 | C       | 20    | 0   | 0      | 0      |
+| P       | 3     | 0   | 0      | 0      |
