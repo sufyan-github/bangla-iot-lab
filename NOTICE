@@ -1,0 +1,45 @@
+বাংলা IoT ল্যাব (Bangla IoT Lab)
+Copyright 2026 Md Abu Sufyan
+
+The original code and documentation in this repository are licensed under the
+Apache License, Version 2.0 (see LICENSE).
+
+This repository also contains, and the web application distributes, material
+under other licences. Each is kept apart from the Apache-2.0 code.
+
+1. Starter firmware (LGPL-2.1-or-later)
+
+   The files packages/board-emulators/fixtures/starters/*.hex are compiled
+   programs for an UNO-compatible board. Each is a combined work of:
+
+   - a sketch written for this project (the .ino file beside it, Apache-2.0);
+   - ArduinoCore-avr 1.8.8, Copyright Arduino LLC and contributors,
+     LGPL-2.1-or-later;
+   - for servo.hex: the Servo library 1.3.0, Copyright Michael Margolis and
+     Arduino LLC, LGPL-2.1-or-later;
+   - for lcd.hex: the LiquidCrystal library 1.0.7, Copyright Hans-Christoph
+     Steiner and Arduino LLC, LGPL-2.1-or-later;
+   - avr-libc, under its BSD-style licence (LICENSES/avr-libc.txt);
+   - libgcc, under the GCC Runtime Library Exception.
+
+   The complete corresponding source of the LGPL parts, unmodified, is in
+   third_party/arduino-avr/. The licence text is LICENSES/LGPL-2.1.txt. How to
+   rebuild or replace the firmware is described in
+   third_party/arduino-avr/README.md. In the application, any starter program
+   can be changed and re-uploaded from the code tab.
+
+2. Anek Bangla font (SIL Open Font License 1.1)
+
+   Copyright 2021 The Anek Project Authors. Distributed unmodified through the
+   @fontsource-variable/anek-bangla package. See LICENSES/OFL-1.1-AnekBangla.txt.
+
+3. JavaScript dependencies
+
+   Listed with their licence texts in THIRD_PARTY_LICENSES.md.
+
+Trademarks
+
+Arduino and UNO are trademarks of Arduino S.r.l.; Raspberry Pi is a trademark of
+Raspberry Pi Ltd. This project is not affiliated with, sponsored by or endorsed
+by them, nor by any parts supplier. Product names are used only to say what the
+software is compatible with.

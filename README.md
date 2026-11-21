@@ -1,23 +1,46 @@
-# বাংলা IoT ল্যাব — Bangla IoT Virtual Lab
+# বাংলা IoT ল্যাব (Bangla IoT Lab)
 
-A Bangla-first, offline-capable virtual electronics laboratory for students in
-Class 6–12 in Bangladesh. Students build circuits on a virtual breadboard,
-run them, and see voltages, currents and plain-language explanations.
+A virtual electronics and IoT lab that runs in the browser, in Bangla and
+English, for school students in Bangladesh. Build a circuit on a breadboard,
+write a program for the board, switch it on and see what happens, with no
+hardware and no internet after the first visit.
 
-**Status: Phase 0 is complete; Phase 1 (core simulator) is in progress.**
-See [docs/phase-1-progress.md](docs/phase-1-progress.md) for what works now,
-what is still missing from Phase 1, the test results and the known limitations.
+**Status: early development.** The parts below work and are covered by automated
+tests. Nothing has yet been checked against real hardware; see
+[Hardware validation](#hardware-validation).
 
 ## What works today
 
-- Breadboard editor with all 20 planned parts, from resistors and LEDs to a transistor,
-  relay, servo, 16 × 2 LCD and five kinds of sensor.
-- An Arduino UNO beside the board: write a sketch (the Servo and LiquidCrystal libraries
-  are available), upload it, and it drives the circuit.
-- Circuit simulation checked against ngspice (15 steady and 3 time-dependent reference circuits).
-- Live readings, an oscilloscope, a logic analyser and a serial monitor.
-- Plain-language explanations of common mistakes, in Bangla and English.
-- Automatic saving on the device; the app installs as a PWA and reopens projects, with their programs, offline.
+- **Breadboard editor.** Place parts, pull wires from hole to hole, bend them
+  round parts, drag anything, undo and redo. Touch and mouse.
+- **Circuit simulation.** Our own solver (Modified Nodal Analysis with
+  Newton-Raphson, written in TypeScript), checked against ngspice on 18 reference
+  circuits. Explains common mistakes in plain words: an LED the wrong way round,
+  no resistor, a short circuit.
+- **20 parts.** Resistor, LED, button, switch, potentiometer, capacitor, diode,
+  transistor, buzzer, motor, relay, servo, character LCD, light, temperature,
+  soil, IR and ultrasonic sensors, battery, and an UNO-compatible board.
+- **A programmable board.** Write a sketch for the UNO-compatible board, compile
+  it in a sandbox and watch it drive the circuit. The board is emulated at the
+  instruction level with [avr8js](https://github.com/wokwi/avr8js).
+- **Instruments.** Two-probe voltmeter, oscilloscope and logic traces, serial
+  monitor, and a meter for every part.
+- **Diagram view.** The same circuit drawn as a schematic, with moving dashes
+  showing where current flows.
+- **Offline.** Installs as a web app and saves on the device. Seven ready-made
+  programs run without a server.
+
+## What does not exist yet
+
+An ESP32 board, digital logic chips, lessons, project templates, class accounts,
+and uploading to a real board. The plan and the honest state of each piece are in
+[docs/progress.md](docs/progress.md).
+
+## Hardware validation
+
+Every part model is, for now, **not yet checked on real hardware**. A part is
+called validated only when a bench measurement is stored in
+[docs/validation/](docs/validation/README.md) beside the simulated result.
 
 ## Requirements
 
@@ -35,68 +58,67 @@ On Ubuntu: `sudo apt install gcc-avr avr-libc binutils-avr bubblewrap`.
 
 ```bash
 pnpm install
-pnpm --filter @banglalab/compile-worker core:fetch   # Arduino core and libraries, pinned (once)
-pnpm --filter @banglalab/board-emulators pico:fetch    # MicroPython firmware, pinned (once)
+pnpm --filter @banglalab/compile-worker core:fetch   # AVR core and libraries, pinned (once)
+pnpm --filter @banglalab/board-emulators pico:fetch  # MicroPython firmware, pinned (once)
 pnpm db:up          # PostgreSQL 18 in Docker on 127.0.0.1:55440
 pnpm db:migrate     # create the tables
 pnpm dev            # web :5173, API :4000, compile worker :4100
 ```
 
-Open http://localhost:5173. The lab and the ready-made programs need only the
-web app (`pnpm dev:web`); the API and compile worker are needed only to compile
-code a student has written ("বোর্ডে আপলোড করো").
+Open http://localhost:5173. The lab and the ready-made programs need only the web
+app (`pnpm dev:web`). The API and compile worker are needed only to compile a
+program a student has written.
 
 ## Checks
 
 ```bash
-pnpm check              # lint + format + types + unit tests (no services needed)
+pnpm check              # lint, format, types, licence check, unit tests (no services needed)
 pnpm test:integration   # needs `pnpm db:up`, avr-gcc and bubblewrap
-pnpm test:e2e           # builds the app and drives it in Chromium (desktop + phone)
+pnpm test:e2e           # builds the app and drives it in Chromium (desktop and phone sizes)
 ```
 
-The first e2e run needs a browser: `pnpm --filter @banglalab/web exec playwright install chromium`.
+The first browser-test run needs a browser:
+`pnpm --filter @banglalab/web exec playwright install chromium`.
 
 ## Layout
 
 ```
-apps/web              React + Vite PWA: the lab, code editor, instruments, project list
-apps/api              Fastify API: health, compile proxy, PostgreSQL schema and migrations
-apps/compile-worker   Sandboxed avr-gcc service with a content-addressed cache
-packages/shared       Circuit document schema, breadboard model, editing rules
-packages/circuit-engine   MNA + Newton-Raphson solver, DC and time steps (no UI or board knowledge)
-packages/simulation   Document → netlist → readings; session that runs boards and circuit together
-packages/board-emulators  Arduino UNO wrapper around avr8js
-packages/i18n         Bangla and English text, number and unit formatting
-infra/docker          Local development services
-docs                  Requirements, architecture, decisions, testing, reports
+apps/web                  the lab (React, Vite, offline-capable)
+apps/compile-worker       compiles sketches in a per-job sandbox
+apps/api                  thin API in front of the compile worker
+packages/circuit-engine   the circuit solver, with its ngspice reference results
+packages/simulation       parts as circuit models; board and circuit run together
+packages/board-emulators  wrappers round avr8js and rp2040js
+packages/shared           the saved-circuit format and editing rules
+packages/i18n             Bangla and English text
+third_party/              source of other people's code that we distribute
+docs/                     architecture, decisions, progress, validation
 ```
-
-Packages planned in the master brief but not created yet because they would be
-empty: `ui`, `lesson-engine`, `content-schema`, `config` (see
-[docs/decisions/decision-log.md](docs/decisions/decision-log.md), D-004).
-
-## Troubleshooting
-
-- **`COMPILE_SANDBOX=bwrap but bubblewrap could not start avr-gcc`** — install
-  `bubblewrap` and the AVR toolchain. For a quick local try only, start the
-  worker with `COMPILE_SANDBOX=none` (never in production).
-- **`ArduinoCore-avr is missing`** — run `pnpm --filter @banglalab/compile-worker core:fetch`.
-- **Integration tests say PostgreSQL is not reachable** — run `pnpm db:up`.
-- **Port already in use** — the web dev server uses 5173, preview 4173, e2e 4174,
-  API 4000, worker 4100, Postgres 55440.
-- **Changes do not show up in the installed app** — it is served by a service
-  worker; reload twice or clear site data.
-- **"এই ব্রাউজারে সেভ করা যাচ্ছে না"** — private browsing blocks IndexedDB.
 
 ## Documentation
 
-- [Technical requirements](docs/requirements/technical-requirements.md)
-- [Architecture and data flow](docs/architecture/overview.md)
-- [Simulation design](docs/architecture/simulation.md)
-- [Database design](docs/architecture/database.md)
-- [API reference](docs/architecture/api.md)
-- [Decision log](docs/decisions/decision-log.md)
-- [Testing guide](docs/testing/testing.md)
-- [Phase 0 report](docs/phase-0-report.md)
-- [Phase 1 progress report](docs/phase-1-progress.md)
-- [প্রথম সার্কিট (student guide)](docs/user-guides/first-circuit.bn.md)
+- [Progress report](docs/progress.md) and [changelog](CHANGELOG.md)
+- [Architecture](docs/architecture/overview.md) and [how the simulation works](docs/architecture/simulation.md)
+- [Decision log](docs/decisions/decision-log.md): why things are the way they are
+- [Testing](docs/testing/testing.md)
+- [Hardware testing checklist](docs/validation/README.md)
+- [Contributing](CONTRIBUTING.md)
+
+## Licence
+
+The original code is under the [Apache License 2.0](LICENSE). The repository also
+carries a small amount of other people's work under its own licences, kept
+separate and described in [NOTICE](NOTICE):
+
+- the ready-made firmware contains LGPL-2.1-or-later code from the Arduino AVR
+  core and libraries; its full source is in
+  [third_party/arduino-avr](third_party/arduino-avr/README.md);
+- the Anek Bangla font is under the SIL Open Font License;
+- JavaScript dependencies are listed in
+  [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+
+Lesson content, store catalogue data and handbook material are **not** in this
+repository.
+
+Arduino and UNO are trademarks of Arduino S.r.l. This project is independent and
+is not affiliated with or endorsed by Arduino or by any parts supplier.

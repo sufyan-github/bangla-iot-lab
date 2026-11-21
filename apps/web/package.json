@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/copy-licences.mjs && vite build",
     "preview": "vite preview --port 4173 --strictPort",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "e2e": "playwright test"
@@ -37,5 +37,6 @@
     "vite": "^8.3.8",
     "vite-plugin-pwa": "^2.0.0",
     "workbox-window": "^7.4.1"
-  }
+  },
+  "license": "Apache-2.0"
 }

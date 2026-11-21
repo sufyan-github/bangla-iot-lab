@@ -9,6 +9,14 @@ export const bn = {
   'app.tagline': 'নিজের হাতে সার্কিট বানাও, চালিয়ে দেখো',
   'nav.projects': 'আমার সার্কিট',
   'nav.language': 'English',
+  'nav.licences': 'লাইসেন্স',
+  'licences.title': 'লাইসেন্স ও কৃতজ্ঞতা',
+  'licences.intro':
+    'বাংলা IoT ল্যাব মুক্ত সফটওয়্যার। এর নিজের কোড Apache-2.0 লাইসেন্সে দেওয়া। এর সঙ্গে অন্যদের তৈরি কিছু জিনিসও আসে, প্রতিটির নিজের লাইসেন্সে। আইনি লেখাগুলো ইংরেজিতে, কারণ সেটাই মূল পাঠ।',
+  'licences.source': 'সোর্স কোড',
+  'licences.fullList': 'সব লাইসেন্সের পূর্ণ পাঠ',
+  'licences.replace':
+    'তৈরি প্রোগ্রামগুলোর যেকোনোটা তুমি বদলাতে পারো: কোড ট্যাবে প্রোগ্রাম পাল্টে আবার আপলোড করো।',
   'status.offline': 'অফলাইন — কাজ এই ডিভাইসেই সেভ হচ্ছে',
   'status.updateReady': 'অফলাইনে ব্যবহারের জন্য প্রস্তুত',
 
@@ -271,6 +279,14 @@ export const en: Record<MessageKey, string> = {
   'app.tagline': 'Build circuits with your own hands and watch them run',
   'nav.projects': 'My circuits',
   'nav.language': 'বাংলা',
+  'nav.licences': 'Licences',
+  'licences.title': 'Licences and credits',
+  'licences.intro':
+    'Bangla IoT Lab is free software. Its own code is under the Apache-2.0 licence. It also comes with some work by others, each under its own licence. The legal notices below are in English because that is their original text.',
+  'licences.source': 'Source code',
+  'licences.fullList': 'Full text of every licence',
+  'licences.replace':
+    'You can change any of the ready-made programs: edit the program in the code tab and upload it again.',
   'status.offline': 'Offline — your work is saved on this device',
   'status.updateReady': 'Ready to use offline',
 

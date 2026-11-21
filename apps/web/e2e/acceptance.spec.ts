@@ -12,6 +12,25 @@ async function ledCurrentMilliamps(page: Page): Promise<number> {
   return Number(await led(page).getAttribute('data-current-ma'));
 }
 
+/** Names of the projects in this browser's own storage. */
+function savedProjectNames(page: Page): Promise<string[]> {
+  return page.evaluate(
+    () =>
+      new Promise<string[]>((resolve, reject) => {
+        const open = indexedDB.open('banglalab');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const all = open.result.transaction('projects').objectStore('projects').getAll();
+          all.onerror = () => reject(all.error);
+          all.onsuccess = () => {
+            open.result.close();
+            resolve((all.result as { name: string }[]).map((project) => project.name));
+          };
+        };
+      }),
+  );
+}
+
 async function waitUntilOfflineReady(page: Page) {
   // The service worker precaches the app during install; once it controls the
   // page, every later load can be served without a network.
@@ -61,6 +80,9 @@ test('build an LED circuit, run it, save it and reopen it offline', async ({ pag
 
   // --- save: happens automatically, on this device ---
   await page.getByTestId('project-name').fill('আমার LED সার্কিট');
+  // Check the device's own storage, not only the indicator: "saved" on screen could be left
+  // over from the edit before, and the page is about to be reloaded.
+  await expect.poll(() => savedProjectNames(page)).toContain('আমার LED সার্কিট');
   await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
   await page.getByTestId('run').click(); // stop
 
@@ -152,4 +174,26 @@ test('switches between Bangla and English', async ({ page }) => {
   await page.reload();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('My circuits');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
+test('the application carries its licence notices and the firmware source offer', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/');
+  await page.getByTestId('nav-licences').click();
+  const notices = page.getByTestId('licences');
+  await expect(notices.locator('[data-notice="app"]')).toContainText('Apache-2.0');
+  // The starter firmware is LGPL: the notice must say so and point at its source.
+  const firmware = notices.locator('[data-notice="firmware"]');
+  await expect(firmware).toContainText('LGPL-2.1-or-later');
+  await expect(firmware.locator('a[href*="third_party/arduino-avr"]')).toHaveCount(1);
+  // The licence texts are served with the application itself.
+  for (const file of ['LICENSE.txt', 'NOTICE.txt', 'LGPL-2.1.txt', 'THIRD_PARTY_LICENSES.md']) {
+    const response = await request.get(`/licences/${file}`);
+    expect(response.ok(), file).toBe(true);
+  }
+  expect(await (await request.get('/licences/LGPL-2.1.txt')).text()).toContain(
+    'GNU LESSER GENERAL PUBLIC LICENSE',
+  );
 });

@@ -1,0 +1,18 @@
+// Copies the licence files into the build, so the web application carries the
+// notices and licence texts of everything it distributes.
+import { cpSync, mkdirSync } from 'node:fs';
+import path from 'node:path';
+
+const root = path.resolve(import.meta.dirname, '../../..');
+const target = path.resolve(import.meta.dirname, '../public/licences');
+mkdirSync(target, { recursive: true });
+for (const [from, to] of [
+  ['LICENSE', 'LICENSE.txt'],
+  ['NOTICE', 'NOTICE.txt'],
+  ['THIRD_PARTY_LICENSES.md', 'THIRD_PARTY_LICENSES.md'],
+  ['LICENSES/LGPL-2.1.txt', 'LGPL-2.1.txt'],
+  ['LICENSES/avr-libc.txt', 'avr-libc.txt'],
+  ['LICENSES/OFL-1.1-AnekBangla.txt', 'OFL-1.1-AnekBangla.txt'],
+]) {
+  cpSync(path.join(root, from), path.join(target, to));
+}

@@ -10,3 +10,9 @@ test-results
 *.log
 .DS_Store
 vendor
+
+# Kept out of the public repository until publication rights are confirmed:
+# planning notes, store catalogue data and handbook material.
+private
+data/private
+apps/web/public/licences

@@ -8,3 +8,10 @@ test-results
 apps/api/drizzle
 *.hex
 packages/circuit-engine/golden/*.json
+third_party
+LICENSES
+LICENSE
+THIRD_PARTY_LICENSES.md
+private
+data/private
+apps/web/public/licences
