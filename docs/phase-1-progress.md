@@ -34,32 +34,34 @@ or pick a program, upload it, and watch the program drive the circuit:
 
 ## 2. Phase 1 task list
 
-| #   | Task                                           | Status                                                                                        |
-| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 1   | Circuit data structures and netlist generation | Done for the parts listed above                                                               |
-| 2   | Component models                               | Done: all 20 parts                                                                            |
-| 3   | Connection and validation rules                | Done for those parts                                                                          |
-| 4   | MNA DC solver                                  | Done (Phase 0), extended with source-with-resistance                                          |
-| 5   | Compare against ngspice                        | Done: 15 DC and 3 transient reference circuits                                                |
-| 6   | Transient analysis                             | Done: backward Euler, capacitors only. Trapezoidal not started                                |
-| 7   | MCU scheduler                                  | Done: 1 ms processor slices, event-ordered circuit updates                                    |
-| 8   | MCU pins connected to the circuit              | Done: digital out, digital in, pull-up, analog in, PWM                                        |
-| 9   | UNO emulation                                  | Done. Not emulated: SPI, I²C, EEPROM, external interrupts from the circuit                    |
-| 10  | Pico emulation                                 | **Not started**                                                                               |
-| 11  | Blockly                                        | **Not started**                                                                               |
-| 12  | CodeMirror                                     | Done                                                                                          |
-| 13  | Code generation (blocks → code)                | **Not started**                                                                               |
-| 14  | Virtual upload                                 | Done                                                                                          |
-| 15  | Compilation caching                            | Done; Arduino core prebuilt at worker start                                                   |
-| 16  | Multimeter, oscilloscope, logic analyser       | Oscilloscope and logic analyser done. Meter reads per part; free-probe multimeter not started |
-| 17  | Simulation error handling                      | Done for current parts: 13 diagnostics; loose-ended parts can no longer cause a failed solve  |
-| 18  | Golden test cases                              | Done for current scope                                                                        |
+| #   | Task                                           | Status                                                                                                          |
+| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 1   | Circuit data structures and netlist generation | Done for the parts listed above                                                                                 |
+| 2   | Component models                               | Done: all 20 parts                                                                                              |
+| 3   | Connection and validation rules                | Done for those parts                                                                                            |
+| 4   | MNA DC solver                                  | Done (Phase 0), extended with source-with-resistance                                                            |
+| 5   | Compare against ngspice                        | Done: 15 DC and 3 transient reference circuits                                                                  |
+| 6   | Transient analysis                             | Done: backward Euler, capacitors only. Trapezoidal not started                                                  |
+| 7   | MCU scheduler                                  | Done: 1 ms processor slices, event-ordered circuit updates                                                      |
+| 8   | MCU pins connected to the circuit              | Done: digital out, digital in, pull-up, analog in, PWM                                                          |
+| 9   | UNO emulation                                  | Done. Not emulated: SPI, I²C, EEPROM, external interrupts from the circuit                                      |
+| 10  | Pico emulation                                 | **Validated, not integrated.** Trial passed ([report](decisions/pico-trial.md)); the Pico is not yet in the lab |
+| 11  | Blockly                                        | **Not started**                                                                                                 |
+| 12  | CodeMirror                                     | Done                                                                                                            |
+| 13  | Code generation (blocks → code)                | **Not started**                                                                                                 |
+| 14  | Virtual upload                                 | Done                                                                                                            |
+| 15  | Compilation caching                            | Done; Arduino core prebuilt at worker start                                                                     |
+| 16  | Multimeter, oscilloscope, logic analyser       | Oscilloscope and logic analyser done. Meter reads per part; free-probe multimeter not started                   |
+| 17  | Simulation error handling                      | Done for current parts: 13 diagnostics; loose-ended parts can no longer cause a failed solve                    |
+| 18  | Golden test cases                              | Done for current scope                                                                                          |
 
 ## 3. What remains before the Phase 1 gate
 
 1. Blockly, block-to-code generation, and the rule for how blocks and hand-edited
    text coexist without overwriting a student's work.
-2. Pico: a time-boxed trial of rp2040js with MicroPython firmware, then a go/no-go.
+2. Pico: the trial is done and the answer is go, with conditions. Remaining: connect it
+   to the circuit simulation, add the part and a MicroPython editor mode, and measure
+   speed on a real phone.
 3. Pause and single-step controls; free-probe multimeter.
 4. Real-board upload (also listed under Phase 3).
 
@@ -77,12 +79,12 @@ of section 3.
 
 ## 5. Test results (20 November 2026)
 
-| Suite                                                                        | Result                          |
-| ---------------------------------------------------------------------------- | ------------------------------- |
-| ESLint, Prettier, TypeScript                                                 | clean                           |
-| Unit                                                                         | 196 passed, 0 failed, 0 skipped |
-| Integration (PostgreSQL 18, avr-gcc, bubblewrap, Arduino core and libraries) | 21 passed                       |
-| End to end (Chromium; desktop and phone profiles)                            | 36 passed                       |
+| Suite                                                                                       | Result                          |
+| ------------------------------------------------------------------------------------------- | ------------------------------- |
+| ESLint, Prettier, TypeScript                                                                | clean                           |
+| Unit                                                                                        | 196 passed, 0 failed, 0 skipped |
+| Integration (PostgreSQL 18, avr-gcc, bubblewrap, Arduino core and libraries, Pico firmware) | 28 passed                       |
+| End to end (Chromium; desktop and phone profiles)                                           | 36 passed                       |
 
 Electrical agreement with ngspice 45.2: DC within 1 µV / 1 nA on 15 circuits
 (including an NPN transistor saturated, in its active region and as a follower);
@@ -160,6 +162,6 @@ Platform
 ## 9. Decisions needed from the owner
 
 - [ ] Order of the remaining work: more parts first, or Blockly first?
-- [ ] Is a Pico trial still wanted in Phase 1, or should it move later?
+- [ ] Pico: the trial says go. Integrate it within Phase 1, or schedule it later?
 - [ ] Bangla wording review, now including the starter-program comments
       (`packages/board-emulators/fixtures/starters/*.ino`).

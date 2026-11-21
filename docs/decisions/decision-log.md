@@ -226,3 +226,13 @@ the tutor should say that RW goes to ground and V0 needs a contrast voltage.
 ## D-032 — Circuit schema version 4
 
 Adds the servo, ultrasonic sensor and LCD. Older versions are upgraded on read.
+
+## D-033 — Pico: go, on rp2040js with the official MicroPython firmware
+
+A time-boxed trial ([pico-trial.md](pico-trial.md)) found that rp2040js 1.4.2
+runs MicroPython v1.29.0 correctly, with exact timing, once one emulator fault is
+worked around: its USB serial port never lets the processor sleep. With the fix
+a waiting program costs almost nothing; a program that computes continuously
+runs at 0.1 to 0.3 times real time on a laptop. Integration may proceed for the
+plain Pico, after a speed measurement on a real low-end phone. rp2040js is
+pinned to an exact version because the fix touches one of its private fields.

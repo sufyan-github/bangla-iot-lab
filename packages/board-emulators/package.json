@@ -5,13 +5,17 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./fixtures/*": "./fixtures/*"
+    "./fixtures/*": "./fixtures/*",
+    "./pico": "./src/pico.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "fixtures:build": "bash fixtures/build.sh"
+    "fixtures:build": "bash fixtures/build.sh",
+    "pico:fetch": "bash scripts/fetch-pico-firmware.sh",
+    "pico:benchmark": "tsx scripts/pico-benchmark.ts"
   },
   "dependencies": {
-    "avr8js": "^0.21.1"
+    "avr8js": "^0.21.1",
+    "rp2040js": "1.4.2"
   }
 }

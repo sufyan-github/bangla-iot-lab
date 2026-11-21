@@ -1,11 +1,11 @@
 # Testing guide
 
-| Suite       | Command                                            | Needs                             | What it proves                                                                                                                     |
-| ----------- | -------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Unit        | `pnpm test`                                        | nothing                           | Solver, device models, breadboard, editing rules, simulation diagnostics, UNO emulator, i18n, storage, API routes (worker stubbed) |
-| Integration | `pnpm test:integration`                            | `pnpm db:up`, avr-gcc, bubblewrap | Migrations and constraints on real PostgreSQL 18; real compiles inside the sandbox; sandbox escape attempts                        |
-| End to end  | `pnpm test:e2e`                                    | avr-gcc, bubblewrap, Chromium     | The production build in a browser, desktop and phone profiles, including the offline reload                                        |
-| Static      | `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | nothing                           | Style, layering rule, types                                                                                                        |
+| Suite       | Command                                            | Needs                                                                                        | What it proves                                                                                                                                |
+| ----------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit        | `pnpm test`                                        | nothing                                                                                      | Solver, device models, breadboard, editing rules, simulation diagnostics, UNO emulator, i18n, storage, API routes (worker stubbed)            |
+| Integration | `pnpm test:integration`                            | `pnpm db:up`, avr-gcc, bubblewrap, Arduino core (`core:fetch`), Pico firmware (`pico:fetch`) | Migrations and constraints on real PostgreSQL 18; real compiles inside the sandbox; sandbox escape attempts; MicroPython on the emulated Pico |
+| End to end  | `pnpm test:e2e`                                    | avr-gcc, bubblewrap, Chromium                                                                | The production build in a browser, desktop and phone profiles, including the offline reload                                                   |
+| Static      | `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | nothing                                                                                      | Style, layering rule, types                                                                                                                   |
 
 Integration tests fail loudly when a service is missing. No test is skipped.
 

@@ -36,6 +36,7 @@ On Ubuntu: `sudo apt install gcc-avr avr-libc binutils-avr bubblewrap`.
 ```bash
 pnpm install
 pnpm --filter @banglalab/compile-worker core:fetch   # Arduino core and libraries, pinned (once)
+pnpm --filter @banglalab/board-emulators pico:fetch    # MicroPython firmware, pinned (once)
 pnpm db:up          # PostgreSQL 18 in Docker on 127.0.0.1:55440
 pnpm db:migrate     # create the tables
 pnpm dev            # web :5173, API :4000, compile worker :4100
