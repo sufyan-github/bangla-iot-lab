@@ -143,3 +143,20 @@ test('an ESP32 compile error points at the line, and the old program keeps runni
   await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('on');
   await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('off');
 });
+
+test('the code tab links to a page that says what the ESP32 experiment is and is not', async ({
+  page,
+}) => {
+  await openEsp32Example(page);
+  await page.getByTestId('tab-code').click();
+  await page.getByTestId('esp32-more').click();
+  const about = page.getByTestId('esp32-page');
+  await expect(about).toBeVisible();
+  // What has not been done is said as plainly as what has.
+  const measured = page.getByTestId('esp32-measured');
+  await expect(measured).toContainText('৭৪টির মধ্যে ৭৪টি');
+  await expect(measured).toContainText('এখনো মাপা হয়নি');
+  await expect(measured).toContainText('এখনো করা হয়নি');
+  await page.getByTestId('language').click();
+  await expect(measured).toContainText('Not measured yet');
+});

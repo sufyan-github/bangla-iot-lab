@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Suspense, lazy, useEffect, useRef } from 'react';
+import { Link } from 'react-router';
 import { isProgrammable, type ProgrammableType } from '@banglalab/shared';
 import { compileSketch } from '../api';
 import { useT } from '../i18n';
@@ -51,7 +52,10 @@ export function CodePanel({ boardId }: { boardId: string }) {
           className="rounded-lg border-l-4 border-amber bg-amber-soft px-3 py-2 text-sm"
           data-testid="esp32-note"
         >
-          {t('code.esp32.note')}
+          {t('code.esp32.note')}{' '}
+          <Link to="/esp32" className="font-medium text-mat underline" data-testid="esp32-more">
+            {t('code.esp32.more')}
+          </Link>
         </p>
       )}
       <label className="block">

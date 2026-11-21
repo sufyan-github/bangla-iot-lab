@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from 'react-router';
 import { HomePage } from '../home/HomePage';
 import { useLocale, useT } from '../i18n';
 import { LabPage } from '../lab/LabPage';
+import { Esp32Page } from './Esp32Page';
 import { LicencesPage } from './LicencesPage';
 import { useOnline } from './useOnline';
 
@@ -59,6 +60,7 @@ export function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/lab/:projectId" element={<LabPage />} />
           <Route path="/licences" element={<LicencesPage />} />
+          <Route path="/esp32" element={<Esp32Page />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </div>

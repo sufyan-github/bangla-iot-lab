@@ -14,8 +14,9 @@ make no promise of compatibility, except that saved circuits are always migrated
   Programs run on the lab's own board library, built into a WebAssembly module:
   four ready-made programs (blink, button, fade, knob) work offline, and a
   student's own sketch is compiled by the sandboxed compile worker. The editor
-  says that this is a model of the board, what works and what does not. Nothing
-  has been checked against a real board.
+  says that this is a model of the board, what works and what does not, and
+  links to a page (`/esp32`) with what has been measured and what has not.
+  Nothing has been checked against a real board.
 - Circuit format version 7 (adds the ESP32 board). A circuit has one board, of
   either kind.
 - The simulation runs any board through one interface, from a table of each
