@@ -348,13 +348,40 @@ QEMU as published would not reach it, so option B would rest on the community
 version or on our own additions to a GPL program, as well as on a server and an
 internet connection for every student.
 
-### Still to do in steps 4 and 5
+## Step 5 result: option B, QEMU on a server
 
-Run esp32sim with the level 1 to 3 reference sketches built for the classic
-ESP32, and measure what works and how fast, in a browser and with the processor
-slowed. Run one sketch in QEMU and measure the cost of a server per student.
-Both mean downloading and running other people's programs on this computer,
-which waits for the owner's go-ahead.
+Run on 22 November 2026 with Espressif's QEMU, release
+`esp-develop-9.2.2-20261109`, on this laptop (Intel Core i5-1135G7, 8 threads),
+inside a sandbox with no network. Two small sketches written for the test were
+built with the real toolchain and booted as real firmware.
+
+| Sketch | Result | Processor used | Memory |
+| ------ | ------ | -------------- | ------ |
+| Prints its clock once a second and waits in between | Boots and prints on time | About 20 % of one core | 172 MB |
+| The same, with a loop that never waits | Boots and prints on time | A little over one whole core, all the time | 172 MB |
+
+What this shows:
+
+- Real firmware built from an Arduino sketch boots in it and its serial text
+  comes out. The board's clock keeps to real time.
+- Each running board needs 172 MB of memory. A server with 8 GB could hold about
+  40 at once on memory alone. That is an estimate from one measurement.
+- A student whose sketch has a loop without a wait takes a whole processor core
+  for as long as it runs.
+- The code itself runs slower than on the board while the clock keeps real
+  time: the loop went round 200,000 to 300,000 times a second here. The emulator of
+  step 4, which counts the board's clock cycles, puts the board at about 1.9
+  million. Neither figure has been checked on a real board.
+
+What was not measured: the delay between a student's action and the browser,
+which needs a server on the internet; and anything to do with pins, because this
+QEMU has no documented way to set or watch one from outside (see the survey
+above).
+
+For the criteria, the facts are these. Option B needs a server and a connection
+for every student, at the cost above; with Espressif's QEMU as published it
+cannot show a pin, read a sensor or drive the kit's display without additions to
+a GPL program.
 
 ## What the study will not do
 
