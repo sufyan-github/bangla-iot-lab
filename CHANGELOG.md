@@ -20,8 +20,9 @@ make no promise of compatibility, except that saved circuits are always migrated
   definitions.
 - ESP32 feasibility study, in progress: the plan, the reference sketches sorted
   by what they need, a compile baseline, and a prototype board library
-  (`spikes/esp32-api`) with its own tests, measured on a desk computer only. A
-  study prototype, not part of the lab; no decision has been made.
+  (`spikes/esp32-api`) with its own tests, built natively and as WebAssembly,
+  and a speed test page for a browser or a phone. A study prototype, not part of
+  the lab; no decision has been made.
 
 ### Fixed
 

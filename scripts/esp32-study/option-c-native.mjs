@@ -44,7 +44,13 @@ const sketches = corpus.filter(
   (sketch) => sketch.level <= maxLevel && (!only || only.test(sketch.name)),
 );
 
-const FLAGS = ['-std=gnu++17', '-O1', '-w', `-I${path.join(library, 'include')}`];
+const FLAGS = [
+  '-std=gnu++17',
+  '-O1',
+  '-w',
+  '-funsigned-char',
+  `-I${path.join(library, 'include')}`,
+];
 mkdirSync(work, { recursive: true });
 // The library and the world are compiled once and linked into every sketch.
 for (const [file, object] of [

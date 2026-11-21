@@ -19,8 +19,16 @@ sketch against our own implementation of the board's functions.
 - `harness/world.cpp`: a world for a desk computer, with a **virtual clock** and
   inputs that arrive from a script. `delay(1000)` takes no real time; it moves
   the clock on a second. A run is exact and repeatable.
+- `wasm/entry.cpp`: the start of a sketch built as a WebAssembly module. The
+  world is not in the module; every host function is an import.
+- `wasm/world.mjs`: the same world as `harness/world.cpp`, in JavaScript, for a
+  module. It needs nothing from Node, so it runs in a browser or a worker.
+- `wasm/bench/`: a page that runs the test sketches in a browser and reports how
+  fast, for measuring a real phone.
 - `tests/`: seven small sketches written for this project, each with a scenario
-  (scripted inputs and what the sketch must then do). `api.itest.mjs` runs them.
+  (scripted inputs and what the sketch must then do). `api.itest.mjs` runs them
+  natively and as WebAssembly, and requires both to give exactly the same pin
+  events and serial text.
 
 ## What it covers
 
@@ -47,17 +55,32 @@ student:
 
 ## Running it
 
-```bash
-pnpm test:integration        # includes api.itest.mjs; needs g++
-```
-
-By hand, for one of the test sketches:
+The tests need `g++` and, for the WebAssembly half, clang with the wasm32-wasi
+target, `wasm-ld`, wasi-libc and libc++ for wasm32. On Ubuntu:
 
 ```bash
-node -e "
-import('./scripts/esp32-study/lib.mjs').then(({ buildLibrary, buildSketch, runSketch }) => {
-  buildLibrary('/tmp/esp32-api');
-  const { program } = buildSketch('/tmp/esp32-api', 'spikes/esp32-api/tests/blink');
-  console.log(runSketch(program, { runMs: 2000 }).events);
-});"
+sudo apt-get install clang lld wasi-libc libc++-dev-wasm32 libclang-rt-dev-wasm32
 ```
+
+If those packages are unpacked somewhere else instead of installed, name that
+folder in `WASI_ROOT`. The tests fail, and say what is missing, when the
+toolchain is not there; they are never skipped.
+
+```bash
+pnpm test:integration
+```
+
+## Measuring a phone
+
+The speed that matters is on a real low-cost phone. To measure one, on a
+computer on the same network as the phone:
+
+```bash
+node scripts/esp32-study/bench.mjs --work /tmp/esp32-bench --serve 8080 --lan
+```
+
+The command prints an address. Open it in the phone's browser, wait for "Done",
+and copy the text in the box at the bottom: it holds the device, the browser and
+every figure. `--lan` makes the page visible to that network while the command
+runs; stop it with Ctrl+C afterwards. Without `--lan` the page is served to this
+computer only.

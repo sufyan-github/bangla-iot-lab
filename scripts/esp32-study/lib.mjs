@@ -6,7 +6,14 @@ import path from 'node:path';
 
 export const root = path.resolve(import.meta.dirname, '../..');
 export const library = path.join(root, 'spikes/esp32-api');
-const FLAGS = ['-std=gnu++17', '-O1', '-w', `-I${path.join(library, 'include')}`];
+// -funsigned-char: plain char is unsigned on the ESP32's compiler, signed by default here.
+export const FLAGS = [
+  '-std=gnu++17',
+  '-O1',
+  '-w',
+  '-funsigned-char',
+  `-I${path.join(library, 'include')}`,
+];
 
 /** Compiles the library and the world once, into `work`. Throws if they do not compile cleanly. */
 export function buildLibrary(work) {
@@ -86,7 +93,24 @@ export function runSketch(program, { runMs = 5000, script = [] } = {}) {
     env: { ...process.env, ESP32_RUN_MS: String(runMs), ESP32_SCRIPT: scriptFile },
   });
   const realMs = Number((process.hrtime.bigint() - started) / 1000000n);
-  const events = (run.stderr ?? '')
+  return {
+    trace: run.stderr ?? '',
+    events: parseTrace(run.stderr ?? ''),
+    ok: run.status === 0,
+    how:
+      run.status === 0
+        ? 'ran to the end of the time'
+        : run.error?.code === 'ETIMEDOUT'
+          ? 'did not finish in 20 real seconds'
+          : `stopped by ${run.signal ?? `exit code ${run.status}`}`,
+    realMs,
+    serial: run.stdout ?? '',
+  };
+}
+
+/** Turns a world's trace (one pin event per line) into events for check(). */
+export function parseTrace(trace) {
+  return trace
     .split('\n')
     .filter(Boolean)
     .map((line) => {
@@ -100,18 +124,6 @@ export function runSketch(program, { runMs = 5000, script = [] } = {}) {
         c: Number(c),
       };
     });
-  return {
-    ok: run.status === 0,
-    how:
-      run.status === 0
-        ? 'ran to the end of the time'
-        : run.error?.code === 'ETIMEDOUT'
-          ? 'did not finish in 20 real seconds'
-          : `stopped by ${run.signal ?? `exit code ${run.status}`}`,
-    realMs,
-    serial: run.stdout ?? '',
-    events,
-  };
 }
 
 const levelAt = (events, pin, ms) =>

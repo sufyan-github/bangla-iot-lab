@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ESP32 library speed test</title>
+    <style>
+      body {
+        font:
+          16px/1.5 system-ui,
+          sans-serif;
+        margin: 16px;
+        max-width: 720px;
+      }
+      h1 {
+        font-size: 1.3rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        text-align: right;
+        padding: 6px 8px;
+        border-bottom: 1px solid #8884;
+      }
+      th:first-child,
+      td:first-child {
+        text-align: left;
+      }
+      .bad {
+        color: #b00020;
+        font-weight: 700;
+      }
+      textarea {
+        width: 100%;
+        height: 9rem;
+        font: 12px monospace;
+      }
+      .scroll {
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ESP32 library speed test</h1>
+    <p>
+      Study prototype. Each sketch is run for one minute of board time on a virtual clock. The last
+      column says how many times faster than a real board this device ran it; below 1 would be too
+      slow to use.
+    </p>
+    <p id="status">Running…</p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Sketch</th>
+            <th>Size</th>
+            <th>Load</th>
+            <th>1 min takes</th>
+            <th>× real time</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p>To report the result, copy this text:</p>
+    <textarea id="report" readonly></textarea>
+    <script type="module">
+      const rowsElement = document.getElementById('rows');
+      const status = document.getElementById('status');
+      const onMain = new URLSearchParams(location.search).get('thread') === 'main';
+      const show = (row) => {
+        const tr = document.createElement('tr');
+        const cells = [
+          row.name,
+          `${(row.bytes / 1024).toFixed(1)} kB`,
+          `${row.compileMs.toFixed(1)} ms`,
+          `${row.realMs.toFixed(1)} ms`,
+          row.timesRealTime >= 100 ? Math.round(row.timesRealTime) : row.timesRealTime.toFixed(1),
+          row.same ? 'correct' : 'WRONG',
+        ];
+        cells.forEach((text, index) => {
+          const td = document.createElement('td');
+          td.textContent = text;
+          if (index === 5 && !row.same) td.className = 'bad';
+          tr.append(td);
+        });
+        rowsElement.append(tr);
+      };
+      const finish = (rows) => {
+        const slowest = Math.min(...rows.map((row) => row.timesRealTime));
+        status.textContent = `Done. Slowest sketch ran ${slowest.toFixed(1)} times faster than a real board.`;
+        const report = {
+          device: navigator.userAgent,
+          cores: navigator.hardwareConcurrency,
+          memoryGB: navigator.deviceMemory ?? null,
+          thread: onMain ? 'main' : 'worker',
+          rows,
+        };
+        document.getElementById('report').value = JSON.stringify(report);
+        window.benchReport = report;
+      };
+      const fail = (message) => {
+        status.textContent = `Failed: ${message}`;
+        status.className = 'bad';
+        window.benchReport = { error: message };
+      };
+      if (onMain) {
+        const { runAll } = await import('./bench.mjs');
+        runAll(show).then(finish, (error) => fail(String(error)));
+      } else {
+        const worker = new Worker('./bench.mjs', { type: 'module' });
+        worker.onmessage = ({ data }) => {
+          if (data.row) show(data.row);
+          if (data.done) finish(data.done);
+          if (data.error) fail(data.error);
+        };
+        worker.onerror = (event) => fail(event.message ?? 'the worker did not start');
+      }
+    </script>
+  </body>
+</html>

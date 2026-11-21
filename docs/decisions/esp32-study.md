@@ -64,14 +64,14 @@ What this already tells us:
 
 ## Method
 
-| Step | What                                                                                                                                                                  | State                                                                                                                                 |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Sort the reference sketches by what they need                                                                                                                         | **Done**                                                                                                                              |
-| 2    | Baseline: compile every sketch with the real toolchain and record which succeed, so a later failure is known to be ours                                               | **Done**                                                                                                                              |
-| 3    | Option C prototype: the board library for levels 1 and 2, a sketch compiled to WebAssembly, pins connected to the existing circuit solver. Measure coverage and speed | **Partly done:** built and measured on a desk computer. Not yet compiled to WebAssembly, connected to the solver, or timed on a phone |
-| 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | Not started                                                                                                                           |
-| 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | Not started                                                                                                                           |
-| 6    | Score the options against the criteria and write the decision                                                                                                         | Not started                                                                                                                           |
+| Step | What                                                                                                                                                                  | State                                                                                                                                          |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Sort the reference sketches by what they need                                                                                                                         | **Done**                                                                                                                                       |
+| 2    | Baseline: compile every sketch with the real toolchain and record which succeed, so a later failure is known to be ours                                               | **Done**                                                                                                                                       |
+| 3    | Option C prototype: the board library for levels 1 and 2, a sketch compiled to WebAssembly, pins connected to the existing circuit solver. Measure coverage and speed | **Mostly done:** built, measured on a desk computer, and as WebAssembly in a browser. Not yet connected to the solver or timed on a real phone |
+| 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | Not started                                                                                                                                    |
+| 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | Not started                                                                                                                                    |
+| 6    | Score the options against the criteria and write the decision                                                                                                         | Not started                                                                                                                                    |
 
 Speed will be measured on a laptop first. The figure that counts is from a real
 low-cost phone, which needs the lab team; until then any speed result is marked
@@ -123,7 +123,7 @@ This matters for the lab's own compile service, which also generates
 declarations. It must be tested against sketches like these before ESP32 sketches
 are accepted, whichever option is chosen.
 
-## Step 3 so far: option C on a desk computer
+## Step 3 so far: option C on a desk computer and in a browser
 
 Run on 22 November 2026. The prototype is in
 [`spikes/esp32-api`](../../spikes/esp32-api/README.md): a board library of about
@@ -174,7 +174,7 @@ Five seconds of board time take 2 ms at the median on this laptop, and 594 ms
 for the slowest sketch, one that loops without waiting. That is a native build,
 so **it is not the figure that matters.** It shows the approach itself is cheap:
 the cost is the student's own code, with no chip to emulate. The figure that
-matters, WebAssembly on a low-cost phone, is not measured yet.
+matters is the one for WebAssembly on a low-cost phone; see below.
 
 ### What this option cannot do
 
@@ -188,12 +188,72 @@ student would be told:
 - It is not the real firmware, so a fault that lives in the real board software
   will not appear.
 
+### As WebAssembly
+
+The same library and sketches were then built as WebAssembly modules, the form
+they would have in the browser, and run with the world outside the module in
+JavaScript. The compiler is clang with the standard WebAssembly C library; no
+part of it is under a licence the project rules out.
+
+| Measure                                                                 | Result                                                        |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Sketches at levels 1 and 2 that build                                   | 74 of 74                                                      |
+| Runs compared with the desk-computer build (pin events and serial text) | 86, of which 84 identical                                     |
+| Scripted behaviour checks                                               | 63 of 63 hold                                                 |
+| Module size                                                             | median 29 kB, largest 39 kB (13 kB and 19 kB when compressed) |
+| Memory a module starts with                                             | 128 kB                                                        |
+| Time to build one sketch on this laptop                                 | about 0.4 to 0.8 s at the median                              |
+
+The two runs that differ are both explained, and neither is a fault. One sketch
+prints the time it was compiled, and the two builds were a second apart. The
+other prints the size of `long`: 8 bytes on this 64-bit laptop, 4 bytes as
+WebAssembly. The real board's compiler says 4. So for data sizes the
+WebAssembly build is the faithful one: `int`, `long`, pointers, `size_t` and
+`double` all have the board's sizes. Checking this against the board's compiler
+found one difference to correct: plain `char` is unsigned on the board and
+signed by default here, so both builds now set it to unsigned. A remaining
+difference is `wchar_t` (2 bytes on the board, 4 here), which school sketches do
+not use.
+
+A sketch that crashes stops its own module and is reported; it cannot disturb
+the page that loaded it.
+
+### Speed in a browser
+
+Measured in headless Chromium 158 on this laptop, with the project's seven own
+test sketches, each run for one minute of board time. Every sketch gave the
+correct result in the browser, in a worker and on the page's own thread.
+
+| Processor                         | Slowest sketch, times faster than a real board | Kind of figure |
+| --------------------------------- | ---------------------------------------------- | -------------- |
+| This laptop, in a worker          | 56                                             | Measured       |
+| This laptop, on the page's thread | 52                                             | Measured       |
+| Slowed 4 times by the browser     | 13                                             | Estimate       |
+| Slowed 6 times by the browser     | 8                                              | Estimate       |
+
+The slowest sketch is the worst case for this design: a loop that reads a
+button without ever waiting, which crosses from the module to the world 50
+million times in a minute of board time. Sketches that wait between actions, as
+most do, run thousands of times faster than real time.
+
+Because every library call is charged a little board time, there is a ceiling
+on how much work one second of board time can hold. That makes the worst case
+bounded, which is why the slowed figures stay well above 1.
+
+**The slowed rows are estimates, not measurements of a phone.** The same test
+is a page that can be opened on a real phone (see the prototype's README). That
+measurement has not been made. And these figures have an almost empty world
+behind them; the circuit solver will add its own cost each time a pin changes.
+
 ### Still to do in step 3
 
-Compile the same library to WebAssembly and time it in a browser and on a phone;
-connect the sixteen world functions to the circuit solver, so a sketch drives a
-real simulated circuit; decide how far up the levels to take the prototype before
-the options are compared.
+Run the speed test page on a real low-cost phone; connect the sixteen world
+functions to the circuit solver, so a sketch drives a real simulated circuit,
+and measure again; decide how far up the levels to take the prototype before the
+options are compared. One design question is already visible: in the browser a
+sketch's `delay()` must also be able to wait in real time, so the student sees a
+lamp blink at the right pace. The world can do that from inside a worker; how is
+to be settled with the solver connection.
 
 ## What the study will not do
 
