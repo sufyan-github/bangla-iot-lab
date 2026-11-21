@@ -172,15 +172,18 @@ export function Palette() {
   const tool = useLab((s) => s.tool);
   const wireStart = useLab((s) => s.wireStart);
   const running = useLab((s) => s.running);
+  const wireSelected = useLab((s) => s.circuit.wires.some((wire) => wire.id === s.selectedId));
   const { setTool, addBattery, addUno } = useLab.getState();
   const { t } = useT();
 
   const hint: MessageKey =
     tool === 'wire' && wireStart
       ? 'hint.wire.end'
-      : tool === 'select' && running
-        ? 'hint.running'
-        : (HINTS[tool] ?? 'hint.place');
+      : tool === 'select' && wireSelected
+        ? 'hint.wireSelected'
+        : tool === 'select' && running
+          ? 'hint.running'
+          : (HINTS[tool] ?? 'hint.place');
   const choose = (item: PaletteItem) =>
     item === 'battery' ? addBattery() : item === 'uno' ? addUno() : setTool(item);
 

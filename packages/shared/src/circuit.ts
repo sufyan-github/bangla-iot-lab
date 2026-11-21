@@ -14,10 +14,11 @@ import { Value } from 'typebox/value';
  *     the temperature, soil-moisture and IR sensor modules.
  * 4 — adds the servo, ultrasonic distance sensor and character LCD.
  * 5 — batteries and the board may carry `at`, where the student moved them to.
+ * 6 — a wire may carry `bends`, the points the student routed it through.
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 5;
+export const CIRCUIT_SCHEMA_VERSION = 6;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -263,11 +264,15 @@ export const ComponentSchema = Type.Union([
   UnoSchema,
 ]);
 
+export const MAX_WIRE_BENDS = 8;
+
 export const WireSchema = Type.Object({
   id: Id,
   from: Endpoint,
   to: Endpoint,
   color: Type.String({ pattern: '^#[0-9a-fA-F]{6}$' }),
+  /** Points the wire is routed through, in order from `from` to `to`, in hole pitches. */
+  bends: Type.Optional(Type.Array(PositionSchema, { maxItems: MAX_WIRE_BENDS })),
 });
 
 export const CircuitDocumentSchema = Type.Object({

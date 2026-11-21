@@ -4,6 +4,7 @@ import {
   ComponentSchema,
   LCD_PINS,
   UNO_TERMINALS,
+  WireSchema,
   componentHoles,
   parseTerminal,
   type BoardPart,
@@ -335,6 +336,24 @@ export function moveWireEnd(
   const next = { ...wire, [end]: endpoint };
   const error = checkWire(circuit, next);
   if (error) return fail(error);
+  return {
+    ok: true,
+    id: wireId,
+    circuit: { ...circuit, wires: circuit.wires.map((w) => (w.id === wireId ? next : w)) },
+  };
+}
+
+/** Routes a wire through the given points, or straightens it when there are none. */
+export function setWireBends(
+  circuit: CircuitDocument,
+  wireId: string,
+  bends: readonly Position[],
+): EditResult {
+  const wire = circuit.wires.find((w) => w.id === wireId);
+  if (!wire) return fail('unknown-item');
+  const straight: Wire = { id: wire.id, from: wire.from, to: wire.to, color: wire.color };
+  const next: Wire = bends.length > 0 ? { ...straight, bends: [...bends] } : straight;
+  if (!Value.Check(WireSchema, next)) return fail('invalid-value');
   return {
     ok: true,
     id: wireId,

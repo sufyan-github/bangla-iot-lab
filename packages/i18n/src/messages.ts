@@ -43,6 +43,8 @@ export const bn = {
   'lab.zoomOut': 'ছোট করো',
   'lab.zoomFit': 'পুরো বোর্ড দেখাও',
   'lab.undo': 'আগের অবস্থায় ফেরো (Ctrl+Z)',
+  'lab.straighten': 'তার সোজা করো',
+  'hint.wireSelected': 'তারের গায়ের ছোট বিন্দু টেনে তার বাঁকাও। মাথার বিন্দু টেনে অন্য ছিদ্রে নাও।',
   'lab.redo': 'আবার করো (Ctrl+Y)',
   'lab.canvasLabel': 'ব্রেডবোর্ড',
 
@@ -291,6 +293,9 @@ export const en: Record<MessageKey, string> = {
   'lab.zoomOut': 'Zoom out',
   'lab.zoomFit': 'Show the whole board',
   'lab.undo': 'Undo (Ctrl+Z)',
+  'lab.straighten': 'Straighten',
+  'hint.wireSelected':
+    'Drag a small dot on the wire to bend it. Drag an end dot to move it to another hole.',
   'lab.redo': 'Redo (Ctrl+Y)',
   'lab.canvasLabel': 'Breadboard',
 

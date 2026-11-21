@@ -198,10 +198,34 @@ export function BatteryView(props: {
 }
 
 /**
- * Path of a wire: it hangs slack between its ends like a real jumper wire, so
- * wires that share a row stay tellable apart.
+ * Path of a wire. Left alone it hangs slack between its ends like a real jumper
+ * wire, so wires that share a row stay tellable apart. Routed through bend
+ * points it runs straight between them with rounded corners.
  */
-export function wirePath(from: Point, to: Point): string {
+export function wirePath(from: Point, to: Point, bends: readonly Point[] = []): string {
+  const r = (value: number) => Math.round(value * 10) / 10;
+  if (bends.length > 0) {
+    const points = [from, ...bends, to];
+    let d = `M${r(from.x)} ${r(from.y)}`;
+    for (let i = 1; i < points.length - 1; i++) {
+      const before = points[i - 1]!;
+      const corner = points[i]!;
+      const after = points[i + 1]!;
+      const inLength = Math.hypot(corner.x - before.x, corner.y - before.y) || 1;
+      const outLength = Math.hypot(after.x - corner.x, after.y - corner.y) || 1;
+      const radius = Math.min(16, inLength / 2, outLength / 2);
+      const enter = {
+        x: corner.x - ((corner.x - before.x) / inLength) * radius,
+        y: corner.y - ((corner.y - before.y) / inLength) * radius,
+      };
+      const leave = {
+        x: corner.x + ((after.x - corner.x) / outLength) * radius,
+        y: corner.y + ((after.y - corner.y) / outLength) * radius,
+      };
+      d += `L${r(enter.x)} ${r(enter.y)}Q${r(corner.x)} ${r(corner.y)} ${r(leave.x)} ${r(leave.y)}`;
+    }
+    return `${d}L${r(to.x)} ${r(to.y)}`;
+  }
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const length = Math.hypot(dx, dy) || 1;
@@ -213,10 +237,24 @@ export function wirePath(from: Point, to: Point): string {
   }
   // Kept shallow enough that a wire does not cover the row of holes below it.
   const sag = Math.min(PITCH * 0.8, length * 0.12);
-  const r = (value: number) => Math.round(value * 10) / 10;
   const control = (along: number) =>
     `${r(from.x + dx * along + nx * sag)} ${r(from.y + dy * along + ny * sag)}`;
   return `M${r(from.x)} ${r(from.y)}C${control(0.22)} ${control(0.78)} ${r(to.x)} ${r(to.y)}`;
+}
+
+/** The middle of an unrouted wire, where it hangs lowest. */
+export function slackMiddle(from: Point, to: Point): Point {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy) || 1;
+  let nx = -dy / length;
+  let ny = dx / length;
+  if (ny < 0 || (ny === 0 && nx < 0)) {
+    nx = -nx;
+    ny = -ny;
+  }
+  const drop = Math.min(PITCH * 0.8, length * 0.12) * 0.75;
+  return { x: (from.x + to.x) / 2 + nx * drop, y: (from.y + to.y) / 2 + ny * drop };
 }
 
 /** The plug on the end of a jumper wire: a dark sleeve with a metal pin in the hole. */
@@ -238,8 +276,10 @@ export function WireView(props: {
   selected: boolean;
   /** True while one end is being carried to a new hole. */
   lifted?: boolean;
+  /** Points the wire is routed through. */
+  bends?: readonly Point[];
 }) {
-  const d = wirePath(props.from, props.to);
+  const d = wirePath(props.from, props.to, props.bends);
   const flowing = props.current !== undefined && Math.abs(props.current) > 1e-6;
   return (
     <g fill="none" strokeLinecap="round" opacity={props.lifted ? 0.85 : 1}>

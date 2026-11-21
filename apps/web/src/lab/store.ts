@@ -8,6 +8,7 @@ import {
   isHole,
   placePart,
   removeItem,
+  setWireBends,
   updateProps,
   type BoardPartType,
   type CircuitDocument,
@@ -80,6 +81,8 @@ interface LabState {
   addUno(): void;
   removeSelected(): void;
   flipSelected(): void;
+  /** Takes the bends out of the selected wire. */
+  straightenSelected(): void;
   setProps(id: string, props: Record<string, unknown>): void;
   /** Used while dragging, when the canvas has already validated the move. */
   replaceCircuit(circuit: CircuitDocument): void;
@@ -248,6 +251,10 @@ export const useLab = create<LabState>((set, get) => {
     flipSelected() {
       const { selectedId, circuit } = get();
       if (selectedId) apply(flipPart(circuit, selectedId));
+    },
+    straightenSelected() {
+      const { selectedId, circuit } = get();
+      if (selectedId) apply(setWireBends(circuit, selectedId, []));
     },
     setProps: (id, props) =>
       void apply(

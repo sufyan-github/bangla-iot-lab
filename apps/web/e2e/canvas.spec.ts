@@ -294,3 +294,54 @@ test('undo and redo step through edits, drags and removals', async ({ page }) =>
   await page.keyboard.press('Control+z');
   await expect(parts).toHaveCount(5);
 });
+
+test('a wire can be bent around parts and straightened again', async ({ page }) => {
+  await openExample(page, 'open-example');
+  // W3 runs from the + rail (tp4) to a5. Select it by a point away from its ends.
+  const at = await places(page, ['tp4', 'a5']);
+  const middle = { x: (at.tp4!.x + at.a5!.x) / 2, y: (at.tp4!.y + at.a5!.y) / 2 + 4 };
+  const [spot] = await onScreen(page, [middle]);
+  await page.mouse.click(spot!.x, spot!.y);
+  await expect(page.getByTestId('quick-remove')).toBeVisible();
+  const path = page.locator('[data-wire="W3"] path').first();
+  const straight = await path.getAttribute('d');
+
+  // Dragging the small dot in the middle makes a bend there.
+  const centreOf = async (handle: string) => {
+    const box = await page.locator(`[data-handle="${handle}"]`).boundingBox();
+    if (!box) throw new Error(`${handle} is not on screen`);
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  };
+  const pull = async (handle: string, dx: number, dy: number) => {
+    const from = await centreOf(handle);
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(from.x + dx, from.y + dy, { steps: 6 });
+    await page.mouse.up();
+  };
+  await pull('W3.add0', 60, 10);
+  await expect(page.locator('[data-handle="W3.bend0"]')).toBeVisible();
+  const bent = await path.getAttribute('d');
+  expect(bent).not.toBe(straight);
+  expect(bent).toContain('Q'); // a rounded corner
+
+  // The bend is one undo step, and the wire still conducts either way.
+  await page.getByTestId('run').click();
+  await expect(page.locator('[data-part="LED1"]')).toHaveAttribute('data-led-state', 'on');
+  await page.getByTestId('undo').click();
+  await expect(page.locator('[data-handle="W3.bend0"]')).toHaveCount(0);
+  await page.getByTestId('redo').click();
+  await expect(page.locator('[data-handle="W3.bend0"]')).toBeVisible();
+
+  // Dragged back onto the straight line, the bend disappears.
+  await pull('W3.bend0', -60, -10);
+  await expect(page.locator('[data-handle="W3.bend0"]')).toHaveCount(0);
+
+  // The straighten button removes every bend at once.
+  await pull('W3.add0', 50, 0);
+  await expect(page.getByTestId('quick-straighten')).toBeVisible();
+  await page.getByTestId('quick-straighten').click();
+  await expect(page.locator('[data-handle="W3.bend0"]')).toHaveCount(0);
+  expect(await path.getAttribute('d')).toBe(straight);
+  await expect(page.locator('[data-part="LED1"]')).toHaveAttribute('data-led-state', 'on');
+});

@@ -22,6 +22,7 @@ import {
   holePoint,
   partBox,
   unoShift,
+  wireBends,
   type Point,
 } from './geometry';
 import {
@@ -534,6 +535,7 @@ export function Scene({
               current={result?.wireCurrents[wire.id]}
               selected={wire.id === selectedId}
               lifted={carried !== null}
+              bends={wireBends(wire)}
             />
           </g>
         );

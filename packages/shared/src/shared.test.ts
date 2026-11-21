@@ -15,6 +15,7 @@ import {
   moveOffBoardPart,
   movePart,
   movePin,
+  setWireBends,
   moveWireEnd,
   placePart,
   removeItem,
@@ -69,7 +70,7 @@ describe('circuit document', () => {
 
   it('rejects malformed documents', () => {
     const example = ledCircuitExample();
-    expect(isCircuitDocument({ ...example, schemaVersion: 6 })).toBe(false);
+    expect(isCircuitDocument({ ...example, schemaVersion: 7 })).toBe(false);
     expect(isCircuitDocument({ ...example, wires: [{ id: 'W1', from: 'a1' }] })).toBe(false);
     expect(
       isCircuitDocument({
@@ -352,6 +353,28 @@ describe('editing rules', () => {
   it('opens a version 4 document, which has no stored positions', () => {
     const opened = migrateCircuit({ ...unoCircuitExample(), schemaVersion: 4 });
     expect(opened).toEqual(unoCircuitExample());
+  });
+
+  it('routes a wire through bend points and straightens it again', () => {
+    const bent = ok(
+      setWireBends(ledCircuitExample(), 'W3', [
+        { x: 2, y: 3 },
+        { x: 4.5, y: 3 },
+      ]),
+    );
+    expect(bent.wires.find((w) => w.id === 'W3')!.bends).toHaveLength(2);
+    expect(isCircuitDocument(bent)).toBe(true);
+    // Moving an end keeps the route.
+    const moved = ok(moveWireEnd(bent, 'W3', 'to', 'b5'));
+    expect(moved.wires.find((w) => w.id === 'W3')!.bends).toHaveLength(2);
+
+    const straight = ok(setWireBends(bent, 'W3', []));
+    expect(straight).toEqual(ledCircuitExample());
+    expect('bends' in straight.wires.find((w) => w.id === 'W3')!).toBe(false);
+
+    const tooMany = Array.from({ length: 9 }, (_, i) => ({ x: i, y: 1 }));
+    expect(setWireBends(bent, 'W3', tooMany)).toEqual({ ok: false, error: 'invalid-value' });
+    expect(setWireBends(bent, 'nope', []).ok).toBe(false);
   });
 
   it('never mutates the document it was given', () => {

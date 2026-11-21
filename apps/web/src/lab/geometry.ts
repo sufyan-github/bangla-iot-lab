@@ -10,6 +10,8 @@ import {
   type CircuitComponent,
   type CircuitDocument,
   type EditResult,
+  type Position,
+  type Wire,
 } from '@banglalab/shared';
 
 /** Canvas layout in SVG user units. One breadboard pitch is 24 units. */
@@ -103,11 +105,7 @@ export function moveOffBoardTo(circuit: CircuitDocument, id: string, corner: Poi
   if (!part) return { ok: false, error: 'unknown-item' };
   const box = { ...partBox(circuit, part), x: Math.round(corner.x), y: Math.round(corner.y) };
   if (!fitsAt(circuit, part, box)) return { ok: false, error: 'no-room' };
-  const pitches = (value: number) => Math.round((value / PITCH) * 1000) / 1000;
-  return moveOffBoardPart(circuit, id, {
-    x: pitches(box.x - BOARD_X),
-    y: pitches(box.y - BOARD_Y),
-  });
+  return moveOffBoardPart(circuit, id, toPosition(box));
 }
 
 /**
@@ -250,6 +248,33 @@ export function endpointNear(circuit: CircuitDocument, point: Point): string | u
     }
   }
   return holeNear(point);
+}
+
+/** A canvas point as a stored position, in hole pitches from the breadboard's origin. */
+export function toPosition(point: Point): Position {
+  const pitches = (value: number) => Math.round((value / PITCH) * 1000) / 1000;
+  return { x: pitches(point.x - BOARD_X), y: pitches(point.y - BOARD_Y) };
+}
+
+export function fromPosition(position: Position): Point {
+  return { x: BOARD_X + position.x * PITCH, y: BOARD_Y + position.y * PITCH };
+}
+
+/** Canvas points a wire is routed through between its ends. */
+export function wireBends(wire: Wire): Point[] {
+  return (wire.bends ?? []).map(fromPosition);
+}
+
+/** How far `point` is from the straight line between `a` and `b`. */
+export function distanceToSegment(point: Point, a: Point, b: Point): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lengthSquared = dx * dx + dy * dy;
+  const along =
+    lengthSquared === 0
+      ? 0
+      : Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared));
+  return Math.hypot(point.x - (a.x + dx * along), point.y - (a.y + dy * along));
 }
 
 export const HOLE_POINTS: readonly { hole: string; point: Point }[] = allHoles().map((hole) => ({

@@ -1,4 +1,5 @@
 import {
+  MAX_WIRE_BENDS,
   attachError,
   hasFlexibleLeads,
   isHole,
@@ -7,10 +8,12 @@ import {
   movePin,
   parseTerminal,
   placePart,
+  setWireBends,
   suggestWireColor,
   type CircuitDocument,
   type EditError,
   type EditResult,
+  type Wire,
 } from '@banglalab/shared';
 import {
   memo,
@@ -29,6 +32,7 @@ import {
   PITCH,
   UNO_SOCKETS,
   canvasHeight,
+  distanceToSegment,
   endpointNear,
   endpointPoint,
   holeNear,
@@ -36,9 +40,11 @@ import {
   moveOffBoardTo,
   offBoardParts,
   partBox,
+  toPosition,
+  wireBends,
   type Point,
 } from './geometry';
-import { wirePath } from './parts';
+import { slackMiddle, wirePath } from './parts';
 import { BoardPartDrawing, Scene } from './Scene';
 import { useLab } from './store';
 
@@ -57,6 +63,8 @@ type Drag = {
   /** `anchor` is where the dragged lead or wire end started. */
   | { kind: 'pin'; pin: string; anchor: Point }
   | { kind: 'wire-end'; end: 'from' | 'to'; anchor: Point }
+  /** A bend point of a wire; `inserted` when the drag creates it at `index`. */
+  | { kind: 'bend'; index: number; inserted: boolean; anchor: Point }
 );
 
 /** A press on the board that is not a drag of something: a tap, or a wire being pulled out. */
@@ -91,6 +99,8 @@ const TAP_SLOP = 10;
 const PULL_DISTANCE = 9;
 /** A wire can be picked up by its end from this close. */
 const WIRE_END_REACH = 11;
+/** A bend this close to the straight line between its neighbours is removed when let go. */
+const STRAIGHT_SLOP = 7;
 
 const AMBER = '#e8a21a';
 const DANGER = '#d8342a';
@@ -124,6 +134,7 @@ export function Canvas() {
     setProps,
     removeSelected,
     flipSelected,
+    straightenSelected,
   } = useLab.getState();
   const height = canvasHeight(circuit);
   const { t, quantity, number } = useT();
@@ -244,6 +255,15 @@ export function Canvas() {
     }
 
     const carried = { x: active.anchor.x + moveX, y: active.anchor.y + moveY };
+    if (active.kind === 'bend') {
+      const wire = active.origin.wires.find((w) => w.id === active.id);
+      if (!wire) return;
+      const bends = [...(wire.bends ?? [])];
+      bends.splice(active.index, active.inserted ? 0 : 1, toPosition(carried));
+      const moved = setWireBends(active.origin, active.id, bends);
+      if (moved.ok) replaceCircuit(moved.circuit);
+      return;
+    }
     const target = active.kind === 'pin' ? holeNear(carried) : endpointNear(active.origin, carried);
     setFloating({
       id: active.id,
@@ -306,6 +326,24 @@ export function Canvas() {
     setLift(null);
     setFloating(null);
     showHover(null);
+    if (active.kind === 'bend') {
+      // A bend left lying on the straight line between its neighbours is no bend: take it out.
+      const now = useLab.getState().circuit;
+      const wire = now.wires.find((w) => w.id === active.id);
+      const from = wire && endpointPoint(now, wire.from);
+      const to = wire && endpointPoint(now, wire.to);
+      if (wire && from && to) {
+        const route = [from, ...wireBends(wire), to];
+        const bend = route[active.index + 1];
+        const before = route[active.index];
+        const after = route[active.index + 2];
+        if (bend && before && after && distanceToSegment(bend, before, after) < STRAIGHT_SLOP) {
+          const kept = (wire.bends ?? []).filter((_, i) => i !== active.index);
+          const straightened = setWireBends(now, wire.id, kept);
+          if (straightened.ok) replaceCircuit(straightened.circuit);
+        }
+      }
+    }
     commitDrag(active.origin);
     // The part stays at the last valid place; say why it would not go further.
     if (active.error && active.kind !== 'off-board') setNotice(active.error);
@@ -406,6 +444,57 @@ export function Canvas() {
     );
   };
 
+  /** Dots along the selected wire: solid ones are its bends, small ones add a bend when dragged. */
+  const bendHandles = (wire: Wire) => {
+    const from = endpointPoint(circuit, wire.from);
+    const to = endpointPoint(circuit, wire.to);
+    if (!from || !to) return null;
+    const bends = wireBends(wire);
+    const route = [from, ...bends, to];
+    const grab = (event: ReactPointerEvent, index: number, inserted: boolean, anchor: Point) =>
+      startDrag(event, { ...dragOf(wire.id, event), kind: 'bend', index, inserted, anchor });
+    return (
+      <>
+        {bends.length < MAX_WIRE_BENDS &&
+          route.slice(0, -1).map((start, index) => {
+            const end = route[index + 1]!;
+            const middle =
+              bends.length === 0
+                ? slackMiddle(from, to)
+                : { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+            if (distance(start, end) < PITCH * 1.5) return null; // no room for another bend
+            return (
+              <g
+                key={`add${index}`}
+                className="drag-handle"
+                data-handle={`${wire.id}.add${index}`}
+                onPointerDown={(event) => grab(event, index, true, middle)}
+              >
+                <circle cx={middle.x} cy={middle.y} r={11} fill="transparent" />
+                <circle
+                  className="handle-dot"
+                  cx={middle.x}
+                  cy={middle.y}
+                  r={4.5}
+                  fill={AMBER}
+                  stroke="#fff"
+                  strokeWidth={2}
+                />
+              </g>
+            );
+          })}
+        {bends.map((bend, index) => (
+          <Handle
+            key={`bend${index}`}
+            name={`${wire.id}.bend${index}`}
+            point={bend}
+            onPointerDown={(event) => grab(event, index, false, bend)}
+          />
+        ))}
+      </>
+    );
+  };
+
   // While a part tool is held over a hole, show the part where it would go.
   const ghost = useMemo(() => {
     if (tool === 'select' || tool === 'wire' || !hover || !isHole(hover)) return null;
@@ -465,7 +554,7 @@ export function Canvas() {
                     key={wire.id}
                     className="wire-hit"
                     data-hit={wire.id}
-                    d={wirePath(from, to)}
+                    d={wirePath(from, to, wireBends(wire))}
                     onPointerDown={(event) => {
                       // Grabbed near an end, the wire comes out of its hole and follows the hand.
                       const point = toCanvas(event);
@@ -637,6 +726,7 @@ export function Canvas() {
                     )
                   );
                 })}
+              {selectedWire && !floating && bendHandles(selectedWire)}
             </g>
           )}
 
@@ -714,6 +804,16 @@ export function Canvas() {
               className="min-h-10 rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
             >
               {t('inspector.flip')}
+            </button>
+          )}
+          {selectedWire?.bends && (
+            <button
+              type="button"
+              data-testid="quick-straighten"
+              onClick={straightenSelected}
+              className="min-h-10 rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
+            >
+              {t('lab.straighten')}
             </button>
           )}
           <button
