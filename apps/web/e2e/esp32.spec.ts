@@ -7,6 +7,12 @@ import { expect, test, type Page } from '@playwright/test';
 
 const led = (page: Page) => page.locator('[data-part="LED1"]');
 const ledState = (page: Page) => led(page).getAttribute('data-led-state');
+/**
+ * How often to look at the LED. Not a round number on purpose: looking once a
+ * second at a lamp that blinks once a second sees the same half of the blink
+ * every time.
+ */
+const SAMPLING = { timeout: 15_000, intervals: [70, 110, 130] };
 
 async function openEsp32Example(page: Page) {
   await page.goto('/');
@@ -24,13 +30,13 @@ async function chooseStarter(page: Page, starter: string) {
 test('the ESP32 example blinks its LED from a 3.3 V pin', async ({ page }) => {
   await openEsp32Example(page);
   await page.getByTestId('run').click();
-  await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('on');
+  await expect.poll(() => ledState(page), SAMPLING).toBe('on');
   // A red LED through 220 ohms from 3.3 V: about 6 mA, less than half what 5 V gives.
   const current = Number(await led(page).getAttribute('data-current-ma'));
   expect(current).toBeGreaterThan(4);
   expect(current).toBeLessThan(8);
-  await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('off');
-  await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('on');
+  await expect.poll(() => ledState(page), SAMPLING).toBe('off');
+  await expect.poll(() => ledState(page), SAMPLING).toBe('on');
 });
 
 test('the code tab says the ESP32 is experimental and offers only ESP32 programs', async ({
@@ -51,7 +57,7 @@ test('the button program lights the LED while the button is held', async ({ page
   await openEsp32Example(page);
   await chooseStarter(page, 'button');
   await page.getByTestId('run').click();
-  await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('off');
+  await expect.poll(() => ledState(page), SAMPLING).toBe('off');
 
   const button = page.locator('[data-press="SW1"]');
   await button.scrollIntoViewIfNeeded();
@@ -59,9 +65,9 @@ test('the button program lights the LED while the button is held', async ({ page
   if (!box) throw new Error('button not on screen');
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('on');
+  await expect.poll(() => ledState(page), SAMPLING).toBe('on');
   await page.mouse.up();
-  await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('off');
+  await expect.poll(() => ledState(page), SAMPLING).toBe('off');
 });
 
 test('the knob program prints what the board reads from the potentiometer', async ({ page }) => {
@@ -140,8 +146,8 @@ test('an ESP32 compile error points at the line, and the old program keeps runni
 
   // The board still has Blink on it.
   await page.getByTestId('tab-circuit').click();
-  await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('on');
-  await expect.poll(() => ledState(page), { timeout: 15_000 }).toBe('off');
+  await expect.poll(() => ledState(page), SAMPLING).toBe('on');
+  await expect.poll(() => ledState(page), SAMPLING).toBe('off');
 });
 
 test('the code tab links to a page that says what the ESP32 experiment is and is not', async ({
