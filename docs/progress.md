@@ -27,16 +27,16 @@ curriculum depend on that board.
 
 ## Phase 0 tasks
 
-| Task                                                                                                                           | State                                                                                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| Public repository, Apache-2.0 licence, notices                                                                                 | Done                                                                                                                         |
-| LGPL compliance for the starter firmware: source in the repository, notices in the application, a test that the source matches | Done and tested                                                                                                              |
-| Licence check that refuses copyleft in shipped dependencies                                                                    | Done and tested                                                                                                              |
-| Continuous integration running on every pull request                                                                           | In progress                                                                                                                  |
-| Hardware testing checklist, equipment list and procedures                                                                      | Written; no test run yet                                                                                                     |
-| Catalogue importer                                                                                                             | Done and tested on made-up data; run on the real export, whose figures all match the brief. See [catalogue.md](catalogue.md) |
-| Part definition format and parts list                                                                                          | Done and tested: 64 definitions; three parts read their shape from them. See [parts.md](parts.md)                            |
-| ESP32 feasibility study                                                                                                        | Started: step 1 of 6 done. See [the study](decisions/esp32-study.md)                                                         |
+| Task                                                                                                                           | State                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Public repository, Apache-2.0 licence, notices                                                                                 | Done                                                                                                                                    |
+| LGPL compliance for the starter firmware: source in the repository, notices in the application, a test that the source matches | Done and tested                                                                                                                         |
+| Licence check that refuses copyleft in shipped dependencies                                                                    | Done and tested                                                                                                                         |
+| Continuous integration running on every pull request                                                                           | In progress                                                                                                                             |
+| Hardware testing checklist, equipment list and procedures                                                                      | Written; no test run yet                                                                                                                |
+| Catalogue importer                                                                                                             | Done and tested on made-up data; run on the real export, whose figures all match the brief. See [catalogue.md](catalogue.md)            |
+| Part definition format and parts list                                                                                          | Done and tested: 64 definitions; three parts read their shape from them. See [parts.md](parts.md)                                       |
+| ESP32 feasibility study                                                                                                        | Started: steps 1 and 2 of 6 done; all 141 reference sketches compile with the real toolchain. See [the study](decisions/esp32-study.md) |
 
 ## Test results
 

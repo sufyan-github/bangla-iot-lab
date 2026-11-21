@@ -1,6 +1,6 @@
 # ESP32 feasibility study
 
-**Status: in progress. Step 1 of 6 is done. No decision has been made.**
+**Status: in progress. Steps 1 and 2 of 6 are done. No decision has been made.**
 
 ## The question
 
@@ -35,8 +35,9 @@ sketches and scored on the same criteria.
 
 ## The reference sketches
 
-The school handbook's sketches are the yardstick: 142 programs, about 12,500
-lines, all written for this board and this kit. They are private until their
+The school handbook's sketches are the yardstick: 141 programs, about 12,500
+lines, all written for this board and this kit. (A 142nd folder holds eight
+deliberately broken bug-hunt exercises and is not a sketch.) They are private until their
 licence is settled, so only counts are given here. The tool that produces them is
 `scripts/esp32-study/corpus.mjs`.
 
@@ -45,10 +46,10 @@ Each sketch is placed at the lowest level of board support that could run it:
 | Level | Support needed                                    | Sketches | Running total |
 | ----- | ------------------------------------------------- | -------- | ------------- |
 | 1     | Pins, time and serial text                        | 30       | 30 (21 %)     |
-| 2     | Analog input, PWM, pulse timing, interrupts       | 45       | 75 (53 %)     |
-| 3     | The kit's devices: I2C display, DHT sensor, servo | 29       | 104 (73 %)    |
-| 4     | Saved settings, sleep and restart                 | 19       | 123 (87 %)    |
-| 5     | Wi-Fi and the internet                            | 19       | 142 (100 %)   |
+| 2     | Analog input, PWM, pulse timing, interrupts       | 44       | 74 (52 %)     |
+| 3     | The kit's devices: I2C display, DHT sensor, servo | 29       | 103 (73 %)    |
+| 4     | Saved settings, sleep and restart                 | 19       | 122 (87 %)    |
+| 5     | Wi-Fi and the internet                            | 19       | 141 (100 %)   |
 
 What this already tells us:
 
@@ -65,7 +66,7 @@ What this already tells us:
 | Step | What                                                                                                                                                                  | State       |
 | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | 1    | Sort the reference sketches by what they need                                                                                                                         | **Done**    |
-| 2    | Baseline: compile every sketch with the real toolchain and record which succeed, so a later failure is known to be ours                                               | Not started |
+| 2    | Baseline: compile every sketch with the real toolchain and record which succeed, so a later failure is known to be ours                                               | **Done**    |
 | 3    | Option C prototype: the board library for levels 1 and 2, a sketch compiled to WebAssembly, pins connected to the existing circuit solver. Measure coverage and speed | Not started |
 | 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | Not started |
 | 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | Not started |
@@ -74,6 +75,52 @@ What this already tells us:
 Speed will be measured on a laptop first. The figure that counts is from a real
 low-cost phone, which needs the lab team; until then any speed result is marked
 as a laptop result.
+
+## Step 2 result: the baseline
+
+Run on 21 November 2026 with `scripts/esp32-study/baseline.mjs`: PlatformIO with
+the `espressif32` platform 8.0.0 (Arduino core 3.3.12) and the six libraries at
+the versions the handbook pins.
+
+**All 141 sketches compile.** So from here on, a sketch that fails under one of
+the options fails because of that option.
+
+| Level | Sketches | Firmware size, median | Largest  | Memory for data, median |
+| ----- | -------- | --------------------- | -------- | ----------------------- |
+| 1     | 30       | 261 kB                | 262 kB   | 21 kB                   |
+| 2     | 44       | 267 kB                | 280 kB   | 21 kB                   |
+| 3     | 29       | 276 kB                | 318 kB   | 21 kB                   |
+| 4     | 19       | 278 kB                | 325 kB   | 21 kB                   |
+| 5     | 19       | 975 kB                | 1,089 kB | 48 kB                   |
+
+Compiling one sketch takes 4 seconds at the median and under 20 seconds for nine
+in ten, once the core has been built. (One build in the run stalled for about
+96 minutes while every other took seconds; the same sketch took 7 seconds in a
+separate run, so that figure is treated as the computer being suspended, not as
+a compile time.)
+
+What this adds:
+
+- **Firmware is a quarter of a megabyte even for Blink**, and about a megabyte
+  with Wi-Fi. An option that runs the real firmware (A or B) starts from that
+  size and from the whole board software inside it. Option C runs only the
+  student's code.
+- **Wi-Fi quadruples the firmware and doubles the memory.** It is the dividing
+  line in cost as well as in difficulty.
+- **Compiling on a server is fast enough** for a lesson, at seconds per sketch
+  with a warm cache.
+
+### A finding about preparing sketches
+
+In a first run, 9 sketches failed. The cause was not the sketches but the usual
+automatic step that turns an Arduino sketch into C++ by inventing function
+declarations: it mistook JavaScript inside the web pages some sketches embed for
+C++ functions, and it placed a declaration before the type it used. Joining the
+sketch's files in the Arduino order and generating nothing compiles all of them.
+
+This matters for the lab's own compile service, which also generates
+declarations. It must be tested against sketches like these before ESP32 sketches
+are accepted, whichever option is chosen.
 
 ## What the study will not do
 

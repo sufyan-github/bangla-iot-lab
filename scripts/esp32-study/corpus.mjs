@@ -6,7 +6,7 @@
 // board features it uses, and sorts it into the lowest level of ESP32 support
 // that could run it. Writes data/private/esp32-study/corpus.json and prints a
 // summary. The sketches are not copied: only their names and what they use.
-import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const source = process.argv[2];
@@ -69,6 +69,9 @@ const LEVELS = {
 
 const sketches = readdirSync(source)
   .filter((name) => statSync(path.join(source, name)).isDirectory())
+  // A sketch is a folder with a main file of the same name. A folder without one is a
+  // set of separate exercise files (deliberately broken ones, for bug hunts), not a sketch.
+  .filter((name) => existsSync(path.join(source, name, `${name}.ino`)))
   .sort()
   .map((name) => {
     const folder = path.join(source, name);
