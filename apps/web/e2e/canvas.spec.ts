@@ -195,7 +195,7 @@ test('the battery and the board can be moved, and their wires follow', async ({ 
   await expect(wires(page)).toHaveCount(9);
 
   // It cannot be dropped on the breadboard: it stops at the edge instead.
-  await dragPart(page, 'UNO1', { x: 0.5, y: 0.6 }, { x: 0, y: -300 });
+  await dragPart(page, 'UNO1', { x: 0.5, y: 0.6 }, { x: 0, y: -160 });
   const blocked = await placeOf(page, 'UNO1');
   expect(blocked.y).toBeLessThan(after.y);
   expect(blocked.y).toBeGreaterThan(28 + 19 * 24); // still below the breadboard's bottom edge

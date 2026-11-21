@@ -280,3 +280,34 @@ roll back program text, which has its own undo in the editor. Each step does
 remember the programs the boards had, so a board that undo brings back gets its
 program again and a running circuit reloads it. The history is not saved with
 the project; it starts empty each time a circuit is opened.
+
+## D-038 — Circuit schema version 6: wires may be routed through bend points
+
+A wire may carry up to eight `bends`, stored like part positions in hole
+pitches. Bends are only how the wire is drawn; the simulator ignores them. A
+wire without bends still hangs slack between its ends. Right-angle-only wires on
+the breadboard were considered and rejected by the owner in favour of jumper
+wires that can be bent, as real ones are.
+
+## D-039 — The schematic is a generated view, not a second editor
+
+The owner chose a diagram drawn from the breadboard circuit over a separate
+schematic editor. The breadboard stays the single source of truth, so there is
+one saved format and nothing to keep in step. The diagram is laid out by a
+simple rule that is always correct rather than clever: symbols in one row,
+ordered outward from the supply; supply rails above, ground rails below, every
+other net on a horizontal track under the row; legs reach their net by a
+vertical drop; two series parts that end up side by side are joined directly.
+A plain loop therefore looks like the textbook drawing, while a busy circuit
+looks like a bus diagram with many tracks. A layout that folds branches the way
+a person would draw them is a known next step, not attempted here. Modules and
+the board are labelled boxes showing only the legs in use. The layout is pure
+data (`lab/diagram/layout.ts`) and tested without a browser.
+
+## D-040 — Parts are drawn, not photographed
+
+"Real-looking" parts are SVG drawings with shared shading (a round body, a dome,
+brushed metal, board gloss), metal legs and cast shadows. Photographs were not
+used: they would need licensed images for twenty parts, add megabytes to an
+offline-first download, and could not show state (a lit LED, a turned knob, a
+closed relay) without a second image per state.

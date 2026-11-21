@@ -5,7 +5,8 @@ import { resistorBands } from './resistor-bands';
 
 /** Drawings of the parts. Pure SVG: no state, no event handling. */
 
-const LEG = '#aab3b6';
+const LEG_EDGE = '#6f787c';
+const LEG_SHINE = '#e6ebed';
 const SELECTION = '#e8a21a';
 
 function between(a: Point, b: Point) {
@@ -27,25 +28,105 @@ function SelectionHalo({ length }: { length: number }) {
   );
 }
 
+/** A tinned metal leg: a dark edge with a bright line along it, as round wire catches the light. */
+function Leg({ from, to }: { from: number; to: number }) {
+  return (
+    <g strokeLinecap="round">
+      <line x1={from} x2={to} stroke={LEG_EDGE} strokeWidth={3.4} />
+      <line x1={from} x2={to} y1={-0.5} y2={-0.5} stroke={LEG_SHINE} strokeWidth={1.4} />
+    </g>
+  );
+}
+
+/** Where a module's pin is soldered: a bright dot with a dark rim. */
+function SolderDot({ x, y = 0, color }: { x: number; y?: number; color?: string }) {
+  return (
+    <circle
+      cx={x}
+      cy={y}
+      r={2.8}
+      fill={color ?? 'url(#shade-metal)'}
+      stroke="rgba(0,0,0,.45)"
+      strokeWidth={0.7}
+    />
+  );
+}
+
+/** The soft shadow a part throws on the board, a little down and to the right. */
+function Shadow(props: { x: number; y: number; width: number; height: number; rx: number }) {
+  return <rect {...props} transform="translate(1.5 3)" fill="#000" opacity={0.22} />;
+}
+
+/** A fibreglass module board: solder mask colour, a gloss across it and a mounting hole in each top corner. */
+function ModuleBoard(props: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+}) {
+  const { x, y, width, height } = props;
+  return (
+    <>
+      <Shadow x={x} y={y} width={width} height={height} rx={4} />
+      <rect x={x} y={y} width={width} height={height} rx={4} fill={props.color} />
+      <rect x={x} y={y} width={width} height={height} rx={4} fill="url(#shade-board)" />
+      <rect x={x} y={y} width={width} height={height} rx={4} fill="none" stroke="rgba(0,0,0,.45)" />
+      {[x + 5.5, x + width - 5.5].map((cx) => (
+        <g key={cx}>
+          <circle cx={cx} cy={y + 5.5} r={3.1} fill="#d9b65c" />
+          <circle cx={cx} cy={y + 5.5} r={1.9} fill="#174a40" />
+        </g>
+      ))}
+    </>
+  );
+}
+
+/** The black plastic strip a module's pins come out of. */
+function PinHeader({ from, to }: { from: number; to: number }) {
+  return <rect x={from - 6} y={-5.5} width={to - from + 12} height={11} rx={1.5} fill="#16191b" />;
+}
+
 export function ResistorView(props: { a: Point; b: Point; resistance: number; selected: boolean }) {
   const { length, transform } = between(props.a, props.b);
   const body = Math.min(54, Math.max(20, length - 14));
   const bands = resistorBands(props.resistance);
-  const bandAt = [0.16, 0.34, 0.52, 0.8];
+  const bandAt = [0.2, 0.36, 0.52, 0.78];
+  // A carbon-film resistor swells at its two end caps.
+  const caps = body >= 34;
+  const shapes = [
+    { x: -body / 2 + (caps ? 5 : 0), y: -6.6, width: body - (caps ? 10 : 0), height: 13.2, rx: 6 },
+    ...(caps
+      ? [
+          { x: -body / 2, y: -8.2, width: 13, height: 16.4, rx: 6.5 },
+          { x: body / 2 - 13, y: -8.2, width: 13, height: 16.4, rx: 6.5 },
+        ]
+      : []),
+  ];
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
-      <line x1={-length / 2} x2={length / 2} stroke={LEG} strokeWidth={2.6} strokeLinecap="round" />
-      <rect x={-body / 2} y={-8} width={body} height={16} rx={7} fill="#e2c89d" stroke="#b3955f" />
-      {bands.map((color, i) => (
-        <rect
-          key={i}
-          x={-body / 2 + body * bandAt[i]! - 2}
-          y={-8}
-          width={4}
-          height={16}
-          fill={color}
-        />
+      <Shadow x={-body / 2} y={-7} width={body} height={14} rx={7} />
+      <Leg from={-length / 2} to={length / 2} />
+      {shapes.map((shape, i) => (
+        <rect key={i} {...shape} fill="#dcc391" />
+      ))}
+      {bands.map((color, i) => {
+        const x = -body / 2 + body * bandAt[i]! - 2;
+        const onCap = caps && (x < -body / 2 + 11 || x > body / 2 - 15);
+        return (
+          <rect
+            key={i}
+            x={x}
+            y={onCap ? -8.2 : -6.6}
+            width={4}
+            height={onCap ? 16.4 : 13.2}
+            fill={color}
+          />
+        );
+      })}
+      {shapes.map((shape, i) => (
+        <rect key={i} {...shape} fill="url(#shade-round)" />
       ))}
     </g>
   );
@@ -71,9 +152,13 @@ export function LedView(props: {
   const paint = LED_PAINT[props.color];
   const burned = props.state === 'burned';
   const lit = props.brightness > 0;
+  const lens = burned ? '#3b3b3b' : paint.off;
+  // Seen from above: a round lens on a wider rim, which is cut flat on the cathode (−) side.
+  const rim = 'M8.6 -8.22A11.9 11.9 0 1 0 8.6 8.22Z';
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
+      <ellipse cx={1.5} cy={3.5} rx={12} ry={11} fill="#000" opacity={0.25} />
       {lit && (
         <circle
           className="led-glow"
@@ -83,12 +168,16 @@ export function LedView(props: {
           pointerEvents="none"
         />
       )}
-      <line x1={-length / 2} x2={length / 2} stroke={LEG} strokeWidth={2.6} strokeLinecap="round" />
-      <circle r={10.5} fill={burned ? '#3b3b3b' : paint.off} stroke="rgba(0,0,0,.45)" />
-      {lit && <circle r={10.5} fill={paint.on} opacity={0.35 + 0.65 * props.brightness} />}
-      {/* The flat edge marks the cathode (−), as on a real LED. */}
-      <line x1={8.2} x2={8.2} y1={-6.4} y2={6.4} stroke="rgba(0,0,0,.55)" strokeWidth={2.2} />
-      <circle cx={-3} cy={-3.5} r={2.6} fill="#fff" opacity={burned ? 0.08 : 0.35} />
+      <Leg from={-length / 2} to={length / 2} />
+      <path d={rim} fill={lens} />
+      <path d={rim} fill="#000" opacity={0.28} />
+      <circle r={9.4} fill={lens} />
+      {/* The metal post and anvil inside the lens. */}
+      <path d="M-4.2 -2.2h3.2v4.4h-3.2zM0.8 -4h3.8v8h-3.8z" fill="#000" opacity={0.2} />
+      {lit && <circle r={9.4} fill={paint.on} opacity={0.35 + 0.65 * props.brightness} />}
+      {lit && <circle r={4.2} fill="#fff" opacity={0.6 * props.brightness} />}
+      <circle r={9.4} fill="url(#shade-dome)" opacity={burned ? 0.3 : 1} />
+      <circle r={9.4} fill="none" stroke="rgba(0,0,0,.4)" strokeWidth={0.8} />
       {burned && (
         <path d="M-5 -5L5 5M5 -5L-5 5" stroke="#d0d0d0" strokeWidth={2} strokeLinecap="round" />
       )}
@@ -115,6 +204,33 @@ export function BatteryView(props: {
   selected: boolean;
 }) {
   const { x, y, width, height } = props.box;
+  const clip = (at: Point, wire: string) => (
+    <g>
+      {/* A short lead from the battery's snap to a clip the jumper wires fasten to. */}
+      <path
+        d={`M${x + width - 4} ${at.y}H${at.x - 6}`}
+        stroke="rgba(0,0,0,.45)"
+        strokeWidth={6.4}
+        strokeLinecap="round"
+      />
+      <path
+        d={`M${x + width - 4} ${at.y}H${at.x - 6}`}
+        stroke={wire}
+        strokeWidth={4.6}
+        strokeLinecap="round"
+      />
+      <circle
+        cx={at.x}
+        cy={at.y}
+        r={8.8}
+        fill="url(#shade-metal)"
+        stroke="#6f5a1c"
+        strokeWidth={1.4}
+      />
+      <circle cx={at.x} cy={at.y} r={8.8} fill="#e2b84a" opacity={0.55} />
+      <circle cx={at.x} cy={at.y} r={3.2} fill="#5b4a17" />
+    </g>
+  );
   return (
     <g>
       {props.selected && (
@@ -128,41 +244,53 @@ export function BatteryView(props: {
           opacity={0.4}
         />
       )}
-      <line
-        x1={x + width}
-        y1={props.positive.y}
-        x2={props.positive.x}
-        y2={props.positive.y}
-        stroke={LEG}
-        strokeWidth={5}
-      />
-      <line
-        x1={x + width}
-        y1={props.negative.y}
-        x2={props.negative.x}
-        y2={props.negative.y}
-        stroke={LEG}
-        strokeWidth={5}
-      />
-      <circle
-        cx={props.positive.x}
-        cy={props.positive.y}
-        r={8.5}
-        fill="#d9b65c"
-        stroke="#8a6d1f"
-        strokeWidth={1.5}
-      />
-      <circle
-        cx={props.negative.x}
-        cy={props.negative.y}
-        r={8.5}
-        fill="#d9b65c"
-        stroke="#8a6d1f"
-        strokeWidth={1.5}
-      />
-      <rect x={x} y={y} width={width} height={height} rx={11} fill="#262d2f" />
+      <rect x={x + 3} y={y + 6} width={width} height={height} rx={11} fill="#000" opacity={0.3} />
+      {clip(props.positive, '#d8342a')}
+      {clip(props.negative, '#23282b')}
+      <rect x={x} y={y} width={width} height={height} rx={11} fill="#22292b" />
       <rect x={x} y={y} width={width} height={34} rx={11} fill="#e8a21a" />
       <rect x={x} y={y + 22} width={width} height={12} fill="#e8a21a" />
+      {/* The two snap terminals on top of a 9 V block: a small round one and a wide ribbed one. */}
+      <circle cx={x + width * 0.3} cy={y + 15} r={8} fill="url(#shade-metal)" stroke="#6d7578" />
+      <circle cx={x + width * 0.3} cy={y + 15} r={4.2} fill="#8b9498" />
+      <circle cx={x + width * 0.7} cy={y + 15} r={9.6} fill="url(#shade-metal)" stroke="#6d7578" />
+      <circle
+        cx={x + width * 0.7}
+        cy={y + 15}
+        r={6.6}
+        fill="none"
+        stroke="#6d7578"
+        strokeDasharray="2.6 2.2"
+        strokeWidth={2}
+      />
+      <rect
+        x={x + 10}
+        y={y + height - 30}
+        width={width - 20}
+        height={3}
+        rx={1.5}
+        fill="#e8a21a"
+        opacity={0.8}
+      />
+      <rect
+        x={x + 10}
+        y={y + height - 22}
+        width={width - 42}
+        height={3}
+        rx={1.5}
+        fill="#f4f7f5"
+        opacity={0.35}
+      />
+      <rect x={x} y={y} width={width} height={height} rx={11} fill="url(#shade-side)" />
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        rx={11}
+        fill="none"
+        stroke="rgba(0,0,0,.55)"
+      />
       <text
         x={x + width / 2}
         y={y + 96}
@@ -308,13 +436,30 @@ export function WireView(props: {
 export function CapacitorView(props: { a: Point; b: Point; selected: boolean }) {
   const { length, transform } = between(props.a, props.b);
   const body = Math.min(40, Math.max(22, length - 10));
+  const can = { x: -body / 2, y: -11, width: body, height: 22, rx: 5 };
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
-      <line x1={-length / 2} x2={length / 2} stroke={LEG} strokeWidth={2.6} strokeLinecap="round" />
-      <rect x={-body / 2} y={-11} width={body} height={22} rx={6} fill="#22325a" stroke="#131c36" />
-      <rect x={body / 2 - 9} y={-11} width={6} height={22} fill="#c9d2e6" opacity={0.85} />
-      <rect x={-body / 2 + 2} y={-11} width={3} height={22} fill="#8d9396" opacity={0.7} />
+      <Shadow {...can} />
+      <Leg from={-length / 2} to={length / 2} />
+      <rect {...can} fill="#1d2b52" />
+      {/* The pale stripe with minus signs marks the negative leg. */}
+      <rect x={-body / 2 + 3} y={3.5} width={body - 9} height={6} fill="#c3cbdd" />
+      {[0.25, 0.5, 0.75].map((along) => (
+        <rect
+          key={along}
+          x={-body / 2 + body * along - 2.5}
+          y={5.9}
+          width={5}
+          height={1.3}
+          fill="#1d2b52"
+        />
+      ))}
+      {/* The crimp near the legs and the bare aluminium top. */}
+      <rect x={-body / 2 + 4} y={-11} width={1.6} height={22} fill="#0d1530" />
+      <rect x={body / 2 - 4.5} y={-11} width={4.5} height={22} rx={2} fill="#b8c0c4" />
+      <rect {...can} fill="url(#shade-round)" />
+      <rect {...can} fill="none" stroke="rgba(0,0,0,.5)" strokeWidth={0.8} />
     </g>
   );
 }
@@ -325,14 +470,31 @@ export function ButtonView(props: { a: Point; b: Point; pressed: boolean; select
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
-      <line x1={-length / 2} x2={length / 2} stroke={LEG} strokeWidth={2.6} strokeLinecap="round" />
-      <rect x={-13} y={-13} width={26} height={26} rx={4} fill="#2c3133" stroke="#15191b" />
-      <circle
-        r={props.pressed ? 7.5 : 9}
-        fill={props.pressed ? '#9d241c' : '#e0493e'}
-        stroke="rgba(0,0,0,.4)"
+      <Shadow x={-14} y={-14} width={28} height={28} rx={3} />
+      <Leg from={-length / 2} to={length / 2} />
+      <rect x={-14} y={-14} width={28} height={28} rx={3} fill="#1b1f21" />
+      {/* The stamped metal cover, held down by a rivet in each corner. */}
+      <rect x={-12.4} y={-12.4} width={24.8} height={24.8} rx={2.5} fill="url(#shade-metal)" />
+      <rect
+        x={-12.4}
+        y={-12.4}
+        width={24.8}
+        height={24.8}
+        rx={2.5}
+        fill="none"
+        stroke="#5d666a"
+        strokeWidth={0.8}
       />
-      {!props.pressed && <circle cx={-2.5} cy={-3} r={2.4} fill="#fff" opacity={0.35} />}
+      {[-9, 9].flatMap((x) =>
+        [-9, 9].map((y) => <circle key={`${x},${y}`} cx={x} cy={y} r={1.5} fill="#4f585c" />),
+      )}
+      <circle r={9.6} fill="#15181a" />
+      <circle r={props.pressed ? 7.4 : 8.6} fill={props.pressed ? '#9d241c' : '#e0493e'} />
+      <circle
+        r={props.pressed ? 7.4 : 8.6}
+        fill="url(#shade-dome)"
+        opacity={props.pressed ? 0.35 : 1}
+      />
     </g>
   );
 }
@@ -348,29 +510,26 @@ export function PotentiometerView(props: {
   const { length, transform } = between(props.a, props.b);
   // Fully towards lead a at position 0, fully towards lead b at position 1.
   const angle = -135 + 270 * props.position;
+  const body = { x: -length / 2 - 9, y: -15, width: length + 18, height: 30, rx: 5 };
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
-      <rect
-        x={-length / 2 - 9}
-        y={-15}
-        width={length + 18}
-        height={30}
-        rx={5}
-        fill="#2b62b0"
-        stroke="#1b3f73"
-      />
+      <Shadow {...body} />
+      <rect {...body} fill="#2b62b0" />
+      <rect {...body} fill="url(#shade-board)" />
+      <rect {...body} fill="none" stroke="#1b3f73" />
       {[-length / 2, 0, length / 2].map((x) => (
-        <circle key={x} cx={x} cy={11} r={2.4} fill={LEG} />
+        <SolderDot key={x} x={x} y={11} />
       ))}
-      <circle r={12} fill="#e9ecea" stroke="#8d9396" strokeWidth={1.5} />
-      <line
-        y2={-10}
-        stroke="#13231f"
-        strokeWidth={3}
-        strokeLinecap="round"
-        transform={`rotate(${angle})`}
-      />
+      {/* The rotor: a slotted disc that a screwdriver or a fingertip turns. */}
+      <circle r={12.6} fill="#1b3f73" />
+      <circle r={11.6} fill="#eef1f0" />
+      <circle r={11.6} fill="url(#shade-dome)" opacity={0.7} />
+      <g transform={`rotate(${angle})`} strokeLinecap="round">
+        <line y1={7} y2={-9.5} stroke="#13231f" strokeWidth={3.2} />
+        <line x1={-5} x2={5} stroke="#13231f" strokeWidth={2.2} opacity={0.55} />
+        <path d="M0 -11.4l-2.6 3.4h5.2z" fill="#e8a21a" />
+      </g>
     </g>
   );
 }
@@ -378,6 +537,7 @@ export function PotentiometerView(props: {
 /** The UNO board with its two rows of sockets. `ledLevel` is how bright the pin 13 LED is, 0 to 1. */
 export function UnoView(props: { ledLevel: number; powered: boolean; selected: boolean }) {
   const { x, y, width, height } = UNO_BOX;
+  const silk = '#d7f0f2';
   return (
     <g>
       {props.selected && (
@@ -391,33 +551,117 @@ export function UnoView(props: { ledLevel: number; powered: boolean; selected: b
           opacity={0.4}
         />
       )}
+      <rect x={x + 3} y={y + 6} width={width} height={height} rx={10} fill="#000" opacity={0.3} />
+      <rect x={x} y={y} width={width} height={height} rx={10} fill="#0f7a86" />
+      <rect x={x} y={y} width={width} height={height} rx={10} fill="url(#shade-board)" />
       <rect
         x={x}
         y={y}
         width={width}
         height={height}
         rx={10}
-        fill="#0f7a86"
+        fill="none"
         stroke="#0a5a63"
         strokeWidth={2}
       />
-      {/* USB socket, power jack and the processor */}
-      <rect x={x - 12} y={y + 38} width={58} height={44} rx={3} fill="#b9c0c4" stroke="#8d9396" />
-      <rect x={x - 6} y={y + 122} width={46} height={40} rx={3} fill="#22282b" />
-      <rect x={x + 250} y={y + 96} width={170} height={34} rx={3} fill="#1b1f21" />
-      <text x={x + 335} y={y + 117} textAnchor="middle" fontSize={10} fill="#8b979c">
+      {/* Copper traces under the solder mask, and the four mounting holes. */}
+      <path
+        d={`M${x + 96} ${y + 34}V${y + 70}H${x + 236}V${y + 96}M${x + 300} ${y + 34}V${y + 78}H${x + 380}V${y + 96}M${x + 270} ${y + 154}V${y + 130}M${x + 330} ${y + 154}V${y + 130}`}
+        fill="none"
+        stroke="#0b6672"
+        strokeWidth={2.2}
+        strokeLinejoin="round"
+      />
+      {[
+        [x + 86, y + 14],
+        [x + width - 14, y + 46],
+        [x + 84, y + height - 14],
+        [x + width - 14, y + height - 40],
+      ].map(([cx, cy]) => (
+        <g key={`${cx},${cy}`}>
+          <circle cx={cx} cy={cy} r={6.4} fill="#d9b65c" />
+          <circle cx={cx} cy={cy} r={4.3} fill="#174a40" />
+        </g>
+      ))}
+
+      {/* USB socket, power jack, the regulator and the processor in its socket. */}
+      <rect
+        x={x - 12}
+        y={y + 38}
+        width={58}
+        height={44}
+        rx={3}
+        fill="url(#shade-metal)"
+        stroke="#70797d"
+      />
+      <rect x={x - 12} y={y + 46} width={10} height={28} fill="#23282a" />
+      <rect x={x - 6} y={y + 122} width={46} height={40} rx={3} fill="#1d2325" />
+      <rect x={x - 6} y={y + 122} width={46} height={40} rx={3} fill="url(#shade-side)" />
+      <circle cx={x - 2} cy={y + 142} r={9} fill="#0b0d0e" />
+      <rect x={x + 58} y={y + 92} width={26} height={20} rx={2} fill="#1b1f21" />
+      <rect x={x + 62} y={y + 88} width={18} height={5} fill="url(#shade-metal)" />
+      {[x + 120, x + 142].map((cx) => (
+        <g key={cx}>
+          <circle cx={cx} cy={y + 150} r={9.5} fill="url(#shade-metal)" stroke="#70797d" />
+          <path
+            d={`M${cx - 6} ${y + 150}h12M${cx} ${y + 144}v12`}
+            stroke="#70797d"
+            strokeWidth={1.1}
+          />
+        </g>
+      ))}
+      <rect
+        x={x + 176}
+        y={y + 82}
+        width={34}
+        height={13}
+        rx={6.5}
+        fill="url(#shade-metal)"
+        stroke="#70797d"
+      />
+      {Array.from({ length: 14 }, (_, i) => (
+        <g key={i} fill="#c2cacd">
+          <rect x={x + 255 + i * 12.2} y={y + 91} width={4.5} height={6} />
+          <rect x={x + 255 + i * 12.2} y={y + 129} width={4.5} height={6} />
+        </g>
+      ))}
+      <rect x={x + 250} y={y + 96} width={170} height={34} rx={3} fill="#17191b" />
+      <rect x={x + 250} y={y + 96} width={170} height={34} rx={3} fill="url(#shade-side)" />
+      <circle cx={x + 258} cy={y + 113} r={3} fill="#0b0d0e" />
+      <text x={x + 338} y={y + 117} textAnchor="middle" fontSize={10} fill="#8b979c">
         ATmega328P
       </text>
-      <text
-        x={x + 150}
-        y={y + 112}
-        textAnchor="middle"
-        fontSize={22}
-        fontWeight={700}
-        fill="#d7f0f2"
-      >
+      <text x={x + 150} y={y + 122} textAnchor="middle" fontSize={24} fontWeight={700} fill={silk}>
         UNO
       </text>
+      {/* Reset button, beside the USB socket. */}
+      <rect
+        x={x + 54}
+        y={y + 20}
+        width={18}
+        height={18}
+        rx={2}
+        fill="url(#shade-metal)"
+        stroke="#70797d"
+      />
+      <circle cx={x + 63} cy={y + 29} r={5} fill="#c0392b" />
+      <circle cx={x + 63} cy={y + 29} r={5} fill="url(#shade-dome)" />
+      {/* The six programming pins at the far end. */}
+      {[0, 1, 2].flatMap((row) =>
+        [0, 1].map((column) => (
+          <rect
+            key={`${row}-${column}`}
+            x={x + width - 36 + column * 11}
+            y={y + 76 + row * 11}
+            width={7}
+            height={7}
+            rx={1}
+            fill="#d9b65c"
+            stroke="#15191b"
+            strokeWidth={1.6}
+          />
+        )),
+      )}
 
       {/* Power light and the LED wired to pin 13 */}
       <rect
@@ -428,7 +672,10 @@ export function UnoView(props: { ledLevel: number; powered: boolean; selected: b
         rx={2}
         fill={props.powered ? '#7dff9b' : '#2f5d3a'}
       />
-      <text x={x + 82} y={y + 143} fontSize={9} fill="#d7f0f2">
+      {props.powered && (
+        <circle cx={x + 71.5} cy={y + 139.5} r={11} fill="#7dff9b" opacity={0.28} />
+      )}
+      <text x={x + 82} y={y + 143} fontSize={9} fill={silk}>
         ON
       </text>
       {props.ledLevel > 0 && (
@@ -444,21 +691,38 @@ export function UnoView(props: { ledLevel: number; powered: boolean; selected: b
         fill="#ffd45e"
         opacity={props.ledLevel}
       />
-      <text x={x + 82} y={y + 62} fontSize={9} fill="#d7f0f2">
+      <text x={x + 82} y={y + 62} fontSize={9} fill={silk}>
         L
       </text>
 
+      {/* The socket strips: one square opening for each pin. */}
       {UNO_SOCKETS.map(({ terminal, point, label, top }) => (
         <g key={terminal}>
-          <rect x={point.x - 8} y={point.y - 8} width={16} height={16} rx={2} fill="#15191b" />
-          <rect x={point.x - 3.5} y={point.y - 3.5} width={7} height={7} rx={1} fill="#4a5256" />
+          <rect x={point.x - 11} y={point.y - 9.5} width={22} height={19} fill="#121517" />
+          <rect
+            x={point.x - 11}
+            y={point.y - 9.5}
+            width={22}
+            height={3}
+            fill="#fff"
+            opacity={0.08}
+          />
+          <rect
+            x={point.x - 4.2}
+            y={point.y - 4.2}
+            width={8.4}
+            height={8.4}
+            rx={1}
+            fill="#050606"
+          />
+          <rect x={point.x - 2} y={point.y - 2} width={4} height={4} fill="#b99a3e" />
           <text
             x={point.x}
             y={point.y + (top ? 22 : -14)}
             textAnchor="middle"
             fontSize={9}
             fontWeight={600}
-            fill="#d7f0f2"
+            fill={silk}
           >
             {label}
           </text>
@@ -473,13 +737,7 @@ function TwoLeads(props: { length: number; selected: boolean }) {
   return (
     <>
       {props.selected && <SelectionHalo length={props.length} />}
-      <line
-        x1={-props.length / 2}
-        x2={props.length / 2}
-        stroke={LEG}
-        strokeWidth={2.6}
-        strokeLinecap="round"
-      />
+      <Leg from={-props.length / 2} to={props.length / 2} />
     </>
   );
 }
@@ -487,19 +745,34 @@ function TwoLeads(props: { length: number; selected: boolean }) {
 /** Slide switch: the knob sits towards lead b when the switch is on. */
 export function SwitchView(props: { a: Point; b: Point; closed: boolean; selected: boolean }) {
   const { length, transform } = between(props.a, props.b);
+  const knob = props.closed ? 1 : -12;
   return (
     <g transform={transform}>
       <TwoLeads length={length} selected={props.selected} />
-      <rect x={-17} y={-10} width={34} height={20} rx={3} fill="#3a4245" stroke="#15191b" />
-      <rect x={-13} y={-5} width={26} height={10} rx={2} fill="#15191b" />
+      <Shadow x={-17} y={-10} width={34} height={20} rx={3} />
+      <rect x={-17} y={-10} width={34} height={20} rx={3} fill="url(#shade-metal)" />
+      <rect x={-17} y={-10} width={34} height={20} rx={3} fill="none" stroke="#5d666a" />
+      <rect x={-13.5} y={-5.5} width={27} height={11} rx={2} fill="#101315" />
       <rect
-        x={props.closed ? 1 : -12}
+        x={knob}
         y={-6.5}
         width={11}
         height={13}
         rx={2}
-        fill={props.closed ? '#55e584' : '#c9d1d4'}
+        fill={props.closed ? '#3fc66d' : '#c9d1d4'}
       />
+      {[2.5, 5.5, 8.5].map((x) => (
+        <rect
+          key={x}
+          x={knob + x - 0.6}
+          y={-5}
+          width={1.2}
+          height={10}
+          fill="#000"
+          opacity={0.28}
+        />
+      ))}
+      <rect x={knob} y={-6.5} width={11} height={13} rx={2} fill="url(#shade-round)" />
     </g>
   );
 }
@@ -508,11 +781,14 @@ export function SwitchView(props: { a: Point; b: Point; closed: boolean; selecte
 export function DiodeView(props: { anode: Point; cathode: Point; selected: boolean }) {
   const { length, transform } = between(props.anode, props.cathode);
   const body = Math.min(34, Math.max(18, length - 12));
+  const shape = { x: -body / 2, y: -7, width: body, height: 14, rx: 3.5 };
   return (
     <g transform={transform}>
       <TwoLeads length={length} selected={props.selected} />
-      <rect x={-body / 2} y={-7} width={body} height={14} rx={3} fill="#1c1f21" />
-      <rect x={body / 2 - 8} y={-7} width={4.5} height={14} fill="#d7dde0" />
+      <Shadow {...shape} />
+      <rect {...shape} fill="#17191b" />
+      <rect x={body / 2 - 8.5} y={-7} width={5} height={14} fill="#d7dde0" />
+      <rect {...shape} fill="url(#shade-round)" />
     </g>
   );
 }
@@ -523,9 +799,19 @@ export function LdrView(props: { a: Point; b: Point; light: number; selected: bo
   return (
     <g transform={transform}>
       <TwoLeads length={length} selected={props.selected} />
-      <circle r={11} fill="#b5683c" stroke="#6f3d20" />
-      <circle r={11} fill="#ffe9a8" opacity={0.75 * props.light} />
-      <path d="M-7 -5H5V-1.5H-5V2H7V5.5H-7" fill="none" stroke="#3a2416" strokeWidth={1.6} />
+      <ellipse cx={1.5} cy={3} rx={11.5} ry={11} fill="#000" opacity={0.24} />
+      {/* A ceramic disc with the light-sensitive track winding across it, under clear resin. */}
+      <circle r={11.4} fill="#7c4a26" />
+      <circle r={10} fill="#ead9ae" />
+      <circle r={10} fill="#ffe9a8" opacity={0.8 * props.light} />
+      <path
+        d="M-7 -5.5H5V-2H-5V1.5H5V5H-7"
+        fill="none"
+        stroke="#a8432a"
+        strokeWidth={1.7}
+        strokeLinejoin="round"
+      />
+      <circle r={10} fill="url(#shade-dome)" opacity={0.85} />
     </g>
   );
 }
@@ -552,8 +838,13 @@ export function BuzzerView(props: {
           <path d="M-18 -22A30 30 0 0 1 18 -22" />
         </g>
       )}
-      <circle r={13} fill="#1c1f21" stroke="#0c0e0f" />
-      <circle r={3} fill="#4a5256" />
+      <ellipse cx={2} cy={4} rx={13.5} ry={13} fill="#000" opacity={0.28} />
+      {/* A black plastic drum; sound comes out of the hole in the middle. */}
+      <circle r={13.5} fill="#17191b" />
+      <circle r={13.5} fill="url(#shade-dome)" opacity={0.55} />
+      <circle r={10.4} fill="none" stroke="#000" strokeWidth={1.1} opacity={0.6} />
+      <circle r={3.4} fill="#2e3437" />
+      <circle r={2.2} fill="#050606" />
       <text
         x={-length / 2 - 1}
         y={-9}
@@ -575,7 +866,13 @@ export function MotorView(props: { a: Point; b: Point; speed: number; selected: 
   return (
     <g transform={transform}>
       <TwoLeads length={length} selected={props.selected} />
-      <circle r={15} fill="#aeb6ba" stroke="#6d7578" strokeWidth={1.5} />
+      <ellipse cx={2} cy={4} rx={15} ry={14.5} fill="#000" opacity={0.26} />
+      {/* The steel can from the shaft end, with its two vents and the bearing in the middle. */}
+      <circle r={15} fill="url(#shade-metal)" stroke="#5d666a" strokeWidth={1.2} />
+      <circle r={11.2} fill="#8f989c" />
+      <circle r={11.2} fill="url(#shade-dome)" opacity={0.5} />
+      <rect x={-8.5} y={-2.2} width={4.4} height={4.4} rx={1} fill="#23282a" />
+      <rect x={4.1} y={-2.2} width={4.4} height={4.4} rx={1} fill="#23282a" />
       <g
         className={turning ? 'motor-rotor' : undefined}
         style={
@@ -587,8 +884,9 @@ export function MotorView(props: { a: Point; b: Point; speed: number; selected: 
             : undefined
         }
       >
-        <path d="M-11 0H11M0 -11V11" stroke="#e8a21a" strokeWidth={4} strokeLinecap="round" />
-        <circle r={3.5} fill="#3a4245" />
+        {/* A marker on the shaft, so its turning can be seen. */}
+        <path d="M-11 0H11M0 -11V11" stroke="#e8a21a" strokeWidth={3.6} strokeLinecap="round" />
+        <circle r={3.8} fill="#d5dadd" stroke="#4f585c" />
       </g>
     </g>
   );
@@ -597,14 +895,19 @@ export function MotorView(props: { a: Point; b: Point; speed: number; selected: 
 /** NPN transistor (TO-92 package) seen from above, flat face towards the viewer. */
 export function TransistorView(props: { collector: Point; emitter: Point; selected: boolean }) {
   const { length, transform } = between(props.collector, props.emitter);
+  const body = 'M-15 4H15V-2A15 13 0 0 0 -15 -2Z';
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
       {[-length / 2, 0, length / 2].map((x) => (
-        <circle key={x} cx={x} r={2.6} fill={LEG} />
+        <SolderDot key={x} x={x} />
       ))}
-      <path d="M-15 4H15V-2A15 13 0 0 0 -15 -2Z" fill="#1c1f21" stroke="#0c0e0f" />
-      <g fontSize={8.5} fontWeight={700} fill="#d7dde0" textAnchor="middle" pointerEvents="none">
+      <path d={body} transform="translate(1.5 3)" fill="#000" opacity={0.24} />
+      <path d={body} fill="#17191b" />
+      <path d={body} fill="url(#shade-dome)" opacity={0.45} />
+      {/* The flat face, where the type is printed. */}
+      <rect x={-15} y={2.2} width={30} height={1.8} fill="#3a4043" />
+      <g fontSize={8.5} fontWeight={700} fill="#4b5d57" textAnchor="middle" pointerEvents="none">
         <text x={-length / 2} y={15}>
           C
         </text>
@@ -633,23 +936,39 @@ export function SensorView(props: {
   selected: boolean;
 }) {
   const { length, transform } = between(props.vcc, props.gnd);
+  const left = -length / 2 - 10;
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
-      <rect
-        x={-length / 2 - 10}
+      <ModuleBoard
+        x={left}
         y={-34}
         width={length + 20}
         height={40}
-        rx={4}
-        fill={SENSOR_BOARD[props.kind]}
-        stroke="rgba(0,0,0,.4)"
+        color={SENSOR_BOARD[props.kind]}
       />
+      <PinHeader from={-length / 2} to={length / 2} />
       {[-length / 2, 0, length / 2].map((x) => (
-        <circle key={x} cx={x} r={2.6} fill={LEG} />
+        <SolderDot key={x} x={x} />
       ))}
+      {/* What does the sensing: a black three-leg sensor, bare probe pads, or an emitter and receiver pair. */}
+      {props.kind === 'temperature' && (
+        <path d="M-7 -28.5H7V-31A7 5 0 0 0 -7 -31Z" transform="translate(0 4)" fill="#17191b" />
+      )}
+      {props.kind === 'soil' &&
+        [-9, 9].map((x) => (
+          <rect key={x} x={x - 3} y={-33} width={6} height={9} rx={1.5} fill="#d9b65c" />
+        ))}
+      {props.kind === 'ir' && (
+        <>
+          <circle cx={-7} cy={-29} r={4.2} fill="#e9ecea" stroke="#8d9396" />
+          <circle cx={-7} cy={-29} r={4.2} fill="url(#shade-dome)" />
+          <circle cx={7} cy={-29} r={4.2} fill="#17191b" />
+          <circle cx={7} cy={-29} r={4.2} fill="url(#shade-dome)" opacity={0.6} />
+        </>
+      )}
       <text
-        y={-14}
+        y={-11.5}
         textAnchor="middle"
         fontSize={12}
         fontWeight={700}
@@ -658,26 +977,11 @@ export function SensorView(props: {
       >
         {props.label}
       </text>
-      <g
-        fontSize={7.5}
-        fontWeight={600}
-        fill="#fff"
-        opacity={0.85}
-        textAnchor="middle"
-        pointerEvents="none"
-      >
-        <text x={-length / 2} y={-2}>
-          +
-        </text>
-        <text x={0} y={-2}>
-          OUT
-        </text>
-        <text x={length / 2} y={-2}>
-          −
-        </text>
-      </g>
       {props.lit !== undefined && (
-        <circle cx={length / 2 + 2} cy={-27} r={3} fill={props.lit ? '#ff5340' : '#5a1f1a'} />
+        <>
+          {props.lit && <circle cx={length / 2 + 2} cy={-20} r={7} fill="#ff5340" opacity={0.35} />}
+          <circle cx={length / 2 + 2} cy={-20} r={2.8} fill={props.lit ? '#ff5340' : '#5a1f1a'} />
+        </>
       )}
     </g>
   );
@@ -691,20 +995,26 @@ export function RelayView(props: {
   selected: boolean;
 }) {
   const { length, transform } = between(props.first, props.last);
+  const box = { x: -length / 2 - 10, y: -36, width: length + 20, height: 42, rx: 4 };
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
+      <Shadow {...box} />
+      {/* The blue plastic case; what is inside is drawn on its lid. */}
+      <rect {...box} fill="#2456a6" />
+      <rect {...box} fill="url(#shade-side)" />
+      <rect {...box} fill="none" stroke="#153564" />
       <rect
-        x={-length / 2 - 10}
-        y={-36}
-        width={length + 20}
-        height={42}
-        rx={4}
-        fill="#2456a6"
-        stroke="#153564"
+        x={box.x + 3}
+        y={-33}
+        width={box.width - 6}
+        height={2}
+        rx={1}
+        fill="#fff"
+        opacity={0.22}
       />
       {[0, PITCH, length - PITCH, length].map((x) => (
-        <circle key={x} cx={x - length / 2} r={2.6} fill={LEG} />
+        <SolderDot key={x} x={x - length / 2} />
       ))}
       {/* Coil */}
       <path
@@ -737,25 +1047,40 @@ export function ServoView(props: {
   selected: boolean;
 }) {
   const { length, transform } = between(props.gnd, props.signal);
+  const body = { x: -length / 2 - 12, y: -46, width: length + 24, height: 50, rx: 5 };
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
-      <rect
-        x={-length / 2 - 12}
-        y={-46}
-        width={length + 24}
-        height={50}
-        rx={5}
-        fill="#2456a6"
-        stroke="#153564"
-      />
-      {[-length / 2, 0, length / 2].map((x, i) => (
-        <circle key={x} cx={x} r={2.6} fill={['#7b4a21', '#d8342a', '#ef7d1a'][i]} />
+      <Shadow {...body} />
+      {/* Mounting ears on both sides, each with a screw hole. */}
+      {[body.x - 9, body.x + body.width - 3].map((x) => (
+        <g key={x}>
+          <rect x={x} y={-33} width={12} height={16} rx={2} fill="#1d4a92" stroke="#153564" />
+          <circle cx={x + 6} cy={-25} r={2.6} fill="#174a40" />
+        </g>
       ))}
-      <circle cy={-24} r={13} fill="#e9ecea" stroke="#8d9396" />
+      <rect {...body} fill="#2456a6" />
+      <rect {...body} fill="url(#shade-side)" />
+      <rect {...body} fill="none" stroke="#153564" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {/* Brown is ground, red is power, orange is the signal: the colours of a real servo lead. */}
+      {[-length / 2, 0, length / 2].map((x, i) => (
+        <SolderDot key={x} x={x} color={['#7b4a21', '#d8342a', '#ef7d1a'][i]} />
+      ))}
+      <circle cy={-24} r={14} fill="#1d4a92" />
+      <circle cy={-24} r={12.4} fill="#e9ecea" stroke="#8d9396" />
+      <circle cy={-24} r={12.4} fill="url(#shade-dome)" opacity={0.6} />
       <g transform={`translate(0 -24) rotate(${(props.angle ?? 90) - 90})`}>
-        <rect x={-3.5} y={-22} width={7} height={25} rx={3.5} fill="#f4f7f5" stroke="#6d7578" />
-        <circle r={2.2} fill="#3a4245" />
+        <path
+          d="M-4.2 2L-2.8 -19a2.8 2.8 0 0 1 5.6 0L4.2 2a4.2 4.2 0 0 1 -8.4 0Z"
+          fill="#f8faf9"
+          stroke="#6d7578"
+        />
+        {[-17, -12.5, -8].map((cy) => (
+          <circle key={cy} cy={cy} r={1} fill="#8d9396" />
+        ))}
+        <circle r={2.6} fill="url(#shade-metal)" stroke="#3a4245" />
+        <path d="M-1.6 0h3.2M0 -1.6v3.2" stroke="#3a4245" strokeWidth={0.8} />
       </g>
     </g>
   );
@@ -772,26 +1097,34 @@ export function UltrasonicView(props: {
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
-      <rect
-        x={-length / 2 - 14}
-        y={-48}
-        width={length + 28}
-        height={52}
-        rx={4}
-        fill="#1f5fa8"
-        stroke="#123a69"
-      />
+      <ModuleBoard x={-length / 2 - 14} y={-48} width={length + 28} height={52} color="#1f5fa8" />
+      <PinHeader from={-length / 2} to={length / 2} />
       {[-length / 2, -length / 6, length / 6, length / 2].map((x) => (
-        <circle key={x} cx={x} r={2.6} fill={LEG} />
+        <SolderDot key={x} x={x} />
       ))}
+      {/* The two transducers: metal cans with a fine mesh over the opening. */}
       {[-length / 2 + 4, length / 2 - 4].map((x) => (
         <g key={x}>
-          <circle cx={x} cy={-28} r={13} fill="#c9d1d4" stroke="#6d7578" />
-          <circle cx={x} cy={-28} r={8} fill="#3a4245" />
+          <circle cx={x + 1.2} cy={-25.5} r={13} fill="#000" opacity={0.28} />
+          <circle cx={x} cy={-28} r={13} fill="url(#shade-metal)" stroke="#5d666a" />
+          <circle cx={x} cy={-28} r={9.2} fill="#23282a" />
+          <circle cx={x} cy={-28} r={9.2} fill="url(#mesh)" />
+          <circle cx={x} cy={-28} r={9.2} fill="url(#shade-dome)" opacity={0.45} />
         </g>
       ))}
+      {/* The crystal that times the pulses sits between them. */}
+      <rect
+        x={-7}
+        y={-43}
+        width={14}
+        height={6}
+        rx={3}
+        fill="url(#shade-metal)"
+        stroke="#5d666a"
+        strokeWidth={0.7}
+      />
       <text
-        y={-8}
+        y={-9.5}
         textAnchor="middle"
         fontSize={10}
         fontWeight={700}
@@ -816,19 +1149,28 @@ export function LcdView(props: {
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
-      <rect
-        x={-length / 2 - 14}
-        y={-104}
-        width={length + 28}
-        height={110}
-        rx={5}
-        fill="#17603c"
-        stroke="#0d3d25"
-      />
-      {Array.from({ length: 16 }, (_, i) => (
-        <circle key={i} cx={-length / 2 + (i * length) / 15} r={2.4} fill={LEG} />
+      <ModuleBoard x={-length / 2 - 14} y={-104} width={length + 28} height={110} color="#17603c" />
+      {/* Two more mounting holes in the bottom corners. */}
+      {[-length / 2 - 8.5, length / 2 + 8.5].map((cx) => (
+        <g key={cx}>
+          <circle cx={cx} cy={-18} r={3.1} fill="#d9b65c" />
+          <circle cx={cx} cy={-18} r={1.9} fill="#174a40" />
+        </g>
       ))}
-      <rect x={-length / 2 - 2} y={-92} width={length + 4} height={66} rx={3} fill="#0c1a12" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {Array.from({ length: 16 }, (_, i) => (
+        <SolderDot key={i} x={-length / 2 + (i * length) / 15} />
+      ))}
+      {/* The metal bezel clipped over the glass, then the glass itself. */}
+      <rect x={-length / 2 - 3} y={-93} width={length + 6} height={68} rx={3} fill="#0c1a12" />
+      <rect
+        x={-length / 2 - 3}
+        y={-93}
+        width={length + 6}
+        height={68}
+        rx={3}
+        fill="url(#shade-side)"
+      />
       <rect
         x={-length / 2 + 4}
         y={-86}
@@ -836,6 +1178,29 @@ export function LcdView(props: {
         height={54}
         rx={2}
         fill={props.lines ? '#b9d23c' : '#5e6f2c'}
+      />
+      {/* Each character has its own block of dots, faintly visible even when blank. */}
+      <g fill="#000" opacity={props.lines ? 0.07 : 0.12}>
+        {[0, 1].flatMap((row) =>
+          Array.from({ length: 16 }, (_, column) => (
+            <rect
+              key={`${row}-${column}`}
+              x={-length / 2 + 8 + cell * column + 1}
+              y={-82 + row * 24}
+              width={cell - 2}
+              height={21}
+              rx={1}
+            />
+          )),
+        )}
+      </g>
+      <rect
+        x={-length / 2 + 4}
+        y={-86}
+        width={length - 8}
+        height={54}
+        rx={2}
+        fill="url(#shade-board)"
       />
       <g
         fontFamily="ui-monospace, Menlo, Consolas, monospace"

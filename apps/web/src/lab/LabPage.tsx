@@ -258,6 +258,28 @@ export function LabPage() {
             onChange={(event) => setName(event.target.value)}
             className="order-last min-h-11 min-w-0 basis-full rounded-lg border-2 border-line bg-transparent px-2 text-lg font-semibold sm:order-none sm:flex-1 sm:basis-0 sm:border-transparent sm:hover:border-line sm:focus:border-line"
           />
+          <div
+            role="group"
+            aria-label={t('lab.viewLabel')}
+            className="flex shrink-0 overflow-hidden rounded-xl border-2 border-line"
+          >
+            {(['board', 'diagram'] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                data-testid={`view-${id}`}
+                aria-pressed={view === id}
+                onClick={() => setView(id)}
+                className={`min-h-11 px-3.5 text-sm font-semibold ${
+                  view === id
+                    ? 'bg-amber-soft text-ink'
+                    : 'text-ink-soft hover:bg-paper hover:text-ink'
+                }`}
+              >
+                {t(id === 'board' ? 'lab.viewBoard' : 'lab.viewDiagram')}
+              </button>
+            ))}
+          </div>
           <span
             data-testid="save-state"
             data-state={saveState}
@@ -306,28 +328,6 @@ export function LabPage() {
         <div className="relative flex min-h-0 flex-1 flex-col">
           <Notice />
           {view === 'board' ? <Canvas /> : <Diagram />}
-          <div
-            role="group"
-            aria-label={t('lab.viewLabel')}
-            className="absolute top-3 left-3 flex overflow-hidden rounded-xl border border-line bg-surface shadow-md"
-          >
-            {(['board', 'diagram'] as const).map((id) => (
-              <button
-                key={id}
-                type="button"
-                data-testid={`view-${id}`}
-                aria-pressed={view === id}
-                onClick={() => setView(id)}
-                className={`min-h-11 px-3.5 text-sm font-semibold ${
-                  view === id
-                    ? 'bg-amber-soft text-ink'
-                    : 'text-ink-soft hover:bg-paper hover:text-ink'
-                }`}
-              >
-                {t(id === 'board' ? 'lab.viewBoard' : 'lab.viewDiagram')}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 

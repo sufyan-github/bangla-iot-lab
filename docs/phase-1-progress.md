@@ -49,7 +49,18 @@ or pick a program, upload it, and watch the program drive the circuit:
 - Zoom with Ctrl + wheel, a button that fits the board to the window, and quick
   flip/remove buttons on the canvas for the selected item.
 
-Not done: hover and drag-to-wire need a mouse or pen; on touch there is no hover
+- **Bendable wires.** With a wire selected, small dots along it add a bend when
+  dragged; a bend laid back on the straight line disappears, and a button
+  straightens the wire (schema version 6).
+- **Diagram view.** A switch in the top bar shows the same circuit as a schematic
+  with textbook symbols and right-angle wires, generated from the breadboard and
+  kept in step with it. Tapping a symbol selects the part; a lit LED is filled in.
+  It is for reading, not editing.
+- **Realistic parts.** All twenty parts, the battery and the board are redrawn
+  with shading, metal legs and shadows.
+
+Not done: the diagram cannot be edited, and a busy circuit is drawn as many
+parallel tracks rather than the way a person would arrange it. Hover and drag-to-wire need a mouse or pen; on touch there is no hover
 and wiring stays tap-tap. None of this has been tried on a real phone.
 
 ## 2. Phase 1 task list
@@ -102,9 +113,9 @@ of section 3.
 | Suite                                                                                       | Result                          |
 | ------------------------------------------------------------------------------------------- | ------------------------------- |
 | ESLint, Prettier, TypeScript                                                                | clean                           |
-| Unit                                                                                        | 214 passed, 0 failed, 0 skipped |
+| Unit                                                                                        | 224 passed, 0 failed, 0 skipped |
 | Integration (PostgreSQL 18, avr-gcc, bubblewrap, Arduino core and libraries, Pico firmware) | 28 passed                       |
-| End to end (Chromium; desktop and phone profiles)                                           | 50 passed                       |
+| End to end (Chromium; desktop and phone profiles)                                           | 58 passed                       |
 
 Electrical agreement with ngspice 45.2: DC within 1 µV / 1 nA on 15 circuits
 (including an NPN transistor saturated, in its active region and as a follower);

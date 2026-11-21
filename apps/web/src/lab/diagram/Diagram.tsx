@@ -89,7 +89,7 @@ export function Diagram() {
   return (
     <div
       ref={frameRef}
-      className="diagram-paper min-h-0 flex-1 overflow-auto pt-14 pb-4"
+      className="diagram-paper min-h-0 flex-1 overflow-auto py-4"
       data-testid="diagram"
     >
       <svg
