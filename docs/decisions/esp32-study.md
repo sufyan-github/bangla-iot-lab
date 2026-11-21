@@ -1,7 +1,8 @@
 # ESP32 feasibility study
 
 **Status: in progress. Steps 1 and 2 of 6 are done. Step 3 is done except for one
-measurement that needs a real phone. No decision has been made.**
+measurement that needs a real phone. Steps 4 and 5 have a survey but no
+measurement. No decision has been made.**
 
 ## The question
 
@@ -69,8 +70,8 @@ What this already tells us:
 | 1    | Sort the reference sketches by what they need                                                                                                                         | **Done**                                                                                                                                                           |
 | 2    | Baseline: compile every sketch with the real toolchain and record which succeed, so a later failure is known to be ours                                               | **Done**                                                                                                                                                           |
 | 3    | Option C prototype: the board library for levels 1 and 2, a sketch compiled to WebAssembly, pins connected to the existing circuit solver. Measure coverage and speed | **Done on a laptop:** built, run as WebAssembly in a browser, and connected to the circuit solver through a stand-in board. Still to do: the speed on a real phone |
-| 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | Not started                                                                                                                                                        |
-| 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | Not started                                                                                                                                                        |
+| 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | **Partly done:** what exists has been surveyed. No emulator has been run yet                                                                                       |
+| 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | **Partly done:** what Espressif's QEMU covers has been read from its documents. Nothing has been run                                                               |
 | 6    | Score the options against the criteria and write the decision                                                                                                         | Not started                                                                                                                                                        |
 
 Speed will be measured on a laptop first. The figure that counts is from a real
@@ -302,6 +303,58 @@ rather than to choosing it:
   inside a worker.
 - The solver knows one kind of board. An ESP32 needs its own board part, with a
   3.3 V supply and its own pin behaviour.
+
+## Steps 4 and 5 so far: what already exists
+
+Read on 22 November 2026. Each fact was read on the project's own page or
+repository (VERIFIED) unless marked REPORTED. **Nothing in this section has been
+run.** A project's own description of itself is not a measurement.
+
+### Emulators that run in a browser
+
+| Project                                                               | Licence                                             | The classic ESP32                           | What it says it does                                                                                                                                                                                                                                                                                                                     |
+| --------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [esp32sim](https://github.com/mikroverk/esp32sim)                     | MIT                                                 | Listed as "early"; the ESP32-S3 is "mature" | Written in Rust, built as one WebAssembly module for a worker. Boots the chip's own start-up code, FreeRTOS and an unmodified program. Its table of peripherals is for the S3 only. Its classic ESP32 examples are MicroPython and one Arduino sketch on a display board. First published August 2026, version 0.4.0 on 15 November 2026 |
+| [esp-emulator](https://github.com/espressif/esp-emulator) (Espressif) | Apache-2.0                                          | Not in its list of chips                    | Covers the ESP32-S3 and the newer RISC-V chips. Runs programs built with Espressif's own framework; Arduino is not mentioned. Has a browser build                                                                                                                                                                                        |
+| Wokwi                                                                 | Not open: no public repository for its ESP32 engine | Supported                                   | Pins, serial, I2C, SPI, PWM, analog input, timers and Wi-Fi; runs Arduino projects. Its [terms](https://wokwi.com/legal/terms) allow personal, non-commercial use and forbid copying and distributing it. No published licence for putting it inside another product was found                                                           |
+| [Velxio](https://github.com/davidmonterocrespo24/velxio)              | AGPL-3.0, or a paid licence                         | Supported, but on a server                  | Its ESP32 runs in QEMU on a server and talks to the browser. This is option B, not option A                                                                                                                                                                                                                                              |
+| Cirkit Designer                                                       | No licence or repository stated                     | Stated as supported                         | A closed product                                                                                                                                                                                                                                                                                                                         |
+
+For comparison, the emulator the lab already uses for the UNO-compatible board
+(avr8js) is MIT, as is its sibling for the Pico.
+
+What this means for option A. It is no longer a question of whether anyone
+could write such an emulator: an MIT one exists and is being worked on. Two
+things stand between it and the lab and both must be measured, not assumed. Its
+support for the board the kit uses is the part its authors call "early". And an
+emulator of the whole chip must run the whole of the board's software, so its
+speed on a low-cost phone is the open question that option C does not have.
+
+### Espressif's QEMU, for option B
+
+- Licence: GPL-2.0. On a server, as a separate program, that is compatible with
+  the project's rules; in the browser it would not be.
+- Its [list of what it emulates](https://github.com/espressif/esp-toolchain-docs/blob/main/qemu/README.md)
+  for the classic ESP32 includes the processor, serial, timers, flash and PWM.
+  It lists I2C, general SPI, Wi-Fi and Bluetooth as **not supported**, and does
+  not mention analog input.
+- No way to set or watch a pin from outside is documented, and the pin model in
+  its source only loops outputs back to inputs.
+- A community version of QEMU (the one Velxio and PICSimLab use, also GPL) adds
+  more, including Wi-Fi. Its coverage has not been read in detail.
+
+What this means for option B. The school kit's display speaks I2C. Espressif's
+QEMU as published would not reach it, so option B would rest on the community
+version or on our own additions to a GPL program, as well as on a server and an
+internet connection for every student.
+
+### Still to do in steps 4 and 5
+
+Run esp32sim with the level 1 to 3 reference sketches built for the classic
+ESP32, and measure what works and how fast, in a browser and with the processor
+slowed. Run one sketch in QEMU and measure the cost of a server per student.
+Both mean downloading and running other people's programs on this computer,
+which waits for the owner's go-ahead.
 
 ## What the study will not do
 
