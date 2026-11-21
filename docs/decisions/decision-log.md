@@ -369,3 +369,22 @@ numbers add up. Dashes also run through two-leg parts and up through a battery,
 so the eye follows one path from the source round and back. Currents under
 5 µA are not drawn, which keeps input pins quiet. Flow is not drawn through
 modules, the board or a transistor, whose inside paths the diagram does not show.
+
+## D-045 — The ESP32 pin model is built from Espressif's documents, and its analog input is their calibration curve run backwards
+
+The ESP32 development board's pins are modelled from Espressif's datasheets and
+source code alone, each number labelled as read from a document, reported, or
+our estimate ([engineering record](../engineering/esp32-pin-model.md)). Two
+choices had real alternatives.
+
+The analog input could have been an ideal converter (count = V / 3.3 × 4095).
+It is not, because that is the mistake students make with the real board: the
+real converter reads 0 below about 0.14 V, about 176 counts low through the
+middle, and reaches full scale near 3.13 V. Espressif publishes the curve from
+count to millivolts in its calibration code, so the model inverts that curve.
+The cost is that the model is a nominal chip: real chips differ, and none has
+been measured.
+
+A digital input between the two datasheet thresholds keeps its last level, as
+the UNO-compatible board's pins already do. The datasheet gives no hysteresis
+figure, so any single switching voltage would have been invented.
