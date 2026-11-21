@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "li-ion-18650",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "power",
+  "tier": 2,
+  "name": {
+    "bn": "18650 lithium-ion cell",
+    "en": "18650 lithium-ion cell"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["18650 li-ion cell"]
+  }
+}

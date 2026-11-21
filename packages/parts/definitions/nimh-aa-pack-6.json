@@ -1,0 +1,41 @@
+{
+  "formatVersion": 1,
+  "id": "nimh-aa-pack-6",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "power",
+  "tier": 1,
+  "name": {
+    "bn": "৬×AA NiMH ব্যাটারি প্যাক",
+    "en": "6×AA NiMH battery pack"
+  },
+  "summary": {
+    "bn": "",
+    "en": "A 7.2 V pack for motors."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C18"]
+  },
+  "pins": [
+    {
+      "id": "pos",
+      "label": "+",
+      "role": "power"
+    },
+    {
+      "id": "neg",
+      "label": "−",
+      "role": "ground"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["aa battery holder", "aa nimh"]
+  }
+}

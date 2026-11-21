@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "l298n",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "actuator",
+  "tier": 1,
+  "name": {
+    "bn": "L298N মোটর ড্রাইভার",
+    "en": "L298N dual motor driver"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Drives two motors from logic signals."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C17"]
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["l298n"]
+  }
+}

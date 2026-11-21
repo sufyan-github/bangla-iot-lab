@@ -1,0 +1,51 @@
+{
+  "formatVersion": 1,
+  "id": "rain-sensor",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 1,
+  "name": {
+    "bn": "বৃষ্টি সেন্সর",
+    "en": "Rain sensor module"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Detects water on its board."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C12"]
+  },
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "do",
+      "label": "DO",
+      "role": "output"
+    },
+    {
+      "id": "ao",
+      "label": "AO",
+      "role": "output"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["rain sensor", "rain/steam"]
+  }
+}

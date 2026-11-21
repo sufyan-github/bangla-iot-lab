@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "lora-ra-02",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "communication",
+  "tier": 2,
+  "name": {
+    "bn": "SX1278 Ra-02 LoRa radio",
+    "en": "SX1278 Ra-02 LoRa radio"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["ra-02"]
+  }
+}

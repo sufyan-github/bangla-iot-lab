@@ -1,0 +1,53 @@
+{
+  "formatVersion": 1,
+  "id": "yl-69",
+  "simulates": "soil",
+  "status": "generic",
+  "statusNote": "A generic three-leg analog sensor stands in. The real probe and its comparator board, with AO and DO, are not modelled.",
+  "family": "sensor",
+  "tier": 1,
+  "name": {
+    "bn": "YL-69 মাটির আর্দ্রতা সেন্সর",
+    "en": "YL-69 soil moisture sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Reads how wet the soil is."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["A divider whose output follows the set moisture."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C13"]
+  },
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "out",
+      "label": "OUT",
+      "role": "output"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
+  "placement": {
+    "idPrefix": "SOIL",
+    "offsets": [0, 1, 2]
+  },
+  "defaults": {
+    "moisture": 0.4
+  },
+  "variants": [],
+  "catalog": {
+    "keywords": ["yl-69"]
+  }
+}

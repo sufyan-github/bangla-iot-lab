@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "antenna",
+  "simulates": null,
+  "status": "not-simulated",
+  "statusNote": "An accessory with no electrical behaviour worth modelling.",
+  "family": "accessory",
+  "tier": 3,
+  "name": {
+    "bn": "Antenna",
+    "en": "Antenna"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Bought for the project but has nothing to simulate."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["antenna"]
+  }
+}

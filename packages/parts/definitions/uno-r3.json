@@ -1,0 +1,55 @@
+{
+  "formatVersion": 1,
+  "id": "uno-r3",
+  "simulates": "uno",
+  "status": "simulated",
+  "family": "board",
+  "tier": 1,
+  "name": {
+    "bn": "UNO বোর্ড",
+    "en": "UNO-compatible board"
+  },
+  "summary": {
+    "bn": "একটা ছোট কম্পিউটার; প্রোগ্রাম অনুযায়ী পিন চালায়।",
+    "en": "A small computer that drives its pins as its program says."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": [
+      "The processor is emulated instruction by instruction; pins are sources with a fixed output resistance.",
+      "No USB, no brown-out, no ADC noise."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["B1", "B2", "B3", "B10"]
+  },
+  "pins": [
+    {
+      "id": "5v",
+      "label": "5V",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
+  "defaults": {},
+  "variants": [
+    {
+      "id": "r3-smd",
+      "name": "UNO R3, SMD processor",
+      "measured": false
+    },
+    {
+      "id": "r3-dip",
+      "name": "UNO R3, DIP processor",
+      "measured": false
+    }
+  ],
+  "catalog": {
+    "keywords": ["arduino uno", "uno r3"]
+  }
+}

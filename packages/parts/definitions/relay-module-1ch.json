@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "id": "relay-module-1ch",
+  "simulates": "relay",
+  "status": "generic",
+  "statusNote": "The bare relay stands in. The driver, optocoupler and high/low trigger jumper are not modelled.",
+  "family": "actuator",
+  "tier": 1,
+  "name": {
+    "bn": "রিলে মডিউল (১ চ্যানেল)",
+    "en": "1-channel relay module"
+  },
+  "summary": {
+    "bn": "",
+    "en": "A relay with its driver and trigger jumper."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C9"]
+  },
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "in",
+      "label": "IN",
+      "role": "input"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["relay module", "1-ch relay", "1-ch 5 v relay"]
+  }
+}

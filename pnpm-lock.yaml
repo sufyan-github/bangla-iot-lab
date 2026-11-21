@@ -345,8 +345,17 @@ importers:
 
   packages/i18n: {}
 
+  packages/parts:
+    dependencies:
+      typebox:
+        specifier: ^1.4.7
+        version: 1.4.7
+
   packages/shared:
     dependencies:
+      '@banglalab/parts':
+        specifier: workspace:*
+        version: link:../parts
       typebox:
         specifier: ^1.4.7
         version: 1.4.7

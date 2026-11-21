@@ -1,0 +1,51 @@
+{
+  "formatVersion": 1,
+  "id": "mq-135",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 1,
+  "name": {
+    "bn": "MQ-135",
+    "en": "MQ-135 gas sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Responds to air quality after its heater warms up."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C14"]
+  },
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "do",
+      "label": "DO",
+      "role": "output"
+    },
+    {
+      "id": "ao",
+      "label": "AO",
+      "role": "output"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["mq-135"]
+  }
+}

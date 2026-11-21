@@ -1,0 +1,54 @@
+{
+  "formatVersion": 1,
+  "id": "resistor",
+  "simulates": "resistor",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 1,
+  "name": {
+    "bn": "রেজিস্টর",
+    "en": "Resistor"
+  },
+  "summary": {
+    "bn": "কারেন্টকে বাধা দেয়।",
+    "en": "Limits current."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["Ideal resistance: no tolerance, heating or noise."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["A1", "A3", "A5"]
+  },
+  "pins": [
+    {
+      "id": "a",
+      "label": "A",
+      "role": "passive"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "R",
+    "offsets": [0, 4],
+    "maxSpan": 12
+  },
+  "defaults": {
+    "resistance": 330
+  },
+  "variants": [
+    {
+      "id": "quarter-watt-axial",
+      "name": "1/4 W axial film resistor",
+      "measured": false
+    }
+  ],
+  "catalog": {
+    "keywords": ["resistor", "1/4 w", "1/4w"]
+  }
+}

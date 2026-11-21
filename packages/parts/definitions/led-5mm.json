@@ -1,0 +1,77 @@
+{
+  "formatVersion": 1,
+  "id": "led-5mm",
+  "simulates": "led",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 1,
+  "name": {
+    "bn": "LED",
+    "en": "LED"
+  },
+  "summary": {
+    "bn": "কারেন্ট গেলে আলো দেয়; শুধু এক দিকে।",
+    "en": "Gives light when current flows, one way only."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": [
+      "Forward voltage from a fixed diode curve per colour.",
+      "Brightness is proportional to current; no viewing angle."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["A1", "A2", "A8"]
+  },
+  "pins": [
+    {
+      "id": "anode",
+      "label": "+",
+      "role": "passive"
+    },
+    {
+      "id": "cathode",
+      "label": "−",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "LED",
+    "offsets": [0, 1],
+    "maxSpan": 4
+  },
+  "defaults": {
+    "color": "red"
+  },
+  "variants": [
+    {
+      "id": "red",
+      "name": "5 mm red",
+      "measured": false
+    },
+    {
+      "id": "green",
+      "name": "5 mm green",
+      "measured": false
+    },
+    {
+      "id": "yellow",
+      "name": "5 mm yellow",
+      "measured": false
+    },
+    {
+      "id": "blue",
+      "name": "5 mm blue",
+      "measured": false
+    },
+    {
+      "id": "white",
+      "name": "5 mm white",
+      "measured": false
+    }
+  ],
+  "catalog": {
+    "keywords": ["5 mm led", "5mm led"]
+  }
+}

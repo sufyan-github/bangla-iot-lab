@@ -12,6 +12,12 @@ make no promise of compatibility, except that saved circuits are always migrated
   the original data, validating it and reporting issues; computes project and
   budget totals; word-prefix search; comparison of two snapshots. No catalogue
   data is published.
+- `packages/parts`: one JSON definition per real part, with a validated format
+  and honesty rules enforced by tests; 64 definitions covering every built part
+  and the parts the shortlisted projects still need; a "missing in the
+  simulator" report for a parts list.
+- Resistor, LED and HC-SR04 now take their breadboard shape from their
+  definitions.
 
 ## [0.1.0] - 2026-11-21
 

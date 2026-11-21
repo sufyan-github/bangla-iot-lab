@@ -1,0 +1,48 @@
+{
+  "formatVersion": 1,
+  "id": "slide-switch",
+  "simulates": "switch",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 2,
+  "name": {
+    "bn": "সুইচ",
+    "en": "Slide switch"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Stays open or closed."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["No contact bounce."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "a",
+      "label": "A",
+      "role": "passive"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "S",
+    "offsets": [0, 2],
+    "maxSpan": 4
+  },
+  "defaults": {
+    "closed": false
+  },
+  "variants": [],
+  "catalog": {
+    "keywords": ["slide switch"]
+  }
+}

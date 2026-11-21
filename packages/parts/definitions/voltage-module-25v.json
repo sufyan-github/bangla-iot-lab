@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "voltage-module-25v",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 2,
+  "name": {
+    "bn": "0–25 V voltage divider module",
+    "en": "0–25 V voltage divider module"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["voltage detection module"]
+  }
+}

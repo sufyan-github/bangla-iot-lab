@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "ph-sensor",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 2,
+  "name": {
+    "bn": "Analog pH sensor kit",
+    "en": "Analog pH sensor kit"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["ph sensor"]
+  }
+}

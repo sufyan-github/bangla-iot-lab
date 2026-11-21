@@ -35,7 +35,7 @@ curriculum depend on that board.
 | Continuous integration running on every pull request                                                                           | In progress                                                                                                                  |
 | Hardware testing checklist, equipment list and procedures                                                                      | Written; no test run yet                                                                                                     |
 | Catalogue importer                                                                                                             | Done and tested on made-up data; run on the real export, whose figures all match the brief. See [catalogue.md](catalogue.md) |
-| Part definition format and parts list                                                                                          | Not started                                                                                                                  |
+| Part definition format and parts list                                                                                          | Done and tested: 64 definitions; three parts read their shape from them. See [parts.md](parts.md)                            |
 | ESP32 feasibility study                                                                                                        | Not started                                                                                                                  |
 
 ## Test results
@@ -43,7 +43,7 @@ curriculum depend on that board.
 | Suite                                                                      | Result on 21 November 2026                             |
 | -------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Lint, formatting, types, licence check                                     | Clean                                                  |
-| Unit tests                                                                 | 244 passed                                             |
+| Unit tests                                                                 | 268 passed                                             |
 | Integration tests (database, compiler sandbox, emulators, firmware source) | 32 passed                                              |
 | Browser tests, desktop and phone sizes                                     | 66 tests. Last full run: 65 passed; see the note below |
 | Hardware tests                                                             | None run                                               |

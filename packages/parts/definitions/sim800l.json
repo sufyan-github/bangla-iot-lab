@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "sim800l",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "communication",
+  "tier": 2,
+  "name": {
+    "bn": "SIM800L GSM modem",
+    "en": "SIM800L GSM modem"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["sim800l"]
+  }
+}

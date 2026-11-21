@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "lcd-st7789-154",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "display",
+  "tier": 2,
+  "name": {
+    "bn": "1.54\" IPS display (ST7789, SPI)",
+    "en": "1.54\" IPS display (ST7789, SPI)"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["1.54\" ips"]
+  }
+}

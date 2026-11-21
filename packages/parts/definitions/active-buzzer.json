@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "id": "active-buzzer",
+  "simulates": "buzzer",
+  "status": "simulated",
+  "family": "output",
+  "tier": 2,
+  "name": {
+    "bn": "বাজার",
+    "en": "Active buzzer"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Sounds when powered."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["A resistor that sounds above a threshold voltage."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "pos",
+      "label": "+",
+      "role": "passive"
+    },
+    {
+      "id": "neg",
+      "label": "−",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "BZ",
+    "offsets": [0, 2],
+    "maxSpan": 3
+  },
+  "defaults": {},
+  "variants": [],
+  "catalog": {
+    "keywords": []
+  }
+}

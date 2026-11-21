@@ -1,0 +1,40 @@
+{
+  "formatVersion": 1,
+  "id": "jumper-wire",
+  "simulates": "wire",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 1,
+  "name": {
+    "bn": "জাম্পার তার",
+    "en": "Jumper wire"
+  },
+  "summary": {
+    "bn": "দুটো বিন্দু জোড়ে।",
+    "en": "Joins two points."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["A fixed small resistance; no length or breakage."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [
+    {
+      "id": "m-m",
+      "name": "Male to male",
+      "measured": false
+    },
+    {
+      "id": "m-f",
+      "name": "Male to female",
+      "measured": false
+    }
+  ],
+  "catalog": {
+    "keywords": ["jumper wire"]
+  }
+}

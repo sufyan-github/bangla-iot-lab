@@ -1,0 +1,53 @@
+{
+  "formatVersion": 1,
+  "id": "analog-temperature",
+  "simulates": "temperature",
+  "status": "generic",
+  "statusNote": "A generic analog sensor. No real part is modelled yet.",
+  "family": "sensor",
+  "tier": 3,
+  "name": {
+    "bn": "তাপমাত্রা সেন্সর",
+    "en": "Analog temperature sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Gives a voltage that follows temperature."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["A divider whose output follows the set temperature; not any one real chip."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "out",
+      "label": "OUT",
+      "role": "output"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
+  "placement": {
+    "idPrefix": "TMP",
+    "offsets": [0, 1, 2]
+  },
+  "defaults": {
+    "celsius": 25
+  },
+  "variants": [],
+  "catalog": {
+    "keywords": []
+  }
+}

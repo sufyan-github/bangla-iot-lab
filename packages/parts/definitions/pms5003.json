@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "pms5003",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 2,
+  "name": {
+    "bn": "PMS5003 particle sensor",
+    "en": "PMS5003 particle sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["pms5003"]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "siren",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "actuator",
+  "tier": 2,
+  "name": {
+    "bn": "Industrial siren",
+    "en": "Industrial siren"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["siren"]
+  }
+}

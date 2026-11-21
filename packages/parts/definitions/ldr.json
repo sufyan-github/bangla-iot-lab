@@ -1,0 +1,48 @@
+{
+  "formatVersion": 1,
+  "id": "ldr",
+  "simulates": "ldr",
+  "status": "simulated",
+  "family": "sensor",
+  "tier": 2,
+  "name": {
+    "bn": "LDR",
+    "en": "Light-dependent resistor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Its resistance falls as light increases."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["Resistance follows one fixed curve; no response time."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "a",
+      "label": "A",
+      "role": "passive"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "LDR",
+    "offsets": [0, 2],
+    "maxSpan": 4
+  },
+  "defaults": {
+    "light": 0.5
+  },
+  "variants": [],
+  "catalog": {
+    "keywords": ["photoresistor"]
+  }
+}

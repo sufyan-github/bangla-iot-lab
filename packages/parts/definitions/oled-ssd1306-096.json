@@ -1,0 +1,51 @@
+{
+  "formatVersion": 1,
+  "id": "oled-ssd1306-096",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "display",
+  "tier": 1,
+  "name": {
+    "bn": "০.৯৬″ OLED",
+    "en": "0.96\" OLED display (SSD1306, I2C)"
+  },
+  "summary": {
+    "bn": "",
+    "en": "A small graphic display on two wires."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C6"]
+  },
+  "pins": [
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "scl",
+      "label": "SCL",
+      "role": "input"
+    },
+    {
+      "id": "sda",
+      "label": "SDA",
+      "role": "bidirectional"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["0.96\" oled", "0.96 oled"]
+  }
+}

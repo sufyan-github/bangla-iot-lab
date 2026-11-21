@@ -1,0 +1,55 @@
+{
+  "formatVersion": 1,
+  "id": "relay",
+  "simulates": "relay",
+  "status": "simulated",
+  "family": "actuator",
+  "tier": 2,
+  "name": {
+    "bn": "রিলে",
+    "en": "Relay"
+  },
+  "summary": {
+    "bn": "",
+    "en": "A coil closes a contact."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["Coil resistance and pull-in current only; no contact bounce or switching time."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "coil1",
+      "label": "COIL",
+      "role": "passive"
+    },
+    {
+      "id": "coil2",
+      "label": "COIL",
+      "role": "passive"
+    },
+    {
+      "id": "com",
+      "label": "COM",
+      "role": "passive"
+    },
+    {
+      "id": "no",
+      "label": "NO",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "K",
+    "offsets": [0, 1, 3, 4]
+  },
+  "defaults": {},
+  "variants": [],
+  "catalog": {
+    "keywords": []
+  }
+}

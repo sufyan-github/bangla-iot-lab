@@ -1,0 +1,35 @@
+{
+  "formatVersion": 1,
+  "id": "breadboard-830",
+  "simulates": "breadboard",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 1,
+  "name": {
+    "bn": "ব্রেডবোর্ড (৮৩০)",
+    "en": "830-hole breadboard"
+  },
+  "summary": {
+    "bn": "ঝালাই ছাড়া সার্কিট বানানোর বোর্ড।",
+    "en": "A board for building circuits without soldering."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["Strips are perfect conductors; no worn contacts."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [
+    {
+      "id": "830",
+      "name": "830 tie points",
+      "measured": false
+    }
+  ],
+  "catalog": {
+    "keywords": ["breadboard 830", "breadboard"]
+  }
+}

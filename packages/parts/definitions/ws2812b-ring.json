@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "ws2812b-ring",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "output",
+  "tier": 2,
+  "name": {
+    "bn": "WS2812B RGB LED ring",
+    "en": "WS2812B RGB LED ring"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["ws2812b"]
+  }
+}

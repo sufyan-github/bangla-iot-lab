@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "lm2596",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "power",
+  "tier": 2,
+  "name": {
+    "bn": "LM2596 buck converter",
+    "en": "LM2596 buck converter"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["lm2596"]
+  }
+}

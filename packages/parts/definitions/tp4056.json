@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "tp4056",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "power",
+  "tier": 2,
+  "name": {
+    "bn": "TP4056 charger with protection",
+    "en": "TP4056 charger with protection"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["tp4056"]
+  }
+}

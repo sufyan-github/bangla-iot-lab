@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "id": "diode",
+  "simulates": "diode",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 2,
+  "name": {
+    "bn": "ডায়োড",
+    "en": "Rectifier diode"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Lets current through one way."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["One silicon diode curve; no reverse breakdown."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["A7"]
+  },
+  "pins": [
+    {
+      "id": "anode",
+      "label": "A",
+      "role": "passive"
+    },
+    {
+      "id": "cathode",
+      "label": "K",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "D",
+    "offsets": [0, 3],
+    "maxSpan": 8
+  },
+  "defaults": {},
+  "variants": [],
+  "catalog": {
+    "keywords": ["1n4007", "rectifier diode"]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "formatVersion": 1,
+  "id": "battery",
+  "simulates": "battery",
+  "status": "simulated",
+  "family": "power",
+  "tier": 1,
+  "name": {
+    "bn": "ব্যাটারি",
+    "en": "Battery"
+  },
+  "summary": {
+    "bn": "সার্কিটে শক্তি দেয়।",
+    "en": "Powers the circuit."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["A voltage source with a fixed internal resistance; it never runs down."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["A1"]
+  },
+  "pins": [
+    {
+      "id": "pos",
+      "label": "+",
+      "role": "power"
+    },
+    {
+      "id": "neg",
+      "label": "−",
+      "role": "ground"
+    }
+  ],
+  "defaults": {
+    "voltage": 9
+  },
+  "variants": [
+    {
+      "id": "9v-block",
+      "name": "9 V block",
+      "measured": false
+    }
+  ],
+  "catalog": {
+    "keywords": []
+  }
+}

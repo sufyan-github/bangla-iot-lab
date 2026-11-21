@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "id": "esp32-devkit-30pin",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet. How it will be emulated is the subject of the ESP32 feasibility study.",
+  "family": "board",
+  "tier": 1,
+  "name": {
+    "bn": "ESP32 বোর্ড (৩০ পিন)",
+    "en": "ESP32 development board, 30 pins"
+  },
+  "summary": {
+    "bn": "",
+    "en": "The default board of the projects and the school kit."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C1", "C2", "C3", "C4", "C19"]
+  },
+  "pins": [
+    {
+      "id": "3v3",
+      "label": "3V3",
+      "role": "power"
+    },
+    {
+      "id": "vin",
+      "label": "VIN",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["esp32 dev board", "esp32 esp-32s", "esp32 +", "gateway: esp32"]
+  }
+}

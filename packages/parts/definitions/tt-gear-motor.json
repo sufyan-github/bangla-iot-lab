@@ -1,0 +1,41 @@
+{
+  "formatVersion": 1,
+  "id": "tt-gear-motor",
+  "simulates": "motor",
+  "status": "generic",
+  "statusNote": "The generic DC motor stands in. Gear ratio, speed and stall current are not modelled.",
+  "family": "actuator",
+  "tier": 1,
+  "name": {
+    "bn": "TT গিয়ার মোটর",
+    "en": "TT DC gear motor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "A small geared motor for robot wheels."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C17"]
+  },
+  "pins": [
+    {
+      "id": "a",
+      "label": "A",
+      "role": "passive"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "role": "passive"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["tt dc gear motor", "gear motor"]
+  }
+}

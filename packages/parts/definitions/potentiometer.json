@@ -1,0 +1,53 @@
+{
+  "formatVersion": 1,
+  "id": "potentiometer",
+  "simulates": "potentiometer",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 1,
+  "name": {
+    "bn": "পটেনশিওমিটার",
+    "en": "Potentiometer"
+  },
+  "summary": {
+    "bn": "",
+    "en": "A resistor with a sliding contact."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["Linear track only."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["A6", "B5"]
+  },
+  "pins": [
+    {
+      "id": "a",
+      "label": "A",
+      "role": "passive"
+    },
+    {
+      "id": "wiper",
+      "label": "W",
+      "role": "passive"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "POT",
+    "offsets": [0, 1, 2]
+  },
+  "defaults": {
+    "resistance": 10000,
+    "position": 0.5
+  },
+  "variants": [],
+  "catalog": {
+    "keywords": ["potentiometer", "trimpot"]
+  }
+}

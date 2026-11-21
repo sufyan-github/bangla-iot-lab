@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "id": "dht11",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 1,
+  "name": {
+    "bn": "DHT11",
+    "en": "DHT11 temperature and humidity sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Sends temperature and humidity on one wire."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C5"]
+  },
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "data",
+      "label": "DATA",
+      "role": "bidirectional"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["dht11"]
+  }
+}

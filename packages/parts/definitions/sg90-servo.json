@@ -1,0 +1,58 @@
+{
+  "formatVersion": 1,
+  "id": "sg90-servo",
+  "simulates": "servo",
+  "status": "simulated",
+  "family": "actuator",
+  "tier": 1,
+  "name": {
+    "bn": "SG90 সার্ভো",
+    "en": "SG90 micro servo"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Turns its arm to the angle the pulse width asks for."
+  },
+  "model": {
+    "level": "timing",
+    "simplified": ["Angle follows pulse width exactly; no speed limit, load or supply dip."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["B6", "C7"]
+  },
+  "pins": [
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power",
+      "volts": [4.8, 6]
+    },
+    {
+      "id": "signal",
+      "label": "SIG",
+      "role": "input",
+      "volts": [0, 5.5]
+    }
+  ],
+  "placement": {
+    "idPrefix": "SRV",
+    "offsets": [0, 1, 2]
+  },
+  "defaults": {},
+  "variants": [
+    {
+      "id": "sg90-180",
+      "name": "SG90, 180°",
+      "measured": false
+    }
+  ],
+  "catalog": {
+    "keywords": ["sg90"]
+  }
+}

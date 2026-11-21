@@ -1,3 +1,4 @@
+import { partDefinition } from '@banglalab/parts';
 import { holeAt, holeCoordinates, holeDistance, isHole, type HoleId } from './breadboard';
 import {
   BATTERY_TERMINALS,
@@ -42,12 +43,33 @@ export type BoardPartType = BoardPart['type'];
  * and how far flexible leads can be bent apart, in hole pitches. Parts with no
  * `maxSpan` are rigid: their leads keep their spacing and move only together.
  */
-export const PART_SHAPES: Record<
-  BoardPartType,
-  { idPrefix: string; pins: readonly string[]; offsets: readonly number[]; maxSpan?: number }
-> = {
-  resistor: { idPrefix: 'R', pins: ['a', 'b'], offsets: [0, 4], maxSpan: 12 },
-  led: { idPrefix: 'LED', pins: ['anode', 'cathode'], offsets: [0, 1], maxSpan: 4 },
+/**
+ * A part's shape, read from its definition in `@banglalab/parts`. Parts are
+ * being moved from this table to their definitions one at a time; a test keeps
+ * the two in agreement for every part that has both.
+ */
+function shapeOf(definitionId: string): PartShape {
+  const definition = partDefinition(definitionId);
+  if (!definition.placement) throw new Error(`Part ${definitionId} has no placement.`);
+  const { idPrefix, offsets, maxSpan } = definition.placement;
+  return {
+    idPrefix,
+    pins: definition.pins.map((pin) => pin.id),
+    offsets,
+    ...(maxSpan === undefined ? {} : { maxSpan }),
+  };
+}
+
+export interface PartShape {
+  idPrefix: string;
+  pins: readonly string[];
+  offsets: readonly number[];
+  maxSpan?: number;
+}
+
+export const PART_SHAPES: Record<BoardPartType, PartShape> = {
+  resistor: shapeOf('resistor'),
+  led: shapeOf('led-5mm'),
   button: { idPrefix: 'SW', pins: ['a', 'b'], offsets: [0, 2], maxSpan: 4 },
   potentiometer: { idPrefix: 'POT', pins: ['a', 'wiper', 'b'], offsets: [0, 1, 2] },
   capacitor: { idPrefix: 'C', pins: ['a', 'b'], offsets: [0, 2], maxSpan: 6 },
@@ -62,7 +84,7 @@ export const PART_SHAPES: Record<
   ir: { idPrefix: 'IR', pins: ['vcc', 'out', 'gnd'], offsets: [0, 1, 2] },
   relay: { idPrefix: 'K', pins: ['coil1', 'coil2', 'com', 'no'], offsets: [0, 1, 3, 4] },
   servo: { idPrefix: 'SRV', pins: ['gnd', 'vcc', 'signal'], offsets: [0, 1, 2] },
-  ultrasonic: { idPrefix: 'US', pins: ['vcc', 'trig', 'echo', 'gnd'], offsets: [0, 1, 2, 3] },
+  ultrasonic: shapeOf('hc-sr04'),
   lcd: { idPrefix: 'LCD', pins: LCD_PINS, offsets: LCD_PINS.map((_, i) => i) },
 };
 

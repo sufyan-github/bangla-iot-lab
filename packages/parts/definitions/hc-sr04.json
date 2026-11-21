@@ -1,0 +1,70 @@
+{
+  "formatVersion": 1,
+  "id": "hc-sr04",
+  "simulates": "ultrasonic",
+  "status": "simulated",
+  "family": "sensor",
+  "tier": 1,
+  "name": {
+    "bn": "HC-SR04 দূরত্ব সেন্সর",
+    "en": "HC-SR04 ultrasonic distance sensor"
+  },
+  "summary": {
+    "bn": "শব্দের প্রতিধ্বনি দিয়ে দূরত্ব মাপে।",
+    "en": "Measures distance by timing an echo."
+  },
+  "model": {
+    "level": "timing",
+    "simplified": [
+      "The echo pulse length is exact for the set distance; no beam angle, soft targets or missed echoes.",
+      "Speed of sound is fixed; temperature is ignored."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["B7", "C8"]
+  },
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power",
+      "volts": [4.5, 5.5]
+    },
+    {
+      "id": "trig",
+      "label": "TRIG",
+      "role": "input",
+      "volts": [0, 5.5]
+    },
+    {
+      "id": "echo",
+      "label": "ECHO",
+      "role": "output",
+      "volts": [0, 5.5]
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
+  "placement": {
+    "idPrefix": "US",
+    "offsets": [0, 1, 2, 3]
+  },
+  "defaults": {
+    "distance": 30
+  },
+  "variants": [
+    {
+      "id": "hc-sr04",
+      "name": "HC-SR04 (5 V echo)",
+      "note": "On a 3.3 V board the echo line needs a divider.",
+      "measured": false
+    }
+  ],
+  "catalog": {
+    "keywords": ["hc-sr04"]
+  }
+}

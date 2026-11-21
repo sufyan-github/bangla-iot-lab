@@ -1,0 +1,48 @@
+{
+  "formatVersion": 1,
+  "id": "capacitor",
+  "simulates": "capacitor",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 1,
+  "name": {
+    "bn": "ক্যাপাসিটর",
+    "en": "Capacitor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Stores charge."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["Ideal: no leakage, series resistance or polarity."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["A9"]
+  },
+  "pins": [
+    {
+      "id": "a",
+      "label": "A",
+      "role": "passive"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "C",
+    "offsets": [0, 2],
+    "maxSpan": 6
+  },
+  "defaults": {
+    "capacitance": 0.0001
+  },
+  "variants": [],
+  "catalog": {
+    "keywords": ["capacitor"]
+  }
+}

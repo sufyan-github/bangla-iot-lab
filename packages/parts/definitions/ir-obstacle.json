@@ -1,0 +1,53 @@
+{
+  "formatVersion": 1,
+  "id": "ir-obstacle",
+  "simulates": "ir",
+  "status": "generic",
+  "statusNote": "A generic on/off sensor stands in. Range and the trimmer are not modelled.",
+  "family": "sensor",
+  "tier": 1,
+  "name": {
+    "bn": "IR বাধা সেন্সর",
+    "en": "IR obstacle sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Its output changes when something is in front of it."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["On or off as set by hand; no distance or surface colour."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C16"]
+  },
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "out",
+      "label": "OUT",
+      "role": "output"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
+  "placement": {
+    "idPrefix": "IR",
+    "offsets": [0, 1, 2]
+  },
+  "defaults": {
+    "detected": false
+  },
+  "variants": [],
+  "catalog": {
+    "keywords": ["ir obstacle"]
+  }
+}

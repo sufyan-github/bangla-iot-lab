@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "jsn-sr04t",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 2,
+  "name": {
+    "bn": "JSN-SR04T waterproof ultrasonic sensor",
+    "en": "JSN-SR04T waterproof ultrasonic sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["jsn-sr04t", "waterproof ultrasonic"]
+  }
+}

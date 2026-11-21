@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "id": "dc-motor",
+  "simulates": "motor",
+  "status": "simulated",
+  "family": "actuator",
+  "tier": 2,
+  "name": {
+    "bn": "মোটর",
+    "en": "DC motor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Turns when current flows; reverses with polarity."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["A resistor; no back-EMF, inertia or stall current."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "a",
+      "label": "A",
+      "role": "passive"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "M",
+    "offsets": [0, 3],
+    "maxSpan": 6
+  },
+  "defaults": {},
+  "variants": [],
+  "catalog": {
+    "keywords": []
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "enclosure",
+  "simulates": null,
+  "status": "not-simulated",
+  "statusNote": "An accessory with no electrical behaviour worth modelling.",
+  "family": "accessory",
+  "tier": 3,
+  "name": {
+    "bn": "Box or enclosure",
+    "en": "Box or enclosure"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Bought for the project but has nothing to simulate."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["junction box", "storage box", "ip65", "case", "3d-printed", "3d printing"]
+  }
+}

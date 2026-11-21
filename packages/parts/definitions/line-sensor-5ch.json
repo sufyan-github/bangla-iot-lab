@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "line-sensor-5ch",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 2,
+  "name": {
+    "bn": "5-channel IR line sensor",
+    "en": "5-channel IR line sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["line sensor array"]
+  }
+}

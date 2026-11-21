@@ -1,0 +1,115 @@
+{
+  "formatVersion": 1,
+  "id": "lcd-1602",
+  "simulates": "lcd",
+  "status": "simulated",
+  "family": "display",
+  "tier": 3,
+  "name": {
+    "bn": "LCD ১৬×২",
+    "en": "16×2 character LCD"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Shows two lines of sixteen characters."
+  },
+  "model": {
+    "level": "timing",
+    "simplified": ["4-bit HD44780 commands for text; no custom characters or contrast."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["B8"]
+  },
+  "pins": [
+    {
+      "id": "vss",
+      "label": "VSS",
+      "role": "ground"
+    },
+    {
+      "id": "vdd",
+      "label": "VDD",
+      "role": "power"
+    },
+    {
+      "id": "v0",
+      "label": "V0",
+      "role": "input"
+    },
+    {
+      "id": "rs",
+      "label": "RS",
+      "role": "input"
+    },
+    {
+      "id": "rw",
+      "label": "RW",
+      "role": "input"
+    },
+    {
+      "id": "e",
+      "label": "E",
+      "role": "input"
+    },
+    {
+      "id": "d0",
+      "label": "D0",
+      "role": "input"
+    },
+    {
+      "id": "d1",
+      "label": "D1",
+      "role": "input"
+    },
+    {
+      "id": "d2",
+      "label": "D2",
+      "role": "input"
+    },
+    {
+      "id": "d3",
+      "label": "D3",
+      "role": "input"
+    },
+    {
+      "id": "d4",
+      "label": "D4",
+      "role": "input"
+    },
+    {
+      "id": "d5",
+      "label": "D5",
+      "role": "input"
+    },
+    {
+      "id": "d6",
+      "label": "D6",
+      "role": "input"
+    },
+    {
+      "id": "d7",
+      "label": "D7",
+      "role": "input"
+    },
+    {
+      "id": "a",
+      "label": "A",
+      "role": "power"
+    },
+    {
+      "id": "k",
+      "label": "K",
+      "role": "ground"
+    }
+  ],
+  "placement": {
+    "idPrefix": "LCD",
+    "offsets": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  },
+  "defaults": {},
+  "variants": [],
+  "catalog": {
+    "keywords": ["lcd 16x2", "1602"]
+  }
+}

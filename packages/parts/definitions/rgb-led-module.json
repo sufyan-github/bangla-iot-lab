@@ -1,0 +1,57 @@
+{
+  "formatVersion": 1,
+  "id": "rgb-led-module",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "output",
+  "tier": 1,
+  "name": {
+    "bn": "RGB LED মডিউল",
+    "en": "RGB LED module"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Three LEDs in one, for mixing colours."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C20"]
+  },
+  "pins": [
+    {
+      "id": "r",
+      "label": "R",
+      "role": "input"
+    },
+    {
+      "id": "g",
+      "label": "G",
+      "role": "input"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "role": "input"
+    },
+    {
+      "id": "gnd",
+      "label": "−",
+      "role": "ground"
+    }
+  ],
+  "variants": [
+    {
+      "id": "common-cathode",
+      "name": "Common cathode",
+      "measured": false
+    }
+  ],
+  "catalog": {
+    "keywords": ["rgb led module"]
+  }
+}

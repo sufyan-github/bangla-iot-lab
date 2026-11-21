@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "id": "pir-hc-sr501",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 1,
+  "name": {
+    "bn": "PIR গতি সেন্সর",
+    "en": "HC-SR501 motion sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Its output goes high when something warm moves."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C15"]
+  },
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "out",
+      "label": "OUT",
+      "role": "output"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["hc-sr501", "pir"]
+  }
+}

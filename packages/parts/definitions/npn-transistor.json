@@ -1,0 +1,50 @@
+{
+  "formatVersion": 1,
+  "id": "npn-transistor",
+  "simulates": "transistor",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 2,
+  "name": {
+    "bn": "ট্রানজিস্টর",
+    "en": "NPN transistor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "A small base current switches a larger collector current."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["Ebers-Moll transport model with fixed gain; no frequency limits or heating."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["A10"]
+  },
+  "pins": [
+    {
+      "id": "collector",
+      "label": "C",
+      "role": "passive"
+    },
+    {
+      "id": "base",
+      "label": "B",
+      "role": "passive"
+    },
+    {
+      "id": "emitter",
+      "label": "E",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "Q",
+    "offsets": [0, 1, 2]
+  },
+  "defaults": {},
+  "variants": [],
+  "catalog": {
+    "keywords": ["2n3904", "2n2222", "bc547"]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "id": "push-button",
+  "simulates": "button",
+  "status": "simulated",
+  "family": "basic",
+  "tier": 1,
+  "name": {
+    "bn": "পুশ বোতাম",
+    "en": "Push button"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Joins its two legs while it is held down."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": ["No contact bounce."]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["B4"]
+  },
+  "pins": [
+    {
+      "id": "a",
+      "label": "A",
+      "role": "passive"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "role": "passive"
+    }
+  ],
+  "placement": {
+    "idPrefix": "SW",
+    "offsets": [0, 2],
+    "maxSpan": 4
+  },
+  "defaults": {},
+  "variants": [],
+  "catalog": {
+    "keywords": ["push button", "tactile"]
+  }
+}

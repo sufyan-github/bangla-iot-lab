@@ -17,11 +17,14 @@ import {
   movePin,
   setWireBends,
   moveWireEnd,
+  PART_SHAPES,
   placePart,
   removeItem,
   updateProps,
+  type BoardPartType,
   type EditResult,
 } from './editing';
+import { PART_DEFINITIONS } from '@banglalab/parts';
 import { ledCircuitExample, unoCircuitExample } from './examples';
 
 function ok(result: EditResult): CircuitDocument {
@@ -233,6 +236,40 @@ describe('the rest of the parts library', () => {
       error: 'invalid-value',
     });
     expect(isCircuitDocument(circuit)).toBe(true);
+  });
+});
+
+describe('part shapes and part definitions', () => {
+  it('agree for every part that plugs into the board', () => {
+    // Parts move from the PART_SHAPES table to JSON definitions one at a time.
+    // Until all have moved, this keeps the two descriptions of a part identical.
+    const modelled = PART_DEFINITIONS.filter(
+      (definition) =>
+        definition.placement &&
+        definition.simulates !== null &&
+        (definition.status === 'simulated' ||
+          // A stand-in definition describes the generic part it borrows, not its own legs.
+          (definition.status === 'generic' && definition.model.level !== 'none')),
+    );
+    expect(modelled.length).toBe(Object.keys(PART_SHAPES).length);
+    for (const definition of modelled) {
+      const shape = PART_SHAPES[definition.simulates as BoardPartType];
+      expect(shape, definition.id).toBeDefined();
+      expect(
+        {
+          idPrefix: definition.placement!.idPrefix,
+          pins: definition.pins.map((pin) => pin.id),
+          offsets: definition.placement!.offsets,
+          maxSpan: definition.placement!.maxSpan,
+        },
+        definition.id,
+      ).toEqual({
+        ...shape,
+        pins: [...shape.pins],
+        offsets: [...shape.offsets],
+        maxSpan: shape.maxSpan,
+      });
+    }
   });
 });
 

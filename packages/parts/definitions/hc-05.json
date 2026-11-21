@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "hc-05",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "communication",
+  "tier": 2,
+  "name": {
+    "bn": "HC-05 Bluetooth module",
+    "en": "HC-05 Bluetooth module"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["hc-05"]
+  }
+}

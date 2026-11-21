@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "id": "buzzer-module-active",
+  "simulates": "buzzer",
+  "status": "generic",
+  "statusNote": "The bare active buzzer stands in. The three-pin board is not modelled.",
+  "family": "output",
+  "tier": 1,
+  "name": {
+    "bn": "অ্যাকটিভ বাজার মডিউল",
+    "en": "Active buzzer module"
+  },
+  "summary": {
+    "bn": "",
+    "en": "A buzzer on a three-pin board."
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": ["C10"]
+  },
+  "pins": [
+    {
+      "id": "s",
+      "label": "S",
+      "role": "input"
+    },
+    {
+      "id": "nc",
+      "label": "NC",
+      "role": "passive"
+    },
+    {
+      "id": "gnd",
+      "label": "−",
+      "role": "ground"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["active buzzer"]
+  }
+}

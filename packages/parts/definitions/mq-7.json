@@ -1,0 +1,30 @@
+{
+  "formatVersion": 1,
+  "id": "mq-7",
+  "simulates": null,
+  "status": "planned",
+  "statusNote": "Not built yet.",
+  "family": "sensor",
+  "tier": 2,
+  "name": {
+    "bn": "MQ-7 carbon monoxide sensor",
+    "en": "MQ-7 carbon monoxide sensor"
+  },
+  "summary": {
+    "bn": "",
+    "en": "Needed by a shortlisted project."
+  },
+  "model": {
+    "level": "none",
+    "simplified": []
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [],
+  "variants": [],
+  "catalog": {
+    "keywords": ["mq-7"]
+  }
+}
