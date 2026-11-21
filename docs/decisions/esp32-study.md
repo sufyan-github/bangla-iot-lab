@@ -143,9 +143,26 @@ circuit simulation.
 | 5     | 19       | 0                | —                                   |
 
 Levels 3 to 5 stop at the first header the library does not have yet. Counting
-that first missing header per sketch: `DHT.h` 18, `WiFi.h` 18, `Wire.h` 16,
-`ESP32Servo.h` 9, `Preferences.h` 6. That list is the remaining work for this
-option, in order.
+every header those 67 sketches include, beyond the board's own, there are
+twelve:
+
+| Header                                    | Sketches that include it | Needed from level |
+| ----------------------------------------- | ------------------------ | ----------------- |
+| `DHT.h`                                   | 38                       | 3                 |
+| `Wire.h`                                  | 26                       | 3                 |
+| `Adafruit_GFX.h` and `Adafruit_SSD1306.h` | 24                       | 3                 |
+| `Preferences.h`                           | 24                       | 4                 |
+| `ESP32Servo.h`                            | 14                       | 3                 |
+| `WiFi.h`                                  | 19                       | 5                 |
+| `WebServer.h`                             | 10                       | 5                 |
+| `ESPmDNS.h`                               | 9                        | 5                 |
+| `HTTPClient.h`                            | 6                        | 5                 |
+| `WiFiClientSecure.h`                      | 5                        | 5                 |
+| `time.h`                                  | 3                        | 5                 |
+
+The first six cover every sketch at levels 3 and 4, 48 sketches. The last six are
+the network, level 5. That list is the remaining work for this option; how much
+work each is has not been estimated yet.
 
 ### Behaviour
 
