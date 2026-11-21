@@ -1,0 +1,225 @@
+import {
+  BATTERY_TERMINALS,
+  PART_SHAPES,
+  UNO_TERMINALS,
+  isHole,
+  stripOf,
+  unoPinNumber,
+  type CircuitComponent,
+  type CircuitDocument,
+} from '@banglalab/shared';
+
+/**
+ * What a schematic diagram is made of, and the first step of drawing one:
+ * finding which legs of the breadboard circuit are joined (the nets).
+ * Pure data in, pure data out: no React, so it is tested without a browser.
+ */
+
+export type Side = 'left' | 'right' | 'up' | 'down';
+export type NetKind = 'supply' | 'ground' | 'signal';
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface DiagramPin {
+  name: string;
+  /** Text printed beside the leg on box symbols. */
+  label: string;
+  /** Index into `nets`, or null when nothing else is joined to this leg. */
+  net: number | null;
+  /** Where the leg ends, in diagram units. */
+  x: number;
+  y: number;
+  side: Side;
+}
+
+export interface DiagramPart {
+  id: string;
+  component: CircuitComponent;
+  /** Where the symbol is drawn from: its left edge, and the line its main legs lie on. */
+  x: number;
+  y: number;
+  width: number;
+  /** Two-leg symbols are mirrored when their second leg faces the supply. */
+  flipped: boolean;
+  /** For parts drawn as a labelled box: its size, and how far its top edge is above `y`. */
+  box: { width: number; height: number; top: number } | null;
+  pins: DiagramPin[];
+}
+
+export interface Segment {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export interface DiagramNet {
+  kind: NetKind;
+  /** "componentId.pin" of every leg on this net. */
+  legs: string[];
+  /** The source that names a rail: a battery's voltage or the board's 5 V. */
+  source: { type: 'battery'; voltage: number } | { type: 'uno' } | null;
+  segments: Segment[];
+  /** Where three or more wire ends meet. */
+  dots: Point[];
+  /** Left end of the rail, where its name is written; null for nets joined directly. */
+  labelAt: Point | null;
+  /** Right end of a ground rail, where the ground symbol hangs. */
+  groundAt: Point | null;
+}
+
+/**
+ * The end of a wire that is not drawn all the way: a supply or ground symbol, or
+ * a flag carrying a name. Flags with the same name are joined, as in any schematic.
+ */
+export interface DiagramTerminal {
+  kind: 'supply' | 'ground' | 'flag';
+  net: number;
+  x: number;
+  y: number;
+  /** The way the symbol or flag points away from the wire. */
+  side: Side;
+  /** The name on a flag; null when it is the net's own supply or ground name. */
+  text: string | null;
+}
+
+export interface DiagramLayout {
+  width: number;
+  height: number;
+  parts: DiagramPart[];
+  nets: DiagramNet[];
+  terminals: DiagramTerminal[];
+}
+
+/** Parts drawn as a labelled box with named legs. */
+export const BOX_TYPES = new Set([
+  'temperature',
+  'soil',
+  'ir',
+  'relay',
+  'servo',
+  'ultrasonic',
+  'lcd',
+  'uno',
+]);
+/** Boxes with so many legs that only the connected ones are drawn. */
+export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno']);
+
+export function pinNames(component: CircuitComponent): readonly string[] {
+  if (component.type === 'battery') return BATTERY_TERMINALS;
+  if (component.type === 'uno') return UNO_TERMINALS;
+  return PART_SHAPES[component.type].pins;
+}
+
+export function pinLabel(component: CircuitComponent, pin: string): string {
+  if (component.type === 'uno') {
+    if (pin.startsWith('gnd')) return 'GND';
+    if (pin === '5v') return '5V';
+    const number = unoPinNumber(pin);
+    if (number === null) return pin.toUpperCase();
+    return number >= 14 ? `A${number - 14}` : `D${number}`;
+  }
+  const short: Record<string, string> = { anode: '+', cathode: '−', pos: '+', neg: '−' };
+  return short[pin] ?? pin.toUpperCase();
+}
+
+export const isSupplyLeg = (component: CircuitComponent, pin: string) =>
+  (component.type === 'battery' && pin === 'pos') || (component.type === 'uno' && pin === '5v');
+export const isGroundLeg = (component: CircuitComponent, pin: string) =>
+  (component.type === 'battery' && pin === 'neg') ||
+  (component.type === 'uno' && pin.startsWith('gnd'));
+
+export interface Leg {
+  component: CircuitComponent;
+  pin: string;
+}
+
+/** Groups every leg in the circuit by what it is electrically joined to. */
+export function findNets(circuit: CircuitDocument): Leg[][] {
+  const parent = new Map<string, string>();
+  const find = (key: string): string => {
+    const up = parent.get(key);
+    if (up === undefined) {
+      parent.set(key, key);
+      return key;
+    }
+    if (up === key) return key;
+    const root = find(up);
+    parent.set(key, root);
+    return root;
+  };
+  const join = (a: string, b: string) => parent.set(find(a), find(b));
+  // Holes in one strip are joined inside the breadboard.
+  const node = (endpoint: string) => (isHole(endpoint) ? `strip:${stripOf(endpoint)}` : endpoint);
+
+  for (const wire of circuit.wires) join(node(wire.from), node(wire.to));
+  const groups = new Map<string, Leg[]>();
+  for (const component of circuit.components) {
+    // The board's two ground sockets are one net inside the board.
+    if (component.type === 'uno') join(`${component.id}.gnd`, `${component.id}.gnd2`);
+  }
+  for (const component of circuit.components) {
+    for (const pin of pinNames(component)) {
+      const endpoint =
+        'pins' in component
+          ? (component.pins as Record<string, string>)[pin]!
+          : `${component.id}.${pin}`;
+      const root = find(node(endpoint));
+      groups.set(root, [...(groups.get(root) ?? []), { component, pin }]);
+    }
+  }
+  // The board's two ground sockets count as one leg; a net needs two legs to be worth drawing.
+  return [...groups.values()]
+    .map((legs) => legs.filter((leg) => !(leg.component.type === 'uno' && leg.pin === 'gnd2')))
+    .filter((legs) => legs.length >= 2);
+}
+
+export function classify(legs: Leg[]): NetKind {
+  const supply = legs.some((leg) => isSupplyLeg(leg.component, leg.pin));
+  const ground = legs.some((leg) => isGroundLeg(leg.component, leg.pin));
+  if (supply && !ground) return 'supply';
+  if (ground && !supply) return 'ground';
+  return 'signal';
+}
+
+/** The nets of a circuit, with what each one is and a lookup from leg to net. */
+export interface Analysis {
+  netLegs: Leg[][];
+  kinds: NetKind[];
+  /** The net a leg is on, or null when nothing else is joined to it. */
+  netOfLeg(component: CircuitComponent, pin: string): number | null;
+  /** The parts of a drawn net that do not depend on the layout. */
+  describe(net: number): Pick<DiagramNet, 'kind' | 'legs' | 'source'>;
+}
+
+export function analyse(circuit: CircuitDocument): Analysis {
+  const netLegs = findNets(circuit);
+  const kinds = netLegs.map(classify);
+  const netOf = new Map<string, number>();
+  netLegs.forEach((legs, index) => {
+    for (const leg of legs) netOf.set(`${leg.component.id}.${leg.pin}`, index);
+  });
+  return {
+    netLegs,
+    kinds,
+    netOfLeg: (component, pin) =>
+      netOf.get(`${component.id}.${pin === 'gnd2' ? 'gnd' : pin}`) ?? null,
+    describe(net) {
+      const legs = netLegs[net]!;
+      const supplyLeg = legs.find((leg) => isSupplyLeg(leg.component, leg.pin));
+      return {
+        kind: kinds[net]!,
+        legs: legs.map((leg) => `${leg.component.id}.${leg.pin}`),
+        source:
+          supplyLeg?.component.type === 'battery'
+            ? { type: 'battery', voltage: supplyLeg.component.props.voltage }
+            : supplyLeg?.component.type === 'uno'
+              ? { type: 'uno' }
+              : null,
+      };
+    },
+  };
+}

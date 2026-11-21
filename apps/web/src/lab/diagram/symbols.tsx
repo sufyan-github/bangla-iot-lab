@@ -112,14 +112,15 @@ function twoLegSymbol(type: CircuitComponent['type'], state: SymbolState): React
   }
 }
 
-/** Legs of a box symbol, with their names inside the box. */
+/** A box symbol: each leg runs from its tip to the nearest edge, with its name just inside. */
 function BoxSymbol({ part, name }: { part: DiagramPart; name: string }) {
   const box = part.box!;
+  const bottom = box.top + box.height;
   return (
     <>
       <rect
         x={0}
-        y={-box.height / 2}
+        y={box.top}
         width={box.width}
         height={box.height}
         rx={5}
@@ -127,7 +128,7 @@ function BoxSymbol({ part, name }: { part: DiagramPart; name: string }) {
       />
       <text
         x={box.width / 2}
-        y={4.5}
+        y={box.top + box.height / 2 + 4.5}
         textAnchor="middle"
         fontSize={12.5}
         fontWeight={700}
@@ -138,14 +139,20 @@ function BoxSymbol({ part, name }: { part: DiagramPart; name: string }) {
       </text>
       {part.pins.map((pin) => {
         const x = pin.x - part.x;
-        const edge = pin.side === 'up' ? -box.height / 2 : box.height / 2;
+        const y = pin.y - part.y;
+        const sideways = pin.side === 'left' || pin.side === 'right';
+        const leg = sideways
+          ? `M${pin.side === 'left' ? 0 : box.width} ${y}H${x}`
+          : `M${x} ${pin.side === 'up' ? box.top : bottom}V${y}`;
+        const label = sideways
+          ? { x: pin.side === 'left' ? 5 : box.width - 5, y: y + 3 }
+          : { x, y: pin.side === 'up' ? box.top + 11 : bottom - 4.5 };
         return (
           <g key={pin.name}>
-            <path d={`M${x} ${edge}V${pin.y}`} />
+            <path d={leg} />
             <text
-              x={x}
-              y={pin.side === 'up' ? edge + 11 : edge - 4.5}
-              textAnchor="middle"
+              {...label}
+              textAnchor={sideways ? (pin.side === 'left' ? 'start' : 'end') : 'middle'}
               fontSize={8.5}
               fontWeight={600}
               stroke="none"
@@ -188,11 +195,12 @@ export function PartSymbol(props: { part: DiagramPart; name: string; state: Symb
   if (component.type === 'potentiometer') {
     const wiper = part.pins.find((pin) => pin.name === 'wiper')!;
     const up = wiper.side === 'up';
+    const wiperY = wiper.y - part.y;
     const tip = up ? -9 : 9;
     return (
       <>
         <path d={`M0 0H20${ZIGZAG.slice(5)}H${W}`} />
-        <path d={`M40 ${wiper.y}V${tip}`} />
+        <path d={`M40 ${wiperY}V${tip}`} />
         <path d={`M40 ${tip}l-4.5 ${up ? -7 : 7}h9z`} fill="currentColor" strokeWidth={1} />
       </>
     );

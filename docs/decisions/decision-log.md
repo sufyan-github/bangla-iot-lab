@@ -311,3 +311,29 @@ brushed metal, board gloss), metal legs and cast shadows. Photographs were not
 used: they would need licensed images for twenty parts, add megabytes to an
 offline-first download, and could not show state (a lit LED, a turned knob, a
 closed relay) without a second image per state.
+
+## D-041 — Board circuits are drawn as a tree from the board, with supply and ground symbols
+
+Supersedes the layout part of D-039 for circuits that contain a board; circuits
+without one keep the row-between-rails layout, which suits a battery loop.
+
+The board stands on the left and each pin in use leads off to the right through
+the parts wired to it, branching where a net has several legs. Supply and ground
+are not wired across the page: each leg on them ends in its own symbol. That one
+change removes most of the wiring that made busy diagrams unreadable, and it is
+how such circuits are drawn by hand and in Proteus. A module wired to several
+pins is entered on parallel lines, and the board's pins are listed in the order
+that makes those lines straight rather than in numerical order. Two parts in
+parallel are closed with a short wire.
+
+The drawing is a tree, so a connection that would close a loop in it (a part
+whose far leg returns to another board pin, for example) is not routed. Both
+ends get a flag with the same name, the board pin's name where there is one.
+This is always electrically correct and standard schematic practice; routing
+such wires is left for when it proves to matter. Parts the board does not lead
+to, batteries above all, are drawn on their own underneath.
+
+Every layout is checked by one property test (`expectSound` in
+`layout.test.ts`) on several circuits: wires are horizontal or vertical, every
+leg of a net is joined by wire or by a shared terminal, wires of different nets
+never run along each other, no wire crosses a symbol, and symbols do not overlap.

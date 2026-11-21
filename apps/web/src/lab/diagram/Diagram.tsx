@@ -8,6 +8,8 @@ import { PartSymbol, type SymbolState } from './symbols';
 
 const INK = '#13231f';
 const SELECTION = '#e8a21a';
+/** Which way a flag's stem leaves the wire. */
+const STEM = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] } as const;
 
 /** Where a symbol's name and value are written, relative to its left edge and the baseline. */
 function labelPlace(part: DiagramPart): {
@@ -23,7 +25,8 @@ function labelPlace(part: DiagramPart): {
     return { x: 40, y: wiperUp ? 24 : -17, anchor: 'middle' };
   }
   if (type === 'ldr') return { x: 40, y: -32, anchor: 'middle' };
-  if (type === 'led') return { x: 40, y: 27, anchor: 'middle' };
+  // An LED's arrows and a button's plunger are above the line, so their names go below it.
+  if (type === 'led' || type === 'button') return { x: 40, y: 27, anchor: 'middle' };
   return { x: 40, y: -19, anchor: 'middle' };
 }
 
@@ -129,11 +132,75 @@ export function Diagram() {
             </g>
           ))}
 
+          {layout.terminals.map((terminal, index) => {
+            const net = layout.nets[terminal.net]!;
+            const { x, y } = terminal;
+            if (terminal.kind === 'ground') {
+              return (
+                <path
+                  key={index}
+                  data-terminal="ground"
+                  d={`M${x} ${y}v8m-10 0h20m-16 5h12m-8.5 5h5`}
+                />
+              );
+            }
+            if (terminal.kind === 'supply') {
+              return (
+                <g key={index} data-terminal="supply">
+                  <path d={`M${x} ${y}v-8m-8 0h16`} stroke="#b8281f" />
+                  <text
+                    x={x}
+                    y={y - 13}
+                    textAnchor="middle"
+                    fontSize={11}
+                    fontWeight={700}
+                    stroke="none"
+                    fill="#b8281f"
+                  >
+                    {railName(net)}
+                  </text>
+                </g>
+              );
+            }
+            // A flag: a short stem, then the name of the net it belongs to.
+            const [dx, dy] = STEM[terminal.side];
+            const text = terminal.text ?? railName(net);
+            const width = text.length * 6.4 + 10;
+            const cx = x + dx * (9 + width / 2);
+            const cy = y + dy * 17;
+            return (
+              <g key={index} data-terminal="flag" data-flag={text}>
+                <path d={`M${x} ${y}l${dx * 9} ${dy * 9}`} />
+                <rect
+                  x={cx - width / 2}
+                  y={cy - 8}
+                  width={width}
+                  height={16}
+                  rx={4}
+                  fill="var(--color-amber-soft)"
+                  stroke="#8a5a00"
+                  strokeWidth={1.2}
+                />
+                <text
+                  x={cx}
+                  y={cy + 3.8}
+                  textAnchor="middle"
+                  fontSize={10.5}
+                  fontWeight={700}
+                  stroke="none"
+                  fill="#8a5a00"
+                >
+                  {text}
+                </text>
+              </g>
+            );
+          })}
+
           {layout.parts.map((part) => {
             const place = labelPlace(part);
             const value = valueOf(part.component);
             const selected = part.id === selectedId;
-            const top = part.box ? -part.box.height / 2 - 14 : -34;
+            const top = part.box ? part.box.top - 14 : -34;
             const height = part.box ? part.box.height + 28 : 68;
             return (
               <g
@@ -141,7 +208,7 @@ export function Diagram() {
                 data-symbol={part.id}
                 data-type={part.component.type}
                 data-selected={selected}
-                transform={`translate(${part.x} ${layout.baseline})`}
+                transform={`translate(${part.x} ${part.y})`}
                 style={{ cursor: 'pointer' }}
                 onPointerDown={(event) => {
                   event.stopPropagation();

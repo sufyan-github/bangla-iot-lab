@@ -59,8 +59,11 @@ or pick a program, upload it, and watch the program drive the circuit:
 - **Realistic parts.** All twenty parts, the battery and the board are redrawn
   with shading, metal legs and shadows.
 
-Not done: the diagram cannot be edited, and a busy circuit is drawn as many
-parallel tracks rather than the way a person would arrange it. Hover and drag-to-wire need a mouse or pen; on touch there is no hover
+  A circuit built round the board is drawn as a person would draw it: board on
+  the left, each pin leading off through its parts, supply and ground as symbols.
+
+Not done: the diagram cannot be edited. A connection that closes a loop in the
+drawing is shown by a named flag at both ends instead of a wire. Hover and drag-to-wire need a mouse or pen; on touch there is no hover
 and wiring stays tap-tap. None of this has been tried on a real phone.
 
 ## 2. Phase 1 task list
@@ -113,7 +116,7 @@ of section 3.
 | Suite                                                                                       | Result                          |
 | ------------------------------------------------------------------------------------------- | ------------------------------- |
 | ESLint, Prettier, TypeScript                                                                | clean                           |
-| Unit                                                                                        | 224 passed, 0 failed, 0 skipped |
+| Unit                                                                                        | 232 passed, 0 failed, 0 skipped |
 | Integration (PostgreSQL 18, avr-gcc, bubblewrap, Arduino core and libraries, Pico firmware) | 28 passed                       |
 | End to end (Chromium; desktop and phone profiles)                                           | 58 passed                       |
 
