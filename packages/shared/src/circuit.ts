@@ -13,10 +13,11 @@ import { Value } from 'typebox/value';
  * 3 — adds the switch, diode, LDR, buzzer, motor, NPN transistor, relay and
  *     the temperature, soil-moisture and IR sensor modules.
  * 4 — adds the servo, ultrasonic distance sensor and character LCD.
- * Each version only adds part types, so an older document is valid in a newer
- * version apart from the number.
+ * 5 — batteries and the board may carry `at`, where the student moved them to.
+ * Each version only adds part types or optional fields, so an older document
+ * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 4;
+export const CIRCUIT_SCHEMA_VERSION = 5;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -26,10 +27,22 @@ const Endpoint = Type.String({ maxLength: 60, pattern: '^[A-Za-z0-9_-]+(\\.[a-z0
 export const LED_COLORS = ['red', 'yellow', 'green', 'blue', 'white'] as const;
 export type LedColor = (typeof LED_COLORS)[number];
 
+/**
+ * Where an off-board part sits on the work surface: its top-left corner in hole
+ * pitches, measured from the breadboard's origin. Absent until the part is
+ * moved, and the editor then lays it out in its usual place.
+ */
+export const PositionSchema = Type.Object({
+  x: Type.Number({ minimum: -60, maximum: 120 }),
+  y: Type.Number({ minimum: -60, maximum: 120 }),
+});
+export type Position = Static<typeof PositionSchema>;
+
 export const BatterySchema = Type.Object({
   id: Id,
   type: Type.Literal('battery'),
   props: Type.Object({ voltage: Type.Number({ minimum: 0.1, maximum: 24 }) }),
+  at: Type.Optional(PositionSchema),
 });
 
 export const ResistorSchema = Type.Object({
@@ -224,6 +237,7 @@ export const UnoSchema = Type.Object({
   id: Id,
   type: Type.Literal('uno'),
   props: Type.Object({}),
+  at: Type.Optional(PositionSchema),
 });
 
 export const ComponentSchema = Type.Union([

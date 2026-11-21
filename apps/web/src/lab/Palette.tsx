@@ -201,7 +201,7 @@ export function Palette() {
                 data-testid={`tool-${item}`}
                 aria-pressed={tool === item}
                 onClick={() => choose(item)}
-                className={`flex min-h-14 min-w-[4.25rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`flex min-h-14 min-w-[4.25rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-1.5 text-sm font-medium whitespace-nowrap transition active:scale-95 ${
                   tool === item
                     ? 'border-amber bg-amber-soft text-ink'
                     : 'border-transparent text-ink-soft hover:bg-paper hover:text-ink'
@@ -216,8 +216,9 @@ export function Palette() {
           </Fragment>
         ))}
       </div>
+      {/* Two lines of room on narrow screens, so the board does not jump when the hint changes. */}
       <p
-        className="border-t border-line bg-paper px-4 py-1.5 text-sm text-ink-soft"
+        className="min-h-[3.55rem] border-t border-line bg-paper px-4 py-1.5 text-sm text-ink-soft sm:min-h-0"
         aria-live="polite"
       >
         {t(hint)}

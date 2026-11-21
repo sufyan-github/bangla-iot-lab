@@ -32,6 +32,24 @@ or pick a program, upload it, and watch the program drive the circuit:
 - **Offline:** starter programs ship with firmware, and uploaded firmware is
   saved with the project, so a board circuit runs again with no network.
 
+### Working on the canvas (21 November 2026)
+
+- **Everything can be moved.** Batteries and the UNO are dragged freely and stop
+  at the breadboard and at each other; their wires follow. The breadboard stays
+  fixed. Positions are saved with the circuit (schema version 5).
+- **Wires in one gesture.** With a mouse, press on a hole and let go on another,
+  with the wire tool or straight from the select tool. A wire picked up near its
+  end moves to another hole. Tap-tap wiring is unchanged and is what touch uses.
+- **Pointing shows what is there.** Every hole, leg, terminal and socket gets a
+  ring and a name ("LED1 +", "D9 PWM"), and the holes joined to it inside the
+  board light up as a band. A part tool shows the part where it would go.
+- **Carried parts follow the hand** and settle into the marked holes when let go.
+- Zoom with Ctrl + wheel, a button that fits the board to the window, and quick
+  flip/remove buttons on the canvas for the selected item.
+
+Not done: hover and drag-to-wire need a mouse or pen; on touch there is no hover
+and wiring stays tap-tap. None of this has been tried on a real phone.
+
 ## 2. Phase 1 task list
 
 | #   | Task                                           | Status                                                                                                          |
@@ -77,14 +95,14 @@ program react, turn a knob and see `analogRead` change, see the same signal on
 the oscilloscope and logic analyser. Not met for the phase as a whole, because
 of section 3.
 
-## 5. Test results (20 November 2026)
+## 5. Test results (21 November 2026)
 
 | Suite                                                                                       | Result                          |
 | ------------------------------------------------------------------------------------------- | ------------------------------- |
 | ESLint, Prettier, TypeScript                                                                | clean                           |
-| Unit                                                                                        | 196 passed, 0 failed, 0 skipped |
+| Unit                                                                                        | 206 passed, 0 failed, 0 skipped |
 | Integration (PostgreSQL 18, avr-gcc, bubblewrap, Arduino core and libraries, Pico firmware) | 28 passed                       |
-| End to end (Chromium; desktop and phone profiles)                                           | 36 passed                       |
+| End to end (Chromium; desktop and phone profiles)                                           | 48 passed                       |
 
 Electrical agreement with ngspice 45.2: DC within 1 µV / 1 nA on 15 circuits
 (including an NPN transistor saturated, in its active region and as a follower);

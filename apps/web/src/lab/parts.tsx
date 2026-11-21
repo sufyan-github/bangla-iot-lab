@@ -197,7 +197,10 @@ export function BatteryView(props: {
   );
 }
 
-/** Path of a wire: a gentle sag so wires that share a row stay tellable apart. */
+/**
+ * Path of a wire: it hangs slack between its ends like a real jumper wire, so
+ * wires that share a row stay tellable apart.
+ */
 export function wirePath(from: Point, to: Point): string {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -208,10 +211,22 @@ export function wirePath(from: Point, to: Point): string {
     nx = -nx;
     ny = -ny;
   }
-  const sag = Math.min(PITCH * 0.9, length * 0.14);
-  const cx = (from.x + to.x) / 2 + nx * sag;
-  const cy = (from.y + to.y) / 2 + ny * sag;
-  return `M${from.x} ${from.y}Q${cx} ${cy} ${to.x} ${to.y}`;
+  // Kept shallow enough that a wire does not cover the row of holes below it.
+  const sag = Math.min(PITCH * 0.8, length * 0.12);
+  const r = (value: number) => Math.round(value * 10) / 10;
+  const control = (along: number) =>
+    `${r(from.x + dx * along + nx * sag)} ${r(from.y + dy * along + ny * sag)}`;
+  return `M${r(from.x)} ${r(from.y)}C${control(0.22)} ${control(0.78)} ${r(to.x)} ${r(to.y)}`;
+}
+
+/** The plug on the end of a jumper wire: a dark sleeve with a metal pin in the hole. */
+function WirePlug({ at }: { at: Point }) {
+  return (
+    <>
+      <circle cx={at.x} cy={at.y} r={5.2} fill="#1f2426" stroke="rgba(0,0,0,.45)" strokeWidth={1} />
+      <circle cx={at.x} cy={at.y} r={2} fill="#c9d1d4" />
+    </>
+  );
 }
 
 export function WireView(props: {
@@ -221,14 +236,19 @@ export function WireView(props: {
   /** Amperes from `from` to `to`; undefined while the circuit is stopped. */
   current: number | undefined;
   selected: boolean;
+  /** True while one end is being carried to a new hole. */
+  lifted?: boolean;
 }) {
   const d = wirePath(props.from, props.to);
   const flowing = props.current !== undefined && Math.abs(props.current) > 1e-6;
   return (
-    <g fill="none" strokeLinecap="round">
+    <g fill="none" strokeLinecap="round" opacity={props.lifted ? 0.85 : 1}>
       {props.selected && <path d={d} stroke={SELECTION} strokeWidth={16} opacity={0.5} />}
-      <path d={d} stroke="rgba(0,0,0,.4)" strokeWidth={7.5} />
-      <path d={d} stroke={props.color} strokeWidth={5.5} />
+      <path d={d} stroke="rgba(0,0,0,.28)" strokeWidth={8} transform="translate(0 2)" />
+      <path d={d} stroke="rgba(0,0,0,.45)" strokeWidth={7} />
+      <path d={d} stroke={props.color} strokeWidth={5.4} />
+      {/* A thin light line along the top makes the insulation look round. */}
+      <path d={d} stroke="rgba(255,255,255,.3)" strokeWidth={1.4} transform="translate(0 -1.1)" />
       {flowing && (
         <path
           d={d}
@@ -238,8 +258,8 @@ export function WireView(props: {
           strokeDasharray="3 11"
         />
       )}
-      <circle cx={props.from.x} cy={props.from.y} r={4.2} fill="#2a2f31" />
-      <circle cx={props.to.x} cy={props.to.y} r={4.2} fill="#2a2f31" />
+      <WirePlug at={props.from} />
+      <WirePlug at={props.to} />
     </g>
   );
 }

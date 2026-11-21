@@ -9,6 +9,7 @@ import {
   type BoardPart,
   type CircuitComponent,
   type CircuitDocument,
+  type Position,
   type Wire,
 } from './circuit';
 import { Value } from 'typebox/value';
@@ -265,6 +266,19 @@ export function movePart(
     pins[pin] = target;
   }
   return withPins(circuit, part, pins);
+}
+
+/** Puts a battery or board somewhere else on the work surface. The editor checks for overlap. */
+export function moveOffBoardPart(
+  circuit: CircuitDocument,
+  componentId: string,
+  at: Position,
+): EditResult {
+  const component = circuit.components.find((c) => c.id === componentId);
+  if (!component || 'pins' in component) return fail('unknown-item');
+  const next = { ...component, at };
+  if (!Value.Check(ComponentSchema, next)) return fail('no-room');
+  return { ok: true, id: componentId, circuit: replaceComponent(circuit, next) };
 }
 
 /** Turns a part end for end. For an LED this reverses its polarity. */

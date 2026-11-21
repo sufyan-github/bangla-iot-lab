@@ -236,3 +236,36 @@ a waiting program costs almost nothing; a program that computes continuously
 runs at 0.1 to 0.3 times real time on a laptop. Integration may proceed for the
 plain Pico, after a speed measurement on a real low-end phone. rp2040js is
 pinned to an exact version because the fix touches one of its private fields.
+
+## D-034 — Circuit schema version 5: batteries and the board can be moved
+
+A battery and the UNO may carry `at`, their top-left corner in hole pitches from
+the breadboard's origin. Pitches rather than screen units, so the saved circuit
+does not depend on how the editor draws it. The field is optional: a part that
+was never moved is laid out in its usual place, and version 4 documents open
+unchanged. The breadboard itself stays fixed; everything else is placed relative
+to it. Whether a place is free (clear of the breadboard and of other parts) is
+decided by the editor's geometry, which knows the drawn sizes; the shared
+package only validates the numbers.
+
+## D-035 — The canvas works out taps and drags itself, from pointer position
+
+Holes, terminals and sockets no longer have their own click handlers. The
+canvas reads every press, finds the nearest endpoint, and decides between a
+tap, a wire being pulled out and a drag. This allows three things the old
+per-hole handlers could not do: one hover mark for every endpoint in every
+tool, press-drag-release wiring alongside tap-tap, and pulling a wire from a
+free hole with the select tool. A press that travels less than 10 screen pixels
+is a tap whatever happens to the page meanwhile. This rule exists because
+starting a wire changes the hint text, which on a narrow screen moved the board
+under a stationary pointer and finished the wire on the wrong hole. Touch keeps
+tap-tap wiring only, so a finger dragged across the board still scrolls it.
+
+## D-036 — Carried parts follow the hand; the circuit changes hole by hole
+
+While a part, a leg or a wire end is dragged it is drawn at the pointer, and
+rings mark the holes it will drop into. The circuit document still changes only
+when the nearest valid holes change, so a running simulation reacts during the
+drag and an invalid position is never stored. Batteries and the board have no
+holes to snap to and move continuously, sliding along an obstacle instead of
+stopping dead.

@@ -16,11 +16,13 @@ import {
   CANVAS_WIDTH,
   HOLE_POINTS,
   PITCH,
-  batteryBox,
   batteryTerminalPoint,
   canvasHeight,
   endpointPoint,
   holePoint,
+  partBox,
+  unoShift,
+  type Point,
 } from './geometry';
 import {
   BatteryView,
@@ -77,6 +79,16 @@ const Board = memo(function Board({ detailed, height }: { detailed: boolean; hei
       <rect width={CANVAS_WIDTH} height={height} fill="url(#mat-fine)" />
       <rect width={CANVAS_WIDTH} height={height} fill="url(#mat-coarse)" />
 
+      {/* The board casts a soft shadow on the mat and has a lit top edge. */}
+      <rect
+        x={BOARD_X + 2}
+        y={BOARD_Y + 6}
+        width={BOARD_WIDTH * PITCH}
+        height={BOARD_HEIGHT * PITCH}
+        rx={10}
+        fill="#0d3129"
+        opacity={0.55}
+      />
       <rect
         x={BOARD_X}
         y={BOARD_Y}
@@ -88,11 +100,28 @@ const Board = memo(function Board({ detailed, height }: { detailed: boolean; hei
         strokeWidth={1.5}
       />
       <rect
+        x={BOARD_X + 6}
+        y={BOARD_Y + 1.5}
+        width={BOARD_WIDTH * PITCH - 12}
+        height={2}
+        rx={1}
+        fill="#fffdf4"
+        opacity={0.9}
+      />
+      {/* The trench down the middle, where chips straddle the two halves. */}
+      <rect
         x={BOARD_X}
         y={rowY('e') + PITCH * 0.9}
         width={BOARD_WIDTH * PITCH}
         height={PITCH * 1.2}
         fill="#ddd5bd"
+      />
+      <rect
+        x={BOARD_X}
+        y={rowY('e') + PITCH * 0.9}
+        width={BOARD_WIDTH * PITCH}
+        height={2.5}
+        fill="#c4bb9f"
       />
 
       {/* Power rail markings: red for +, blue for −. */}
@@ -151,7 +180,20 @@ const Board = memo(function Board({ detailed, height }: { detailed: boolean; hei
             ))}
           </g>
 
-          <g fill="#30332f">
+          {/* Each hole: a bevelled rim, then the dark opening with a glint of the metal clip. */}
+          <g fill="#d6ceb4">
+            {HOLE_POINTS.map(({ hole, point }) => (
+              <rect
+                key={hole}
+                x={point.x - 4.6}
+                y={point.y - 4.6}
+                width={9.2}
+                height={9.2}
+                rx={2.4}
+              />
+            ))}
+          </g>
+          <g fill="#2a2d29">
             {HOLE_POINTS.map(({ hole, point }) => (
               <rect
                 key={hole}
@@ -160,6 +202,18 @@ const Board = memo(function Board({ detailed, height }: { detailed: boolean; hei
                 width={6.8}
                 height={6.8}
                 rx={1.6}
+              />
+            ))}
+          </g>
+          <g fill="#6f7a78">
+            {HOLE_POINTS.map(({ hole, point }) => (
+              <rect
+                key={hole}
+                x={point.x - 1.3}
+                y={point.y + 0.9}
+                width={2.6}
+                height={1.3}
+                rx={0.6}
               />
             ))}
           </g>
@@ -185,18 +239,30 @@ export interface SceneProps {
   readingLabel?(amperes: number): string;
   /** Formats a plain number in the student's language; used on sensor modules. */
   formatNumber?(value: number): string;
+  /**
+   * A part being carried: it is drawn this far from the holes it would drop
+   * into, so it follows the hand smoothly instead of jumping hole to hole.
+   */
+  lift?: { id: string; x: number; y: number } | null;
+  /**
+   * A lead or wire end being carried: `key` is the lead's name, or `from`/`to`
+   * for a wire, and it is drawn at `point` until it is let go.
+   */
+  floating?: { id: string; key: string; point: Point } | null;
 }
 
 /** Draws one part that plugs into the breadboard. */
-function BoardPartDrawing(props: {
+export function BoardPartDrawing(props: {
   part: Extract<CircuitComponent, { pins: unknown }>;
   reading: Reading | undefined;
   held: boolean;
   selected: boolean;
   formatNumber(value: number): string;
+  /** Overrides where a hole is drawn; used for a lead that is being carried. */
+  pointOf?(hole: string): Point;
 }) {
   const { part, reading, selected } = props;
-  const at = holePoint;
+  const at = props.pointOf ?? holePoint;
   switch (part.type) {
     case 'resistor':
       return (
@@ -375,8 +441,14 @@ export function Scene({
   batteryLabel,
   readingLabel,
   formatNumber = String,
+  lift = null,
+  floating = null,
 }: SceneProps) {
-  let batteryCount = 0;
+  /** Style for the layer of a part: it glides back into place when it is let go. */
+  const layerStyle = (id: string) =>
+    lift?.id === id
+      ? { transform: `translate(${lift.x}px, ${lift.y}px)`, transition: 'none' }
+      : undefined;
   return (
     <>
       <Board detailed={detailed} height={canvasHeight(circuit)} />
@@ -384,22 +456,27 @@ export function Scene({
         const selected = component.id === selectedId;
         const reading = result?.readings[component.id];
         if (component.type === 'battery') {
-          const index = batteryCount++;
+          const box = partBox(circuit, component);
           return (
             <g key={component.id} data-part={component.id}>
               <BatteryView
-                box={batteryBox(index)}
+                box={box}
                 label={batteryLabel(component.props.voltage)}
-                positive={batteryTerminalPoint(index, 'pos')}
-                negative={batteryTerminalPoint(index, 'neg')}
+                positive={batteryTerminalPoint(box, 'pos')}
+                negative={batteryTerminalPoint(box, 'neg')}
                 selected={selected}
               />
             </g>
           );
         }
         if (component.type === 'uno') {
+          const shift = unoShift(circuit, component);
           return (
-            <g key={component.id} data-part={component.id}>
+            <g
+              key={component.id}
+              data-part={component.id}
+              transform={`translate(${shift.x} ${shift.y})`}
+            >
               <UnoView
                 ledLevel={boards[component.id]?.highFraction[13] ?? 0}
                 powered={result !== null}
@@ -409,9 +486,15 @@ export function Scene({
           );
         }
         const held = pressed.includes(component.id);
+        const carried = floating?.id === component.id ? floating : null;
+        const carriedHole = carried
+          ? (component.pins as Record<string, string>)[carried.key]
+          : undefined;
         return (
           <g
             key={component.id}
+            className={lift?.id === component.id ? 'part-layer part-lifted' : 'part-layer'}
+            style={layerStyle(component.id)}
             data-part={component.id}
             data-pressed={component.type === 'button' ? held : undefined}
             data-led-state={component.type === 'led' ? (reading?.led?.state ?? 'idle') : undefined}
@@ -427,14 +510,20 @@ export function Scene({
               held={held}
               selected={selected}
               formatNumber={formatNumber}
+              pointOf={
+                carried
+                  ? (hole) => (hole === carriedHole ? carried.point : holePoint(hole))
+                  : undefined
+              }
             />
           </g>
         );
       })}
 
       {circuit.wires.map((wire) => {
-        const from = endpointPoint(circuit, wire.from);
-        const to = endpointPoint(circuit, wire.to);
+        const carried = floating?.id === wire.id ? floating : null;
+        const from = carried?.key === 'from' ? carried.point : endpointPoint(circuit, wire.from);
+        const to = carried?.key === 'to' ? carried.point : endpointPoint(circuit, wire.to);
         if (!from || !to) return null;
         return (
           <g key={wire.id} data-wire={wire.id}>
@@ -444,6 +533,7 @@ export function Scene({
               color={wire.color}
               current={result?.wireCurrents[wire.id]}
               selected={wire.id === selectedId}
+              lifted={carried !== null}
             />
           </g>
         );

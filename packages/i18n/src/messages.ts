@@ -41,6 +41,7 @@ export const bn = {
   'lab.loading': 'সার্কিট খোলা হচ্ছে…',
   'lab.zoomIn': 'বড় করো',
   'lab.zoomOut': 'ছোট করো',
+  'lab.zoomFit': 'পুরো বোর্ড দেখাও',
   'lab.canvasLabel': 'ব্রেডবোর্ড',
 
   'tool.select': 'বাছাই',
@@ -70,10 +71,9 @@ export const bn = {
   'tool.uno': 'UNO বোর্ড',
   'hint.button': 'বোতাম বসাতে একটা ছিদ্রে ট্যাপ করো। সার্কিট চালু থাকলে বোতামে চেপে ধরে রাখা যায়।',
   'hint.potentiometer': 'পটেনশিওমিটার বসাতে একটা ছিদ্রে ট্যাপ করো। তিনটা পা পাশাপাশি তিন কলামে বসবে।',
-  'hint.select':
-    'কোনো যন্ত্রাংশে ট্যাপ করে বাছাই করো। টেনে সরানো যায়, পায়ের গোল বিন্দু টেনে পা সরানো যায়।',
-  'hint.wire.start': 'তারের প্রথম মাথা কোথায় বসবে? একটা ছিদ্রে বা ব্যাটারির প্রান্তে ট্যাপ করো।',
-  'hint.wire.end': 'এবার দ্বিতীয় মাথার জায়গায় ট্যাপ করো।',
+  'hint.select': 'যন্ত্রাংশ বা তারের মাথা টেনে সরাও। ফাঁকা ছিদ্র থেকে মাউস টানলে নতুন তার বের হয়।',
+  'hint.wire.start': 'তার কোথা থেকে শুরু হবে? সেখানে ট্যাপ করো, অথবা সেখান থেকে টেনে নিয়ে যাও।',
+  'hint.wire.end': 'এবার দ্বিতীয় মাথার জায়গায় ট্যাপ করো বা সেখানে ছেড়ে দাও।',
   'hint.resistor': 'রেজিস্টর বসাতে বোর্ডের একটা ছিদ্রে ট্যাপ করো।',
   'hint.led': 'LED বসাতে একটা ছিদ্রে ট্যাপ করো। যেখানে ট্যাপ করবে সেখানে লম্বা পা (+) বসবে।',
 
@@ -287,6 +287,7 @@ export const en: Record<MessageKey, string> = {
   'lab.loading': 'Opening circuit…',
   'lab.zoomIn': 'Zoom in',
   'lab.zoomOut': 'Zoom out',
+  'lab.zoomFit': 'Show the whole board',
   'lab.canvasLabel': 'Breadboard',
 
   'tool.select': 'Select',
@@ -319,9 +320,10 @@ export const en: Record<MessageKey, string> = {
     'Tap a hole to place the button. While the circuit runs you can press and hold it.',
   'hint.potentiometer':
     'Tap a hole to place the potentiometer. Its three legs go in three neighbouring columns.',
-  'hint.select': 'Tap a part to select it. Drag it to move; drag the round dots to move a leg.',
-  'hint.wire.start': 'Where does the wire start? Tap a hole or a battery terminal.',
-  'hint.wire.end': 'Now tap where the other end goes.',
+  'hint.select':
+    'Drag a part or a wire end to move it. Drag from an empty hole with the mouse to pull out a new wire.',
+  'hint.wire.start': 'Where does the wire start? Tap there, or drag from there to the other end.',
+  'hint.wire.end': 'Now tap where the other end goes, or let go there.',
   'hint.resistor': 'Tap a hole on the board to place the resistor.',
   'hint.led': 'Tap a hole to place the LED. The long leg (+) goes where you tap.',
 

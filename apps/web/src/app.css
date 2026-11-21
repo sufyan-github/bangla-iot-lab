@@ -82,19 +82,91 @@ input {
   }
 }
 
-/* Tap targets over breadboard holes and battery terminals. */
+/* Tap targets over breadboard holes, terminals and sockets. The hover mark is drawn by the canvas. */
 .tap-target {
   fill: transparent;
   cursor: pointer;
 }
-@media (hover: hover) {
-  .tap-target:hover {
-    fill: rgba(232, 162, 26, 0.55);
-  }
-}
 .drag-handle {
   touch-action: none;
   cursor: grab;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Parts and wires answer the pointer before they are picked up. */
+.part-hit {
+  fill: transparent;
+  transition: fill 0.12s ease-out;
+}
+.wire-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 18;
+  stroke-linecap: round;
+  cursor: pointer;
+  touch-action: none;
+  transition: stroke 0.12s ease-out;
+}
+@media (hover: hover) {
+  .part-hit:hover {
+    fill: rgba(232, 162, 26, 0.16);
+  }
+  .wire-hit:hover {
+    stroke: rgba(232, 162, 26, 0.3);
+  }
+  .handle-dot {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 0.12s ease-out;
+  }
+  .drag-handle:hover .handle-dot {
+    transform: scale(1.25);
+  }
+}
+
+/* A carried part floats above the board, then glides into the holes it is dropped on. */
+.part-layer {
+  transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+.part-lifted {
+  filter: drop-shadow(0 7px 5px rgba(0, 0, 0, 0.35));
+}
+
+@keyframes hover-ring-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+.hover-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hover-ring-in 0.12s ease-out;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.quick-actions {
+  animation: rise-in 0.16s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .part-layer,
+  .part-hit,
+  .wire-hit,
+  .handle-dot {
+    transition: none;
+  }
+  .hover-ring,
+  .quick-actions {
+    animation: none;
+  }
 }
 
 /* A running motor's rotor; the duration is set from its speed. */

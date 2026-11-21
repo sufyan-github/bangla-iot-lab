@@ -17,6 +17,7 @@ import {
 import type { BoardStatus, Probe, SimulationFrame, SimulationResult } from '@banglalab/simulation';
 import { create } from 'zustand';
 import type { BoardProgram, ProjectContent } from '../storage/projects';
+import { settleOffBoardPart } from './geometry';
 import { signals } from './signals';
 import { starterProgram } from './starters';
 
@@ -60,6 +61,8 @@ interface LabState {
   select(id: string | null): void;
   /** A tap on a hole, battery terminal or board socket; what it does depends on the tool. */
   tapEndpoint(endpoint: string): void;
+  /** Drops the wire being drawn; `toSelect` also puts the wire tool away. */
+  endWire(toSelect: boolean): void;
   addBattery(): void;
   addUno(): void;
   removeSelected(): void;
@@ -146,13 +149,20 @@ export const useLab = create<LabState>((set, get) => {
       }
     },
 
+    endWire: (toSelect) =>
+      set(toSelect ? { wireStart: null, tool: 'select' } : { wireStart: null }),
+
     addBattery() {
       const id = apply(addBattery(get().circuit));
-      if (id) set({ tool: 'select', selectedId: id, wireStart: null });
+      if (!id) return;
+      // Its usual place may be taken by something the student moved there.
+      set({ circuit: settleOffBoardPart(get().circuit, id) });
+      set({ tool: 'select', selectedId: id, wireStart: null });
     },
     addUno() {
       const id = apply(addUno(get().circuit));
       if (!id) return;
+      set({ circuit: settleOffBoardPart(get().circuit, id) });
       // A new board arrives with Blink already on it, as a real UNO does.
       set({ tool: 'select', selectedId: id, wireStart: null });
       get().uploadProgram(id, starterProgram('blink'));

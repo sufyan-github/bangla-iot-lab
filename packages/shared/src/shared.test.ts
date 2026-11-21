@@ -12,6 +12,7 @@ import {
   addUno,
   addWire,
   flipPart,
+  moveOffBoardPart,
   movePart,
   movePin,
   moveWireEnd,
@@ -68,7 +69,7 @@ describe('circuit document', () => {
 
   it('rejects malformed documents', () => {
     const example = ledCircuitExample();
-    expect(isCircuitDocument({ ...example, schemaVersion: 5 })).toBe(false);
+    expect(isCircuitDocument({ ...example, schemaVersion: 6 })).toBe(false);
     expect(isCircuitDocument({ ...example, wires: [{ id: 'W1', from: 'a1' }] })).toBe(false);
     expect(
       isCircuitDocument({
@@ -320,6 +321,37 @@ describe('editing rules', () => {
       ok: false,
       error: 'battery-limit',
     });
+  });
+
+  it('moves batteries and the board, and keeps their wires', () => {
+    const circuit = ok(moveOffBoardPart(unoCircuitExample(), 'UNO1', { x: 3.5, y: 22 }));
+    expect(circuit.components.find((c) => c.id === 'UNO1')).toMatchObject({
+      at: { x: 3.5, y: 22 },
+    });
+    expect(circuit.wires).toEqual(unoCircuitExample().wires);
+    expect(isCircuitDocument(circuit)).toBe(true);
+
+    const battery = ok(moveOffBoardPart(ledCircuitExample(), 'BAT1', { x: -6, y: 4 }));
+    expect(battery.components[0]).toMatchObject({ id: 'BAT1', at: { x: -6, y: 4 } });
+  });
+
+  it('refuses to move a board part, an unknown part or to a place off the work surface', () => {
+    const circuit = ledCircuitExample();
+    expect(moveOffBoardPart(circuit, 'R1', { x: 0, y: 0 })).toEqual({
+      ok: false,
+      error: 'unknown-item',
+    });
+    expect(moveOffBoardPart(circuit, 'nope', { x: 0, y: 0 }).ok).toBe(false);
+    expect(moveOffBoardPart(circuit, 'BAT1', { x: 5000, y: 0 })).toEqual({
+      ok: false,
+      error: 'no-room',
+    });
+    expect(moveOffBoardPart(circuit, 'BAT1', { x: Number.NaN, y: 0 }).ok).toBe(false);
+  });
+
+  it('opens a version 4 document, which has no stored positions', () => {
+    const opened = migrateCircuit({ ...unoCircuitExample(), schemaVersion: 4 });
+    expect(opened).toEqual(unoCircuitExample());
   });
 
   it('never mutates the document it was given', () => {
