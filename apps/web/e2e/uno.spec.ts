@@ -101,7 +101,10 @@ test('write a program, upload it, and watch it read the potentiometer', async ({
     );
   await expect(page.getByTestId('starter')).toHaveValue('custom');
   await page.getByTestId('upload').click();
-  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
+  // A compile on a busy machine can take many seconds; this is not a test of its speed.
+  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible({
+    timeout: 30_000,
+  });
 
   // Knob in the middle: 2.5 V → 511 → prints 5.
   const serial = page.getByTestId('serial');
@@ -124,7 +127,7 @@ test('compile errors point at the line, and the old program keeps running', asyn
     .fill('void setup() {\n  pinMode(13, OUTPUT);\n  digitalWrit(13, HIGH);\n}\nvoid loop() {}\n');
   await page.getByTestId('upload').click();
   const status = page.getByTestId('upload-status');
-  await expect(status).toContainText('digitalWrit');
+  await expect(status).toContainText('digitalWrit', { timeout: 30_000 });
   await expect(status).toContainText('লাইন ৩');
 
   // The board still has Blink on it.
