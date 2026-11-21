@@ -6,6 +6,7 @@ import { useT } from '../i18n';
 import { simulation } from '../sim/client';
 import { projectStore } from '../storage/projects';
 import { Canvas } from './Canvas';
+import { Diagram } from './diagram/Diagram';
 import { CodePanel } from './CodePanel';
 import { Palette } from './Palette';
 import { Inspector, Messages, Meter } from './panels';
@@ -218,6 +219,8 @@ export function LabPage() {
     }
   };
   const [tab, setTab] = useState<'circuit' | 'code' | 'signals'>('circuit');
+  /** The breadboard is where the circuit is built; the diagram is the same circuit as a schematic. */
+  const [view, setView] = useState<'board' | 'diagram'>('board');
   const showCode = tab === 'code' && boardId !== undefined;
   const { setName, setRunning } = useLab.getState();
   const { t } = useT();
@@ -293,10 +296,38 @@ export function LabPage() {
             {t(running ? 'lab.stop' : 'lab.run')}
           </button>
         </div>
-        <Palette />
+        {view === 'board' ? (
+          <Palette />
+        ) : (
+          <p className="border-b border-line bg-paper px-4 py-1.5 text-sm text-ink-soft">
+            {t('diagram.hint')}
+          </p>
+        )}
         <div className="relative flex min-h-0 flex-1 flex-col">
           <Notice />
-          <Canvas />
+          {view === 'board' ? <Canvas /> : <Diagram />}
+          <div
+            role="group"
+            aria-label={t('lab.viewLabel')}
+            className="absolute top-3 left-3 flex overflow-hidden rounded-xl border border-line bg-surface shadow-md"
+          >
+            {(['board', 'diagram'] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                data-testid={`view-${id}`}
+                aria-pressed={view === id}
+                onClick={() => setView(id)}
+                className={`min-h-11 px-3.5 text-sm font-semibold ${
+                  view === id
+                    ? 'bg-amber-soft text-ink'
+                    : 'text-ink-soft hover:bg-paper hover:text-ink'
+                }`}
+              >
+                {t(id === 'board' ? 'lab.viewBoard' : 'lab.viewDiagram')}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

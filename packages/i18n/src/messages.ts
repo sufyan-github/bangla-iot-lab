@@ -44,6 +44,12 @@ export const bn = {
   'lab.zoomFit': 'পুরো বোর্ড দেখাও',
   'lab.undo': 'আগের অবস্থায় ফেরো (Ctrl+Z)',
   'lab.straighten': 'তার সোজা করো',
+  'lab.viewLabel': 'সার্কিট কীভাবে দেখবে',
+  'lab.viewBoard': 'ব্রেডবোর্ড',
+  'lab.viewDiagram': 'ডায়াগ্রাম',
+  'diagram.hint':
+    'এই ডায়াগ্রামটা তোমার ব্রেডবোর্ডের সার্কিট থেকে নিজে নিজে আঁকা হয়। সার্কিট বদলাতে ব্রেডবোর্ডে ফিরে যাও।',
+  'diagram.empty': 'এখনো কিছু নেই। ব্রেডবোর্ডে যন্ত্রাংশ বসালে এখানে তার ডায়াগ্রাম দেখা যাবে।',
   'hint.wireSelected': 'তারের গায়ের ছোট বিন্দু টেনে তার বাঁকাও। মাথার বিন্দু টেনে অন্য ছিদ্রে নাও।',
   'lab.redo': 'আবার করো (Ctrl+Y)',
   'lab.canvasLabel': 'ব্রেডবোর্ড',
@@ -294,6 +300,12 @@ export const en: Record<MessageKey, string> = {
   'lab.zoomFit': 'Show the whole board',
   'lab.undo': 'Undo (Ctrl+Z)',
   'lab.straighten': 'Straighten',
+  'lab.viewLabel': 'How to show the circuit',
+  'lab.viewBoard': 'Breadboard',
+  'lab.viewDiagram': 'Diagram',
+  'diagram.hint':
+    'This diagram is drawn for you from the circuit on your breadboard. To change the circuit, go back to the breadboard.',
+  'diagram.empty': 'Nothing here yet. Put parts on the breadboard and their diagram appears here.',
   'hint.wireSelected':
     'Drag a small dot on the wire to bend it. Drag an end dot to move it to another hole.',
   'lab.redo': 'Redo (Ctrl+Y)',

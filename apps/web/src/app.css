@@ -194,3 +194,10 @@ input {
     animation: none;
   }
 }
+
+/* The schematic is drawn on dotted paper, as in a drawing program. */
+.diagram-paper {
+  background-color: var(--color-surface);
+  background-image: radial-gradient(circle, var(--color-line) 1.1px, transparent 1.3px);
+  background-size: 20px 20px;
+}
