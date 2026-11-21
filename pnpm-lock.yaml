@@ -335,6 +335,8 @@ importers:
         specifier: 1.4.2
         version: 1.4.2
 
+  packages/catalog: {}
+
   packages/circuit-engine:
     devDependencies:
       eecircuit-engine:
