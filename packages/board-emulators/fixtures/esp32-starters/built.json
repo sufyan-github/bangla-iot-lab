@@ -1,0 +1,21 @@
+{
+  "toolchain": "clang 21.1.8 wasm-opt 120",
+  "starters": {
+    "blink": {
+      "sourceHash": "0f2a35581a3947d9d742600573d5aadbd7e29214956e5aadd079ad06e14d9159",
+      "bytes": 7112
+    },
+    "button": {
+      "sourceHash": "bac1f4942f87ad5519d59b60b3201ec32fedc257189bf4a3ee295bb23442a5fb",
+      "bytes": 7363
+    },
+    "fade": {
+      "sourceHash": "b8ff6801c008243a54f44c492fc3bf6bbc483699083c99ec8ca18e61ffb957a7",
+      "bytes": 7797
+    },
+    "knob": {
+      "sourceHash": "21dd298bfed5cf1b017dfbe2ad9976809c635040ebceb5f9810b9ae516ecc48b",
+      "bytes": 39162
+    }
+  }
+}

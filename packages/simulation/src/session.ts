@@ -7,6 +7,7 @@ import {
   type ProgrammableType,
 } from '@banglalab/shared';
 import { BOARD_MODELS, type BoardModel } from './boards';
+import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MODULE_MIN_SUPPLY } from './library';
 import { buildNetlist, type CircuitState, type Netlist } from './netlist';
 import { Peripherals, type ScheduledInput } from './peripherals';
@@ -193,9 +194,19 @@ export class SimulationSession {
     sample.forEach((v, p) => values[p]!.push(v));
   }
 
-  /** Uploads a program to a UNO-compatible board and starts it from reset. Throws if the firmware is not valid. */
-  loadFirmware(boardId: string, hex: string): void {
-    this.loadProgram(boardId, new UnoBoard(hex));
+  /**
+   * Uploads a built program to a board and starts it from reset. The program is
+   * text: Intel HEX for the UNO-compatible board; for the ESP32, a sketch
+   * module in base64. Throws if it is not a valid program for that board.
+   */
+  loadFirmware(boardId: string, program: string): void {
+    const component = this.document.components.find((c) => c.id === boardId);
+    if (component?.type === 'esp32') {
+      const bytes = Uint8Array.from(atob(program.trim()), (char) => char.charCodeAt(0));
+      this.loadProgram(boardId, new Esp32SketchBoard(bytes));
+    } else {
+      this.loadProgram(boardId, new UnoBoard(program));
+    }
   }
 
   /**

@@ -52,7 +52,22 @@ export async function buildServer(config: WorkerConfig) {
     },
   );
 
-  app.get('/health', async () => ({ status: 'ok', sandbox: config.sandbox, toolchain, arduino }));
+  // The ESP32 board library is experimental and needs its own toolchain; the worker runs without it.
+  const esp32 = await compiler.prepareEsp32().then(
+    () => 'ready' as const,
+    (error: Error) => {
+      app.log.warn(error.message);
+      return 'unavailable' as const;
+    },
+  );
+
+  app.get('/health', async () => ({
+    status: 'ok',
+    sandbox: config.sandbox,
+    toolchain,
+    arduino,
+    esp32,
+  }));
 
   app.post(
     '/compile',
@@ -60,7 +75,7 @@ export async function buildServer(config: WorkerConfig) {
       schema: {
         body: Type.Object(
           {
-            board: Type.Literal('uno'),
+            board: Type.Union([Type.Literal('uno'), Type.Literal('esp32')]),
             language: Type.Union([Type.Literal('c'), Type.Literal('arduino')]),
             source: Type.String({ minLength: 1, maxLength: config.maxSourceBytes }),
           },
@@ -69,6 +84,9 @@ export async function buildServer(config: WorkerConfig) {
       },
     },
     async (request, reply) => {
+      if (request.body.board === 'esp32' && request.body.language !== 'arduino') {
+        return reply.code(400).send({ error: 'the ESP32 board takes Arduino sketches only' });
+      }
       try {
         return await compiler.compile(request.body);
       } catch (error) {

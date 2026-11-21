@@ -8,7 +8,8 @@
     "start": "tsx src/main.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "core:fetch": "bash scripts/fetch-arduino-core.sh",
-    "starters:build": "tsx scripts/build-starters.ts"
+    "starters:build": "tsx scripts/build-starters.ts",
+    "esp32-starters:build": "tsx scripts/build-esp32-starters.ts"
   },
   "dependencies": {
     "@fastify/type-provider-typebox": "^6.3.0",

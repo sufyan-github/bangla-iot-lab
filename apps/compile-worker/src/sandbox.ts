@@ -21,6 +21,7 @@ function bwrapArgs(
   tool: string,
   args: string[],
   readOnlyPaths: string[],
+  env: Record<string, string>,
 ): string[] {
   return [
     '--unshare-all',
@@ -48,6 +49,7 @@ function bwrapArgs(
     '/dev',
     '--tmpfs',
     '/tmp',
+    ...Object.entries(env).flatMap(([name, value]) => ['--setenv', name, value]),
     // Extra read-only inputs (the Arduino core), visible at their real paths.
     ...readOnlyPaths.flatMap((dir) => ['--ro-bind', dir, dir]),
     '--bind',
@@ -71,9 +73,11 @@ export function runTool(
   args: string[],
   timeoutMs: number,
   readOnlyPaths: string[] = [],
+  /** Extra environment for the tool. Never taken from a request. */
+  env: Record<string, string> = {},
 ): Promise<RunResult> {
   const [command, commandArgs] =
-    mode === 'bwrap' ? ['bwrap', bwrapArgs(jobDir, tool, args, readOnlyPaths)] : [tool, args];
+    mode === 'bwrap' ? ['bwrap', bwrapArgs(jobDir, tool, args, readOnlyPaths, env)] : [tool, args];
 
   return new Promise((resolve, reject) => {
     execFile(
@@ -84,7 +88,7 @@ export function runTool(
         timeout: timeoutMs,
         killSignal: 'SIGKILL',
         maxBuffer: MAX_OUTPUT_BYTES,
-        env: { PATH: '/usr/bin:/bin', LC_ALL: 'C' },
+        env: { PATH: '/usr/bin:/bin', LC_ALL: 'C', ...env },
       },
       (error, stdout, stderr) => {
         if (error && typeof error.code === 'string' && error.code === 'ENOENT') {

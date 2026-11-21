@@ -279,6 +279,8 @@ export const useLab = create<LabState>((set, get) => {
       if (!id) return;
       set({ circuit: settleOffBoardPart(get().circuit, id) });
       set({ tool: 'select', selectedId: id, wireStart: null });
+      // Like the UNO-compatible board, it arrives with Blink on it.
+      get().uploadProgram(id, starterProgram('blink', 'esp32'));
     },
     removeSelected() {
       const { selectedId, circuit, programs } = get();

@@ -1,9 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { Suspense, lazy, useEffect, useRef } from 'react';
+import { isProgrammable, type ProgrammableType } from '@banglalab/shared';
 import { compileSketch } from '../api';
 import { useT } from '../i18n';
 import { useOnline } from '../shell/useOnline';
-import { STARTER_IDS, matchingStarter, starterProgram, type StarterId } from './starters';
+import { matchingStarter, starterIds, starterLabel, starterProgram } from './starters';
 import { useLab } from './store';
 
 // The editor is the heaviest part of the app, so it loads only when a board is used.
@@ -13,13 +14,17 @@ const CodeEditor = lazy(() => import('./CodeEditor'));
 export function CodePanel({ boardId }: { boardId: string }) {
   const program = useLab((s) => s.programs[boardId]);
   const serial = useLab((s) => s.serial[boardId] ?? '');
+  const boardType = useLab(
+    (s) => s.circuit.components.find((c) => c.id === boardId && isProgrammable(c))?.type,
+  ) as ProgrammableType | undefined;
+  const board: ProgrammableType = boardType ?? 'uno';
   const { setSource, uploadProgram, clearSerial } = useLab.getState();
   const { t, number } = useT();
   const online = useOnline();
   const source = program?.source ?? '';
 
   const build = useMutation({
-    mutationFn: compileSketch,
+    mutationFn: (code: string) => compileSketch(code, board),
     onSuccess: (result, compiled) => {
       if (result.ok)
         uploadProgram(boardId, { source: compiled, hex: result.hex, hexSource: compiled });
@@ -36,22 +41,30 @@ export function CodePanel({ boardId }: { boardId: string }) {
   const chooseStarter = (id: string) => {
     if (id === 'custom') return;
     build.reset();
-    uploadProgram(boardId, starterProgram(id as StarterId));
+    uploadProgram(boardId, starterProgram(id, board));
   };
 
   return (
-    <div className="space-y-4 px-4 py-4" data-testid="code-panel">
+    <div className="space-y-4 px-4 py-4" data-testid="code-panel" data-board={board}>
+      {board === 'esp32' && (
+        <p
+          className="rounded-lg border-l-4 border-amber bg-amber-soft px-3 py-2 text-sm"
+          data-testid="esp32-note"
+        >
+          {t('code.esp32.note')}
+        </p>
+      )}
       <label className="block">
         <span className="mb-1.5 block text-sm text-ink-soft">{t('code.starter')}</span>
         <select
           data-testid="starter"
-          value={matchingStarter(source) ?? 'custom'}
+          value={matchingStarter(source, board) ?? 'custom'}
           onChange={(event) => chooseStarter(event.target.value)}
           className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-3"
         >
-          {STARTER_IDS.map((id) => (
+          {starterIds(board).map((id) => (
             <option key={id} value={id}>
-              {t(`code.starter.${id}`)}
+              {t(starterLabel(board, id))}
             </option>
           ))}
           <option value="custom">{t('code.starter.custom')}</option>

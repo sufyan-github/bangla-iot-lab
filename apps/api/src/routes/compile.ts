@@ -2,14 +2,22 @@ import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { Type } from 'typebox';
 import type { AppDependencies } from '../app';
 
-const CompileBody = Type.Object(
-  {
-    board: Type.Literal('uno'),
-    language: Type.Union([Type.Literal('c'), Type.Literal('arduino')]),
-    source: Type.String({ minLength: 1, maxLength: 64 * 1024 }),
-  },
-  { additionalProperties: false },
-);
+const source = Type.String({ minLength: 1, maxLength: 64 * 1024 });
+const CompileBody = Type.Union([
+  Type.Object(
+    {
+      board: Type.Literal('uno'),
+      language: Type.Union([Type.Literal('c'), Type.Literal('arduino')]),
+      source,
+    },
+    { additionalProperties: false },
+  ),
+  // The ESP32 board (experimental) takes Arduino sketches only.
+  Type.Object(
+    { board: Type.Literal('esp32'), language: Type.Literal('arduino'), source },
+    { additionalProperties: false },
+  ),
+]);
 
 /**
  * POST /v1/compile: validates the request and passes it to the compile worker.

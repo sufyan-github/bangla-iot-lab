@@ -9,12 +9,18 @@ export type CompileResult =
       diagnostics: { line: number; severity: string; message: string }[];
     };
 
-/** Compiles an Arduino sketch for the UNO on the server. Rejects when the server cannot be reached. */
-export async function compileSketch(source: string): Promise<CompileResult> {
+/**
+ * Compiles an Arduino sketch on the server for a kind of board. `hex` in the
+ * result is the built program as text. Rejects when the server cannot be reached.
+ */
+export async function compileSketch(
+  source: string,
+  board: 'uno' | 'esp32' = 'uno',
+): Promise<CompileResult> {
   const response = await fetch(`${API_URL}/v1/compile`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ board: 'uno', language: 'arduino', source }),
+    body: JSON.stringify({ board, language: 'arduino', source }),
   });
   if (!response.ok) throw new Error(`compile request failed: ${response.status}`);
   return response.json();

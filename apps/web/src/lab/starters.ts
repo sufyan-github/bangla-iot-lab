@@ -12,6 +12,16 @@ import fadeHex from '@banglalab/board-emulators/fixtures/starters/fade.hex?raw';
 import fadeSource from '@banglalab/board-emulators/fixtures/starters/fade.ino?raw';
 import knobHex from '@banglalab/board-emulators/fixtures/starters/knob.hex?raw';
 import knobSource from '@banglalab/board-emulators/fixtures/starters/knob.ino?raw';
+import esp32BlinkSource from '@banglalab/board-emulators/fixtures/esp32-starters/blink.ino?raw';
+import esp32BlinkModule from '@banglalab/board-emulators/fixtures/esp32-starters/blink.wasm.base64?raw';
+import esp32ButtonSource from '@banglalab/board-emulators/fixtures/esp32-starters/button.ino?raw';
+import esp32ButtonModule from '@banglalab/board-emulators/fixtures/esp32-starters/button.wasm.base64?raw';
+import esp32FadeSource from '@banglalab/board-emulators/fixtures/esp32-starters/fade.ino?raw';
+import esp32FadeModule from '@banglalab/board-emulators/fixtures/esp32-starters/fade.wasm.base64?raw';
+import esp32KnobSource from '@banglalab/board-emulators/fixtures/esp32-starters/knob.ino?raw';
+import esp32KnobModule from '@banglalab/board-emulators/fixtures/esp32-starters/knob.wasm.base64?raw';
+import type { MessageKey } from '@banglalab/i18n';
+import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
 
 /**
@@ -28,15 +38,45 @@ export const STARTERS = {
   lcd: { source: lcdSource, hex: lcdHex },
 } as const;
 
+/**
+ * Ready-made programs for the ESP32 board, built against the lab's own board
+ * library (experimental). `hex` here is the sketch module in base64.
+ */
+export const ESP32_STARTERS = {
+  blink: { source: esp32BlinkSource, hex: esp32BlinkModule },
+  button: { source: esp32ButtonSource, hex: esp32ButtonModule },
+  fade: { source: esp32FadeSource, hex: esp32FadeModule },
+  knob: { source: esp32KnobSource, hex: esp32KnobModule },
+} as const;
+
 export type StarterId = keyof typeof STARTERS;
 export const STARTER_IDS = Object.keys(STARTERS) as StarterId[];
 
-export function starterProgram(id: StarterId): BoardProgram {
-  const { source, hex } = STARTERS[id];
-  return { source, hex, hexSource: source };
+const BY_BOARD: Record<ProgrammableType, Record<string, { source: string; hex: string }>> = {
+  uno: STARTERS,
+  esp32: ESP32_STARTERS,
+};
+
+/** The ready-made programs a kind of board has, in the order they are offered. */
+export function starterIds(board: ProgrammableType): string[] {
+  return Object.keys(BY_BOARD[board]);
+}
+
+/** The name a ready-made program is listed under. */
+export function starterLabel(board: ProgrammableType, id: string): MessageKey {
+  return (board === 'uno' ? `code.starter.${id}` : `code.starter.esp32.${id}`) as MessageKey;
+}
+
+export function starterProgram(id: string, board: ProgrammableType = 'uno'): BoardProgram {
+  const starter = BY_BOARD[board][id];
+  if (!starter) throw new Error(`the ${board} board has no ready-made program "${id}"`);
+  return { source: starter.source, hex: starter.hex, hexSource: starter.source };
 }
 
 /** The starter a program is still identical to, if any. */
-export function matchingStarter(source: string): StarterId | undefined {
-  return STARTER_IDS.find((id) => STARTERS[id].source === source);
+export function matchingStarter(
+  source: string,
+  board: ProgrammableType = 'uno',
+): string | undefined {
+  return starterIds(board).find((id) => BY_BOARD[board][id]!.source === source);
 }

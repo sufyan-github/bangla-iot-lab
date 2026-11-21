@@ -1,8 +1,9 @@
 import {
   emptyCircuit,
+  esp32CircuitExample,
   ledCircuitExample,
-  unoCircuitExample,
   type CircuitDocument,
+  unoCircuitExample,
 } from '@banglalab/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
@@ -95,6 +96,20 @@ export function HomePage() {
               className="min-h-12 rounded-xl border-2 border-paper/70 px-5 text-lg font-medium hover:bg-paper/10"
             >
               {t('home.exampleUno')}
+            </button>
+            <button
+              type="button"
+              data-testid="open-example-esp32"
+              onClick={() =>
+                create.mutate({
+                  name: t('home.exampleEsp32Name'),
+                  circuit: esp32CircuitExample(),
+                  programs: { ESP1: starterProgram('blink', 'esp32') },
+                })
+              }
+              className="min-h-12 rounded-xl border-2 border-paper/70 px-5 text-lg font-medium hover:bg-paper/10"
+            >
+              {t('home.exampleEsp32')}
             </button>
           </div>
         </div>

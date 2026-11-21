@@ -45,7 +45,8 @@ describe('POST /v1/compile', () => {
     const fetch = vi.fn();
     app = await build(fetch);
     for (const payload of [
-      { ...body, board: 'esp32' },
+      { ...body, board: 'pico' },
+      { ...body, board: 'esp32', language: 'c' },
       { ...body, source: '' },
       { ...body, source: 'x'.repeat(70_000) },
       { board: 'uno' },

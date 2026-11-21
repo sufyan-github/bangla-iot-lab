@@ -11,11 +11,24 @@ import {
   ensureArduinoCore,
   type ArduinoCore,
 } from './arduino-core';
+import {
+  ESP32_MAX_MODULE_BYTES,
+  ensureEsp32Library,
+  esp32BuildSteps,
+  findEsp32Toolchain,
+  type Esp32Library,
+  type Esp32Toolchain,
+} from './esp32-library';
 import { runTool, type RunResult } from './sandbox';
 import { sketchToCpp } from './sketch';
 
 export interface CompileRequest {
-  board: 'uno';
+  /**
+   * `uno`: firmware for the ATmega328P. `esp32`: EXPERIMENTAL, a sketch built
+   * against the lab's own board library into a WebAssembly module (Arduino
+   * sketches only).
+   */
+  board: 'uno' | 'esp32';
   /** `c`: plain avr-libc C. `arduino`: an Arduino sketch with setup() and loop(). */
   language: 'c' | 'arduino';
   source: string;
@@ -29,6 +42,10 @@ export interface CompileDiagnostic {
 }
 
 export type CompileOutcome =
+  /**
+   * `hex` is the built program as text: Intel HEX for the UNO, and for the
+   * ESP32 the WebAssembly module in base64 (`flashBytes` is then its size).
+   */
   | { ok: true; hex: string; flashBytes: number; ramBytes: number }
   | {
       ok: false;
@@ -123,9 +140,11 @@ export class Compiler {
    */
   cacheKey(request: CompileRequest): string {
     const recipe =
-      request.language === 'arduino'
-        ? [ARDUINO_CORE_VERSION, ARDUINO_LIBRARIES, ARDUINO_FLAGS, CXX_FLAGS]
-        : GCC_FLAGS;
+      request.board === 'esp32'
+        ? ['esp32-library', this.esp32Key ?? 'unbuilt']
+        : request.language === 'arduino'
+          ? [ARDUINO_CORE_VERSION, ARDUINO_LIBRARIES, ARDUINO_FLAGS, CXX_FLAGS]
+          : GCC_FLAGS;
     const parts = [RECIPE_VERSION, this.toolchain, recipe, request.board, request.language];
     return createHash('sha256')
       .update(JSON.stringify(parts))
@@ -139,6 +158,8 @@ export class Compiler {
   }
 
   async compile(request: CompileRequest): Promise<CompileResponse> {
+    // The ESP32 library's own version is part of the key, so it is built first.
+    if (request.board === 'esp32') await this.prepareEsp32();
     const key = this.cacheKey(request);
     const cached = await readFile(this.cachePath(key), 'utf8').catch(() => null);
     if (cached) {
@@ -168,7 +189,69 @@ export class Compiler {
     return this.core;
   }
 
+  private esp32: Promise<{ toolchain: Esp32Toolchain; library: Esp32Library }> | undefined;
+  private esp32Key: string | undefined;
+
+  /** Finds the WebAssembly toolchain and builds the ESP32 board library on first use. */
+  prepareEsp32(): Promise<{ toolchain: Esp32Toolchain; library: Esp32Library }> {
+    this.esp32 ??= (async () => {
+      const toolchain = findEsp32Toolchain();
+      if ('missing' in toolchain) {
+        throw new Error(
+          `The ESP32 toolchain is incomplete. Missing: ${toolchain.missing.join(', ')}`,
+        );
+      }
+      const library = await ensureEsp32Library(this.config.cacheDir, toolchain);
+      this.esp32Key = `${toolchain.version} ${library.key}`;
+      return { toolchain, library };
+    })();
+    this.esp32.catch(() => (this.esp32 = undefined));
+    return this.esp32;
+  }
+
+  private async buildEsp32(source: string): Promise<CompileOutcome> {
+    const { sandbox, timeoutMs } = this.config;
+    const { toolchain, library } = await this.prepareEsp32();
+    const jobDir = await mkdtemp(path.join(tmpdir(), 'banglalab-compile-'));
+    try {
+      await writeFile(path.join(jobDir, 'sketch.cpp'), sketchToCpp(source));
+      let log = '';
+      for (const step of esp32BuildSteps(toolchain, library)) {
+        const result = await runTool(
+          sandbox,
+          jobDir,
+          step.tool,
+          step.args,
+          timeoutMs,
+          library.readOnlyPaths,
+          toolchain.env,
+        );
+        if (result.timedOut) return { ok: false, reason: 'timeout', diagnostics: [] };
+        log += result.stderr;
+        if (result.exitCode !== 0) {
+          const diagnostics = parseGccDiagnostics(log).filter((d) => d.severity === 'error');
+          if (diagnostics.length === 0) {
+            const missing = /undefined symbol: ([^\n]+)/.exec(log);
+            const message = missing
+              ? `undefined reference to '${missing[1]!.trim()}'`
+              : log.trim().split('\n').slice(-3).join(' ').slice(0, 500);
+            diagnostics.push({ line: 1, column: 1, severity: 'error', message });
+          }
+          return { ok: false, reason: 'compile-error', diagnostics };
+        }
+      }
+      const module = await readFile(path.join(jobDir, 'sketch.wasm'));
+      if (module.length > ESP32_MAX_MODULE_BYTES) {
+        return { ok: false, reason: 'program-too-large', diagnostics: [] };
+      }
+      return { ok: true, hex: module.toString('base64'), flashBytes: module.length, ramBytes: 0 };
+    } finally {
+      await rm(jobDir, { recursive: true, force: true });
+    }
+  }
+
   private async build(request: CompileRequest): Promise<CompileOutcome> {
+    if (request.board === 'esp32') return this.buildEsp32(request.source);
     const { sandbox, timeoutMs } = this.config;
     const jobDir = await mkdtemp(path.join(tmpdir(), 'banglalab-compile-'));
     const run = (tool: string, args: string[], readOnly: string[] = []) =>
