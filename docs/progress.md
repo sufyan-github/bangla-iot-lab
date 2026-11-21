@@ -36,7 +36,7 @@ curriculum depend on that board.
 | Hardware testing checklist, equipment list and procedures                                                                      | Written; no test run yet                                                                                                     |
 | Catalogue importer                                                                                                             | Done and tested on made-up data; run on the real export, whose figures all match the brief. See [catalogue.md](catalogue.md) |
 | Part definition format and parts list                                                                                          | Done and tested: 64 definitions; three parts read their shape from them. See [parts.md](parts.md)                            |
-| ESP32 feasibility study                                                                                                        | Not started                                                                                                                  |
+| ESP32 feasibility study                                                                                                        | Started: step 1 of 6 done. See [the study](decisions/esp32-study.md)                                                         |
 
 ## Test results
 
