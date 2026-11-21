@@ -49,21 +49,36 @@ int digitalRead(uint8_t pin) {
   return host_digital_read(pin) ? HIGH : LOW;
 }
 
-// PROTOTYPE MODEL: the converter is treated as ideal and linear from 0 to 3.3 V.
-// The real one is not (it is blind near 0 V and compresses near the top); the
-// proper curve is being worked out separately and replaces this.
+// The converter is not ideal (it is blind near 0 V and compresses near the top),
+// and how it behaves belongs to the chip, so the world answers: the library only
+// passes on the resolution and attenuation the sketch chose.
+static uint8_t attenuation_of[40];
+static bool attenuation_set = false;
+static int attenuation(uint8_t pin) {
+  if (!attenuation_set) {
+    for (uint8_t& value : attenuation_of) value = ADC_11db; // the default
+    attenuation_set = true;
+  }
+  return pin < 40 ? attenuation_of[pin] : ADC_11db;
+}
 uint32_t analogReadMilliVolts(uint8_t pin) {
   host_tick();
-  int millivolts = host_analog_millivolts(pin);
-  return (uint32_t)constrain(millivolts, 0, 3300);
+  int millivolts = host_analog_read_millivolts(pin, attenuation(pin));
+  return (uint32_t)(millivolts < 0 ? 0 : millivolts);
 }
 uint16_t analogRead(uint8_t pin) {
-  uint32_t top = (1u << adc_bits) - 1;
-  return (uint16_t)((uint64_t)analogReadMilliVolts(pin) * top / 3300);
+  host_tick();
+  return (uint16_t)host_analog_read(pin, attenuation(pin), adc_bits);
 }
-void analogReadResolution(uint8_t bits) { adc_bits = constrain(bits, 9, 12); }
-void analogSetAttenuation(adc_attenuation_t) {}
-void analogSetPinAttenuation(uint8_t, adc_attenuation_t) {}
+void analogReadResolution(uint8_t bits) { adc_bits = constrain(bits, 1, 16); }
+void analogSetAttenuation(adc_attenuation_t value) {
+  attenuation(0);
+  for (uint8_t& each : attenuation_of) each = (uint8_t)value;
+}
+void analogSetPinAttenuation(uint8_t pin, adc_attenuation_t value) {
+  attenuation(0);
+  if (pin < 40) attenuation_of[pin] = (uint8_t)value;
+}
 
 static void drive(uint8_t pin, uint32_t duty) {
   if (pin >= 40) return;

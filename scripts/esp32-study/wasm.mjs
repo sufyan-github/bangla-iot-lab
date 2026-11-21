@@ -39,10 +39,13 @@ function findTools() {
       cLib: path.join(wasiRoot, 'usr/lib/wasm32-wasi'),
       builtins: path.join(llvm, `lib/clang/${version}/lib/wasi/libclang_rt.builtins-wasm32.a`),
       compiler: `clang++-${version}`,
+      optimiser: path.join(wasiRoot, 'usr/bin/wasm-opt'),
     };
   };
   const complete = versions.find((version) =>
-    Object.entries(tools(version)).every(([name, file]) => name === 'compiler' || existsSync(file)),
+    Object.entries(tools(version)).every(
+      ([name, file]) => name === 'compiler' || name === 'optimiser' || existsSync(file),
+    ),
   );
   return tools(complete ?? versions[0] ?? 21);
 }
@@ -51,7 +54,7 @@ const TOOLS = findTools();
 /** What is missing from the WebAssembly toolchain, as a list of paths. Empty when it is complete. */
 export function missingTools() {
   const missing = Object.entries(TOOLS)
-    .filter(([name, file]) => name !== 'compiler' && !existsSync(file))
+    .filter(([name, file]) => name !== 'compiler' && name !== 'optimiser' && !existsSync(file))
     .map(([, file]) => file);
   if (spawnSync(TOOLS.compiler, ['--version']).status !== 0) missing.push(TOOLS.compiler);
   return missing;
@@ -100,7 +103,13 @@ export function buildLibraryWasm(work, optimise = '-O2') {
  * Builds the sketch in `folder` into `work/sketch/sketch.wasm`, the same way
  * lib.mjs builds it natively: the .ino files joined in the Arduino order.
  */
-export function buildSketchWasm(work, folder, name = path.basename(folder), optimise = '-O2') {
+export function buildSketchWasm(
+  work,
+  folder,
+  name = path.basename(folder),
+  optimise = '-O2',
+  { pausable = false } = {},
+) {
   const build = path.join(work, 'sketch');
   rmSync(build, { recursive: true, force: true });
   mkdirSync(build, { recursive: true });
@@ -146,13 +155,68 @@ export function buildSketchWasm(work, folder, name = path.basename(folder), opti
       '--export=_initialize',
       // The loader calls interrupt handlers through the function table.
       '--export-table',
+      // A pausable module keeps its paused call stack in memory it asks for.
+      ...(pausable ? ['--export=malloc'] : []),
       '--gc-sections',
       '--strip-all',
     ],
     { encoding: 'utf8', maxBuffer: 32e6 },
   );
+  if (linked.status !== 0) return { ok: false, module, log: linked.stderr };
+  if (pausable) {
+    const paused = makePausable(module);
+    if (!paused.ok) return { ok: false, module, log: paused.log };
+  }
   const buildMs = Number((process.hrtime.bigint() - started) / 1000000n);
-  return { ok: linked.status === 0, module, log: linked.stderr, buildMs };
+  return { ok: true, module, log: linked.stderr, buildMs };
+}
+
+/** The host functions inside which a sketch may be paused: the ones that let time pass. */
+export const PAUSING_IMPORTS = ['host_delay_micros', 'host_tick', 'host_pulse_in'];
+
+/** What is missing for making modules pausable. Empty when wasm-opt (binaryen) is there. */
+export function missingPauseTools() {
+  return existsSync(TOOLS.optimiser) ? [] : [TOOLS.optimiser];
+}
+
+/**
+ * Rewrites a module in place so that it can be stopped inside a host call that
+ * lets time pass, and carried on later from the same place (binaryen's
+ * "asyncify"). The simulation needs this: it runs a sketch a millisecond at a
+ * time, and a sketch's own loop never returns.
+ */
+export function makePausable(module) {
+  const run = spawnSync(
+    TOOLS.optimiser,
+    [
+      // What the compiler uses beyond the first version of WebAssembly. Every
+      // browser the lab supports has had these for years.
+      '--enable-bulk-memory',
+      '--enable-nontrapping-float-to-int',
+      '--enable-sign-ext',
+      '--enable-mutable-globals',
+      '--asyncify',
+      `--pass-arg=asyncify-imports@${PAUSING_IMPORTS.map((name) => `env.${name}`).join(',')}`,
+      '-O1',
+      module,
+      '-o',
+      module,
+    ],
+    {
+      encoding: 'utf8',
+      // An unpacked toolchain keeps wasm-opt's library beside it.
+      env: {
+        ...process.env,
+        LD_LIBRARY_PATH: [
+          path.join(wasiRoot, 'usr/lib/x86_64-linux-gnu'),
+          process.env.LD_LIBRARY_PATH,
+        ]
+          .filter(Boolean)
+          .join(':'),
+      },
+    },
+  );
+  return { ok: run.status === 0, log: run.stderr };
 }
 
 /**

@@ -13,7 +13,7 @@ sketch against our own implementation of the board's functions.
   sketch for the ESP32 calls (`pinMode`, `digitalWrite`, `analogRead`,
   `ledcWrite`, `pulseIn`, `Serial`, `String`, …), written from the public
   behaviour of those functions. It contains no code from the ESP32 Arduino core.
-- `include/host.h`: the sixteen functions the library needs from the world
+- `include/host.h`: the seventeen functions the library needs from the world
   (set a pin, read a voltage, let time pass, send serial text). Everything the
   library does goes through them.
 - `harness/world.cpp`: a world for a desk computer, with a **virtual clock** and

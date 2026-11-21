@@ -82,6 +82,11 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}, circuit = n
   let instance;
   const valid = (pin) => pin >= 0 && pin < PINS;
 
+  const pinMillivolts = (pin) =>
+    Math.min(
+      3300,
+      Math.max(0, circuit?.millivolts(pin, now) ?? (valid(pin) ? millivolts[pin] : 0)),
+    );
   const levelSeen = (pin) => {
     if (!valid(pin)) return 0;
     if (modeOf[pin] === OUTPUT || modeOf[pin] === OUTPUT_OPEN_DRAIN) return outputLevel[pin];
@@ -134,8 +139,10 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}, circuit = n
       circuit?.write(pin, level, now);
     },
     host_digital_read: (pin) => circuit?.read(pin, now) ?? levelSeen(pin),
-    host_analog_millivolts: (pin) =>
-      circuit?.millivolts(pin, now) ?? (valid(pin) ? millivolts[pin] : 0),
+    // This test world has an ideal converter: linear from 0 to 3.3 V.
+    host_analog_read: (pin, _attenuation, bits) =>
+      Math.trunc((pinMillivolts(pin) * (2 ** bits - 1)) / 3300),
+    host_analog_read_millivolts: (pin) => pinMillivolts(pin),
     host_pwm(pin, duty, maxDuty, frequency) {
       trace.push(`W ${now} ${pin} ${duty >>> 0} ${maxDuty >>> 0} ${frequency.toFixed(0)}`);
     },

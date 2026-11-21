@@ -132,7 +132,15 @@ void host_digital_write(int pin, int level) {
   output_level[pin] = level;
 }
 int host_digital_read(int pin) { return level_seen(pin); }
-int host_analog_millivolts(int pin) { return pin >= 0 && pin < PINS ? millivolts[pin] : 0; }
+// This test world has an ideal converter: linear from 0 to 3.3 V, whatever the attenuation.
+static int clamped_millivolts(int pin) {
+  int value = pin >= 0 && pin < PINS ? millivolts[pin] : 0;
+  return value < 0 ? 0 : value > 3300 ? 3300 : value;
+}
+int host_analog_read(int pin, int, int bits) {
+  return (int)((uint64_t)clamped_millivolts(pin) * ((1u << bits) - 1) / 3300);
+}
+int host_analog_read_millivolts(int pin, int) { return clamped_millivolts(pin); }
 void host_pwm(int pin, uint32_t duty, uint32_t max_duty, double frequency) {
   fprintf(stderr, "W %" PRIu64 " %d %u %u %.0f\n", now_us, pin, duty, max_duty, frequency);
 }

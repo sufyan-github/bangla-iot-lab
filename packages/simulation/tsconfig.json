@@ -1,5 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "types": ["node"] },
+  // WebWorker: the ESP32 sketch board uses WebAssembly, which that library declares.
+  "compilerOptions": { "types": ["node"], "lib": ["ES2023", "WebWorker"] },
   "include": ["src"]
 }

@@ -15,8 +15,14 @@ extern "C" {
 void host_pin_mode(int pin, int mode);
 void host_digital_write(int pin, int level);
 int host_digital_read(int pin);
-/** The voltage on a pin, in millivolts. */
-int host_analog_millivolts(int pin);
+/**
+ * What analogRead() returns for a pin: the converter's count at `bits` of
+ * resolution. `attenuation` is 0 to 3 for 0, 2.5, 6 and 11 dB. How a voltage
+ * becomes a count is the world's business, because it is the chip's.
+ */
+int host_analog_read(int pin, int attenuation, int bits);
+/** What analogReadMilliVolts() returns: the chip's own estimate of the voltage on a pin. */
+int host_analog_read_millivolts(int pin, int attenuation);
 /** A PWM output: `duty` out of `max_duty` at `frequency` hertz. */
 void host_pwm(int pin, uint32_t duty, uint32_t max_duty, double frequency);
 int host_touch_read(int pin);
