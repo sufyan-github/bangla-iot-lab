@@ -13,7 +13,14 @@ import {
   type EditResult,
 } from '@banglalab/shared';
 import { describe, expect, it } from 'vitest';
-import { findNets, layoutDiagram, type DiagramLayout } from './layout';
+import {
+  LOGIC_BOX_HEIGHT,
+  findNets,
+  gatesInUse,
+  layoutDiagram,
+  logicBoxWidth,
+  type DiagramLayout,
+} from './layout';
 
 function ok(result: EditResult): CircuitDocument {
   if (!result.ok) throw new Error(`edit refused: ${result.error}`);
@@ -512,6 +519,58 @@ describe('diagram of a motor driver circuit', () => {
     );
     expect(netWith(layout, 'DRV1.out1').legs).toContain('M1.a');
     expect(netWith(layout, 'DRV1.in1').legs).toContain('ESP1.d26');
+    expectSound(layout);
+  });
+});
+
+describe('diagram of a logic chip', () => {
+  // A 74HC08 placed at e10 has legs 1 to 7 along row f, columns 10 to 16, and 8 to 14
+  // back along row e, so leg 14 (supply) is at e10 and leg 7 (ground) at f16.
+  const chip = (circuit: CircuitDocument) => ok(placePart(circuit, 'logic', 'e10'));
+  const wire = (circuit: CircuitDocument, pairs: [string, string][]) =>
+    pairs.reduce((c, [from, to]) => ok(addWire(c, from, to)), circuit);
+  const expectGateBox = (layout: DiagramLayout, gates: number) => {
+    const part = layout.parts.find((p) => p.component.type === 'logic')!;
+    const connected = new Set(part.pins.filter((pin) => pin.net !== null).map((pin) => pin.name));
+    expect(gatesInUse(part.component, (name) => connected.has(name))).toHaveLength(gates);
+    expect(part.box!.height).toBeGreaterThanOrEqual(LOGIC_BOX_HEIGHT);
+    expect(part.box!.width).toBeGreaterThanOrEqual(logicBoxWidth(gates));
+    return part;
+  };
+
+  it('makes room in the box for the gates in use when the board drives it', () => {
+    let circuit = chip(ok(addEsp32(emptyCircuit())));
+    circuit = ok(placePart(circuit, 'led', 'c20'));
+    circuit = wire(circuit, [
+      ['ESP1.3v3', 'a10'],
+      ['ESP1.gnd1', 'j16'],
+      ['ESP1.d26', 'g10'], // 1A
+      ['ESP1.d27', 'g11'], // 1B
+      ['h12', 'a20'], // 1Y to the LED
+      ['a21', 'ESP1.gnd2'],
+      ['ESP1.d25', 'g13'], // 2A: a second gate in use
+    ]);
+    const layout = layoutDiagram(circuit);
+    const part = expectGateBox(layout, 2);
+    expect(part.pins.map((pin) => pin.label).sort()).toEqual(
+      ['1A', '1B', '1Y', '2A', 'GND', 'VCC'].sort(),
+    );
+    expectSound(layout);
+  });
+
+  it('makes room for the gates in a circuit with no board', () => {
+    let circuit = chip(ok(addBattery(emptyCircuit(), 5)));
+    circuit = ok(placePart(circuit, 'led', 'c20'));
+    circuit = wire(circuit, [
+      ['BAT1.pos', 'a10'],
+      ['BAT1.neg', 'j16'],
+      ['g10', 'b10'], // 1A tied high
+      ['g11', 'c10'], // 1B tied high
+      ['h12', 'a20'],
+      ['a21', 'BAT1.neg'],
+    ]);
+    const layout = layoutDiagram(circuit);
+    expectGateBox(layout, 1);
     expectSound(layout);
   });
 });

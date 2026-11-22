@@ -37,3 +37,33 @@ test('the truth table appears once there is a switch and an LED', async ({ page 
   // One switch: two rows.
   await expect(page.getByTestId('table-row')).toHaveCount(2);
 });
+
+test('the diagram draws a chip with its gates in use inside it', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await page.getByTestId('tool-battery').click();
+  await place(page, 'logic', 'e10');
+  await page.locator('[data-hit="U1"]').click();
+  await page.getByTestId('logic-chip').selectOption('74HC00');
+  await place(page, 'led', 'c20');
+  await page.getByTestId('tool-wire').click();
+  for (const [from, to] of [
+    ['BAT1.pos', 'a10'],
+    ['BAT1.neg', 'j16'],
+    ['g10', 'b10'],
+    ['h12', 'a20'],
+    ['a21', 'i16'],
+  ]) {
+    await tap(page, from!);
+    await tap(page, to!);
+  }
+  await page.getByTestId('tool-select').click();
+  await page.getByTestId('view-diagram').click();
+  const symbol = page.getByTestId('diagram').locator('[data-symbol="U1"]');
+  await expect(symbol).toContainText('74HC00');
+  // One NAND gate in use, with its legs named as in the datasheet.
+  await expect(symbol.locator('[data-gates="1"]')).toHaveCount(1);
+  await expect(symbol.locator('[data-gates]')).toContainText('1Y');
+  if (process.env.GATE_SHOT)
+    await page.getByTestId('diagram').screenshot({ path: process.env.GATE_SHOT });
+});

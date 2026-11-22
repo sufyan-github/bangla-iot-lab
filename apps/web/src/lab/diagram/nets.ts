@@ -155,6 +155,25 @@ export function pinLabel(component: CircuitComponent, pin: string): string {
   return short[pin] ?? pin.toUpperCase();
 }
 
+/**
+ * A logic chip is drawn as a box with a symbol inside for each of its gates in
+ * use, as a datasheet's logic diagram draws it. A gate is in use when any of
+ * its legs is joined to something.
+ */
+export const GATE_CELL = 80;
+export const LOGIC_BOX_HEIGHT = 76;
+export function gatesInUse(
+  component: CircuitComponent,
+  connected: (pin: string) => boolean,
+): number[] {
+  if (component.type !== 'logic') return [];
+  return LOGIC_CHIP_GATES[component.props.chip].gates.flatMap((gate, index) =>
+    [...gate.inputs, gate.output].some((n) => connected(`p${n}`)) ? [index] : [],
+  );
+}
+/** The narrowest box that holds the chip's gates in use beside its leg names. */
+export const logicBoxWidth = (gates: number) => (gates === 0 ? 0 : gates * GATE_CELL + 56);
+
 /** Sockets of a board that give out a supply voltage, with the name written on its rail. */
 const BOARD_SUPPLIES: Record<string, Record<string, string>> = {
   uno: { '5v': '5V' },

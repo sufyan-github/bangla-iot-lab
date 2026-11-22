@@ -1,6 +1,6 @@
-import type { CircuitComponent } from '@banglalab/shared';
+import { LOGIC_CHIP_GATES, type CircuitComponent, type GateKind } from '@banglalab/shared';
 import type { ReactNode } from 'react';
-import type { DiagramPart } from './layout';
+import { GATE_CELL, gatesInUse, pinLabel, type DiagramPart } from './layout';
 
 /**
  * Schematic symbols, drawn the way school textbooks draw them. Each is drawn
@@ -112,6 +112,82 @@ function twoLegSymbol(type: CircuitComponent['type'], state: SymbolState): React
   }
 }
 
+/**
+ * A gate drawn as in a textbook, its body from x to x + 30 around the line y:
+ * AND flat-backed with a round front, OR curved, XOR with a second curve
+ * behind, NOT a triangle; a small circle on the output inverts it.
+ */
+function GateSymbol(props: {
+  kind: GateKind;
+  x: number;
+  y: number;
+  inputs: string[];
+  output: string;
+}) {
+  const { kind, x, y } = props;
+  const inverted = kind === 'NAND' || kind === 'NOR' || kind === 'NOT';
+  const end = kind === 'NOT' ? x + 22 : x + 30;
+  const outX = end + (inverted ? 6 : 0);
+  const body =
+    kind === 'NOT'
+      ? `M${x} ${y - 10}L${end} ${y}L${x} ${y + 10}Z`
+      : kind === 'AND' || kind === 'NAND'
+        ? `M${x} ${y - 12}H${x + 18}A12 12 0 0 1 ${x + 18} ${y + 12}H${x}Z`
+        : `M${x} ${y - 12}Q${x + 22} ${y - 12} ${end} ${y}Q${x + 22} ${y + 12} ${x} ${y + 12}Q${x + 7} ${y} ${x} ${y - 12}Z`;
+  const inputY = props.inputs.length === 1 ? [y] : [y - 6, y + 6];
+  // An OR's back is curved, so its input lines reach a little further in.
+  const inputEnd = kind === 'OR' || kind === 'NOR' || kind === 'XOR' ? x + 4 : x;
+  const label = { fontSize: 7.5, fontWeight: 600, stroke: 'none', fill: 'var(--color-ink-soft)' };
+  return (
+    <g strokeWidth={1.4}>
+      {inputY.map((iy, i) => (
+        <g key={i}>
+          <path d={`M${x - 9} ${iy}H${inputEnd}`} />
+          <text x={x - 11} y={iy + 2.6} textAnchor="end" {...label}>
+            {props.inputs[i]}
+          </text>
+        </g>
+      ))}
+      {kind === 'XOR' && (
+        <path d={`M${x - 5} ${y - 12}Q${x + 2} ${y} ${x - 5} ${y + 12}`} fill="none" />
+      )}
+      <path d={body} fill="var(--color-surface)" />
+      {inverted && <circle cx={end + 3} cy={y} r={3} fill="var(--color-surface)" />}
+      <path d={`M${outX} ${y}H${outX + 8}`} />
+      <text x={outX + 10} y={y + 2.6} {...label}>
+        {props.output}
+      </text>
+    </g>
+  );
+}
+
+/** A logic chip's gates in use, in a row across its box. */
+function ChipGates({ part }: { part: DiagramPart }) {
+  const { component } = part;
+  if (component.type !== 'logic') return null;
+  const connected = new Set(part.pins.filter((pin) => pin.net !== null).map((pin) => pin.name));
+  const used = gatesInUse(component, (name) => connected.has(name));
+  const { kind, gates } = LOGIC_CHIP_GATES[component.props.chip];
+  const box = part.box!;
+  const y = box.top + box.height / 2 + 10;
+  const start = (box.width - used.length * GATE_CELL) / 2;
+  const name = (n: number) => pinLabel(component, `p${n}`);
+  return (
+    <g data-gates={used.length}>
+      {used.map((index, i) => (
+        <GateSymbol
+          key={index}
+          kind={kind}
+          x={start + i * GATE_CELL + 24}
+          y={y}
+          inputs={gates[index]!.inputs.map(name)}
+          output={name(gates[index]!.output)}
+        />
+      ))}
+    </g>
+  );
+}
+
 /** A box symbol: each leg runs from its tip to the nearest edge, with its name just inside. */
 function BoxSymbol({ part, name }: { part: DiagramPart; name: string }) {
   const box = part.box!;
@@ -128,7 +204,7 @@ function BoxSymbol({ part, name }: { part: DiagramPart; name: string }) {
       />
       <text
         x={box.width / 2}
-        y={box.top + box.height / 2 + 4.5}
+        y={part.component.type === 'logic' ? box.top + 25 : box.top + box.height / 2 + 4.5}
         textAnchor="middle"
         fontSize={12.5}
         fontWeight={700}
@@ -136,7 +212,13 @@ function BoxSymbol({ part, name }: { part: DiagramPart; name: string }) {
         fill="currentColor"
       >
         {name}
+        {part.component.type === 'logic' && (
+          <tspan dx={6} fontWeight={600} fill="var(--color-ink-soft)">
+            {part.component.props.chip}
+          </tspan>
+        )}
       </text>
+      <ChipGates part={part} />
       {part.pins.map((pin) => {
         const x = pin.x - part.x;
         const y = pin.y - part.y;

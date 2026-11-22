@@ -8,6 +8,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Logic chips drawn with their gates in the diagram view.** A chip is a box
+  with a textbook symbol inside for each gate in use (AND, OR, XOR, NOT, and
+  NAND and NOR with their small circle), each leg named as in the datasheet
+  (1A, 1B, 1Y), so it is clear which legs belong to which gate.
 - **ESP32 feasibility study finished on a laptop**, with a recommendation for
   the owner to confirm (D-061): the lab's own board library runs ESP32
   programs, the chip emulator stays beside it as an experiment, and the server

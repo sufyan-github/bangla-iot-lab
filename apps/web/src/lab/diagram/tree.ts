@@ -6,7 +6,10 @@ import {
 } from '@banglalab/shared';
 import {
   BOX_TYPES,
+  LOGIC_BOX_HEIGHT,
   SPARSE_BOX_TYPES,
+  gatesInUse,
+  logicBoxWidth,
   isGroundLeg,
   isSupplyLeg,
   pinLabel,
@@ -445,8 +448,16 @@ export function layoutTree(
       );
     });
     const boxTop = -LANE;
-    const boxBottom = Math.max(LANE * (left.length - 1), rightY.at(-1) ?? 0, 0) + LANE;
-    const width = Math.max(96, (Math.max(top.length, bottom.length) + 1) * BOX_PIN_SPACING);
+    const boxBottom = Math.max(
+      Math.max(LANE * (left.length - 1), rightY.at(-1) ?? 0, 0) + LANE,
+      component.type === 'logic' ? boxTop + LOGIC_BOX_HEIGHT : 0,
+    );
+    const gates = gatesInUse(component, (name) => netOfLeg(component, name) !== null).length;
+    const width = Math.max(
+      96,
+      (Math.max(top.length, bottom.length) + 1) * BOX_PIN_SPACING,
+      logicBoxWidth(gates),
+    );
     const topRoom = top.length > 0 ? BOX_LEG + 34 : 6;
     const bottomRoom = bottom.some((leg) => leg.block !== EMPTY) ? BOX_LEG + 34 : BOX_LEG + 6;
     const lastRight = right.at(-1);

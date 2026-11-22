@@ -1,7 +1,10 @@
 import { isProgrammable, type CircuitComponent, type CircuitDocument } from '@banglalab/shared';
 import {
   BOX_TYPES,
+  LOGIC_BOX_HEIGHT,
   SPARSE_BOX_TYPES,
+  gatesInUse,
+  logicBoxWidth,
   pinLabel,
   pinNames,
   type Analysis,
@@ -105,15 +108,21 @@ export function layoutRails(circuit: CircuitDocument, analysis: Analysis): Diagr
         .filter((leg) => leg.net !== null || !SPARSE_BOX_TYPES.has(component.type));
       const top = shown.filter((leg) => upper(leg.net));
       const bottom = shown.filter((leg) => !upper(leg.net));
-      width = Math.max(96, (Math.max(top.length, bottom.length) + 1) * BOX_PIN_SPACING);
-      box = { width, height: BOX_HEIGHT, top: -BOX_HEIGHT / 2 };
+      const gates = gatesInUse(component, (name) => netOfLeg(component, name) !== null).length;
+      width = Math.max(
+        96,
+        (Math.max(top.length, bottom.length) + 1) * BOX_PIN_SPACING,
+        logicBoxWidth(gates),
+      );
+      const height = component.type === 'logic' ? LOGIC_BOX_HEIGHT : BOX_HEIGHT;
+      box = { width, height, top: -height / 2 };
       const spread = (legs: typeof shown, y: number, side: Side) =>
         legs.map((leg, i) =>
           pin(leg.name, Math.round((width * (i + 1)) / (legs.length + 1)), y, side),
         );
       pins = [
-        ...spread(top, -BOX_HEIGHT / 2 - BOX_LEG, 'up'),
-        ...spread(bottom, BOX_HEIGHT / 2 + BOX_LEG, 'down'),
+        ...spread(top, -height / 2 - BOX_LEG, 'up'),
+        ...spread(bottom, height / 2 + BOX_LEG, 'down'),
       ];
     } else if (component.type === 'battery') {
       width = 40;

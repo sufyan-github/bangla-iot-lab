@@ -774,10 +774,17 @@ over 6 V, too little supply, and an output overloaded.
 the circuit's switches in turn, reading its LEDs. It is made twice, in both
 orders; when the two differ the circuit remembers, and the table says so.
 
-**Not yet:** the diagram shows a chip as a box with datasheet pin names (1A,
-1B, 1Y) rather than as gate symbols; flip-flop, counter and decoder chips; a
-chip cannot be turned round, so putting one in upside down (a real mistake)
-cannot be shown yet; and the symbol canvas.
+**In the diagram** a chip is a box with a textbook symbol for each gate in
+use drawn inside it, its inputs and output named as in the datasheet (1A, 1B,
+1Y) to match the legs on the box's edge, as a datasheet's logic diagram draws
+it. The wires inside the chip, from each leg to its gate, are not drawn: the
+legs sit where the circuit's wires leave them, and lines to the gates would
+cross. Drawing each gate as a separate symbol in the circuit is for the symbol
+canvas.
+
+**Not yet:** flip-flop, counter and decoder chips; a chip cannot be turned
+round, so putting one in upside down (a real mistake) cannot be shown yet; and
+the symbol canvas.
 
 ## D-061 — Recommended: ESP32 programs run on the lab's own board library, with the chip emulator kept beside it
 
