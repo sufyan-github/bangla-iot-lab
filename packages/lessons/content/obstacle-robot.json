@@ -1,6 +1,6 @@
 {
   "id": "obstacle-robot",
-  "order": 24,
+  "order": 25,
   "parts": ["l298n", "tt-gear-motor", "nimh-aa-pack-6", "hc-sr04", "resistor"],
   "after": ["motor-driver", "ultrasonic"],
   "title": {

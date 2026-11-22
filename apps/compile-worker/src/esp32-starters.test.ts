@@ -15,6 +15,7 @@ describe('shipped ESP32 starter programs', () => {
       'beep.ino',
       'blink.ino',
       'button.ino',
+      'counter.ino',
       'dht.ino',
       'distance.ino',
       'dustbin.ino',

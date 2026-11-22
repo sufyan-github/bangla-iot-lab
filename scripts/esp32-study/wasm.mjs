@@ -89,6 +89,7 @@ export function buildLibraryWasm(work, optimise = '-O2') {
   mkdirSync(work, { recursive: true });
   for (const [file, object] of [
     ['src/arduino.cpp', 'arduino.o'],
+    ['src/preferences.cpp', 'preferences.o'],
     ['wasm/entry.cpp', 'entry.o'],
   ]) {
     const built = compile(path.join(library, file), path.join(work, object), optimise, [
@@ -142,6 +143,7 @@ export function buildSketchWasm(
       path.join(TOOLS.cLib, 'crt1-reactor.o'),
       object,
       path.join(work, 'arduino.o'),
+      path.join(work, 'preferences.o'),
       path.join(work, 'entry.o'),
       `-L${TOOLS.cxxLib}`,
       `-L${TOOLS.cLib}`,

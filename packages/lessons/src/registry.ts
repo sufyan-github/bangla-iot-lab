@@ -16,13 +16,14 @@ import l13 from '../content/push-button.json' with { type: 'json' };
 import l14 from '../content/rain-alert.json' with { type: 'json' };
 import l15 from '../content/rain-sensor.json' with { type: 'json' };
 import l16 from '../content/rgb-led.json' with { type: 'json' };
-import l17 from '../content/security-alarm.json' with { type: 'json' };
-import l18 from '../content/servo.json' with { type: 'json' };
-import l19 from '../content/smart-dustbin.json' with { type: 'json' };
-import l20 from '../content/smart-parking.json' with { type: 'json' };
-import l21 from '../content/soil-moisture.json' with { type: 'json' };
-import l22 from '../content/street-light.json' with { type: 'json' };
-import l23 from '../content/ultrasonic.json' with { type: 'json' };
+import l17 from '../content/saved-settings.json' with { type: 'json' };
+import l18 from '../content/security-alarm.json' with { type: 'json' };
+import l19 from '../content/servo.json' with { type: 'json' };
+import l20 from '../content/smart-dustbin.json' with { type: 'json' };
+import l21 from '../content/smart-parking.json' with { type: 'json' };
+import l22 from '../content/soil-moisture.json' with { type: 'json' };
+import l23 from '../content/street-light.json' with { type: 'json' };
+import l24 from '../content/ultrasonic.json' with { type: 'json' };
 
 export const LESSON_FILES: unknown[] = [
   l0,
@@ -49,4 +50,5 @@ export const LESSON_FILES: unknown[] = [
   l21,
   l22,
   l23,
+  l24,
 ];

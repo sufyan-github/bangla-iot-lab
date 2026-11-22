@@ -193,9 +193,76 @@ void loop() {}
     expect(fonts.reason).toBe('compile-error');
   }, 120_000);
 
+  it('keeps saved settings (Preferences) by type, and from one run to the next', async () => {
+    const source = `#include <Preferences.h>
+Preferences p;
+void setup() {
+  Serial.begin(115200);
+  p.begin("lab", false);
+  Serial.printf("before %d\\n", (int)p.getInt("count", -1));
+  p.putInt("count", p.getInt("count", 0) + 1);
+  p.putString("name", "Rahim");
+  p.putFloat("volts", 3.3f);
+  p.putBool("on", true);
+  uint8_t bytes[3] = {1, 2, 3};
+  p.putBytes("raw", bytes, 3);
+  Serial.printf("count %d\\n", (int)p.getInt("count"));
+  Serial.printf("name %s\\n", p.getString("name").c_str());
+  Serial.printf("volts %.2f\\n", p.getFloat("volts"));
+  Serial.printf("on %d\\n", p.getBool("on") ? 1 : 0);
+  Serial.printf("raw %d\\n", (int)p.getBytesLength("raw"));
+  Serial.printf("wrong type %d\\n", (int)p.getInt("name", 42));
+  Serial.printf("missing %d\\n", (int)p.getUChar("nothing", 7));
+  Serial.printf("long key %d\\n", (int)p.putInt("a_key_that_is_too_long", 1));
+  Serial.printf("types %d %d\\n", (int)p.getType("count"), (int)p.getType("volts"));
+  p.end();
+  Serial.printf("closed %d\\n", (int)p.putInt("count", 99));
+  p.begin("lab", true);
+  Serial.printf("read only %d\\n", (int)p.putInt("count", 99));
+  Serial.printf("still %d\\n", (int)p.getInt("count"));
+  p.end();
+  Serial.printf("long name %d\\n", p.begin("a_name_that_is_too_long") ? 1 : 0);
+}
+void loop() { delay(100); }
+`;
+    const result = (await compile(source)).json();
+    expect(result.ok, JSON.stringify(result.diagnostics)).toBe(true);
+    const bytes = Buffer.from(result.hex, 'base64');
+    const runOnce = (settings: string) => {
+      const board = new Esp32SketchBoard(bytes, settings);
+      let serial = '';
+      let saved = settings;
+      board.onSerial((text) => (serial += text));
+      board.onSettingsSaved((text) => (saved = text));
+      board.runUntil(50);
+      return { serial, saved };
+    };
+    const first = runOnce('');
+    expect(first.serial).toContain('before -1');
+    expect(first.serial).toContain('count 1');
+    expect(first.serial).toContain('name Rahim');
+    expect(first.serial).toContain('volts 3.30');
+    expect(first.serial).toContain('on 1');
+    expect(first.serial).toContain('raw 3');
+    // A value read as the wrong type, or one that is not there, gives the default.
+    expect(first.serial).toContain('wrong type 42');
+    expect(first.serial).toContain('missing 7');
+    expect(first.serial).toContain('long key 0');
+    // PT_I32 is 4 and PT_BLOB is 9: a float is kept as a byte block, as by the real library.
+    expect(first.serial).toContain('types 4 9');
+    expect(first.serial).toContain('closed 0');
+    expect(first.serial).toContain('read only 0');
+    expect(first.serial).toContain('still 1');
+    expect(first.serial).toContain('long name 0');
+    // Started again with what was saved: the count carries on.
+    const second = runOnce(first.saved);
+    expect(second.serial).toContain('before 1');
+    expect(second.serial).toContain('count 2');
+  }, 60_000);
+
   it('every shipped starter still builds and runs', async () => {
     const sketches = (await readdir(startersDir)).filter((file) => file.endsWith('.ino'));
-    expect(sketches.length).toBe(25);
+    expect(sketches.length).toBe(26);
     for (const sketch of sketches) {
       const { board } = await run(await readFile(new URL(sketch, startersDir), 'utf8'), 200);
       expect(board.stopped, sketch).toBeNull();

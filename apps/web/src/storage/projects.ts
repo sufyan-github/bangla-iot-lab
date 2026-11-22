@@ -41,9 +41,18 @@ export interface ProjectRecord {
   programs: Record<string, BoardProgram>;
   /** Present when the project was started from a lesson. */
   lesson?: LessonProgress;
+  /**
+   * Each board's saved settings (the ESP32's Preferences), by board id, as the
+   * board library keeps them. They outlast stopping the circuit and uploading
+   * a new program, as on a real board.
+   */
+  settings?: Record<string, string>;
 }
 
-export type ProjectContent = Pick<ProjectRecord, 'name' | 'circuit' | 'programs' | 'lesson'>;
+export type ProjectContent = Pick<
+  ProjectRecord,
+  'name' | 'circuit' | 'programs' | 'lesson' | 'settings'
+>;
 
 class LabDatabase extends Dexie {
   projects!: Table<ProjectRecord, string>;

@@ -116,10 +116,32 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   private readonly exports: Exports;
   private readonly pauseData: number;
 
-  /** Throws if the bytes are not a sketch module built pausable for this board. */
-  constructor(bytes: BufferSource) {
+  /** The saved settings (Preferences), as UTF-8 text, and who wants to hear of changes. */
+  private settings: Uint8Array;
+  private readonly settingsListeners = new Set<(settings: string) => void>();
+
+  /**
+   * Throws if the bytes are not a sketch module built pausable for this board.
+   * `settings` are the saved settings the board starts with, as kept from before.
+   */
+  constructor(bytes: BufferSource, settings = '') {
+    this.settings = new TextEncoder().encode(settings);
     const module = new WebAssembly.Module(bytes);
     const env: Record<string, (...args: never[]) => unknown> = {
+      host_settings_load: (pointer: number, capacity: number) => {
+        if (pointer) {
+          const length = Math.min(capacity >>> 0, this.settings.length);
+          new Uint8Array(this.exports.memory.buffer, pointer, length).set(
+            this.settings.subarray(0, length),
+          );
+        }
+        return this.settings.length;
+      },
+      host_settings_save: (pointer: number, length: number) => {
+        this.settings = new Uint8Array(this.exports.memory.buffer, pointer, length >>> 0).slice();
+        const text = new TextDecoder().decode(this.settings);
+        for (const listener of this.settingsListeners) listener(text);
+      },
       host_pin_mode: (pin: number, mode: number) => this.pinMode(pin, mode),
       host_digital_write: (pin: number, level: number) => this.digitalWrite(pin, level),
       host_digital_read: (pin: number) => this.digitalRead(pin),
@@ -234,6 +256,10 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   onPinChange(listener: PinListener): () => void {
     this.pinListeners.add(listener);
     return () => this.pinListeners.delete(listener);
+  }
+
+  onSettingsSaved(listener: (settings: string) => void): void {
+    this.settingsListeners.add(listener);
   }
 
   onI2c(handler: I2cHandler): void {

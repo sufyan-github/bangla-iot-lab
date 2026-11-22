@@ -56,9 +56,9 @@ function useAutosave(enabled: boolean) {
     const save = () => {
       clearTimeout(timer);
       timer = undefined;
-      const { projectId, name, circuit, programs, setSaveState } = useLab.getState();
+      const { projectId, name, circuit, programs, settings, setSaveState } = useLab.getState();
       if (!projectId) return;
-      projectStore.save(projectId, { name, circuit, programs }).then(
+      projectStore.save(projectId, { name, circuit, programs, settings }).then(
         () => setSaveState('saved'),
         () => setSaveState('error'),
       );
@@ -67,7 +67,8 @@ function useAutosave(enabled: boolean) {
       if (
         state.circuit === previous.circuit &&
         state.name === previous.name &&
-        state.programs === previous.programs
+        state.programs === previous.programs &&
+        state.settings === previous.settings
       ) {
         return;
       }
@@ -97,13 +98,13 @@ function useLiveSimulation() {
   const running = useLab((s) => s.running);
   useEffect(() => {
     if (!running) return;
-    const { circuit, pressed, programs, receiveFrame } = useLab.getState();
+    const { circuit, pressed, programs, settings, receiveFrame } = useLab.getState();
     const firmware: Record<string, string> = {};
     for (const [boardId, program] of Object.entries(programs)) {
       if (program.hex) firmware[boardId] = program.hex;
     }
     void simulation().setProbes(useLab.getState().probes);
-    void simulation().start(circuit, pressed, firmware, proxy(receiveFrame));
+    void simulation().start(circuit, pressed, firmware, proxy(receiveFrame), settings);
 
     const unsubscribe = useLab.subscribe((state, previous) => {
       if (state.circuit !== previous.circuit || state.pressed !== previous.pressed) {

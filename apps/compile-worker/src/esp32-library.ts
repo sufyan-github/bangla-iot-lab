@@ -20,7 +20,7 @@ import { runTool } from './sandbox';
 export const ESP32_LIBRARY_DIR = fileURLToPath(
   new URL('../../../spikes/esp32-api/', import.meta.url),
 );
-const LIBRARY_SOURCES = ['src/arduino.cpp', 'wasm/entry.cpp'];
+const LIBRARY_SOURCES = ['src/arduino.cpp', 'src/preferences.cpp', 'wasm/entry.cpp'];
 
 /**
  * Libraries by other people that sketches for the kit use, built into every

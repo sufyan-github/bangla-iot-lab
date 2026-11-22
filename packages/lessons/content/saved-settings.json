@@ -1,0 +1,145 @@
+{
+  "id": "saved-settings",
+  "order": 17,
+  "parts": ["esp32-devkit-30pin", "push-button"],
+  "title": {
+    "bn": "জমা রাখা মান: বোর্ডের স্মৃতি",
+    "en": "Saved settings: the board's memory"
+  },
+  "summary": {
+    "bn": "বিদ্যুৎ চলে গেলেও যা মনে থাকে: বোর্ড কতবার চালু হলো তা গুনে রাখো।",
+    "en": "What is remembered even when the power goes: count how many times the board has started."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "counter",
+  "steps": [
+    {
+      "text": {
+        "bn": "প্রোগ্রামের চলক (`int count`) থাকে বোর্ডের সাধারণ মেমরিতে; বিদ্যুৎ গেলেই মুছে যায়। কিন্তু ESP32-র **ফ্ল্যাশ** মেমরিতে লেখা জিনিস থেকে যায়, নতুন প্রোগ্রাম দিলেও। **Preferences** লাইব্রেরি সেখানে নাম দিয়ে মান জমা রাখে, যেমন `\"starts\"` নামে একটা সংখ্যা।\n\nআজ বোর্ড গুনবে সে কতবার চালু হলো।",
+        "en": "A program's variables (`int count`) live in the board's ordinary memory and vanish when the power goes. But what is written to the ESP32's **flash** memory stays, even when a new program is uploaded. The **Preferences** library keeps values there by name, such as a number called `\"starts\"`.\n\nToday the board counts how many times it has started."
+      },
+      "checks": []
+    },
+    {
+      "text": {
+        "bn": "**বোতাম** খাঁজের ওপর বসাও: এক পা **D4**-এ, অন্য পা GND-তে। এটা চাপলে গণনা মুছে যাবে।",
+        "en": "Place the **button** across the gap: one leg to **D4**, the other to GND. Pressing it will erase the count."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "button"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "board": "d4"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।\n\n`memory.getInt(\"starts\", 0)` জমা রাখা সংখ্যা পড়ে (না থাকলে ০), আর `memory.putInt(\"starts\", starts)` নতুনটা লিখে রাখে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does.\n\n`memory.getInt(\"starts\", 0)` reads the saved number (0 if there is none), and `memory.putInt(\"starts\", starts)` writes the new one."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "counter"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। সিরিয়াল মনিটরে আসবে \"বোর্ড চালু হয়েছে 1 বার\"। বোর্ডে ট্যাপ করলে পাশে দেখবে কী জমা রাখা আছে।",
+        "en": "Press **Run**. The serial monitor says \"বোর্ড চালু হয়েছে 1 বার\" (the board has started once). Tap the board to see what is saved, at the side."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "বোর্ড চালু হয়েছে \\d+ বার",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে গণনা এসেছে",
+            "en": "The count appeared in the serial monitor"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার **বন্ধ করো**, তারপর আবার **চালু করো**: যেন বিদ্যুৎ চলে গিয়ে আবার এলো। চলক মুছে গেছে, কিন্তু জমা রাখা সংখ্যা মনে আছে: এবার আসবে \"2 বার\"।",
+        "en": "Now press **Stop**, then **Run** again, as if the power went off and came back. The variables are gone, but the saved number is remembered: this time it says \"2 বার\" (twice)."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "বোর্ড চালু হয়েছে ([2-9]|\\d{2,}) বার",
+          "label": {
+            "bn": "আবার চালু করার পর গণনা বেড়েছে",
+            "en": "The count went up after starting again"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "বোতাম চাপো: আসবে \"গণনা মুছে ফেলা হলো\"। তারপর বন্ধ করে আবার চালু করো: গোনা আবার 1 থেকে শুরু।",
+        "en": "Press the button: it says \"গণনা মুছে ফেলা হলো\" (the count is erased). Then stop and run again: counting starts again from 1."
+      },
+      "checks": [
+        {
+          "kind": "serial",
+          "matches": "গণনা মুছে ফেলা হলো"
+        },
+        {
+          "kind": "serial",
+          "matches": "বোর্ড চালু হয়েছে 1 বার",
+          "label": {
+            "bn": "মুছে ফেলার পর গোনা 1 থেকে শুরু হয়েছে",
+            "en": "Counting started again from 1 after erasing"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "সাধারণ চলক বিদ্যুৎ গেলে মুছে যায়; ফ্ল্যাশে লেখা মান থাকে।",
+      "`Preferences` নাম দিয়ে মান রাখে: `putInt()` লেখে, `getInt()` পড়ে।",
+      "`clear()` এক জায়গার সব মান মুছে দেয়।"
+    ],
+    "en": [
+      "Ordinary variables vanish when the power goes; values written to flash stay.",
+      "`Preferences` keeps values by name: `putInt()` writes, `getInt()` reads.",
+      "`clear()` erases every value in one namespace."
+    ]
+  },
+  "tryNext": {
+    "bn": "সবচেয়ে বেশি তাপমাত্রা জমা রাখো: DHT11-এর মান আগের সর্বোচ্চের চেয়ে বেশি হলে `putFloat()` দিয়ে লিখে রাখো।",
+    "en": "Save the highest temperature: when the DHT11 reads more than the saved highest, write it with `putFloat()`."
+  }
+}

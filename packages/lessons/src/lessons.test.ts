@@ -97,7 +97,9 @@ type Action =
   | { set: string; props: Record<string, unknown>; afterMs?: number }
   | { press: string; afterMs?: number }
   | { release: string; afterMs?: number }
-  | { edit: (circuit: CircuitDocument) => CircuitDocument; afterMs?: number };
+  | { edit: (circuit: CircuitDocument) => CircuitDocument; afterMs?: number }
+  /** The circuit is stopped and started again: the board keeps only what it saved. */
+  | { restart: true; afterMs?: number };
 
 const esp32: CircuitComponent = { id: 'ESP1', type: 'esp32', props: {} };
 const part = (
@@ -334,6 +336,21 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       ['ESP1.d26', 'DRV1.in1'],
       ['ESP1.d27', 'DRV1.in2'],
     ],
+  },
+  'saved-settings': {
+    components: [esp32, part('SW1', 'button', { a: 'e10', b: 'f10' })],
+    wires: [
+      ['ESP1.d4', 'a10'],
+      ['ESP1.gnd1', 'j10'],
+    ],
+    actions: {
+      4: [{ restart: true, afterMs: 300 }],
+      5: [
+        { press: 'SW1', afterMs: 200 },
+        { release: 'SW1', afterMs: 200 },
+        { restart: true, afterMs: 300 },
+      ],
+    },
   },
   // ---- projects ----
   'street-light': {
@@ -653,6 +670,14 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
           circuit = changed.circuit;
         } else if ('edit' in action) {
           circuit = action.edit(circuit);
+        } else if ('restart' in action) {
+          const saved = (session as SimulationSession | null)?.savedSettings('ESP1') ?? '';
+          session = new SimulationSession(circuit, pressed);
+          (session as SimulationSession).setSettings('ESP1', saved);
+          if (uploadedStarter)
+            (session as SimulationSession).loadFirmware('ESP1', starter(uploadedStarter));
+          serial = '';
+          continue;
         } else if ('press' in action) {
           pressed = [...pressed, action.press];
         } else {

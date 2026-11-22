@@ -701,3 +701,26 @@ Left out for now, and why:
 As for the kit lessons, each project has a walkthrough that completes it
 against the real simulation; breaking a robot motor's wiring or giving the air
 quality step too little gas makes its walkthrough fail.
+
+## D-058 — Saved settings are kept with the project, and survive what flash survives
+
+The ESP32's Preferences library keeps values in flash, where they survive the
+board being switched off and a new program being uploaded (an upload from the
+Arduino tools does not erase that part of flash unless asked to). The lab
+does the same: each board's saved settings are kept with the project on the
+device, passed to the board when the circuit starts, and kept across uploads,
+stopping and reloading. Undo does not touch them, as undoing a wiring change
+on a bench does not change the board's flash.
+
+The library is the lab's own, written from the documented interface, like its
+`ESP32Servo.h`; the Arduino core's Preferences is LGPL and is not used. It keeps
+each value's type as NVS does, so a value read as the wrong type gives the
+default. As the real library does, `putBool` stores one byte, and `putFloat`
+and `putDouble` store byte blocks. Keys and namespaces are limited to 15
+characters and strings to 4000 bytes, the NVS limits.
+
+Not modelled: how long a write takes, flash wear, and running out of space
+(`freeEntries()` assumes room for 500 values, an ESTIMATE). Erasing is offered
+in the board's inspector only while the circuit is stopped. Saved settings
+work with the lab's own model of the board; the chip emulator has no
+Preferences library yet.

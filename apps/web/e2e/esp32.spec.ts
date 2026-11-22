@@ -77,6 +77,7 @@ test('the code tab says the ESP32 is experimental and offers only ESP32 programs
     'airquality',
     'parking',
     'robot',
+    'counter',
     'custom',
   ]);
 });
@@ -531,4 +532,42 @@ test('the motor program runs a motor both ways through the L298N driver', async 
   await expect.poll(speed, SAMPLING).toBe(0);
   await expect.poll(speed, SAMPLING).toBeLessThan(-0.35);
   await expect(page.locator('[data-diag^="pin-over"], [data-diag^="module-"]')).toHaveCount(0);
+});
+
+// ---- saved settings (Preferences) ----
+
+test('saved settings outlast stopping the circuit and a reload, and can be erased', async ({
+  page,
+}) => {
+  await newEsp32Circuit(page);
+  await chooseStarter(page, 'counter');
+  const serial = page.getByTestId('serial');
+  const runOnce = async (expected: string) => {
+    await page.getByTestId('run').click();
+    await page.getByTestId('tab-code').click();
+    await expect(serial).toContainText(expected, { timeout: 15_000 });
+    await page.getByTestId('run').click();
+    await page.getByTestId('tab-circuit').click();
+  };
+  await runOnce('বোর্ড চালু হয়েছে 1 বার');
+  await runOnce('বোর্ড চালু হয়েছে 2 বার');
+
+  // The board's inspector shows what is saved; kept with the project after a reload.
+  await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
+  await page.reload();
+  await page.locator('[data-hit="ESP1"]').click();
+  const saved = page.getByTestId('saved-settings');
+  await expect(saved).toHaveAttribute('data-count', '1');
+  await expect(saved.getByTestId('saved-setting')).toContainText('starts = 2');
+  await runOnce('বোর্ড চালু হয়েছে 3 বার');
+
+  // Erasing is only offered while the circuit is stopped.
+  await page.getByTestId('run').click();
+  await page.locator('[data-hit="ESP1"]').click();
+  await expect(page.getByTestId('erase-settings')).toBeDisabled();
+  await page.getByTestId('run').click();
+  await page.locator('[data-hit="ESP1"]').click();
+  await page.getByTestId('erase-settings').click();
+  await expect(saved).toHaveAttribute('data-count', '0');
+  await runOnce('বোর্ড চালু হয়েছে 1 বার');
 });

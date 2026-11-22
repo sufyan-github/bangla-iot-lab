@@ -79,6 +79,7 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}, circuit = n
   const trace = [];
   const serial = [];
   let hostCalls = 0;
+  let settings = new Uint8Array(0);
   let instance;
   const valid = (pin) => pin >= 0 && pin < PINS;
 
@@ -172,6 +173,19 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}, circuit = n
     host_serial_available: () => typed.length,
     host_serial_read: () => (typed.length ? typed.shift() : -1),
     host_serial_peek: () => (typed.length ? typed[0] : -1),
+    // Saved settings last as long as the run.
+    host_settings_load(pointer, capacity) {
+      if (pointer)
+        new Uint8Array(
+          instance.exports.memory.buffer,
+          pointer,
+          Math.min(capacity, settings.length),
+        ).set(settings.subarray(0, capacity));
+      return settings.length;
+    },
+    host_settings_save(pointer, length) {
+      settings = new Uint8Array(instance.exports.memory.buffer, pointer, length >>> 0).slice();
+    },
     // No I2C device is on this world's bus.
     host_i2c_transfer: () => 2,
     host_micros: () => BigInt(now),

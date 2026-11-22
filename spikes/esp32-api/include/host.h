@@ -51,6 +51,15 @@ int host_serial_peek(void);
 int host_i2c_transfer(int sda, int scl, int address, const uint8_t* write, size_t write_length,
                       uint8_t* read, size_t read_length);
 
+/**
+ * The board's saved settings (what the Preferences library keeps in flash), as
+ * text. Copies up to `capacity` bytes into `buffer` and returns the whole
+ * length; with a null buffer it only says how long it is.
+ */
+size_t host_settings_load(char* buffer, size_t capacity);
+/** Keeps the board's saved settings, all of them, after a change. */
+void host_settings_save(const char* data, size_t length);
+
 uint64_t host_micros(void);
 /** Lets time pass. This is where the world moves on and scripted inputs arrive. */
 void host_delay_micros(uint64_t microseconds);

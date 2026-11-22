@@ -113,8 +113,10 @@ const api = {
     pressed: string[],
     firmware: Record<string, string>,
     onFrame: (frame: SimulationFrame) => void,
+    settings: Record<string, string> = {},
   ): Promise<string[]> {
     const started = (session = new SimulationSession(document, pressed));
+    for (const [boardId, saved] of Object.entries(settings)) session.setSettings(boardId, saved);
     session.setProbes(probes);
     report = onFrame;
     costPerMs = 0;

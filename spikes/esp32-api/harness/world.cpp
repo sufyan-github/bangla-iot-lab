@@ -171,6 +171,13 @@ int host_serial_read(void) {
   return c;
 }
 int host_serial_peek(void) { return typed.empty() ? -1 : typed.front(); }
+// Saved settings last as long as the run.
+static std::string settings;
+size_t host_settings_load(char* buffer, size_t capacity) {
+  if (buffer) memcpy(buffer, settings.data(), std::min(capacity, settings.size()));
+  return settings.size();
+}
+void host_settings_save(const char* data, size_t length) { settings.assign(data, length); }
 // No I2C device is on the desk-computer world's bus.
 int host_i2c_transfer(int, int, int, const uint8_t*, size_t, uint8_t*, size_t) { return 2; }
 uint64_t host_micros(void) { return now_us; }

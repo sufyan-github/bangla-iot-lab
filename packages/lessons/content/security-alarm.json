@@ -1,6 +1,6 @@
 {
   "id": "security-alarm",
-  "order": 20,
+  "order": 21,
   "parts": ["pir-hc-sr501", "push-button", "buzzer-module-active", "led-5mm", "oled-ssd1306-096"],
   "after": ["pir-motion", "push-button", "buzzer", "oled-display"],
   "title": {

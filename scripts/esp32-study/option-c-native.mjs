@@ -55,6 +55,7 @@ mkdirSync(work, { recursive: true });
 // The library and the world are compiled once and linked into every sketch.
 for (const [file, object] of [
   ['src/arduino.cpp', 'arduino.o'],
+  ['src/preferences.cpp', 'preferences.o'],
   ['harness/world.cpp', 'world.o'],
 ]) {
   const built = spawnSync(
@@ -114,6 +115,7 @@ for (const [index, sketch] of sketches.entries()) {
       `-I${build}`,
       path.join(build, 'sketch.cpp'),
       path.join(work, 'arduino.o'),
+      path.join(work, 'preferences.o'),
       path.join(work, 'world.o'),
       '-o',
       program,

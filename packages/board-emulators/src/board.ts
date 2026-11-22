@@ -71,6 +71,12 @@ export interface ProgrammableBoard {
    * A board that does not offer this cannot talk to I2C parts.
    */
   onI2c?(handler: I2cHandler): void;
+  /**
+   * Optional. Called with all of the board's saved settings, as text, each time
+   * the program changes them (the ESP32's Preferences). A board that offers
+   * this takes the settings to start from when it is made.
+   */
+  onSettingsSaved?(listener: (settings: string) => void): void;
   /** Optional. Frees what the board holds, when it is taken out of a circuit. */
   dispose?(): void;
 }

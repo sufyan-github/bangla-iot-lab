@@ -55,6 +55,8 @@ interface LabState {
   circuit: CircuitDocument;
   /** Program and uploaded firmware for each board, by board id. */
   programs: Record<string, BoardProgram>;
+  /** Each board's saved settings (Preferences), by board id; kept with the project. */
+  settings: Record<string, string>;
   selectedId: string | null;
   tool: Tool;
   /** First end of the wire being drawn. */
@@ -121,6 +123,8 @@ interface LabState {
   setRunning(running: boolean): void;
   receiveFrame(frame: SimulationFrame): void;
   clearSerial(boardId: string): void;
+  /** Erases a board's saved settings, as erasing its flash would. Only while stopped. */
+  eraseSettings(boardId: string): void;
   setSaveState(saveState: SaveState): void;
 }
 
@@ -198,6 +202,7 @@ export const useLab = create<LabState>((set, get) => {
     name: '',
     circuit: emptyCircuit(),
     programs: {},
+    settings: {},
     uploads: {},
     probes: [],
     selectedId: null,
@@ -220,6 +225,7 @@ export const useLab = create<LabState>((set, get) => {
         name: project.name,
         circuit: project.circuit,
         programs: project.programs,
+        settings: project.settings ?? {},
         selectedId: null,
         tool: 'select',
         wireStart: null,
@@ -379,10 +385,26 @@ export const useLab = create<LabState>((set, get) => {
           [boardId]: ((serial[boardId] ?? '') + board.serial).slice(-SERIAL_LIMIT),
         };
       }
+      let settings = get().settings;
+      for (const [boardId, board] of Object.entries(frame.boards)) {
+        if (board.settings !== undefined) settings = { ...settings, [boardId]: board.settings };
+      }
       signals.append(frame.trace, frame.timeMs);
-      set({ result: frame.result, boards: frame.boards, serial, speed: frame.speed ?? 1 });
+      set({
+        result: frame.result,
+        boards: frame.boards,
+        serial,
+        settings,
+        speed: frame.speed ?? 1,
+      });
     },
     clearSerial: (boardId) => set({ serial: { ...get().serial, [boardId]: '' } }),
+    eraseSettings(boardId) {
+      if (get().running) return;
+      const settings = { ...get().settings };
+      delete settings[boardId];
+      set({ settings });
+    },
     setSaveState: (saveState) => set({ saveState }),
   };
 });

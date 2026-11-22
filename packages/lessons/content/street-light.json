@@ -1,6 +1,6 @@
 {
   "id": "street-light",
-  "order": 17,
+  "order": 18,
   "parts": ["ldr-module", "pir-hc-sr501", "led-5mm", "resistor"],
   "after": ["ldr-module", "pir-motion", "led-resistor"],
   "title": {

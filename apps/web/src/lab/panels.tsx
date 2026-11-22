@@ -11,6 +11,7 @@ import {
 import type { ReactNode } from 'react';
 import { useT } from '../i18n';
 import { oledImage } from './oled-image';
+import { parseSettings } from './settings';
 import { LED_PAINT } from './parts';
 import { useLab } from './store';
 
@@ -69,6 +70,49 @@ function OledPreview({ id }: { id: string }) {
       className="block max-w-full rounded border-4 border-[#0b0e12]"
       style={{ imageRendering: 'pixelated' }}
     />
+  );
+}
+
+/** What the ESP32's program has saved (Preferences), and a way to erase it. */
+function SavedSettings({ boardId }: { boardId: string }) {
+  const text = useLab((s) => s.settings[boardId] ?? '');
+  const running = useLab((s) => s.running);
+  const { t } = useT();
+  const settings = parseSettings(text);
+  return (
+    <section data-testid="saved-settings" data-count={settings.length}>
+      <p className="mb-1.5 text-sm font-semibold text-ink-soft">{t('settings.title')}</p>
+      {settings.length === 0 ? (
+        <p className="text-sm text-ink-soft">{t('settings.none')}</p>
+      ) : (
+        <ul className="space-y-1 font-mono text-sm">
+          {settings.map((setting) => (
+            <li key={`${setting.space}/${setting.key}`} data-testid="saved-setting">
+              <span className="text-ink-soft">{setting.space} › </span>
+              {setting.key} ={' '}
+              {setting.bytes !== undefined
+                ? t('settings.bytes', { count: String(setting.bytes) })
+                : setting.value}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-1.5 text-xs text-ink-soft">{t('settings.about')}</p>
+      {settings.length > 0 && (
+        <>
+          <button
+            type="button"
+            data-testid="erase-settings"
+            disabled={running}
+            onClick={() => useLab.getState().eraseSettings(boardId)}
+            className="mt-2 min-h-11 rounded-lg border-2 border-danger/40 px-3 text-sm font-medium text-danger hover:bg-danger-soft disabled:opacity-50"
+          >
+            {t('settings.erase')}
+          </button>
+          {running && <p className="mt-1 text-xs text-ink-soft">{t('settings.eraseStopped')}</p>}
+        </>
+      )}
+    </section>
   );
 }
 
@@ -358,6 +402,7 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
+  if (part.type === 'esp32') return <SavedSettings boardId={part.id} />;
   if (part.type !== 'led') return null;
   return (
     <fieldset>

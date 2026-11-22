@@ -41,6 +41,8 @@ export interface BoardStatus {
   highFraction: number[];
   /** Text sent over serial since the last frame. */
   serial: string;
+  /** All of the board's saved settings, present when the program changed them since the last frame. */
+  settings?: string;
 }
 
 /**
@@ -145,6 +147,12 @@ export class SimulationSession {
   /** Where each motion sensor is in its timing, and which have their output HIGH right now. */
   private readonly pirs = new Map<string, PirState>();
   private motion: Record<string, boolean> = {};
+  /**
+   * Each board's saved settings, as kept from one run to the next (the
+   * ESP32's flash). Given by whoever starts the session, changed by programs.
+   */
+  private readonly settings = new Map<string, string>();
+  private readonly settingsChanged = new Set<string>();
   /** What each motor driver was last found to be doing: where the next solve starts from. */
   private drivers: Record<string, DriverState> = {};
 
@@ -197,6 +205,16 @@ export class SimulationSession {
     this.feedInputs();
   }
 
+  /** The saved settings a board starts with when its program is next loaded. */
+  setSettings(boardId: string, settings: string): void {
+    this.settings.set(boardId, settings);
+  }
+
+  /** A board's saved settings as they are now. */
+  savedSettings(boardId: string): string {
+    return this.settings.get(boardId) ?? '';
+  }
+
   /** Chooses which signals to record for the oscilloscope and logic analyser. */
   setProbes(probes: readonly Probe[]): void {
     this.probes = [...probes];
@@ -236,7 +254,7 @@ export class SimulationSession {
         return;
       }
       const bytes = Uint8Array.from(atob(program.trim()), (char) => char.charCodeAt(0));
-      this.loadProgram(boardId, new Esp32SketchBoard(bytes));
+      this.loadProgram(boardId, new Esp32SketchBoard(bytes, this.settings.get(boardId) ?? ''));
     } else {
       this.loadProgram(boardId, new UnoBoard(program));
     }
@@ -285,6 +303,10 @@ export class SimulationSession {
       }
     });
     emulator.onSerial((text) => (board.serial += text));
+    emulator.onSettingsSaved?.((settings) => {
+      this.settings.set(boardId, settings);
+      this.settingsChanged.add(boardId);
+    });
     emulator.onI2c?.((transfer) => this.peripherals.i2c(boardId, transfer));
     this.boards.get(boardId)?.emulator.dispose?.();
     this.boards.set(boardId, board);
@@ -644,9 +666,11 @@ export class SimulationSession {
               : 0,
         ),
         serial: board.serial,
+        ...(this.settingsChanged.has(id) ? { settings: this.settings.get(id) ?? '' } : {}),
       };
       board.highTime.fill(0);
       board.serial = '';
+      this.settingsChanged.delete(id);
     }
     const frame: SimulationFrame = { timeMs: this.time, result, boards };
     if (this.probes.length > 0) {

@@ -8,6 +8,13 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Saved settings on the ESP32** (the Preferences library), in the lab's own
+  model of the board. Values are kept by namespace and key with their type, as
+  in the chip's flash, and outlast stopping the circuit, uploading a new
+  program and reloading the page: they are kept with the project, on the
+  device. The board's inspector lists them and can erase them while the
+  circuit is stopped. A new kit lesson counts how many times the board has
+  started, with its own ready-made program.
 - **Eight project lessons**, after the kit lessons: smart street light, rain
   alert, smart dustbin, security alarm, plant monitor, air quality monitor,
   smart parking and an obstacle-avoiding robot. Each joins several kit parts

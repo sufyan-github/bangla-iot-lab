@@ -1,6 +1,6 @@
 {
   "id": "air-quality",
-  "order": 22,
+  "order": 23,
   "parts": ["mq-135", "oled-ssd1306-096", "rgb-led-module", "buzzer-module-active", "resistor"],
   "after": ["mq135-gas", "oled-display", "rgb-led", "buzzer"],
   "title": {

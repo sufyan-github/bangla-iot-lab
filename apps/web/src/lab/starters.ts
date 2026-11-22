@@ -62,6 +62,8 @@ import esp32ParkingSource from '@banglalab/board-emulators/fixtures/esp32-starte
 import esp32ParkingModule from '@banglalab/board-emulators/fixtures/esp32-starters/parking.wasm.base64?raw';
 import esp32RobotSource from '@banglalab/board-emulators/fixtures/esp32-starters/robot.ino?raw';
 import esp32RobotModule from '@banglalab/board-emulators/fixtures/esp32-starters/robot.wasm.base64?raw';
+import esp32CounterSource from '@banglalab/board-emulators/fixtures/esp32-starters/counter.ino?raw';
+import esp32CounterModule from '@banglalab/board-emulators/fixtures/esp32-starters/counter.wasm.base64?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -110,6 +112,7 @@ export const ESP32_STARTERS = {
   airquality: { source: esp32AirqualitySource, hex: esp32AirqualityModule },
   parking: { source: esp32ParkingSource, hex: esp32ParkingModule },
   robot: { source: esp32RobotSource, hex: esp32RobotModule },
+  counter: { source: esp32CounterSource, hex: esp32CounterModule },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;
