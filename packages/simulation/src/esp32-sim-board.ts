@@ -28,6 +28,26 @@ export interface Esp32Firmware {
   app: Uint8Array;
 }
 
+/** How the lab stores a built firmware: the three images in base64, in JSON. */
+export const ESP32_FIRMWARE_FORMAT = 'esp32-firmware-1';
+
+/** Reads a stored firmware. Returns null when the text is not one. */
+export function parseEsp32Firmware(text: string): Esp32Firmware | null {
+  if (!text.trimStart().startsWith('{')) return null;
+  try {
+    const stored = JSON.parse(text) as Record<string, unknown>;
+    if (stored.format !== ESP32_FIRMWARE_FORMAT) return null;
+    const image = (name: string) => {
+      const value = stored[name];
+      if (typeof value !== 'string') throw new Error(`no ${name}`);
+      return Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
+    };
+    return { bootloader: image('bootloader'), partitions: image('partitions'), app: image('app') };
+  } catch {
+    return null;
+  }
+}
+
 const PINS = 40;
 /** Fastest switching shown for a PWM output, hertz. */
 const PWM_SHOWN_HZ = 2000;
@@ -81,6 +101,7 @@ interface Exports {
   lab_gpio_events(emulator: number, out: number, max: number): number;
   lab_gpio_state(emulator: number, pin: number): number;
   lab_gpio_set(emulator: number, pin: number, level: number): void;
+  lab_gpio_release(emulator: number, pin: number): void;
   lab_adc_volts(emulator: number, pin: number, volts: number): void;
   lab_pwm_hz(emulator: number, pin: number): number;
   lab_pwm_duty(emulator: number, pin: number): number;
@@ -189,6 +210,10 @@ export class Esp32SimBoard implements ProgrammableBoard {
 
   setDigitalInput(pin: number, high: boolean): void {
     if (pin >= 0 && pin < PINS) this.wasm.lab_gpio_set(this.emulator, pin, high ? 1 : 0);
+  }
+
+  releaseInput(pin: number): void {
+    if (pin >= 0 && pin < PINS) this.wasm.lab_gpio_release(this.emulator, pin);
   }
 
   setPinVoltage(pin: number, volts: number): void {

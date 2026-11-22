@@ -20,8 +20,14 @@ make no promise of compatibility, except that saved circuits are always migrated
 - Groundwork for a second way to run ESP32 programs: `Esp32SimBoard` runs the
   board's real firmware in esp32sim, an emulator of the whole chip, behind the
   same interface as the other boards. `third_party/esp32sim` builds the emulator
-  from its pinned source with one file of the lab's added. **Not in the editor
-  yet:** no firmware is built for it or shipped.
+  from its pinned source with one file of the lab's added.
+- The compile worker builds real ESP32 firmware from a sketch, in its sandbox,
+  with Espressif's toolchain and the Arduino core kept in
+  `third_party/arduino-esp32` (LGPL-2.1, unmodified, with how to rebuild and
+  relink). Tests build firmware, boot it in the emulator and run it against the
+  example circuit. **Not in the editor yet.**
+- The simulation tells a board when the circuit is not deciding a pin's level,
+  so a pull-up the program enables reads HIGH in the same instant.
 - Circuit format version 7 (adds the ESP32 board). A circuit has one board, of
   either kind.
 - The simulation runs any board through one interface, from a table of each

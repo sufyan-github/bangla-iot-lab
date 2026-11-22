@@ -43,12 +43,32 @@ under other licences. Each is kept apart from the Apache-2.0 code.
    - libc++, libc++abi and compiler-rt from the LLVM project, under the Apache
      License 2.0 with LLVM Exceptions (LICENSES/LLVM.txt).
 
-3. Anek Bangla font (SIL Open Font License 1.1)
+3. ESP32 firmware for the chip emulator (experimental; LGPL-2.1-or-later)
+
+   When asked for the emulator engine, the compile server builds a student's
+   sketch into real ESP32 firmware. Each image is a combined work of:
+
+   - the sketch;
+   - Espressif's Arduino core for the ESP32, release 3.3.12, Copyright
+     Espressif Systems and contributors, LGPL-2.1-or-later. Its complete
+     corresponding source, unmodified, is in third_party/arduino-esp32/, with
+     how to rebuild or relink the firmware in its README;
+   - Espressif's ESP-IDF 5.5.5 libraries, Apache-2.0, with parts under other
+     permissive licences listed in Espressif's own copyright notice
+     (https://docs.espressif.com/projects/esp-idf/en/v5.5.5/esp32/COPYRIGHT.html).
+
+   No such firmware is shipped with the application yet.
+
+   The emulator itself, esp32sim (MIT, Copyright its authors), is built from
+   its source by third_party/esp32sim/build.sh, and boots Espressif's mask ROM
+   for the ESP32 (Apache-2.0).
+
+4. Anek Bangla font (SIL Open Font License 1.1)
 
    Copyright 2021 The Anek Project Authors. Distributed unmodified through the
    @fontsource-variable/anek-bangla package. See LICENSES/OFL-1.1-AnekBangla.txt.
 
-4. JavaScript dependencies
+5. JavaScript dependencies
 
    Listed with their licence texts in THIRD_PARTY_LICENSES.md.
 

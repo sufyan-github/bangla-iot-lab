@@ -19,6 +19,13 @@ export interface ProgrammableBoard {
   pinDrive(pin: number): PinDrive;
   /** Sets the logic level the program sees when it reads an input pin. */
   setDigitalInput(pin: number, high: boolean): void;
+  /**
+   * Optional. Says that nothing in the circuit decides this pin's level: it is
+   * unconnected, or behind an open switch, or the pin is driving it itself. A
+   * board that models its own pull resistors then lets them decide, at once,
+   * instead of being held to a level the circuit reported a moment ago.
+   */
+  releaseInput?(pin: number): void;
   /** Sets the voltage on a pin, for the program's analog reads. Ignored on a pin that cannot measure. */
   setPinVoltage(pin: number, volts: number): void;
   /** Called whenever a pin changes what it drives. Returns a function that stops listening. */

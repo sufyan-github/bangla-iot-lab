@@ -34,6 +34,12 @@ jobs:
       - run: pnpm --filter @banglalab/board-emulators pico:fetch
       - run: pnpm audit --prod --audit-level high
       - run: pnpm check
+      # The real ESP32 toolchain, for building firmware for the chip emulator: about 1.6 GB, so kept between runs.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: esp32-toolchain-espressif32-8.0.0
+      - run: sh apps/compile-worker/scripts/fetch-esp32-toolchain.sh
       # The ESP32 emulator the lab can run firmware in: built from its pinned source (needs Rust).
       - run: sh third_party/esp32sim/build.sh .cache/esp32sim
       - run: pnpm test:integration

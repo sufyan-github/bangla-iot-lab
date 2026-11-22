@@ -19,6 +19,15 @@ import {
   type Esp32Library,
   type Esp32Toolchain,
 } from './esp32-library';
+import {
+  ESP32_MAX_APP_BYTES,
+  ensureEsp32Core,
+  esp32FirmwareSteps,
+  esp32FirmwareText,
+  findEsp32FirmwareToolchain,
+  type Esp32Core,
+  type Esp32FirmwareToolchain,
+} from './esp32-firmware';
 import { runTool, type RunResult } from './sandbox';
 import { sketchToCpp } from './sketch';
 
@@ -29,6 +38,12 @@ export interface CompileRequest {
    * sketches only).
    */
   board: 'uno' | 'esp32';
+  /**
+   * For the ESP32 only, how the program will be run. `library` (the default):
+   * built against the lab's own board library into a WebAssembly module.
+   * `emulator`: the board's real firmware, for the emulator of the whole chip.
+   */
+  engine?: 'library' | 'emulator';
   /** `c`: plain avr-libc C. `arduino`: an Arduino sketch with setup() and loop(). */
   language: 'c' | 'arduino';
   source: string;
@@ -43,8 +58,9 @@ export interface CompileDiagnostic {
 
 export type CompileOutcome =
   /**
-   * `hex` is the built program as text: Intel HEX for the UNO, and for the
-   * ESP32 the WebAssembly module in base64 (`flashBytes` is then its size).
+   * `hex` is the built program as text: Intel HEX for the UNO; for the ESP32
+   * either the WebAssembly module in base64 or, for the emulator, the firmware
+   * images in JSON (`flashBytes` is then the module's or the app image's size).
    */
   | { ok: true; hex: string; flashBytes: number; ramBytes: number }
   | {
@@ -141,7 +157,9 @@ export class Compiler {
   cacheKey(request: CompileRequest): string {
     const recipe =
       request.board === 'esp32'
-        ? ['esp32-library', this.esp32Key ?? 'unbuilt']
+        ? request.engine === 'emulator'
+          ? ['esp32-firmware', this.firmwareKey ?? 'unbuilt']
+          : ['esp32-library', this.esp32Key ?? 'unbuilt']
         : request.language === 'arduino'
           ? [ARDUINO_CORE_VERSION, ARDUINO_LIBRARIES, ARDUINO_FLAGS, CXX_FLAGS]
           : GCC_FLAGS;
@@ -159,7 +177,9 @@ export class Compiler {
 
   async compile(request: CompileRequest): Promise<CompileResponse> {
     // The ESP32 library's own version is part of the key, so it is built first.
-    if (request.board === 'esp32') await this.prepareEsp32();
+    if (request.board === 'esp32') {
+      await (request.engine === 'emulator' ? this.prepareEsp32Firmware() : this.prepareEsp32());
+    }
     const key = this.cacheKey(request);
     const cached = await readFile(this.cachePath(key), 'utf8').catch(() => null);
     if (cached) {
@@ -250,8 +270,85 @@ export class Compiler {
     }
   }
 
+  private firmware: Promise<{ toolchain: Esp32FirmwareToolchain; core: Esp32Core }> | undefined;
+  private firmwareKey: string | undefined;
+
+  /** Finds the real ESP32 toolchain and builds the Arduino core on first use (about ten seconds). */
+  prepareEsp32Firmware(): Promise<{ toolchain: Esp32FirmwareToolchain; core: Esp32Core }> {
+    this.firmware ??= (async () => {
+      const toolchain = findEsp32FirmwareToolchain();
+      if ('missing' in toolchain) {
+        throw new Error(
+          `The ESP32 firmware toolchain is incomplete. Missing: ${toolchain.missing.join(', ')}`,
+        );
+      }
+      const core = await ensureEsp32Core(this.config.cacheDir, toolchain);
+      this.firmwareKey = core.key;
+      return { toolchain, core };
+    })();
+    this.firmware.catch(() => (this.firmware = undefined));
+    return this.firmware;
+  }
+
+  private async buildEsp32Firmware(source: string): Promise<CompileOutcome> {
+    const { sandbox } = this.config;
+    // Linking against several hundred libraries takes longer than an UNO build.
+    const timeoutMs = Math.max(this.config.timeoutMs, 30_000);
+    const { toolchain, core } = await this.prepareEsp32Firmware();
+    const jobDir = await mkdtemp(path.join(tmpdir(), 'banglalab-compile-'));
+    try {
+      await writeFile(path.join(jobDir, 'sketch.cpp'), sketchToCpp(source));
+      let log = '';
+      for (const step of esp32FirmwareSteps(toolchain, core)) {
+        const result = await runTool(
+          sandbox,
+          jobDir,
+          step.tool,
+          step.args,
+          timeoutMs,
+          core.readOnlyPaths,
+          // The image tool asks where the home folder is; in the sandbox there is none.
+          { HOME: '/tmp' },
+        );
+        if (result.timedOut) return { ok: false, reason: 'timeout', diagnostics: [] };
+        log += result.stderr;
+        if (result.exitCode !== 0) {
+          if (/will not fit in region|region \S+ overflowed/.test(log)) {
+            return { ok: false, reason: 'program-too-large', diagnostics: [] };
+          }
+          const diagnostics = parseGccDiagnostics(log).filter((d) => d.severity === 'error');
+          if (diagnostics.length === 0) {
+            diagnostics.push({
+              line: 1,
+              column: 1,
+              severity: 'error',
+              message: explainLinkError(log),
+            });
+          }
+          return { ok: false, reason: 'compile-error', diagnostics };
+        }
+      }
+      const app = await readFile(path.join(jobDir, 'firmware.bin'));
+      if (app.length > ESP32_MAX_APP_BYTES) {
+        return { ok: false, reason: 'program-too-large', diagnostics: [] };
+      }
+      return {
+        ok: true,
+        hex: await esp32FirmwareText(core, app),
+        flashBytes: app.length,
+        ramBytes: 0,
+      };
+    } finally {
+      await rm(jobDir, { recursive: true, force: true });
+    }
+  }
+
   private async build(request: CompileRequest): Promise<CompileOutcome> {
-    if (request.board === 'esp32') return this.buildEsp32(request.source);
+    if (request.board === 'esp32') {
+      return request.engine === 'emulator'
+        ? this.buildEsp32Firmware(request.source)
+        : this.buildEsp32(request.source);
+    }
     const { sandbox, timeoutMs } = this.config;
     const jobDir = await mkdtemp(path.join(tmpdir(), 'banglalab-compile-'));
     const run = (tool: string, args: string[], readOnly: string[] = []) =>

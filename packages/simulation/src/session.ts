@@ -74,6 +74,8 @@ interface RunningBoard {
   serial: string;
   /** Level last presented to each input, for hysteresis and to avoid redundant updates. */
   inputLevel: (boolean | undefined)[];
+  /** Pins the board was last told the circuit does not decide (see `releaseInput`). */
+  inputReleased: (boolean | undefined)[];
   events: { timeMs: number; pin: number; drive: PinDrive }[];
 }
 
@@ -229,6 +231,7 @@ export class SimulationSession {
       highTime: new Array<number>(model.pinCount).fill(0),
       serial: '',
       inputLevel: [],
+      inputReleased: [],
       events: [],
     };
     emulator.onPinChange((pin, drive, timeMs) => {
@@ -359,13 +362,51 @@ export class SimulationSession {
         const previous = board.inputLevel[pin];
         const level =
           voltage > model.logicHigh ? true : voltage < model.logicLow ? false : (previous ?? false);
-        if (level !== previous) {
+        // A board that models its own pulls is told when the circuit is not deciding the
+        // level, so that a pull-up enabled by the program reads HIGH in the same instant.
+        const released =
+          board.emulator.releaseInput !== undefined && this.pinDecidesItself(id, board, pin, level);
+        if (level !== previous || released !== (board.inputReleased[pin] ?? false)) {
           board.inputLevel[pin] = level;
-          board.emulator.setDigitalInput(pin, level);
+          board.inputReleased[pin] = released;
+          if (released) board.emulator.releaseInput!(pin);
+          else board.emulator.setDigitalInput(pin, level);
         }
         board.emulator.setPinVoltage(pin, voltage);
       }
     }
+  }
+
+  /**
+   * True when nothing in the circuit decides a pin's level: its socket is
+   * empty, the pin is driving it itself, or it reads LOW only because nothing
+   * holds it up (it would read HIGH with the pin's own pull-up on).
+   */
+  private pinDecidesItself(
+    boardId: string,
+    board: RunningBoard,
+    pin: number,
+    level: boolean,
+  ): boolean {
+    const drive = board.drives[pin];
+    if (drive === 'high' || drive === 'low') return true;
+    const terminal = boardSocketOfPin(board.type, pin);
+    if (terminal === null) return false;
+    const socket = `${boardId}.${terminal}`;
+    const steady = this.hasCapacitors ? this.latest : this.solveSteady();
+    if (!steady?.sockets[socket]) return true; // nothing plugged in
+    // With a pull already on, the level is what it is: the circuit and the pull settled it.
+    if (drive === 'pullup' || drive === 'pulldown') return level === (drive === 'pullup');
+    if (level || this.hasCapacitors) return false;
+    // A plain input reading LOW: held LOW by the circuit, or merely not held up?
+    // Asked of the solver as a question; nothing about the running circuit may change.
+    const before = board.drives[pin]!;
+    const relays = this.relays;
+    board.drives[pin] = 'pullup';
+    const pulled = this.solveSteady();
+    board.drives[pin] = before;
+    this.relays = relays;
+    return (pulled?.sockets[socket]?.voltage ?? 0) > board.model.logicHigh;
   }
 
   /** Moves simulated time forward. */

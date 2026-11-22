@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@banglalab/board-emulators": "workspace:*",
+    "@banglalab/shared": "workspace:*",
     "@banglalab/simulation": "workspace:*"
   }
 }

@@ -8,6 +8,7 @@ import Fastify from 'fastify';
 import { Type } from 'typebox';
 import { Compiler, QueueFullError } from './compiler';
 import type { WorkerConfig } from './config';
+import { findEsp32FirmwareToolchain } from './esp32-firmware';
 import { assertSandboxWorks } from './sandbox';
 
 async function detectToolchain(): Promise<string> {
@@ -61,12 +62,18 @@ export async function buildServer(config: WorkerConfig) {
     },
   );
 
+  // Real ESP32 firmware, for the chip emulator: another toolchain again, and optional too.
+  // It is prepared on first use, not here: building the core takes about ten seconds.
+  const esp32Firmware = () =>
+    'missing' in findEsp32FirmwareToolchain() ? ('unavailable' as const) : ('ready' as const);
+
   app.get('/health', async () => ({
     status: 'ok',
     sandbox: config.sandbox,
     toolchain,
     arduino,
     esp32,
+    esp32Firmware: esp32Firmware(),
   }));
 
   app.post(
@@ -77,6 +84,7 @@ export async function buildServer(config: WorkerConfig) {
           {
             board: Type.Union([Type.Literal('uno'), Type.Literal('esp32')]),
             language: Type.Union([Type.Literal('c'), Type.Literal('arduino')]),
+            engine: Type.Optional(Type.Union([Type.Literal('library'), Type.Literal('emulator')])),
             source: Type.String({ minLength: 1, maxLength: config.maxSourceBytes }),
           },
           { additionalProperties: false },
@@ -86,6 +94,9 @@ export async function buildServer(config: WorkerConfig) {
     async (request, reply) => {
       if (request.body.board === 'esp32' && request.body.language !== 'arduino') {
         return reply.code(400).send({ error: 'the ESP32 board takes Arduino sketches only' });
+      }
+      if (request.body.engine && request.body.board !== 'esp32') {
+        return reply.code(400).send({ error: 'only the ESP32 board has a choice of engine' });
       }
       try {
         return await compiler.compile(request.body);
