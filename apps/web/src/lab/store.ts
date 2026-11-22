@@ -292,8 +292,11 @@ export const useLab = create<LabState>((set, get) => {
       // A new board arrives with Blink already on it, as a real UNO does.
       set({ tool: 'select', selectedId: id, wireStart: null });
       void starterProgram('blink').then((program) => {
-        // Only if the board is still there: the student may have removed it meanwhile.
-        if (get().circuit.components.some((c) => c.id === id)) get().uploadProgram(id, program);
+        // Only if the board is still there and nothing was written for it meanwhile.
+        const { circuit, programs } = get();
+        if (circuit.components.some((c) => c.id === id) && !programs[id]) {
+          get().uploadProgram(id, program);
+        }
       });
     },
     addMotorDriver() {
@@ -309,7 +312,10 @@ export const useLab = create<LabState>((set, get) => {
       set({ tool: 'select', selectedId: id, wireStart: null });
       // Like the UNO-compatible board, it arrives with Blink on it.
       void starterProgram('blink', 'esp32').then((program) => {
-        if (get().circuit.components.some((c) => c.id === id)) get().uploadProgram(id, program);
+        const { circuit, programs } = get();
+        if (circuit.components.some((c) => c.id === id) && !programs[id]) {
+          get().uploadProgram(id, program);
+        }
       });
     },
     removeSelected() {

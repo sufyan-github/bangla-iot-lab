@@ -1,5 +1,5 @@
 import { emptyCircuit, ledCircuitExample, movePart, unoCircuitExample } from '@banglalab/shared';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { simulate } from '@banglalab/simulation';
 import { meterReading } from './meter';
 import { useLab } from './store';
@@ -62,9 +62,11 @@ describe('lab editor state', () => {
     expect(lab().selectedId).toBeNull();
   });
 
-  it('gives a new board the Blink program, ready to run, and removes it with the board', () => {
+  it('gives a new board the Blink program, ready to run, and removes it with the board', async () => {
     lab().addUno();
     expect(lab().selectedId).toBe('UNO1');
+    // The ready-made program is loaded, then put on the board.
+    await vi.waitFor(() => expect(lab().programs.UNO1).toBeDefined());
     const program = lab().programs.UNO1!;
     expect(program.source).toContain('digitalWrite');
     expect(program.hex).toMatch(/^:/);
@@ -200,8 +202,9 @@ describe('undo and redo', () => {
     expect(lab().circuit).toEqual(unoCircuitExample());
   });
 
-  it('brings a removed board back with its program, and reloads it if running', () => {
+  it('brings a removed board back with its program, and reloads it if running', async () => {
     lab().addUno();
+    await vi.waitFor(() => expect(lab().programs.UNO1).toBeDefined());
     const program = lab().programs.UNO1!;
     const uploadsBefore = lab().uploads.UNO1!;
     lab().select('UNO1');
