@@ -5,11 +5,13 @@ import {
   type CircuitDocument,
 } from '@banglalab/shared';
 import { Hd44780 } from './hd44780';
-import type { I2cResult, I2cTransfer, PinDrive } from '@banglalab/board-emulators';
+import type { I2cResult, I2cTransfer, OneWireStep, PinDrive } from '@banglalab/board-emulators';
 import {
   DHT11_START_MS,
   DHT11_TIMING_US,
   INA219_ADDRESS,
+  JSN_SR04T_MAX_CM,
+  JSN_SR04T_MIN_CM,
   OLED_ADDRESS,
   SERVO_MAX_PULSE_US,
   SERVO_MIN_PULSE_US,
@@ -19,6 +21,7 @@ import {
 } from './library';
 import { netName } from './netlist';
 import { Bme280, Ina219, type I2cDevice, type Ina219Inputs } from './i2c-sensors';
+import { Ds18b20 } from './onewire-sensors';
 import { Ssd1306 } from './ssd1306';
 
 /** Turns bytes into base64 text, in a browser, a worker or Node. */
@@ -112,6 +115,11 @@ export class Peripherals {
   /** Sensors on an I2C bus, each answering at its own address. */
   private i2cSensors: { id: string; sda?: PinKey; scl?: PinKey; address: number }[] = [];
   private readonly sensorChips = new Map<string, I2cDevice>();
+  /** Thermometers on 1-Wire buses, by the board pin their DQ line is on. */
+  private oneWires: { id: string; dq?: PinKey }[] = [];
+  private readonly thermometers = new Map<string, Ds18b20>();
+  /** Whether each thermometer's DQ line has a pull-up holding it HIGH when released. */
+  private lineUp: (id: string) => boolean = () => false;
   /** What each current monitor sees in the circuit now. */
   private measured: (id: string) => Ina219Inputs = () => ({ shunt: 0, bus: 0 });
   private readonly panels = new Map<string, Ssd1306>();
@@ -143,11 +151,12 @@ export class Peripherals {
     this.dhts = [];
     this.oleds = [];
     this.i2cSensors = [];
+    this.oneWires = [];
     this.sensorInputs.clear();
     for (const component of document.components) {
       if (component.type === 'servo') {
         this.servos.push({ id: component.id, signal: pinOf.direct(component.pins.signal) });
-      } else if (component.type === 'ultrasonic') {
+      } else if (component.type === 'ultrasonic' || component.type === 'jsnsr04t') {
         // A 5 V echo may reach a 3.3 V board's pin through a divider.
         const echo = pinOf.throughResistor(component.pins.echo);
         if (echo) this.sensorInputs.set(echo, false);
@@ -155,7 +164,11 @@ export class Peripherals {
           id: component.id,
           trig: pinOf.direct(component.pins.trig),
           echo,
-          distance: component.props.distance,
+          // The waterproof sensor cannot see closer than its blind zone, nor past its reach.
+          distance:
+            component.type === 'jsnsr04t'
+              ? Math.min(JSN_SR04T_MAX_CM, Math.max(JSN_SR04T_MIN_CM, component.props.distance))
+              : component.props.distance,
         });
       } else if (component.type === 'dht11') {
         const data = pinOf.direct(component.pins.data);
@@ -189,6 +202,12 @@ export class Peripherals {
           scl: pinOf.direct(component.pins.scl),
           address: component.type === 'bme280' ? component.props.address : INA219_ADDRESS,
         });
+      } else if (component.type === 'ds18b20') {
+        const chip = this.thermometers.get(component.id);
+        if (chip) chip.setCelsius(component.props.celsius);
+        else
+          this.thermometers.set(component.id, new Ds18b20(component.id, component.props.celsius));
+        this.oneWires.push({ id: component.id, dq: pinOf.direct(component.pins.dq) });
       } else if (component.type === 'lcd') {
         if (!this.displays.has(component.id)) this.displays.set(component.id, new Hd44780());
         const { pins } = component;
@@ -209,6 +228,7 @@ export class Peripherals {
       this.panels,
       this.pictures,
       this.sensorChips,
+      this.thermometers,
     ]) {
       for (const id of map.keys()) if (!present.has(id)) map.delete(id);
     }
@@ -226,6 +246,36 @@ export class Peripherals {
     for (const [id, panel] of this.panels) if (!powered(id)) panel.reset();
     // So does a sensor: its settings go back to how the chip starts.
     for (const [id, chip] of this.sensorChips) if (!powered(id)) chip.reset();
+    for (const [id, chip] of this.thermometers) if (!powered(id)) chip.powerOn();
+  }
+
+  /** Tells each thermometer whether its line has a pull-up, as the circuit is now solved. */
+  setLinesUp(lineUp: (id: string) => boolean): void {
+    this.lineUp = lineUp;
+  }
+
+  /**
+   * One step on a 1-Wire bus: every powered thermometer whose DQ line is on that
+   * pin takes part. The line is wired-AND: a bit reads 0 when any of them holds
+   * it low. Without a pull-up the line never rises, and no device can answer.
+   */
+  oneWire(boardId: string, step: OneWireStep): 0 | 1 {
+    const key = pinKey(boardId, step.pin);
+    const on = this.oneWires.filter((t) => t.dq === key && this.powered(t.id));
+    if (on.length === 0) return step.op === 'read' ? 1 : 0;
+    if (!on.every((t) => this.lineUp(t.id))) return 0;
+    const chips = on.map((t) => this.thermometers.get(t.id)!);
+    if (step.op === 'reset') {
+      for (const chip of chips) chip.reset(step.timeMs);
+      return 1;
+    }
+    if (step.op === 'write') {
+      for (const chip of chips) chip.write(step.bit, step.timeMs);
+      return 1;
+    }
+    let line: 0 | 1 = 1;
+    for (const chip of chips) if (chip.read(step.timeMs) === 0) line = 0;
+    return line;
   }
 
   /** Tells each current monitor what it measures in the circuit as now solved. */

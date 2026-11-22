@@ -1,0 +1,202 @@
+{
+  "id": "temperature-probe",
+  "order": 34,
+  "parts": ["ds18b20", "resistor", "led-5mm"],
+  "title": {
+    "bn": "পানির তাপমাত্রা: DS18B20 আর 1-Wire",
+    "en": "Water temperature: the DS18B20 and 1-Wire"
+  },
+  "summary": {
+    "bn": "এক তারে জলরোধী প্রোব থেকে তাপমাত্রা পড়ো, আর দেখো পুল-আপ কেন লাগে।",
+    "en": "Read a waterproof probe's temperature over one wire, and see why it needs a pull-up."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "thermo",
+  "steps": [
+    {
+      "text": {
+        "bn": "**DS18B20 প্রোব** বসাও। লাল তার (**VDD**) যাবে **3V3**-এ, কালো (**GND**) যাবে **GND**-তে, হলুদ (**DQ**) যাবে **D4**-এ। এই একটা তারেই প্রোব কথা বলে: তাই নাম 1-Wire।",
+        "en": "Place the **DS18B20 probe**. The red lead (**VDD**) goes to **3V3**, black (**GND**) to **GND**, yellow (**DQ**) to **D4**. The probe talks on this one wire: hence the name 1-Wire."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ds18b20"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ds18b20",
+            "pin": "vdd"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ds18b20",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ds18b20",
+            "pin": "dq"
+          },
+          "to": {
+            "board": "d4"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "প্রোব আর বোর্ড দুজনেই তারকে শুধু নিচে (LOW) টানতে পারে, ওপরে তুলতে পারে না। তাই একটা **৪.৭ kΩ পুল-আপ** লাগে: **DQ** থেকে রেজিস্টর হয়ে **3V3**-এ। এটা ছাড়া লাইন কখনো HIGH হয় না।",
+        "en": "The probe and the board can only pull the wire down (LOW), never up. So it needs a **4.7 kΩ pull-up**: from **DQ** through a resistor to **3V3**. Without it the line never goes HIGH."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ds18b20",
+            "pin": "dq"
+          },
+          "to": {
+            "board": "3v3"
+          },
+          "through": "resistor",
+          "ohms": [3300, 10000]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। এটা DallasTemperature লাইব্রেরি ব্যবহার করে: `probes.begin()` তারে কয়টা প্রোব আছে খোঁজে, প্রত্যেকের নিজের ৬৪-বিট নম্বর দিয়ে।",
+        "en": "**Put this lesson's program on the board.** It uses the DallasTemperature library: `probes.begin()` looks for the probes on the wire, each by its own 64-bit number."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "thermo"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। সিরিয়াল মনিটরে \"প্রোব পাওয়া গেছে: 1\", তারপর প্রতি দুই সেকেন্ডের মতো তাপমাত্রা দেখাবে।",
+        "en": "Press **Run**. The serial monitor shows \"প্রোব পাওয়া গেছে: 1\" (probes found: 1), then the temperature every two seconds or so."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "প্রোব পাওয়া গেছে: 1"
+        },
+        {
+          "kind": "serial",
+          "matches": "প্রোব 1: \\d+\\.\\d\\d °C",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে প্রোবের তাপমাত্রা",
+            "en": "The serial monitor shows the probe's temperature"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "প্রোবে ট্যাপ করে তাপমাত্রা **৪০ °C**-এর বেশি করো, যেন গরম পানি। LED জ্বলবে।",
+        "en": "Tap the probe and raise the temperature above **40 °C**, as in hot water. The LED lights."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "ds18b20",
+          "prop": "celsius",
+          "above": 40
+        },
+        {
+          "kind": "serial",
+          "matches": "প্রোব 1: (4[1-9]|[5-9]\\d|1\\d\\d)\\.\\d\\d °C",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে ৪০ °C-এর বেশি",
+            "en": "The serial monitor shows more than 40 °C"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "1-Wire-এ এক তারে কথা হয়, আর একই তারে অনেক প্রোব রাখা যায়: প্রত্যেকের নিজের নম্বর।",
+      "1-Wire লাইনে পুল-আপ রেজিস্টর লাগে, কারণ যন্ত্রগুলো তারকে শুধু নিচে টানতে পারে।",
+      "প্রথম মাপার আগে DS18B20 ৮৫ °C দেখায়: এই সংখ্যা দেখলে বুঝবে মাপা হয়নি।"
+    ],
+    "en": [
+      "1-Wire talks over one wire, and many probes can share it: each has its own number.",
+      "A 1-Wire line needs a pull-up resistor, because the devices can only pull the wire down.",
+      "Before its first measurement a DS18B20 reads 85 °C: seeing that number means nothing was measured."
+    ]
+  },
+  "tryNext": {
+    "bn": "একই তিনটে তারে আরেকটা প্রোব লাগাও: প্রোগ্রাম দুটোই খুঁজে পায় কি না দেখো। তারপর পুল-আপ সরিয়ে দেখো কী হয়।",
+    "en": "Add a second probe on the same three wires: see whether the program finds both. Then take the pull-up away and see what happens."
+  }
+}

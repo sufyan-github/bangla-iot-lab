@@ -946,3 +946,52 @@ its code.
 INA219's averaging and its address pads; SPI.
 
 Hardware tests E11 and E12 are written; none is run.
+
+## D-065 — 1-Wire is modelled as resets and bits, under the real DallasTemperature library
+
+The DS18B20 needs the 1-Wire bus. The OneWire library for Arduino (MIT-style
+licence, Jim Studt and others) drives the pin through the ESP32's GPIO
+registers, which the lab's board library does not have. So, as I2C was done
+(D-054), the board library has its own `OneWire` with the same functions,
+written for the lab: each reset and each bit is one exchange with the
+simulation (`host_onewire`), and the time the step takes on a real bus is
+charged. The ROM search follows Maxim's published algorithm. No code of the
+OneWire library is used.
+
+The DallasTemperature library (release 4.0.6, MIT, Copyright 2024 Miles
+Burton) is built unmodified on top of it. Releases up to 3.9.1 were LGPL 2.1 or
+later; 4.0.6 is MIT at its tag, checked on 23 November 2026, and only 4.0.6 is
+used.
+
+**The probe** follows Maxim's datasheet (rev. 050102), read from a copy of the
+datasheet: family code 28h; the ROM commands (Search F0h, Read 33h, Match
+55h, Skip CCh, Alarm Search ECh) and function commands (Convert T 44h, Read
+and Write Scratchpad BEh and 4Eh, Copy 48h, Recall B8h, Read Power Supply
+B4h); the scratchpad's layout and its fixed bytes FFh, 0Ch and 10h; the
+configuration byte and its 9 to 12 bits; the longest conversion times; the
+CRC (X^8 + X^5 + X^4 + 1); +85 °C until the first conversion; read slots that
+give 0 during a conversion and 1 after it. The temperature encoding is tested
+against every row of the datasheet's table 2. The line is wired-AND, so
+several probes share it as on a real bus, and the library's search finds each.
+ESTIMATE: alarm limits of 75 °C and 70 °C on a new probe (users' readings; the
+datasheet leaves them to the factory), its supply current.
+
+**The pull-up is required.** A probe answers only when its DQ line rises to at
+least half its supply with the board's pin released, so a missing 4.7 kΩ
+pull-up means no probe is found, and the lab says why. Parasite power is not
+modelled.
+
+**A fault found on the way.** An ESP32 program whose global objects set up a
+pin before `setup()` (OneWire's constructor does) stopped before it began: the
+time that took was treated as a pause, before the program could be paused. The
+simulated board now lets such time pass without pausing, as it already did
+inside interrupt handlers. Programs without such objects are unchanged.
+
+**The other three parts of stage 4.** The JSN-SR04T shares the HC-SR04's
+timing and answers only between 25 cm and 450 cm (sellers' figures for
+version 2.0); the lesson that uses it teaches its blind zone. The line sensor's
+outputs are HIGH over black, as sellers describe the common board (some are
+the other way round). The siren is a 40 Ω load that sounds from about 6 V the
+right way round: estimates.
+
+Hardware tests E13 to E16 are written; none is run.

@@ -337,6 +337,7 @@ export class SimulationSession {
       this.settingsChanged.add(boardId);
     });
     emulator.onI2c?.((transfer) => this.peripherals.i2c(boardId, transfer));
+    emulator.onOneWire?.((step) => this.peripherals.oneWire(boardId, step));
     this.boards.get(boardId)?.emulator.dispose?.();
     this.boards.set(boardId, board);
     this.stepping = null;
@@ -487,6 +488,10 @@ export class SimulationSession {
     this.peripherals.setPowered(
       (id) => (solution?.parts[id]?.voltage ?? 0) >= (minSupply.get(id) ?? MODULE_MIN_SUPPLY),
     );
+    this.peripherals.setLinesUp((id) => {
+      const supply = solution?.parts[id]?.supply ?? 0;
+      return supply > 0 && (solution?.channels[`${id}.dq`]?.voltage ?? 0) > supply / 2;
+    });
     this.peripherals.setMeasured((id) => ({
       shunt: solution?.channels[`${id}.shunt`]?.voltage ?? 0,
       bus: solution?.channels[`${id}.bus`]?.voltage ?? 0,

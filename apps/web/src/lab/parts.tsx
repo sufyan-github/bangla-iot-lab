@@ -1546,6 +1546,100 @@ export function Ina219View(props: { first: Point; last: Point; selected: boolean
   );
 }
 
+/** DS18B20 probe: its steel tip on a black cable, ending in red, yellow and black leads. */
+export function Ds18b20View(props: {
+  first: Point;
+  last: Point;
+  label: string;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const colours = ['#23282b', '#e1b51a', '#c9302c'];
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      {[-length / 2, 0, length / 2].map((x, i) => (
+        <path key={x} d={`M${x} 0V-14L0 -22`} fill="none" stroke={colours[i]} strokeWidth={2.2} />
+      ))}
+      <path d="M0 -22V-34" stroke="#17191b" strokeWidth={6} strokeLinecap="round" />
+      <rect
+        x={-5}
+        y={-62}
+        width={10}
+        height={30}
+        rx={4}
+        fill="url(#shade-metal)"
+        stroke="#5d666a"
+      />
+      <text x={14} y={-40} fontSize={10.5} fontWeight={700} fill="#fff" pointerEvents="none">
+        {props.label}
+      </text>
+    </g>
+  );
+}
+
+/** Five-channel line sensor: a long board with five pairs of infrared LEDs and receivers. */
+export function LineSensorView(props: {
+  first: Point;
+  last: Point;
+  black: readonly boolean[];
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 16} y={-36} width={length + 32} height={42} color="#1f5fa8" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+        <SolderDot key={i} x={-length / 2 + (i * length) / 6} />
+      ))}
+      {props.black.map((black, i) => {
+        const x = -length / 2 - 8 + (i * (length + 16)) / 4;
+        return (
+          <g key={i} transform={`translate(${x} -26)`}>
+            <rect x={-5} y={-5} width={10} height={10} rx={1.5} fill="#17191b" />
+            <circle cx={-2} r={2} fill="#3d4448" />
+            <circle cx={2} r={2} fill="#7a4fbf" />
+            <circle cy={10} r={2.4} fill={black ? '#ff5340' : '#5a1f1a'} />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+/** 12 V siren: a red horn on a black base, between its two leads. */
+export function SirenView(props: { pos: Point; neg: Point; sounding: boolean; selected: boolean }) {
+  const { length, transform } = between(props.pos, props.neg);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      {[-length / 2, length / 2].map((x, i) => (
+        <path
+          key={x}
+          d={`M${x} 0V-10`}
+          stroke={i === 0 ? '#c9302c' : '#23282b'}
+          strokeWidth={2.2}
+        />
+      ))}
+      <rect x={-length / 2 - 4} y={-18} width={length + 8} height={9} rx={2} fill="#17191b" />
+      <path d={`M${-length / 2} -18L-8 -46H8L${length / 2} -18Z`} fill="#c9302c" />
+      <circle cy={-32} r={6} fill="#8f1e1a" />
+      {props.sounding &&
+        [12, 20].map((r) => (
+          <path
+            key={r}
+            d={`M${length / 2 + 2} ${-32 - r / 2}A${r} ${r} 0 0 1 ${length / 2 + 2} ${-32 + r / 2}`}
+            fill="none"
+            stroke="#ff5340"
+            strokeWidth={2}
+          />
+        ))}
+    </g>
+  );
+}
+
 /** HC-SR501 motion sensor: a white faceted dome on a small board. */
 export function PirView(props: {
   vcc: Point;

@@ -37,10 +37,12 @@ function Choice(props: {
   onClick(): void;
   children: ReactNode;
   label?: string;
+  testId?: string;
 }) {
   return (
     <button
       type="button"
+      data-testid={props.testId}
       aria-pressed={props.selected}
       aria-label={props.label}
       title={props.label}
@@ -346,6 +348,28 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
+  if (part.type === 'linesensor') {
+    // Which of the five sensors are over the black line.
+    return (
+      <fieldset>
+        <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.onLine')}</legend>
+        <div className="flex gap-1.5">
+          {part.props.black.map((black, i) => (
+            <Choice
+              key={i}
+              testId={`line-channel-${i + 1}`}
+              selected={black}
+              onClick={() =>
+                setProps(part.id, { black: part.props.black.map((b, j) => (j === i ? !b : b)) })
+              }
+            >
+              {number(i + 1)}
+            </Choice>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
   if (part.type === 'bme280') {
     // The weather where it sits, and its address on the bus.
     const sliders = [
@@ -582,6 +606,8 @@ function PartSettings({ part }: { part: CircuitComponent }) {
     part.type === 'soil' ||
     part.type === 'temperature' ||
     part.type === 'ultrasonic' ||
+    part.type === 'jsnsr04t' ||
+    part.type === 'ds18b20' ||
     part.type === 'tds' ||
     part.type === 'turbidity'
   ) {
@@ -592,12 +618,14 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       soil: { key: 'moisture', label: 'inspector.moisture', min: 0, max: 1, step: 0.01 },
       temperature: { key: 'celsius', label: 'inspector.temperature', min: 0, max: 100, step: 1 },
       ultrasonic: { key: 'distance', label: 'inspector.distance', min: 2, max: 400, step: 1 },
+      jsnsr04t: { key: 'distance', label: 'inspector.distance', min: 2, max: 600, step: 1 },
+      ds18b20: { key: 'celsius', label: 'inspector.temperature', min: -55, max: 125, step: 0.25 },
     }[part.type];
     const value = (part.props as Record<string, number>)[slider.key]!;
     const shown =
-      part.type === 'temperature'
+      part.type === 'temperature' || part.type === 'ds18b20'
         ? `${number(value)}°C`
-        : part.type === 'ultrasonic'
+        : part.type === 'ultrasonic' || part.type === 'jsnsr04t'
           ? `${number(value)} cm`
           : part.type === 'tds'
             ? `${number(value)} ppm`

@@ -10,8 +10,8 @@ Status values: **Done** (implemented and tested), **Partial**, **Planned**.
 | --- | ------------------------------------------------------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------- |
 | G-1 | Bangla-first interface; English available; technical terms shown in both | 0+    | Partial — all Phase 0 screens are bilingual; side-by-side term glossary is Planned                                               |
 | G-2 | Works on Android phones and Windows laptops                              | 0–3   | Partial — responsive and tested in an emulated phone profile; real-device testing is Phase 3                                     |
-| G-3 | Offline lessons and local project storage after first load               | 0–2   | Partial — app shell, projects and the 33 lessons work offline; class content later                                               |
-| G-4 | Students learn Class 6–12 electronics through guided lessons             | 2     | Partial — 18 kit lessons, 6 lessons on parts beyond the kit and 9 projects, all with automatic checks; no curriculum mapping yet |
+| G-3 | Offline lessons and local project storage after first load               | 0–2   | Partial — app shell, projects and the 35 lessons work offline; class content later                                               |
+| G-4 | Students learn Class 6–12 electronics through guided lessons             | 2     | Partial — 18 kit lessons, 8 lessons on parts beyond the kit and 9 projects, all with automatic checks; no curriculum mapping yet |
 | G-5 | Teachers manage classes and see aggregate progress                       | 2     | Planned                                                                                                                          |
 | G-6 | Schools manage teachers, licences and subscriptions                      | 4–5   | Planned                                                                                                                          |
 

@@ -243,6 +243,35 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       </text>
     </>
   ),
+  ds18b20: (
+    <>
+      <path d="M10 3h4v10l1.5 2v3a3.5 3.5 0 0 1-7 0v-3L10 13z" {...stroke} />
+      <path d="M12 16v2" {...stroke} strokeWidth={2} />
+    </>
+  ),
+  jsnsr04t: (
+    <>
+      <circle cx="12" cy="12" r="6" {...stroke} />
+      <path d="M12 18v4M5 8q-2 4 0 8M19 8q2 4 0 8" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  linesensor: (
+    <>
+      <rect x="2" y="9" width="20" height="6" rx="1.5" {...stroke} />
+      <path
+        d="M5 12h.01M8.5 12h.01M12 12h.01M15.5 12h.01M19 12h.01"
+        {...stroke}
+        strokeWidth={2.4}
+      />
+      <path d="M11 3v4M13 3v4M11 17v4M13 17v4" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  siren: (
+    <>
+      <path d="M5 18L9 7h6l4 11z" {...stroke} />
+      <path d="M3 21h18M12 3v2M19 7l1.5-1.5M5 7L3.5 5.5" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
   cell: (
     <>
       <rect x="3" y="8" width="16" height="8" rx="3" {...stroke} />
@@ -334,7 +363,7 @@ const GROUPS: PaletteItem[][] = [
   ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
   ['voltagesensor', 'acs712', 'mq7', 'ph', 'tds', 'turbidity'],
   ['cell', 'tp4056', 'lm2596', 'solar'],
-  ['bme280', 'ina219'],
+  ['bme280', 'ina219', 'ds18b20', 'jsnsr04t', 'linesensor', 'siren'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

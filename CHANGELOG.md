@@ -8,6 +8,26 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **DS18B20 temperature probe over 1-Wire** (circuit format version 17).
+  Programs read it through the DallasTemperature library 4.0.6 (MIT), built
+  unmodified, over the board library's own `OneWire`, which has the OneWire
+  library's functions and exchanges each reset and bit with the simulation.
+  The probe follows Maxim's datasheet command by command, including the ROM
+  search, so several probes can share one wire; it reads 85 °C until its
+  first conversion, and a conversion takes 750 ms at 12 bits. Without a
+  pull-up on its DQ line no probe is found, and the lab says why.
+- **JSN-SR04T waterproof ultrasonic sensor** (25 cm to 450 cm), **five-channel
+  line sensor** and **12 V siren**.
+- Ready-made program `thermo`, and two lessons, each checked step by step by
+  the lab: **temperature probe** (1-Wire and the pull-up) and **tank level**
+  (the waterproof sensor's blind zone).
+- Hardware tests E13 to E16.
+
+### Fixed
+
+- An ESP32 program whose global objects set up a pin before `setup()` (as
+  OneWire does) stopped before it began, printing nothing: the lab now lets
+  that time pass without pausing the program.
 - **Two I2C sensors** (circuit format version 16): the BME280 (temperature,
   humidity and air pressure) and the INA219 (current and voltage monitor).
   Each chip is answered register by register as its maker's datasheet gives

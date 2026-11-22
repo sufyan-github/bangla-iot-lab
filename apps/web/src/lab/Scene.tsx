@@ -34,6 +34,9 @@ import {
 } from './geometry';
 import {
   Acs712View,
+  Ds18b20View,
+  LineSensorView,
+  SirenView,
   Bme280View,
   Ina219View,
   CellView,
@@ -443,6 +446,34 @@ export function BoardPartDrawing(props: {
           selected={selected}
         />
       );
+    case 'ds18b20':
+      return (
+        <Ds18b20View
+          first={at(part.pins.gnd)}
+          last={at(part.pins.vdd)}
+          label={`${props.formatNumber(part.props.celsius)}°`}
+          selected={selected}
+        />
+      );
+    case 'linesensor':
+      return (
+        <LineSensorView
+          first={at(part.pins.gnd)}
+          last={at(part.pins.s5)}
+          black={part.props.black}
+          selected={selected}
+        />
+      );
+    case 'siren':
+      return (
+        <SirenView
+          pos={at(part.pins.pos)}
+          neg={at(part.pins.neg)}
+          sounding={reading?.activity === 1}
+          selected={selected}
+        />
+      );
+    case 'jsnsr04t':
     case 'ultrasonic':
       return (
         <UltrasonicView

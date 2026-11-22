@@ -1,5 +1,6 @@
 import type {
   I2cHandler,
+  OneWireHandler,
   PinDrive,
   PinListener,
   ProgrammableBoard,
@@ -112,6 +113,7 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   private readonly pinListeners = new Set<PinListener>();
   private readonly serialListeners = new Set<(text: string) => void>();
   private i2c: I2cHandler | null = null;
+  private oneWire: OneWireHandler | null = null;
   private readonly decoder = new TextDecoder();
   private readonly exports: Exports;
   private readonly pauseData: number;
@@ -185,6 +187,16 @@ export class Esp32SketchBoard implements ProgrammableBoard {
         }
         return result.status;
       },
+      host_onewire: (pin: number, op: number, value: number) => {
+        // Nothing listening: no presence pulse, and the released line reads HIGH.
+        if (!this.oneWire) return op === 2 ? 1 : 0;
+        return this.oneWire({
+          pin,
+          op: op === 0 ? 'reset' : op === 1 ? 'write' : 'read',
+          bit: value ? 1 : 0,
+          timeMs: this.now / 1000,
+        });
+      },
       host_serial_available: () => this.typed.length,
       host_serial_read: () => (this.typed.length ? this.typed.shift()! : -1),
       host_serial_peek: () => (this.typed.length ? this.typed[0]! : -1),
@@ -211,7 +223,14 @@ export class Esp32SketchBoard implements ProgrammableBoard {
     if (typeof this.exports.asyncify_start_unwind !== 'function' || !this.exports.malloc) {
       throw new Error('not a sketch for this board: it was not built to be paused');
     }
-    this.exports._initialize?.();
+    // The sketch's global constructors run here, before run(): a library may already
+    // set up its pins (OneWire does), which takes time but cannot pause anything yet.
+    this.starting = true;
+    try {
+      this.exports._initialize?.();
+    } finally {
+      this.starting = false;
+    }
     // Where a paused call stack is kept: two words (where it is up to, where it ends), then the room.
     this.pauseData = this.exports.malloc(8 + PAUSE_STACK_BYTES);
   }
@@ -264,6 +283,10 @@ export class Esp32SketchBoard implements ProgrammableBoard {
 
   onI2c(handler: I2cHandler): void {
     this.i2c = handler;
+  }
+
+  onOneWire(handler: OneWireHandler): void {
+    this.oneWire = handler;
   }
 
   onSerial(listener: (text: string) => void): () => void {
@@ -320,8 +343,8 @@ export class Esp32SketchBoard implements ProgrammableBoard {
    * is made again when it carries on.
    */
   private wait(microseconds: number): void {
-    if (this.inHandler) {
-      // A handler is not paused: its time is simply added.
+    if (this.inHandler || this.starting) {
+      // A handler, or the start before run(), is not paused: its time is simply added.
       this.passTime(this.now + microseconds);
       return;
     }
@@ -342,6 +365,8 @@ export class Esp32SketchBoard implements ProgrammableBoard {
     return true;
   }
   private rewinding = false;
+  /** True while the sketch's global constructors run. */
+  private starting = false;
 
   private pauseUntil(until: number): void {
     this.passTime(this.target);

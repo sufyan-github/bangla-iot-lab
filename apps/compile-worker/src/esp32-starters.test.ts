@@ -40,6 +40,7 @@ describe('shipped ESP32 starter programs', () => {
       'servo.ino',
       'soil.ino',
       'streetlight.ino',
+      'thermo.ino',
       'water.ino',
       'watering.ino',
       'weather.ino',

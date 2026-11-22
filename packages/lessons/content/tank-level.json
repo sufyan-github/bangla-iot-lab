@@ -1,0 +1,165 @@
+{
+  "id": "tank-level",
+  "order": 35,
+  "parts": ["jsn-sr04t", "resistor"],
+  "title": {
+    "bn": "পানির ট্যাংকের মাত্রা: জলরোধী আল্ট্রাসনিক",
+    "en": "Water tank level: the waterproof ultrasonic sensor"
+  },
+  "summary": {
+    "bn": "জলরোধী সেন্সরে দূরত্ব মাপো, আর দেখো খুব কাছে কেন মাপতে পারে না।",
+    "en": "Measure distance with a waterproof sensor, and see why it cannot measure very close."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "distance",
+  "steps": [
+    {
+      "text": {
+        "bn": "**JSN-SR04T** বসাও: এর প্রোব ট্যাংকের ঢাকনায় লাগানো যায়, পানির দিকে মুখ করে। **5V** যাবে **VIN**-এ, **GND** যাবে **GND**-তে, **TRIG** যাবে **D5**-এ।",
+        "en": "Place the **JSN-SR04T**: its probe can sit in a tank's lid, facing the water. **5V** goes to **VIN**, **GND** to **GND**, **TRIG** to **D5**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "jsnsr04t"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "jsnsr04t",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "jsnsr04t",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "jsnsr04t",
+            "pin": "trig"
+          },
+          "to": {
+            "board": "d5"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এর **ECHO** ৫ V দেয়, তাই ভোল্টেজ ভাগ লাগে: ECHO থেকে **১ kΩ** হয়ে **D18**-এ, আর D18 থেকে **২ kΩ** হয়ে GND-তে।",
+        "en": "Its **ECHO** gives 5 V, so it needs a divider: ECHO through **1 kΩ** to **D18**, and D18 through **2 kΩ** to GND."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "jsnsr04t",
+            "pin": "echo"
+          },
+          "to": {
+            "board": "d18"
+          },
+          "through": "resistor",
+          "ohms": [800, 1200]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d18"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [1500, 2500]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**: HC-SR04-এর দূরত্ব মাপার প্রোগ্রামটাই এটার সাথে চলে।",
+        "en": "**Put this lesson's program on the board**: the HC-SR04's distance program works with this one as it is."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "distance"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। পানি ১০০ সেমি দূরে: সিরিয়াল মনিটরে ১০০ দেখাবে।",
+        "en": "Press **Run**. The water is 100 cm away: the serial monitor shows 100."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "(^|\\n)(99|100|101)\\r?\\n",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে প্রায় ১০০ সেমি",
+            "en": "The serial monitor shows about 100 cm"
+          }
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার সেন্সরে ট্যাপ করে পানি **১৫ সেমি**-তে আনো, যেন ট্যাংক প্রায় উপচে পড়ছে। সেন্সর ১৫ নয়, ২৫ দেখাবে: এর **অন্ধ এলাকা** ২৫ সেমি। নিজের শব্দ শেষ হওয়ার আগে প্রতিধ্বনি ফিরলে এটা ধরতে পারে না। তাই ট্যাংকে সেন্সর পানির সর্বোচ্চ মাত্রার অন্তত ২৫ সেমি ওপরে বসাতে হয়।",
+        "en": "Now tap the sensor and bring the water to **15 cm**, as if the tank were nearly overflowing. The sensor shows 25, not 15: its **blind zone** is 25 cm. An echo that comes back before its own sound has finished is not caught. So in a tank, the sensor must sit at least 25 cm above the highest water level."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "jsnsr04t",
+          "prop": "distance",
+          "below": 25
+        },
+        {
+          "kind": "serial",
+          "matches": "(^|\\n)(24|25|26)\\r?\\n",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে ২৫ সেমি, আসল দূরত্ব নয়",
+            "en": "The serial monitor shows 25 cm, not the real distance"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "জলরোধী আল্ট্রাসনিক সেন্সর HC-SR04-এর মতোই TRIG আর ECHO দিয়ে কাজ করে।",
+      "প্রতিটা সেন্সরের একটা অন্ধ এলাকা আছে: তার চেয়ে কাছে সে ঠিক মাপতে পারে না।",
+      "সেন্সর কোথায় বসাবে তা ঠিক করতে তার সীমা জানতে হয়।"
+    ],
+    "en": [
+      "The waterproof ultrasonic sensor works with TRIG and ECHO like the HC-SR04.",
+      "Every such sensor has a blind zone: closer than that it cannot measure properly.",
+      "Knowing a sensor's limits decides where to mount it."
+    ]
+  },
+  "tryNext": {
+    "bn": "প্রোগ্রাম বদলে দূরত্ব থেকে ট্যাংক কতটা ভরা (%) দেখাও: ধরো ট্যাংক ২০০ সেমি গভীর, আর সেন্সর পানির সর্বোচ্চ মাত্রার ২৫ সেমি ওপরে।",
+    "en": "Change the program to show how full the tank is (%) from the distance: say the tank is 200 cm deep, and the sensor is 25 cm above the highest water level."
+  }
+}

@@ -90,6 +90,7 @@ export function buildLibraryWasm(work, optimise = '-O2') {
   for (const [file, object] of [
     ['src/arduino.cpp', 'arduino.o'],
     ['src/preferences.cpp', 'preferences.o'],
+    ['src/onewire.cpp', 'onewire.o'],
     ['wasm/entry.cpp', 'entry.o'],
   ]) {
     const built = compile(path.join(library, file), path.join(work, object), optimise, [

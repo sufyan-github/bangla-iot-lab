@@ -52,6 +52,15 @@ int host_i2c_transfer(int sda, int scl, int address, const uint8_t* write, size_
                       uint8_t* read, size_t read_length);
 
 /**
+ * One operation on a 1-Wire bus on pin `pin`, with the board as master: `op` 0
+ * sends a reset pulse and returns 1 when a device answered with a presence
+ * pulse; 1 writes the bit `value`; 2 reads a bit and returns it. The bus is
+ * wired-AND: a bit reads 0 when any device holds the line low. No time passes
+ * here: the library charges what the step would take.
+ */
+int host_onewire(int pin, int op, int value);
+
+/**
  * The board's saved settings (what the Preferences library keeps in flash), as
  * text. Copies up to `capacity` bytes into `buffer` and returns the whole
  * length; with a null buffer it only says how long it is.

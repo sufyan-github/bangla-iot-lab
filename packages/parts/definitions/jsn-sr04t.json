@@ -1,30 +1,59 @@
 {
   "formatVersion": 1,
   "id": "jsn-sr04t",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "jsnsr04t",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "JSN-SR04T waterproof ultrasonic sensor",
+    "bn": "JSN-SR04T জলরোধী আল্ট্রাসনিক সেন্সর",
     "en": "JSN-SR04T waterproof ultrasonic sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "HC-SR04-এর মতোই TRIG আর ECHO দিয়ে দূরত্ব মাপে, কিন্তু প্রোব জলরোধী। ২৫ সেমির কাছে মাপতে পারে না।",
+    "en": "Measures distance with TRIG and ECHO like the HC-SR04, but its probe is waterproof. It cannot measure closer than 25 cm."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "timing",
+    "simplified": [
+      "It answers a trigger pulse with an echo pulse as long as the sound takes to come back, as the lab's HC-SR04 does.",
+      "It measures from 25 cm to 450 cm, as sellers give for version 2.0 (version 3.0 is said to reach 20 cm to 600 cm). Closer than 25 cm it answers as if at 25 cm, and further than 450 cm as if at 450 cm; a real one gives unreliable echoes there.",
+      "It needs 5 V and draws about 30 mA while measuring (sellers' figure). Its echo is a 5 V signal: on a 3.3 V board it needs a divider, as the HC-SR04's does.",
+      "The lab draws it like the HC-SR04's board, with two transducers; the real one is a small board with a single waterproof probe on a cable."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E14"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "5V",
+      "role": "power"
+    },
+    {
+      "id": "trig",
+      "label": "TRIG",
+      "role": "input"
+    },
+    {
+      "id": "echo",
+      "label": "ECHO",
+      "role": "output"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["jsn-sr04t", "waterproof ultrasonic"]
+  },
+  "placement": {
+    "idPrefix": "US",
+    "offsets": [0, 1, 2, 3]
   }
 }

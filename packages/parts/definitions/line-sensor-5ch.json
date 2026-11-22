@@ -1,30 +1,74 @@
 {
   "formatVersion": 1,
   "id": "line-sensor-5ch",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "linesensor",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "5-channel IR line sensor",
-    "en": "5-channel IR line sensor"
+    "bn": "৫-চ্যানেল লাইন সেন্সর",
+    "en": "5-channel line sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "পাঁচটা ইনফ্রারেড সেন্সর; প্রতিটার আউটপুট কালো লাইনের ওপর HIGH, সাদার ওপর LOW। লাইন অনুসরণকারী রোবটের জন্য।",
+    "en": "Five infrared sensors; each output is HIGH over a black line and LOW over white. For line-following robots."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "Each channel's output is HIGH over black and LOW over white, as sellers describe the common TCRT5000 board. Some boards are the other way round; the lab warns nothing about that, so check the board you have.",
+      "Which channels see the line is set in the inspector. Height above the floor, the sensitivity trimmers and ambient light are not modelled.",
+      "Each output drives HIGH through about 1 kΩ and LOW through about 100 Ω, and the module draws about 50 mA: estimates.",
+      "It runs on 3.3 V to 5 V, as sellers give."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E15"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "s1",
+      "label": "OUT1",
+      "role": "output"
+    },
+    {
+      "id": "s2",
+      "label": "OUT2",
+      "role": "output"
+    },
+    {
+      "id": "s3",
+      "label": "OUT3",
+      "role": "output"
+    },
+    {
+      "id": "s4",
+      "label": "OUT4",
+      "role": "output"
+    },
+    {
+      "id": "s5",
+      "label": "OUT5",
+      "role": "output"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["line sensor array"]
+  },
+  "placement": {
+    "idPrefix": "LINE",
+    "offsets": [0, 1, 2, 3, 4, 5, 6]
   }
 }

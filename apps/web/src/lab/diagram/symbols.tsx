@@ -103,6 +103,7 @@ function twoLegSymbol(type: CircuitComponent['type'], state: SymbolState): React
         </>
       );
     case 'buzzer':
+    case 'siren':
       return (
         <>
           <path d={`M0 0H26M54 0H${W}`} />

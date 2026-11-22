@@ -295,6 +295,7 @@ export const bn = {
   'code.starter.esp32.power': 'ভোল্টেজ, কারেন্ট, ক্ষমতা (D35, D34)',
   'code.starter.esp32.weather': 'আবহাওয়া কেন্দ্র (BME280: D22, D21)',
   'code.starter.esp32.monitor': 'কারেন্ট মনিটর (INA219: D22, D21)',
+  'code.starter.esp32.thermo': 'তাপমাত্রা প্রোব (DS18B20: D4)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -377,6 +378,25 @@ export const bn = {
     'যে কারেন্ট মাপবে তা VIN+ দিয়ে ঢুকে ০.১ Ω রেজিস্টর পেরিয়ে VIN− দিয়ে বেরোয়; চিপ সেই রেজিস্টরের ভোল্টেজ আর VIN−-এর ভোল্টেজ মেপে কারেন্ট আর ক্ষমতা হিসাব করে, I2C দিয়ে পাঠায়। ±৩.২ A আর ২৬ V পর্যন্ত মাপে। VCC ৩ থেকে ৫.৫ V। লোডের − বোর্ডের GND-তেও লাগাও। পা: VCC, GND, SCL, SDA, VIN−, VIN+।',
   'diag.module-overvoltage':
     '{id} পাচ্ছে {volts}, কিন্তু এটা সর্বোচ্চ {limit}-এর জন্য বানানো। আসল মডিউল নষ্ট হতে পারে: 3V3 দাও।',
+  'tool.ds18b20': 'DS18B20',
+  'part.ds18b20': 'DS18B20 তাপমাত্রা প্রোব',
+  'part.ds18b20.about':
+    'জলরোধী তাপমাত্রা প্রোব, এক তারে (1-Wire) কথা বলে: একই তারে অনেকগুলো প্রোব বসানো যায়, প্রত্যেকের নিজের ৬৪-বিট নম্বর থাকে। লাল তার VDD (৩ থেকে ৫.৫ V), কালো GND, হলুদ DQ। DQ থেকে VDD-তে একটা ৪.৭ kΩ রেজিস্টর (পুল-আপ) লাগবেই। প্রথম মাপার আগে এটা ৮৫ °C দেখায়। পা: GND, DQ, VDD।',
+  'diag.onewire-no-pullup':
+    '{id}-এর DQ তারে কোনো পুল-আপ নেই, তাই লাইন কখনো HIGH হয় না আর প্রোব কথা বলতে পারে না। DQ থেকে VDD-তে একটা ৪.৭ kΩ রেজিস্টর লাগাও।',
+  'tool.jsnsr04t': 'জলরোধী আল্ট্রাসনিক',
+  'part.jsnsr04t': 'JSN-SR04T জলরোধী আল্ট্রাসনিক সেন্সর',
+  'part.jsnsr04t.about':
+    'HC-SR04-এর মতোই: TRIG-এ ছোট পালস দিলে ECHO-তে দূরত্বের সমান লম্বা পালস ফেরে। এর প্রোব জলরোধী, তাই পানির ট্যাংকের মাত্রা মাপতে কাজে লাগে। ২৫ সেমির কাছে মাপতে পারে না, আর ৪৫০ সেমি পর্যন্ত মাপে। ৫ V লাগে, আর ESP32-এ ECHO-র জন্য ভোল্টেজ ভাগ লাগে। পা: 5V, TRIG, ECHO, GND।',
+  'tool.linesensor': 'লাইন সেন্সর',
+  'part.linesensor': '৫-চ্যানেল লাইন সেন্সর',
+  'part.linesensor.about':
+    'পাঁচটা ইনফ্রারেড সেন্সর পাশাপাশি: সাদা মেঝে আলো ফেরায়, কালো লাইন শুষে নেয়। প্রতিটা সেন্সরের আউটপুট কালোর ওপর HIGH, সাদার ওপর LOW (কোনো কোনো বোর্ডে উল্টো)। কোন সেন্সরগুলো লাইনের ওপর, তা দেখে রোবট বোঝে কোন দিকে ঘুরতে হবে। পা: GND, VCC, OUT1 থেকে OUT5।',
+  'inspector.onLine': 'কোন সেন্সর কালো লাইনের ওপর',
+  'tool.siren': 'সাইরেন',
+  'part.siren': '১২ V সাইরেন',
+  'part.siren.about':
+    'অনেক জোরে বাজে, প্রায় ৩০০ mA নেয়। বোর্ডের পিন এত কারেন্ট দিতে পারে না: ১২ V ব্যাটারি থেকে রিলে বা ট্রানজিস্টর দিয়ে চালাও। উল্টো লাগালে বাজে না। পা: +, −।',
   'tool.logic': 'লজিক চিপ',
   'part.logic': 'লজিক চিপ (74HC)',
   'part.logic.about':
@@ -906,6 +926,7 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.power': 'Voltage, current, power (D35, D34)',
   'code.starter.esp32.weather': 'Weather station (BME280: D22, D21)',
   'code.starter.esp32.monitor': 'Current monitor (INA219: D22, D21)',
+  'code.starter.esp32.thermo': 'Temperature probe (DS18B20: D4)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -988,6 +1009,25 @@ export const en: Record<MessageKey, string> = {
     'The current to measure goes in at VIN+, through a 0.1 Ω resistor and out at VIN−; the chip measures the voltage across that resistor and at VIN−, works out current and power, and sends them over I2C. It measures up to ±3.2 A and 26 V. VCC is 3 to 5.5 V. Join the load’s − to the board’s GND as well. Legs: VCC, GND, SCL, SDA, VIN−, VIN+.',
   'diag.module-overvoltage':
     '{id} is getting {volts}, but it is made for {limit} at most. A real module may be destroyed: give it 3V3.',
+  'tool.ds18b20': 'DS18B20',
+  'part.ds18b20': 'DS18B20 temperature probe',
+  'part.ds18b20.about':
+    'A waterproof temperature probe that talks over one wire (1-Wire): many probes can share the same wire, each with its own 64-bit number. Red is VDD (3 to 5.5 V), black GND, yellow DQ. It must have a 4.7 kΩ resistor (pull-up) from DQ to VDD. Before its first measurement it reads 85 °C. Legs: GND, DQ, VDD.',
+  'diag.onewire-no-pullup':
+    '{id}’s DQ line has no pull-up, so the line never goes HIGH and the probe cannot talk. Put a 4.7 kΩ resistor from DQ to VDD.',
+  'tool.jsnsr04t': 'Waterproof ultrasonic',
+  'part.jsnsr04t': 'JSN-SR04T waterproof ultrasonic sensor',
+  'part.jsnsr04t.about':
+    'Like the HC-SR04: a short pulse on TRIG brings back a pulse on ECHO as long as the distance. Its probe is waterproof, which suits measuring the level in a water tank. It cannot measure closer than 25 cm, and reaches 450 cm. It needs 5 V, and on an ESP32 its ECHO needs a divider. Legs: 5V, TRIG, ECHO, GND.',
+  'tool.linesensor': 'Line sensor',
+  'part.linesensor': '5-channel line sensor',
+  'part.linesensor.about':
+    'Five infrared sensors side by side: a white floor reflects light, a black line absorbs it. Each output is HIGH over black and LOW over white (the other way round on some boards). Which sensors are over the line tells a robot which way to turn. Legs: GND, VCC, OUT1 to OUT5.',
+  'inspector.onLine': 'Which sensors are over the black line',
+  'tool.siren': 'Siren',
+  'part.siren': '12 V siren',
+  'part.siren.about':
+    'Very loud, and takes about 300 mA. A board pin cannot give that much: run it from a 12 V battery through a relay or a transistor. Wired the wrong way round it stays silent. Legs: +, −.',
   'tool.logic': 'Logic chip',
   'part.logic': 'Logic chip (74HC)',
   'part.logic.about':

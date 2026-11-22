@@ -43,8 +43,14 @@ import {
   MOTOR_RESISTANCE,
   MQ135_HEATER_RESISTANCE,
   MQ7_HEATER_RESISTANCE,
+  LINE_SENSOR_HIGH_RESISTANCE,
+  LINE_SENSOR_LOW_RESISTANCE,
+  LINE_SENSOR_SUPPLY_RESISTANCE,
+  SIREN_RESISTANCE,
   CELL_RESISTANCE,
   BME280_SUPPLY_RESISTANCE,
+  DS18B20_DQ_LEAK,
+  DS18B20_SUPPLY_RESISTANCE,
   I2C_MODULE_PULLUP,
   INA219_SHUNT,
   INA219_SUPPLY_RESISTANCE,
@@ -365,6 +371,27 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           ),
         );
         break;
+      case 'siren':
+        partDevice.set(
+          id,
+          add(resistor(id, node(component.pins.pos), node(component.pins.neg), SIREN_RESISTANCE)),
+        );
+        break;
+      case 'linesensor': {
+        // Its supply current, and each output driven HIGH over black, LOW over white.
+        const supply = node(component.pins.vcc);
+        const ground = node(component.pins.gnd);
+        partDevice.set(id, add(resistor(id, supply, ground, LINE_SENSOR_SUPPLY_RESISTANCE)));
+        (['s1', 's2', 's3', 's4', 's5'] as const).forEach((pin, i) => {
+          const out = node(component.pins[pin]);
+          add(
+            component.props.black[i]
+              ? resistor(`${id}:${pin}`, supply, out, LINE_SENSOR_HIGH_RESISTANCE)
+              : resistor(`${id}:${pin}`, out, ground, LINE_SENSOR_LOW_RESISTANCE),
+          );
+        });
+        break;
+      }
       case 'buzzer':
         partDevice.set(
           id,
@@ -393,6 +420,7 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         break;
       case 'servo':
       case 'ultrasonic':
+      case 'jsnsr04t':
       case 'lcd': {
         // Electrically these modules are a supply load; their signal pins are read by the
         // peripheral models in the session rather than by the circuit solver.
@@ -404,7 +432,7 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           id,
           add(resistor(id, node(supply), node(ground), MODULE_SUPPLY_RESISTANCE[component.type])),
         );
-        if (component.type === 'ultrasonic') {
+        if (component.type === 'ultrasonic' || component.type === 'jsnsr04t') {
           const echo = node(component.pins.echo);
           add(
             state.echo?.[id]
@@ -760,6 +788,17 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
               : resistor(id, outp, outn, REGULATOR_OFF),
           ),
         );
+        break;
+      }
+      case 'ds18b20': {
+        // Its supply current, and the small current its DQ pin draws: with no
+        // pull-up, nothing holds the line HIGH.
+        const ground = node(component.pins.gnd);
+        partDevice.set(
+          id,
+          add(resistor(id, node(component.pins.vdd), ground, DS18B20_SUPPLY_RESISTANCE)),
+        );
+        add(resistor(`${id}:dq`, node(component.pins.dq), ground, DS18B20_DQ_LEAK));
         break;
       }
       case 'bme280':

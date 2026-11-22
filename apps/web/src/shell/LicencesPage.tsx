@@ -117,6 +117,14 @@ const NOTICES = [
     source: 'https://github.com/adafruit/Adafruit_INA219',
   },
   {
+    id: 'dallas-temperature',
+    name: 'DallasTemperature',
+    licence: 'MIT',
+    text: 'Copyright 2024 Miles Burton. The library for the DS18B20 thermometer, built unmodified into ESP32 programs that use it.',
+    file: 'dallas-temperature.txt',
+    source: 'https://github.com/milesburton/Arduino-Temperature-Control-Library',
+  },
+  {
     id: 'esp32-firmware',
     name: 'ESP32 firmware built for the chip emulator (experimental)',
     licence: 'LGPL-2.1-or-later',

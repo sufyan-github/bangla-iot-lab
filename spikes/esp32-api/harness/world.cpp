@@ -180,6 +180,8 @@ size_t host_settings_load(char* buffer, size_t capacity) {
 void host_settings_save(const char* data, size_t length) { settings.assign(data, length); }
 // No I2C device is on the desk-computer world's bus.
 int host_i2c_transfer(int, int, int, const uint8_t*, size_t, uint8_t*, size_t) { return 2; }
+// No 1-Wire devices here: no presence pulse, and the line reads HIGH.
+int host_onewire(int, int op, int) { return op == 2 ? 1 : 0; }
 uint64_t host_micros(void) { return now_us; }
 void host_delay_micros(uint64_t microseconds) { advance(microseconds); }
 void host_tick(void) { advance(CALL_COST_US); }

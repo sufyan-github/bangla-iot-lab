@@ -27,7 +27,7 @@ import { isHole } from './breadboard';
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 16;
+export const CIRCUIT_SCHEMA_VERSION = 17;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -425,6 +425,48 @@ export const Ina219Schema = Type.Object({
   props: noProps,
 });
 
+/** DS18B20 temperature probe on a 1-Wire bus. `celsius` is what it senses. */
+export const Ds18b20Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('ds18b20'),
+  pins: Type.Object({ gnd: Hole, dq: Hole, vdd: Hole }),
+  props: Type.Object({ celsius: Type.Number({ minimum: -55, maximum: 125 }) }),
+});
+
+/** JSN-SR04T waterproof ultrasonic sensor: as the HC-SR04, `distance` in cm. */
+export const JsnSr04tSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('jsnsr04t'),
+  pins: Type.Object({ vcc: Hole, trig: Hole, echo: Hole, gnd: Hole }),
+  props: Type.Object({ distance: Type.Number({ minimum: 2, maximum: 600 }) }),
+});
+
+/** Five-channel line sensor. `black` says which of its five sensors are over the line. */
+export const LineSensorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('linesensor'),
+  pins: Type.Object({
+    gnd: Hole,
+    vcc: Hole,
+    s1: Hole,
+    s2: Hole,
+    s3: Hole,
+    s4: Hole,
+    s5: Hole,
+  }),
+  props: Type.Object({
+    black: Type.Array(Type.Boolean(), { minItems: 5, maxItems: 5 }),
+  }),
+});
+
+/** 12 V siren. */
+export const SirenSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('siren'),
+  pins: Type.Object({ pos: Hole, neg: Hole }),
+  props: noProps,
+});
+
 /**
  * HC-SR501 motion sensor. Its output goes HIGH when something moves in front of
  * it and stays HIGH for `hold` seconds after the movement stops.
@@ -642,6 +684,10 @@ export const ComponentSchema = Type.Union([
   SolarPanelSchema,
   Bme280Schema,
   Ina219Schema,
+  Ds18b20Schema,
+  JsnSr04tSchema,
+  LineSensorSchema,
+  SirenSchema,
   PirSchema,
   RgbLedSchema,
   OledSchema,

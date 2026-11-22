@@ -1,30 +1,48 @@
 {
   "formatVersion": 1,
   "id": "siren",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "siren",
+  "status": "simulated",
   "family": "actuator",
   "tier": 2,
   "name": {
-    "bn": "Industrial siren",
-    "en": "Industrial siren"
+    "bn": "১২ V সাইরেন",
+    "en": "12 V siren"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "১২ ভোল্টে জোরে বাজে। বোর্ডের পিন এটা চালাতে পারে না: রিলে বা ট্রানজিস্টর দিয়ে চালাও।",
+    "en": "Sounds loudly on 12 V. A board pin cannot drive it: switch it through a relay or a transistor."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "It sounds while it has at least about 6 V the right way round, and draws about 300 mA at 12 V, as a resistance of 40 Ω: estimates, as sellers' figures differ.",
+      "Its sound in the lab is the same tone as the buzzer's.",
+      "Wired the wrong way round it stays silent; whether a real one is damaged is not modelled."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E16"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "pos",
+      "label": "+",
+      "role": "power"
+    },
+    {
+      "id": "neg",
+      "label": "−",
+      "role": "ground"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["siren"]
+  },
+  "placement": {
+    "idPrefix": "SIR",
+    "offsets": [0, 3]
   }
 }

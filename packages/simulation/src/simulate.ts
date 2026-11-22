@@ -26,6 +26,7 @@ import {
   L298N_REGULATOR_DROPOUT,
   MIN_SUPPLY,
   ACS712_RANGE_AMPS,
+  SIREN_ON_VOLTAGE,
   BME280_MAX_SUPPLY,
   INA219_MAX_BUS,
   INA219_MAX_SHUNT_VOLTS,
@@ -143,6 +144,7 @@ export type DiagnosticCode =
   | 'regulator-overload'
   | 'regulator-dropout'
   | 'module-overvoltage'
+  | 'onewire-no-pullup'
   | 'solver-failed';
 
 export interface Diagnostic {
@@ -831,6 +833,16 @@ export function readSolution(
         };
         break;
       }
+      case 'ds18b20': {
+        // Its supply decides whether it works; its DQ line shows whether it has a pull-up.
+        const supply = volts(component.pins.vdd) - volts(component.pins.gnd);
+        result.parts[id] = { voltage: supply, current: device?.current(solution) ?? 0, supply };
+        result.channels[`${id}.dq`] = {
+          voltage: volts(component.pins.dq) - volts(component.pins.gnd),
+          current: 0,
+        };
+        break;
+      }
       case 'bme280':
         // What decides whether it works: its supply.
         result.parts[id] = {
@@ -1203,6 +1215,9 @@ export class Observation {
       } else if (component.type === 'lm2596') {
         // Its power light.
         reading.activity = average((s) => s.parts[id]!.supply ?? 0) >= MIN_SUPPLY.lm2596! ? 1 : 0;
+      } else if (component.type === 'siren') {
+        // It sounds only with enough voltage the right way round.
+        reading.activity = reading.voltage >= SIREN_ON_VOLTAGE ? 1 : 0;
       } else if (component.type === 'buzzer') {
         reading.activity = reading.voltage >= BUZZER_ON_VOLTAGE ? 1 : 0;
       } else if (component.type === 'motor') {
@@ -1338,6 +1353,24 @@ export class Observation {
             componentId: id,
             volts: lowest,
             limit: component.props.volts + REGULATOR_DROP,
+          });
+        }
+      }
+      if (component.type === 'ds18b20') {
+        // Powered, joined to a board pin, and its line never HIGH: no pull-up.
+        const supply = average((s) => s.parts[id]!.supply ?? 0);
+        const line = extreme((s) => s.channels[`${id}.dq`]?.voltage ?? 0, Math.max);
+        const onBoard = joinedByWires(document)(component.pins.dq);
+        const toPin = document.components.some(
+          (c) =>
+            isProgrammable(c) &&
+            boardTerminals(c.type).some((t) => joinedByWires(document)(`${c.id}.${t}`) === onBoard),
+        );
+        if (supply >= MIN_SUPPLY.ds18b20! && toPin && line < supply / 2) {
+          result.diagnostics.push({
+            code: 'onewire-no-pullup',
+            severity: 'warning',
+            componentId: id,
           });
         }
       }

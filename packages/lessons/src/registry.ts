@@ -29,9 +29,11 @@ import l26 from '../content/soil-moisture.json' with { type: 'json' };
 import l27 from '../content/solar-charging.json' with { type: 'json' };
 import l28 from '../content/step-down.json' with { type: 'json' };
 import l29 from '../content/street-light.json' with { type: 'json' };
-import l30 from '../content/ultrasonic.json' with { type: 'json' };
-import l31 from '../content/water-quality.json' with { type: 'json' };
-import l32 from '../content/weather-station.json' with { type: 'json' };
+import l30 from '../content/tank-level.json' with { type: 'json' };
+import l31 from '../content/temperature-probe.json' with { type: 'json' };
+import l32 from '../content/ultrasonic.json' with { type: 'json' };
+import l33 from '../content/water-quality.json' with { type: 'json' };
+import l34 from '../content/weather-station.json' with { type: 'json' };
 
 export const LESSON_FILES: unknown[] = [
   l0,
@@ -67,4 +69,6 @@ export const LESSON_FILES: unknown[] = [
   l30,
   l31,
   l32,
+  l33,
+  l34,
 ];

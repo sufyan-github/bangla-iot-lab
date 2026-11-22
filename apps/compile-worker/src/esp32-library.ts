@@ -20,7 +20,12 @@ import { runTool } from './sandbox';
 export const ESP32_LIBRARY_DIR = fileURLToPath(
   new URL('../../../spikes/esp32-api/', import.meta.url),
 );
-const LIBRARY_SOURCES = ['src/arduino.cpp', 'src/preferences.cpp', 'wasm/entry.cpp'];
+const LIBRARY_SOURCES = [
+  'src/arduino.cpp',
+  'src/preferences.cpp',
+  'src/onewire.cpp',
+  'wasm/entry.cpp',
+];
 
 /**
  * Libraries by other people that sketches for the kit use, built into every
@@ -73,6 +78,12 @@ export const ESP32_EXTRA_LIBRARIES = [
     dir: path.join(THIRD_PARTY, 'adafruit-bme280'),
     sources: ['Adafruit_BME280.cpp'],
     headers: ['Adafruit_BME280.h'],
+  },
+  // DallasTemperature 4.0.6 (MIT): the DS18B20 thermometer, over the board library's own OneWire.
+  {
+    dir: path.join(THIRD_PARTY, 'dallas-temperature'),
+    sources: ['DallasTemperature.cpp'],
+    headers: ['DallasTemperature.h'],
   },
   // Adafruit's INA219 library 1.2.3 (BSD): current and voltage monitor.
   {

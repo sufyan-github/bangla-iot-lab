@@ -34,6 +34,19 @@ export interface I2cResult {
 export type I2cHandler = (transfer: I2cTransfer) => I2cResult;
 
 /**
+ * One step on a 1-Wire bus on a board pin, with the board as master: a reset
+ * (answered 1 when a device gave a presence pulse), writing a bit, or reading
+ * one. `timeMs` is the board's own clock, for devices that take time to answer.
+ */
+export interface OneWireStep {
+  pin: number;
+  op: 'reset' | 'write' | 'read';
+  bit: 0 | 1;
+  timeMs: number;
+}
+export type OneWireHandler = (step: OneWireStep) => 0 | 1;
+
+/**
  * A board that runs a program, as the circuit simulation sees it: something
  * that can be run up to a moment in time, says what each pin drives, and is
  * told what each pin sees. Pins are numbered as the program numbers them.
@@ -71,6 +84,8 @@ export interface ProgrammableBoard {
    * A board that does not offer this cannot talk to I2C parts.
    */
   onI2c?(handler: I2cHandler): void;
+  /** Optional. Gives the board whoever answers for the devices on its 1-Wire buses. */
+  onOneWire?(handler: OneWireHandler): void;
   /**
    * Optional. Called with all of the board's saved settings, as text, each time
    * the program changes them (the ESP32's Preferences). A board that offers

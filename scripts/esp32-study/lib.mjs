@@ -21,6 +21,7 @@ export function buildLibrary(work) {
   for (const [file, object] of [
     ['src/arduino.cpp', 'arduino.o'],
     ['src/preferences.cpp', 'preferences.o'],
+    ['src/onewire.cpp', 'onewire.o'],
     ['harness/world.cpp', 'world.o'],
   ]) {
     const built = spawnSync(

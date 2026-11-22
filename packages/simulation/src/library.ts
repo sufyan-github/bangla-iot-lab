@@ -377,6 +377,12 @@ export const INA219_MAX_SHUNT_VOLTS = 0.32;
 export const INA219_MAX_BUS = 26;
 export const INA219_SUPPLY_RESISTANCE = 5_000;
 export const I2C_MODULE_PULLUP = 10_000;
+/**
+ * DS18B20. REPORTED in Maxim's datasheet: 3.0 V to 5.5 V, a 4.7 kΩ pull-up on
+ * DQ, and about 5 µA drawn by its DQ pin. ESTIMATE: its supply current.
+ */
+export const DS18B20_SUPPLY_RESISTANCE = 100_000;
+export const DS18B20_DQ_LEAK = 660_000;
 
 /**
  * Turbidity sensor (DFRobot SEN0189). REPORTED by DFRobot: a 5 V supply, up to
@@ -503,7 +509,26 @@ export const RELAY_PULL_IN_CURRENT = 0.05;
 export const RELAY_DROP_OUT_CURRENT = 0.015;
 
 /** What each powered module draws from its supply, as a resistance at 5 V. */
-export const MODULE_SUPPLY_RESISTANCE = { servo: 500, ultrasonic: 330, lcd: 2500 } as const;
+/** JSN-SR04T: REPORTED by sellers, about 30 mA while measuring on 5 V. */
+export const MODULE_SUPPLY_RESISTANCE = {
+  servo: 500,
+  ultrasonic: 330,
+  jsnsr04t: 170,
+  lcd: 2500,
+} as const;
+/** REPORTED by sellers for the JSN-SR04T version 2.0: it measures from 25 cm to 450 cm. */
+export const JSN_SR04T_MIN_CM = 25;
+export const JSN_SR04T_MAX_CM = 450;
+/**
+ * Five-channel line sensor. ESTIMATE: its outputs' drive and its supply current
+ * (five infrared LEDs and a comparator).
+ */
+export const LINE_SENSOR_HIGH_RESISTANCE = 1000;
+export const LINE_SENSOR_LOW_RESISTANCE = 100;
+export const LINE_SENSOR_SUPPLY_RESISTANCE = 100;
+/** 12 V siren. ESTIMATE: about 300 mA at 12 V, and sounding from about 6 V. */
+export const SIREN_RESISTANCE = 40;
+export const SIREN_ON_VOLTAGE = 6;
 /** A module counts as powered above this supply voltage. */
 export const MODULE_MIN_SUPPLY = 4;
 /**
@@ -513,6 +538,8 @@ export const MODULE_MIN_SUPPLY = 4;
 export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   servo: MODULE_MIN_SUPPLY,
   ultrasonic: MODULE_MIN_SUPPLY,
+  jsnsr04t: MODULE_MIN_SUPPLY,
+  linesensor: 3,
   lcd: MODULE_MIN_SUPPLY,
   dht11: 3,
   mq135: 4.5,
@@ -525,6 +552,7 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   lm2596: 4.5,
   bme280: 1.71,
   ina219: 3,
+  ds18b20: 3,
   pir: 4.5,
   oled: 3,
   l298n: 6.5,

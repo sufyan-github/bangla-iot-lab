@@ -172,7 +172,9 @@ function useBuzzerSound(muted: boolean) {
     Object.entries(s.result?.readings ?? {}).some(
       ([id, reading]) =>
         reading.activity === 1 &&
-        s.circuit.components.some((c) => c.id === id && c.type === 'buzzer'),
+        s.circuit.components.some(
+          (c) => c.id === id && (c.type === 'buzzer' || c.type === 'siren'),
+        ),
     ),
   );
   useEffect(() => {
@@ -256,7 +258,9 @@ export function LabPage() {
   const running = useLab((s) => s.running);
   const saveState = useLab((s) => s.saveState);
   const boardId = useLab((s) => s.circuit.components.find(isProgrammable)?.id);
-  const hasBuzzer = useLab((s) => s.circuit.components.some((c) => c.type === 'buzzer'));
+  const hasBuzzer = useLab((s) =>
+    s.circuit.components.some((c) => c.type === 'buzzer' || c.type === 'siren'),
+  );
   const [muted, setMuted] = useState(() => {
     try {
       return localStorage.getItem(MUTE_KEY) === '1';

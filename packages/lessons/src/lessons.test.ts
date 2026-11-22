@@ -812,6 +812,43 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     ],
     actions: { 5: [{ set: 'BAT1', props: { voltage: 6 } }] },
   },
+  'temperature-probe': {
+    components: [
+      esp32,
+      part('TP1', 'ds18b20', { gnd: 'c10', dq: 'c11', vdd: 'c12' }, { celsius: 25 }),
+      part('R2', 'resistor', { a: 'd11', b: 'd15' }, { resistance: 4700 }),
+      ...lamp,
+    ],
+    wires: [
+      ['ESP1.gnd1', 'a10'],
+      ['ESP1.d4', 'a11'],
+      ['ESP1.3v3', 'a12'],
+      ['b12', 'b15'],
+      ...lampWires,
+    ],
+    actions: { 5: [{ set: 'TP1', props: { celsius: 45 } }] },
+  },
+  'tank-level': {
+    components: [
+      esp32,
+      part(
+        'US1',
+        'jsnsr04t',
+        { vcc: 'c10', trig: 'c11', echo: 'c12', gnd: 'c13' },
+        { distance: 100 },
+      ),
+      part('R2', 'resistor', { a: 'd12', b: 'd16' }, { resistance: 1000 }),
+      part('R3', 'resistor', { a: 'b16', b: 'b20' }, { resistance: 2000 }),
+    ],
+    wires: [
+      ['ESP1.vin', 'a10'],
+      ['ESP1.d5', 'a11'],
+      ['ESP1.gnd1', 'a13'],
+      ['ESP1.d18', 'a16'],
+      ['ESP1.gnd2', 'a20'],
+    ],
+    actions: { 4: [{ set: 'US1', props: { distance: 15 } }] },
+  },
 };
 
 /** The longest a student would have to watch for a step to complete, in simulated time. */

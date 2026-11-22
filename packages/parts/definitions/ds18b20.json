@@ -1,30 +1,55 @@
 {
   "formatVersion": 1,
   "id": "ds18b20",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "ds18b20",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "DS18B20 temperature probe",
+    "bn": "DS18B20 তাপমাত্রা প্রোব",
     "en": "DS18B20 temperature probe"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "এক তারে (1-Wire) তাপমাত্রা পাঠায়; একই তারে অনেকগুলো বসানো যায়। DQ থেকে VDD-তে ৪.৭ kΩ পুল-আপ লাগে।",
+    "en": "Sends temperature over one wire (1-Wire); many can share the same wire. Needs a 4.7 kΩ pull-up from DQ to VDD."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "The chip answers command by command as Maxim's datasheet gives them: Search, Read, Match and Skip ROM, Alarm Search, Convert T, Read and Write Scratchpad, Copy, Recall and Read Power Supply. Each reset and each bit is one exchange; the timing of the pulses on the wire is not modelled, only the time each step takes.",
+      "It reads +85 °C until its first conversion, and a conversion takes the datasheet's longest time for its resolution (750 ms at 12 bits). Its reading is the slider's value rounded to its resolution, with no error or self-heating.",
+      "It needs its pull-up resistor: without one on the DQ line the lab finds no device and warns. Parasite power (VDD to ground) is not modelled: it needs 3.0 V to 5.5 V on VDD.",
+      "Its alarm limits start at 75 °C and 70 °C, the values users commonly read from new sensors; the datasheet leaves them to the factory.",
+      "Each probe in the lab gets its own ROM code, made from its name; the family code is 28h as on the real chip."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E13"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "dq",
+      "label": "DQ",
+      "role": "bidirectional"
+    },
+    {
+      "id": "vdd",
+      "label": "VDD",
+      "role": "power"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["ds18b20"]
+  },
+  "placement": {
+    "idPrefix": "TP",
+    "offsets": [0, 1, 2]
   }
 }
