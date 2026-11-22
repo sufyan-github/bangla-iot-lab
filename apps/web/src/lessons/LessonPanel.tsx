@@ -1,4 +1,4 @@
-import { LESSONS } from '@banglalab/lessons';
+import { LESSONS, lessonKind } from '@banglalab/lessons';
 import { isProgrammable } from '@banglalab/shared';
 import { useNavigate } from 'react-router';
 import { useT } from '../i18n';
@@ -28,6 +28,9 @@ export function LessonPanel() {
   const finished = progress.done.length === total;
   const last = progress.step === total - 1;
   const next = LESSONS.find((l) => l.order === lesson.order + 1);
+  // Lessons and projects are numbered apart, as on the lessons page.
+  const sameKind = LESSONS.filter((l) => lessonKind(l) === lessonKind(lesson));
+  const position = sameKind.indexOf(lesson) + 1;
 
   const putProgram = () => {
     if (boardId && lesson.program) {
@@ -44,7 +47,10 @@ export function LessonPanel() {
     <section className="space-y-4 p-4" data-testid="lesson-panel" data-lesson={lesson.id}>
       <header>
         <p className="text-sm text-ink-soft">
-          {t('lesson.number', { n: number(lesson.order), total: number(LESSONS.length) })}
+          {t(lessonKind(lesson) === 'project' ? 'lesson.projectNumber' : 'lesson.number', {
+            n: number(position),
+            total: number(sameKind.length),
+          })}
         </p>
         <h2 className="text-xl leading-snug font-semibold">{lesson.title[locale]}</h2>
       </header>

@@ -11,11 +11,13 @@ describe('shipped ESP32 starter programs', () => {
     };
     const sketches = (await readdir(dir)).filter((file) => file.endsWith('.ino')).sort();
     expect(sketches).toEqual([
+      'airquality.ino',
       'beep.ino',
       'blink.ino',
       'button.ino',
       'dht.ino',
       'distance.ino',
+      'dustbin.ino',
       'fade.ino',
       'gas.ino',
       'knob.ino',
@@ -24,10 +26,16 @@ describe('shipped ESP32 starter programs', () => {
       'motor.ino',
       'obstacle.ino',
       'oled.ino',
+      'parking.ino',
+      'plant.ino',
       'rain.ino',
+      'rainalert.ino',
       'rgb.ino',
+      'robot.ino',
+      'security.ino',
       'servo.ino',
       'soil.ino',
+      'streetlight.ino',
     ]);
     for (const sketch of sketches) {
       const name = sketch.replace(/\.ino$/, '');

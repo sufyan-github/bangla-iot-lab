@@ -1,0 +1,295 @@
+{
+  "id": "security-alarm",
+  "order": 20,
+  "parts": ["pir-hc-sr501", "push-button", "buzzer-module-active", "led-5mm", "oled-ssd1306-096"],
+  "after": ["pir-motion", "push-button", "buzzer", "oled-display"],
+  "title": {
+    "bn": "নিরাপত্তা অ্যালার্ম",
+    "en": "Security alarm"
+  },
+  "summary": {
+    "bn": "বোতাম দিয়ে পাহারা চালু করো; কেউ ঢুকলে বাজার, বাতি আর ডিসপ্লে সতর্ক করবে।",
+    "en": "Arm it with a button; if someone comes in, the buzzer, a light and the display raise the alarm."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "security",
+  "steps": [
+    {
+      "text": {
+        "bn": "এই অ্যালার্ম ঘর পাহারা দেয়। **বোতাম** চাপলে পাহারা চালু বা বন্ধ হয়। পাহারা চালু থাকা অবস্থায় **PIR** কাউকে টের পেলে বাজার আর বাতি জ্বলে-নেভে, আর **OLED**-এ লেখা আসে ALARM!\n\nPIR বসাও: VCC যাবে VIN-এ, OUT যাবে **D27**-এ, GND যাবে GND-তে।",
+        "en": "This alarm guards a room. The **button** switches the guard on and off. While it is on, if the **PIR** notices someone, the buzzer and a light flash and the **OLED** says ALARM!\n\nPlace the PIR: VCC to VIN, OUT to **D27**, GND to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "pir"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pir",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pir",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d27"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pir",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**বোতাম** খাঁজের ওপর বসাও: এক পা **D4**-এ, অন্য পা GND-তে।",
+        "en": "Place the **button** across the gap: one leg to **D4**, the other to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "button"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "board": "d4"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**বাজার** বসাও: + পা **D25**-এ, − পা GND-তে। তারপর একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place the **buzzer**: + to **D25**, − to GND. Then place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "buzzer"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "pos"
+          },
+          "to": {
+            "board": "d25"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "neg"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**OLED ডিসপ্লে** বসাও: GND যাবে GND-তে, VCC যাবে 3V3-তে, SCL যাবে D22-এ, SDA যাবে D21-এ।",
+        "en": "Place the **OLED display**: GND to GND, VCC to 3V3, SCL to D22, SDA to D21."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "oled"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "scl"
+          },
+          "to": {
+            "board": "d22"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "sda"
+          },
+          "to": {
+            "board": "d21"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই প্রকল্পের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও, তারপর কোড ট্যাবে প্রোগ্রামটা পড়ো। এটা আগের পাঠের ছোট ছোট প্রোগ্রাম জুড়েই বানানো।",
+        "en": "Press **Put this lesson's program on the board**, then read it in the Code tab. It is built from the small programs of the earlier lessons."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "security"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। পাহারা এখন বন্ধ: ডিসপ্লেতে OFF। বোতামে একবার চাপ দাও: পাহারা চালু, ডিসপ্লেতে ARMED।",
+        "en": "Press **Run**. The guard is off: the display says OFF. Press the button once: the guard is on and the display says ARMED."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "oled",
+          "path": "oled.lit",
+          "equals": true
+        },
+        {
+          "kind": "serial",
+          "matches": "পাহারা চালু হলো"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার PIR-এ ট্যাপ করো: কেউ ঘরে ঢুকেছে! বাজার আর LED জ্বলে-নিভে সতর্ক করবে।",
+        "en": "Now tap the PIR: someone has come in! The buzzer and the LED flash the alarm."
+      },
+      "checks": [
+        {
+          "kind": "reading",
+          "part": "buzzer",
+          "path": "activity",
+          "equals": 1
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "serial",
+          "matches": "বিপদ! কেউ ঢুকেছে"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "বোতামে আবার চাপ দিয়ে পাহারা বন্ধ করো: অ্যালার্ম থামবে।",
+        "en": "Press the button again to switch the guard off: the alarm stops."
+      },
+      "checks": [
+        {
+          "kind": "serial",
+          "matches": "পাহারা বন্ধ করা হলো"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "একটা বোতাম দিয়ে চালু-বন্ধ করতে আগের অবস্থা (`lastButton`) মনে রাখতে হয়।",
+      "`armed`-এর মতো চলক প্রোগ্রামের \"মোড\" মনে রাখে।",
+      "`millis()` দিয়ে `delay()` ছাড়াই জ্বলা-নেভা করা যায়, তাই বোতাম পড়া থেমে থাকে না।"
+    ],
+    "en": [
+      "Switching on and off with one button needs the last state (`lastButton`).",
+      "A variable like `armed` remembers the program's \"mode\".",
+      "`millis()` flashes without `delay()`, so the button is still read."
+    ]
+  },
+  "tryNext": {
+    "bn": "পাহারা চালু হওয়ার পর ১০ সেকেন্ড সময় দাও, যাতে ঘর থেকে বেরোনো যায়।",
+    "en": "Give 10 seconds after arming before the guard starts, so there is time to leave the room."
+  },
+  "kind": "project"
+}

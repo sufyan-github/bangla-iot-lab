@@ -1,0 +1,315 @@
+{
+  "id": "obstacle-robot",
+  "order": 24,
+  "parts": ["l298n", "tt-gear-motor", "nimh-aa-pack-6", "hc-sr04", "resistor"],
+  "after": ["motor-driver", "ultrasonic"],
+  "title": {
+    "bn": "বাধা এড়ানো রোবট",
+    "en": "Obstacle-avoiding robot"
+  },
+  "summary": {
+    "bn": "দুই চাকার রোবট সামনে চলে, বাধা দেখলে পিছিয়ে ঘুরে নতুন পথ নেয়।",
+    "en": "A two-wheeled robot drives forward, and backs up and turns when it sees an obstacle."
+  },
+  "setup": {
+    "board": "esp32",
+    "battery": 7.2
+  },
+  "program": "robot",
+  "steps": [
+    {
+      "text": {
+        "bn": "এই রোবটের দুই চাকা দুটো মোটরে, যেগুলো **L298N** চালায়। সামনে **আলট্রাসনিক সেন্সর** পথ দেখে।\n\nপ্যালেট থেকে **মোটর ড্রাইভার** যোগ করো। ব্যাটারির + যাবে **12V**-তে, − যাবে **GND**-তে, আর বোর্ডের GND-ও ড্রাইভারের GND-তে। এবার দুই জাম্পারই লাগানো থাকবে: রোবট সবসময় পুরো গতিতে চলবে।",
+        "en": "This robot's two wheels are two motors, driven by the **L298N**. An **ultrasonic sensor** at the front watches the way ahead.\n\nAdd the **motor driver** from the palette. The battery's + goes to **12V** and − to **GND**, and the board's GND to the driver's GND too. Leave both jumpers on this time: the robot always runs at full speed."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "l298n"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "battery": "pos"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "vs"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "battery": "neg"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "gnd"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "দুটো **মোটর** বসাও। বাঁ চাকার মোটর যাবে **OUT1** আর **OUT2**-তে, ডান চাকার মোটর **OUT3** আর **OUT4**-তে। দুটো মোটর একভাবে লাগাও: প্রথম পা OUT1 বা OUT3-এ।",
+        "en": "Place two **motors**. The left wheel's motor goes to **OUT1** and **OUT2**, the right wheel's to **OUT3** and **OUT4**. Connect both the same way round: the first leg to OUT1 or OUT3."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "motor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "a"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "out1"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "b"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "out2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "a"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "out3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "b"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "out4"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "ড্রাইভারের ইনপুট লাগাও: **D26** যাবে IN1-এ, **D27** IN2-তে, **D32** IN3-তে, **D33** IN4-এ।",
+        "en": "Connect the driver's inputs: **D26** to IN1, **D27** to IN2, **D32** to IN3, **D33** to IN4."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d26"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "in1"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d27"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "in2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d32"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "in3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d33"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "in4"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**আলট্রাসনিক সেন্সর** বসাও: VCC যাবে VIN-এ, GND যাবে GND-তে, Trig যাবে D5-এ। Echo থেকে ১ kΩ হয়ে D18-এ, আর D18 থেকে ২ kΩ হয়ে GND-তে: ভোল্টেজ ভাগ, যেমন আলট্রাসনিকের পাঠে করেছ।",
+        "en": "Place the **ultrasonic sensor**: VCC to VIN, GND to GND, Trig to D5. Echo through 1 kΩ to D18, and D18 through 2 kΩ to GND: the divider from the ultrasonic lesson."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ultrasonic"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "trig"
+          },
+          "to": {
+            "board": "d5"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "echo"
+          },
+          "to": {
+            "board": "d18"
+          },
+          "through": "resistor",
+          "ohms": [800, 1200]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d18"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [1500, 2500]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই প্রকল্পের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও, তারপর কোড ট্যাবে প্রোগ্রামটা পড়ো। এটা আগের পাঠের ছোট ছোট প্রোগ্রাম জুড়েই বানানো।",
+        "en": "Press **Put this lesson's program on the board**, then read it in the Code tab. It is built from the small programs of the earlier lessons."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "robot"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। সামনের বাধা ৫০ সেমি দূরে: দুই চাকাই সামনে ঘুরবে।",
+        "en": "Press **Run**. The obstacle is 50 cm away: both wheels turn forwards."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "motor",
+          "path": "activity",
+          "above": 0.6,
+          "every": true,
+          "label": {
+            "bn": "দুই মোটরই সামনে ঘুরেছে",
+            "en": "Both motors turned forwards"
+          }
+        },
+        {
+          "kind": "serial",
+          "matches": "পথ খোলা: সামনে চলছি"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে বাধা **১০ সেমি**-তে আনো। রোবট পিছিয়ে যাবে (দুই চাকা উল্টো), তারপর ঘুরবে (এক চাকা সামনে, অন্যটা পেছনে)।",
+        "en": "Tap the sensor and bring the obstacle to **10 cm**. The robot backs up (both wheels reversed), then turns (one wheel forwards, the other back)."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "ultrasonic",
+          "prop": "distance",
+          "below": 25
+        },
+        {
+          "kind": "reading",
+          "part": "motor",
+          "path": "activity",
+          "below": -0.6
+        },
+        {
+          "kind": "serial",
+          "matches": "বাধা! পিছিয়ে ঘুরছি"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "দুই চাকা উল্টো দিকে ঘুরলে রোবট নিজের জায়গায় ঘোরে।",
+      "সেন্সর দেখে, প্রোগ্রাম ঠিক করে, মোটর করে: এটাই রোবট।",
+      "মোটরের শক্তি ব্যাটারি থেকে আসে, বোর্ড শুধু নির্দেশ দেয়।"
+    ],
+    "en": [
+      "Wheels turning opposite ways make the robot spin on the spot.",
+      "The sensor sees, the program decides, the motors act: that is a robot.",
+      "The motors' power comes from the battery; the board only gives orders."
+    ]
+  },
+  "tryNext": {
+    "bn": "ENA আর ENB-র জাম্পার খুলে PWM দাও, আর বাধার কাছে এলে রোবটের গতি কমাও।",
+    "en": "Take off the ENA and ENB jumpers, add PWM, and slow the robot down as it nears an obstacle."
+  },
+  "kind": "project"
+}

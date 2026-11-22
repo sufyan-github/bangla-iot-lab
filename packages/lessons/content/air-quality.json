@@ -1,0 +1,312 @@
+{
+  "id": "air-quality",
+  "order": 22,
+  "parts": ["mq-135", "oled-ssd1306-096", "rgb-led-module", "buzzer-module-active", "resistor"],
+  "after": ["mq135-gas", "oled-display", "rgb-led", "buzzer"],
+  "title": {
+    "bn": "বাতাসের মান যাচাই",
+    "en": "Air quality monitor"
+  },
+  "summary": {
+    "bn": "বাতাস ভালো, মাঝারি না খারাপ: রং, লেখা আর শব্দে জানাও।",
+    "en": "Good, fair or bad air: shown in colour, in words and with sound."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "airquality",
+  "steps": [
+    {
+      "text": {
+        "bn": "রান্নাঘরের ধোঁয়া বা কারখানার গ্যাসে বাতাস খারাপ হয়। এই যন্ত্র বাতাসের মান তিন ভাগে দেখাবে: ভালো (সবুজ), মাঝারি (হলুদ), খারাপ (লাল আর বাজার)।\n\n**MQ-135** বসাও: VCC যাবে VIN-এ, GND যাবে GND-তে। AO থেকে ১০ kΩ হয়ে **D34**-এ, আর D34 থেকে আরেকটা ১০ kΩ হয়ে GND-তে।",
+        "en": "Kitchen smoke or factory gas makes air bad. This device shows the air in three grades: good (green), fair (yellow), bad (red and a buzzer).\n\nPlace the **MQ-135**: VCC to VIN, GND to GND. AO through 10 kΩ to **D34**, and D34 through another 10 kΩ to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "mq135"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mq135",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mq135",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mq135",
+            "pin": "ao"
+          },
+          "to": {
+            "board": "d34"
+          },
+          "through": "resistor",
+          "ohms": [4700, 22000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d34"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [4700, 22000]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**OLED ডিসপ্লে** বসাও: GND যাবে GND-তে, VCC যাবে 3V3-তে, SCL যাবে D22-এ, SDA যাবে D21-এ।",
+        "en": "Place the **OLED display**: GND to GND, VCC to 3V3, SCL to D22, SDA to D21."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "oled"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "scl"
+          },
+          "to": {
+            "board": "d22"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "sda"
+          },
+          "to": {
+            "board": "d21"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**RGB LED** বসাও: R, G আর B প্রতিটা নিজের ২২০ Ω রেজিস্টর হয়ে D25, D26 আর D27-এ, আর − পা GND-তে। তারপর **বাজার**: + পা **D32**-এ, − পা GND-তে।",
+        "en": "Place the **RGB LED**: R, G and B each through their own 220 Ω resistor to D25, D26 and D27, and − to GND. Then the **buzzer**: + to **D32**, − to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "rgbled"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d25"
+          },
+          "to": {
+            "part": "rgbled",
+            "pin": "r"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d26"
+          },
+          "to": {
+            "part": "rgbled",
+            "pin": "g"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d27"
+          },
+          "to": {
+            "part": "rgbled",
+            "pin": "b"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rgbled",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "part",
+          "type": "buzzer"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "pos"
+          },
+          "to": {
+            "board": "d32"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "neg"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই প্রকল্পের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও, তারপর কোড ট্যাবে প্রোগ্রামটা পড়ো। এটা আগের পাঠের ছোট ছোট প্রোগ্রাম জুড়েই বানানো।",
+        "en": "Press **Put this lesson's program on the board**, then read it in the Code tab. It is built from the small programs of the earlier lessons."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "airquality"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। বাতাস এখন পরিষ্কার: LED **সবুজ**, ডিসপ্লেতে GOOD।",
+        "en": "Press **Run**. The air is clean: the LED is **green** and the display says GOOD."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "rgbled",
+          "path": "rgb.g",
+          "above": 0.05
+        },
+        {
+          "kind": "reading",
+          "part": "oled",
+          "path": "oled.lit",
+          "equals": true
+        },
+        {
+          "kind": "serial",
+          "matches": "বাতাস: ভালো"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে বাতাস **৫০%** খারাপ করো। LED **হলুদ** হবে (লাল আর সবুজ একসাথে)।",
+        "en": "Tap the sensor and make the air **50%** bad. The LED turns **yellow** (red and green together)."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "mq135",
+          "prop": "gas",
+          "above": 0.4,
+          "below": 0.6
+        },
+        {
+          "kind": "serial",
+          "matches": "বাতাস: মাঝারি"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "বাতাস **৯০%** খারাপ করো। LED **লাল** হবে আর বাজার বাজবে।",
+        "en": "Make the air **90%** bad. The LED turns **red** and the buzzer sounds."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "mq135",
+          "prop": "gas",
+          "above": 0.85
+        },
+        {
+          "kind": "reading",
+          "part": "buzzer",
+          "path": "activity",
+          "equals": 1
+        },
+        {
+          "kind": "serial",
+          "matches": "বাতাস: খারাপ!"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "দুটো সীমা দিয়ে একটা মান তিন ভাগে ভাগ করা যায়।",
+      "লাল আর সবুজ আলো মিশে হলুদ হয়।",
+      "৫ V-এর সেন্সর থেকে আসা ভোল্টেজ ভাগ করে নিয়েই ESP32-তে দিতে হয়।"
+    ],
+    "en": [
+      "Two limits divide a reading into three grades.",
+      "Red and green light mix to yellow.",
+      "A 5 V sensor's output must be divided before it reaches the ESP32."
+    ]
+  },
+  "tryNext": {
+    "bn": "বাতাস খারাপ হলে বাজার একটানা না বাজিয়ে প্রতি সেকেন্ডে একবার বিপ দাও।",
+    "en": "When the air is bad, beep once a second instead of sounding all the time."
+  },
+  "kind": "project"
+}

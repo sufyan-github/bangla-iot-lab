@@ -1,0 +1,233 @@
+{
+  "id": "rain-alert",
+  "order": 18,
+  "parts": ["rain-sensor", "sg90-servo", "buzzer-module-active"],
+  "after": ["rain-sensor", "servo", "buzzer"],
+  "title": {
+    "bn": "বৃষ্টির সতর্কতা",
+    "en": "Rain alert"
+  },
+  "summary": {
+    "bn": "বৃষ্টি এলে নিজে নিজে ঢাকনা বন্ধ হবে আর বাজার জানিয়ে দেবে।",
+    "en": "When rain comes, a cover closes by itself and a buzzer gives the alarm."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "rainalert",
+  "steps": [
+    {
+      "text": {
+        "bn": "ছাদে শুকাতে দেওয়া কাপড় বা ধান বৃষ্টিতে ভিজে যায়। এই প্রকল্পে বৃষ্টি সেন্সর পানি টের পেলেই একটা **সার্ভো** ঢাকনা বন্ধ করবে আর **বাজার** বাজবে।\n\nবৃষ্টি সেন্সর বসাও: VCC যাবে 3V3-তে, GND যাবে GND-তে, DO যাবে **D27**-এ।",
+        "en": "Clothes or rice drying on a roof get soaked by rain. In this project, as soon as the rain sensor feels water, a **servo** closes a cover and a **buzzer** sounds.\n\nPlace the rain sensor: VCC to 3V3, GND to GND, DO to **D27**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "rain"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rain",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rain",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rain",
+            "pin": "do"
+          },
+          "to": {
+            "board": "d27"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**সার্ভো** বসাও: GND যাবে GND-তে, VCC যাবে VIN-এ, সংকেত যাবে D13-এ। সার্ভোর হাতটাই ঢাকনা: ০° মানে খোলা, ৯০° মানে বন্ধ।",
+        "en": "Place the **servo**: GND to GND, VCC to VIN, signal to D13. The servo's arm is the cover: 0° is open, 90° is closed."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "servo"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "signal"
+          },
+          "to": {
+            "board": "d13"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**বাজার** বসাও: + পা যাবে **D25**-এ, − পা GND-তে।",
+        "en": "Place the **buzzer**: + to **D25**, − to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "buzzer"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "pos"
+          },
+          "to": {
+            "board": "d25"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "neg"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই প্রকল্পের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও, তারপর কোড ট্যাবে প্রোগ্রামটা পড়ো। এটা আগের পাঠের ছোট ছোট প্রোগ্রাম জুড়েই বানানো।",
+        "en": "Press **Put this lesson's program on the board**, then read it in the Code tab. It is built from the small programs of the earlier lessons."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "rainalert"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। আকাশ পরিষ্কার: ঢাকনা খোলা থাকবে (০°)।",
+        "en": "Press **Run**. The sky is clear: the cover stays open (0°)."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "servo",
+          "path": "angle",
+          "below": 10
+        },
+        {
+          "kind": "serial",
+          "matches": "শুকনো: ঢাকনা খোলা"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে ভেজাভাব **৮০%**-এর বেশি করো: বৃষ্টি এলো! সার্ভো ৯০°-তে গিয়ে ঢাকনা বন্ধ করবে, আর বাজার তিনবার বাজবে।",
+        "en": "Tap the sensor and make it more than **80%** wet: here comes the rain! The servo turns to 90° to close the cover and the buzzer beeps three times."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "rain",
+          "prop": "wetness",
+          "above": 0.79
+        },
+        {
+          "kind": "reading",
+          "part": "servo",
+          "path": "angle",
+          "above": 80
+        },
+        {
+          "kind": "reading",
+          "part": "buzzer",
+          "path": "activity",
+          "equals": 1
+        },
+        {
+          "kind": "serial",
+          "matches": "বৃষ্টি! ঢাকনা বন্ধ হচ্ছে"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "ভেজাভাব আবার **০%** করো: বৃষ্টি থেমেছে, ঢাকনা আবার খুলবে।",
+        "en": "Set the wetness back to **0%**: the rain has stopped and the cover opens again."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "rain",
+          "prop": "wetness",
+          "below": 0.2
+        },
+        {
+          "kind": "serial",
+          "matches": "বৃষ্টি থেমেছে: ঢাকনা খোলা"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "অবস্থা **বদলানোর** মুহূর্তে কাজ করতে `wasRaining`-এর মতো আগের অবস্থা মনে রাখতে হয়।",
+      "সেন্সর, মোটর আর শব্দ মিলে একটা স্বয়ংক্রিয় যন্ত্র হয়।"
+    ],
+    "en": [
+      "To act at the moment something **changes**, remember the previous state, as `wasRaining` does.",
+      "A sensor, a motor and a sound together make an automatic machine."
+    ]
+  },
+  "tryNext": {
+    "bn": "ঢাকনা বন্ধ হওয়ার পর প্রতি ১০ সেকেন্ডে একবার ছোট বিপ দাও, যতক্ষণ বৃষ্টি চলে।",
+    "en": "Once the cover is closed, give a short beep every 10 seconds for as long as it rains."
+  },
+  "kind": "project"
+}

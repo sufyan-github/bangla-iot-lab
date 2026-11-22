@@ -675,3 +675,29 @@ Not done: the relay module has no lesson, because the lab's relay is a bare
 relay and the kit's is a module with its own transistor; lessons for the
 handbook's projects; mapping to the NCTB curriculum; and anything a teacher
 sees. Progress is kept on the device only, as there are no accounts yet.
+
+## D-057 — Project lessons are what the lab can show today, built from the kit lessons
+
+Eight projects follow the 16 kit lessons. Each joins parts the student has met
+in a kit lesson, names those lessons as worth taking first, and has its own
+ready-made ESP32 program written for the lab (Apache-2.0). The text is the
+project's own and CC BY 4.0, as for the kit lessons (D-056); the project themes
+are common school projects, and nothing is taken from the handbook.
+
+Chosen because every part of each can be simulated now: street light (LDR,
+motion sensor, LED), rain alert (rain sensor, servo, buzzer), dustbin
+(ultrasonic, servo, buzzer), security alarm (motion sensor, button, buzzer,
+LED, OLED), plant monitor (soil, DHT11, OLED, RGB LED), air quality (MQ-135
+with a divider, OLED, RGB LED, buzzer), parking (IR, ultrasonic, servo, OLED)
+and an obstacle-avoiding robot (motor driver, two motors, battery, ultrasonic).
+
+Left out for now, and why:
+
+- Anything that needs Wi-Fi (a web dashboard, sending data): the lab has no
+  Wi-Fi.
+- Automatic watering: it needs the relay module and a pump, and the lab's
+  relay is a bare relay, not the kit's module.
+
+As for the kit lessons, each project has a walkthrough that completes it
+against the real simulation; breaking a robot motor's wiring or giving the air
+quality step too little gas makes its walkthrough fail.

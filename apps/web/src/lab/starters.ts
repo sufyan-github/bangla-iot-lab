@@ -46,6 +46,22 @@ import esp32ObstacleSource from '@banglalab/board-emulators/fixtures/esp32-start
 import esp32ObstacleModule from '@banglalab/board-emulators/fixtures/esp32-starters/obstacle.wasm.base64?raw';
 import esp32BeepSource from '@banglalab/board-emulators/fixtures/esp32-starters/beep.ino?raw';
 import esp32BeepModule from '@banglalab/board-emulators/fixtures/esp32-starters/beep.wasm.base64?raw';
+import esp32StreetlightSource from '@banglalab/board-emulators/fixtures/esp32-starters/streetlight.ino?raw';
+import esp32StreetlightModule from '@banglalab/board-emulators/fixtures/esp32-starters/streetlight.wasm.base64?raw';
+import esp32RainalertSource from '@banglalab/board-emulators/fixtures/esp32-starters/rainalert.ino?raw';
+import esp32RainalertModule from '@banglalab/board-emulators/fixtures/esp32-starters/rainalert.wasm.base64?raw';
+import esp32DustbinSource from '@banglalab/board-emulators/fixtures/esp32-starters/dustbin.ino?raw';
+import esp32DustbinModule from '@banglalab/board-emulators/fixtures/esp32-starters/dustbin.wasm.base64?raw';
+import esp32SecuritySource from '@banglalab/board-emulators/fixtures/esp32-starters/security.ino?raw';
+import esp32SecurityModule from '@banglalab/board-emulators/fixtures/esp32-starters/security.wasm.base64?raw';
+import esp32PlantSource from '@banglalab/board-emulators/fixtures/esp32-starters/plant.ino?raw';
+import esp32PlantModule from '@banglalab/board-emulators/fixtures/esp32-starters/plant.wasm.base64?raw';
+import esp32AirqualitySource from '@banglalab/board-emulators/fixtures/esp32-starters/airquality.ino?raw';
+import esp32AirqualityModule from '@banglalab/board-emulators/fixtures/esp32-starters/airquality.wasm.base64?raw';
+import esp32ParkingSource from '@banglalab/board-emulators/fixtures/esp32-starters/parking.ino?raw';
+import esp32ParkingModule from '@banglalab/board-emulators/fixtures/esp32-starters/parking.wasm.base64?raw';
+import esp32RobotSource from '@banglalab/board-emulators/fixtures/esp32-starters/robot.ino?raw';
+import esp32RobotModule from '@banglalab/board-emulators/fixtures/esp32-starters/robot.wasm.base64?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -86,6 +102,14 @@ export const ESP32_STARTERS = {
   gas: { source: esp32GasSource, hex: esp32GasModule },
   obstacle: { source: esp32ObstacleSource, hex: esp32ObstacleModule },
   beep: { source: esp32BeepSource, hex: esp32BeepModule },
+  streetlight: { source: esp32StreetlightSource, hex: esp32StreetlightModule },
+  rainalert: { source: esp32RainalertSource, hex: esp32RainalertModule },
+  dustbin: { source: esp32DustbinSource, hex: esp32DustbinModule },
+  security: { source: esp32SecuritySource, hex: esp32SecurityModule },
+  plant: { source: esp32PlantSource, hex: esp32PlantModule },
+  airquality: { source: esp32AirqualitySource, hex: esp32AirqualityModule },
+  parking: { source: esp32ParkingSource, hex: esp32ParkingModule },
+  robot: { source: esp32RobotSource, hex: esp32RobotModule },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

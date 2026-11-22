@@ -1,6 +1,10 @@
 {
   "toolchain": "clang 21.1.8 wasm-opt 120",
   "starters": {
+    "airquality": {
+      "sourceHash": "92a3dac82abe325213d02f45a05a6f914c2b9a55f345734aa7e07be3293a505c",
+      "bytes": 62854
+    },
     "beep": {
       "sourceHash": "f77ef1a23eec8cefd31ccb1c18614de017be8333a3a3a8771a08c167e341ac54",
       "bytes": 10366
@@ -20,6 +24,10 @@
     "distance": {
       "sourceHash": "e3175fcaf615ffc41fca38ce351ab093b4fe67aab8ee0de174e10c7a382f7563",
       "bytes": 39773
+    },
+    "dustbin": {
+      "sourceHash": "80054db76bc04cc89286a25d34e752a4e05b8775e9ccac745f218699ca843e7e",
+      "bytes": 11788
     },
     "fade": {
       "sourceHash": "97709a275276f885445332b13ac7ef8d434b59939920d5ffa32f6a595b79be2b",
@@ -53,13 +61,33 @@
       "sourceHash": "4609b64c3d1e7fd61e5905f399e1a102639e9624345726bac8a180c172e92f27",
       "bytes": 62098
     },
+    "parking": {
+      "sourceHash": "bdca72b39c56ff2f243f6c371fcf22830fa354db4a4dcd2eaaeb4f68a6fe9b03",
+      "bytes": 34486
+    },
+    "plant": {
+      "sourceHash": "c1cec23e9269307088b1ac6514df205a51501d043fb0dcdba2b8f0983c178f9b",
+      "bytes": 68391
+    },
     "rain": {
       "sourceHash": "d19c3545fb3a89ab09ad94fd624b8041257f60550433e5e75cbfd749e4a3b6ba",
       "bytes": 40201
     },
+    "rainalert": {
+      "sourceHash": "693b096344e27deaa56787aef529b369cf572f3b36c911f1a40e2a62e799f06a",
+      "bytes": 11848
+    },
     "rgb": {
       "sourceHash": "a397d607f2e3d6cac139f1e34bab70242b3aa5ada2db314fdc3d94aafffc35fc",
       "bytes": 10586
+    },
+    "robot": {
+      "sourceHash": "336155659ba54dc4d67c2cf5909b1f0651f3ec23054ebb274395a6f2361b6ea0",
+      "bytes": 40433
+    },
+    "security": {
+      "sourceHash": "adb6aef224ff0d74984d3b2c6b8471981bfc517fe2430886722ec76b08d37c1d",
+      "bytes": 34006
     },
     "servo": {
       "sourceHash": "953263000919dfb6a7800be83c5a1c5d4b7895f567378aff3d6fac4e8e95b566",
@@ -68,6 +96,10 @@
     "soil": {
       "sourceHash": "e701858805da7881c271cce1b40f48ac59d031fccecf14c1b7e3743daf867e70",
       "bytes": 39943
+    },
+    "streetlight": {
+      "sourceHash": "b75e8f369bd9a9da9f3e3fa85861758788a486ee6074f080516f2afd40113752",
+      "bytes": 40532
     }
   }
 }

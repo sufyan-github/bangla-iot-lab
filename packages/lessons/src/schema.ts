@@ -27,6 +27,9 @@ export const Place = Type.Union([
 ]);
 export type Place = Static<typeof Place>;
 
+/** True when every part of the type must pass, not just one of them (both motors of a robot). */
+const Every = { every: Type.Optional(Type.Boolean()) };
+
 /** What the student is shown for a check, when the lab's own wording would not say it well. */
 const Labelled = { label: Type.Optional(Text) };
 
@@ -62,6 +65,7 @@ export const Check = Type.Union([
     part: Type.String(),
     prop: Type.String(),
     ...Comparison,
+    ...Every,
     ...Labelled,
   }),
   /** The board's uploaded program is this ready-made one, unchanged. */
@@ -79,6 +83,7 @@ export const Check = Type.Union([
     part: Type.String(),
     path: Type.String(),
     ...Comparison,
+    ...Every,
     ...Labelled,
   }),
   /** The program printed text matching this pattern to the serial monitor. */
@@ -105,6 +110,13 @@ export const LessonSchema = Type.Object({
   id: Type.String({ pattern: '^[a-z0-9-]+$' }),
   /** Position in the list of lessons, from 1. */
   order: Type.Integer({ minimum: 1 }),
+  /**
+   * `part` (the default): a lesson about one part of the kit. `project`: a
+   * build that puts several parts together, after their own lessons.
+   */
+  kind: Type.Optional(Type.Union([Type.Literal('part'), Type.Literal('project')])),
+  /** Lessons worth taking first, by id. */
+  after: Type.Optional(Type.Array(Type.String())),
   /** The kit parts the lesson is about, by part definition id. */
   parts: Type.Array(Type.String(), { minItems: 1 }),
   title: Text,

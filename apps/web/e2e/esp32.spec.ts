@@ -69,6 +69,14 @@ test('the code tab says the ESP32 is experimental and offers only ESP32 programs
     'gas',
     'obstacle',
     'beep',
+    'streetlight',
+    'rainalert',
+    'dustbin',
+    'security',
+    'plant',
+    'airquality',
+    'parking',
+    'robot',
     'custom',
   ]);
 });

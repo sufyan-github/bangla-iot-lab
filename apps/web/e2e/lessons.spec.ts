@@ -22,15 +22,32 @@ async function expectStepDone(page: Page) {
   });
 }
 
-test('the lessons page lists the sixteen kit lessons in order', async ({ page }) => {
+test('the lessons page lists the kit lessons, then the projects, in order', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('nav-lessons').click();
   await expect(page).toHaveURL(/\/lessons$/);
-  const cards = page.getByTestId('lesson-card');
-  await expect(cards).toHaveCount(16);
-  await expect(cards.first()).toHaveAttribute('data-lesson', 'esp32-blink');
-  await expect(cards.last()).toHaveAttribute('data-lesson', 'motor-driver');
-  await expect(cards.first()).toHaveAttribute('data-state', 'new');
+  const parts = page.getByTestId('lesson-list').getByTestId('lesson-card');
+  await expect(parts).toHaveCount(16);
+  await expect(parts.first()).toHaveAttribute('data-lesson', 'esp32-blink');
+  await expect(parts.last()).toHaveAttribute('data-lesson', 'motor-driver');
+  await expect(parts.first()).toHaveAttribute('data-state', 'new');
+  const projects = page.getByTestId('project-lesson-list').getByTestId('lesson-card');
+  await expect(projects).toHaveCount(8);
+  await expect(projects.first()).toHaveAttribute('data-lesson', 'street-light');
+  await expect(projects.last()).toHaveAttribute('data-lesson', 'obstacle-robot');
+  // Each project names the lessons worth taking first.
+  await expect(projects.first().getByTestId('lesson-after')).toBeVisible();
+});
+
+test('a project opens with its own numbering and its battery in place', async ({ page }) => {
+  await page.goto('/lessons');
+  const robot = page.locator('[data-lesson="obstacle-robot"]');
+  await robot.getByTestId('lesson-start').click();
+  const panel = page.getByTestId('lesson-panel');
+  await expect(panel).toHaveAttribute('data-lesson', 'obstacle-robot');
+  await expect(panel).toContainText(/প্রকল্প ৮|Project 8/);
+  await expect(page.locator('[data-part="BAT1"]')).toBeVisible();
+  await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
 });
 
 test('the first lesson is checked step by step, and its progress is kept', async ({ page }) => {

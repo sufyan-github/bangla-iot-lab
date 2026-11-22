@@ -1,0 +1,286 @@
+{
+  "id": "smart-parking",
+  "order": 23,
+  "parts": ["ir-obstacle", "hc-sr04", "sg90-servo", "oled-ssd1306-096", "resistor"],
+  "after": ["ir-obstacle", "ultrasonic", "servo", "oled-display"],
+  "title": {
+    "bn": "স্মার্ট পার্কিং",
+    "en": "Smart parking"
+  },
+  "summary": {
+    "bn": "জায়গা খালি থাকলে গেট খোলে, ভরা থাকলে বন্ধ থাকে; ডিসপ্লে বলে দেয় খালি না ভরা।",
+    "en": "The gate opens when there is a free space and stays shut when it is full; the display says which."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "parking",
+  "steps": [
+    {
+      "text": {
+        "bn": "গেটে গাড়ি এলে **IR সেন্সর** টের পায়। পার্কিংয়ের জায়গায় গাড়ি আছে কি না **আলট্রাসনিক সেন্সর** মাপে। জায়গা খালি থাকলে **সার্ভো** গেট খোলে।\n\nIR সেন্সর বসাও: VCC যাবে 3V3-তে, OUT যাবে **D27**-এ, GND যাবে GND-তে।",
+        "en": "The **IR sensor** notices a car at the gate. The **ultrasonic sensor** measures whether a car is in the parking space. If the space is free, the **servo** opens the gate.\n\nPlace the IR sensor: VCC to 3V3, OUT to **D27**, GND to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ir"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ir",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ir",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d27"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ir",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**আলট্রাসনিক সেন্সর** বসাও: VCC যাবে VIN-এ, GND যাবে GND-তে, Trig যাবে D5-এ। Echo থেকে ১ kΩ হয়ে D18-এ, আর D18 থেকে ২ kΩ হয়ে GND-তে: ভোল্টেজ ভাগ, যেমন আলট্রাসনিকের পাঠে করেছ।",
+        "en": "Place the **ultrasonic sensor**: VCC to VIN, GND to GND, Trig to D5. Echo through 1 kΩ to D18, and D18 through 2 kΩ to GND: the divider from the ultrasonic lesson."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ultrasonic"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "trig"
+          },
+          "to": {
+            "board": "d5"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "echo"
+          },
+          "to": {
+            "board": "d18"
+          },
+          "through": "resistor",
+          "ohms": [800, 1200]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d18"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [1500, 2500]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**সার্ভো** বসাও: GND যাবে GND-তে, VCC যাবে VIN-এ, সংকেত যাবে D13-এ। **OLED ডিসপ্লে** বসাও: GND যাবে GND-তে, VCC যাবে 3V3-তে, SCL যাবে D22-এ, SDA যাবে D21-এ।",
+        "en": "Place the **servo**: GND to GND, VCC to VIN, signal to D13. Place the **OLED display**: GND to GND, VCC to 3V3, SCL to D22, SDA to D21."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "servo"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "signal"
+          },
+          "to": {
+            "board": "d13"
+          }
+        },
+        {
+          "kind": "part",
+          "type": "oled"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "scl"
+          },
+          "to": {
+            "board": "d22"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "sda"
+          },
+          "to": {
+            "board": "d21"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই প্রকল্পের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও, তারপর কোড ট্যাবে প্রোগ্রামটা পড়ো। এটা আগের পাঠের ছোট ছোট প্রোগ্রাম জুড়েই বানানো।",
+        "en": "Press **Put this lesson's program on the board**, then read it in the Code tab. It is built from the small programs of the earlier lessons."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "parking"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। জায়গা এখন খালি (৫০ সেমি পর্যন্ত কিছু নেই): ডিসপ্লেতে FREE। IR সেন্সরে ট্যাপ করো: গাড়ি এলো! গেট খুলবে, তিন সেকেন্ড পর বন্ধ হবে। আবার ট্যাপ করে গাড়ি সরাও।",
+        "en": "Press **Run**. The space is free (nothing within 50 cm): the display says FREE. Tap the IR sensor: a car arrives! The gate opens and closes three seconds later. Tap again to take the car away."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "oled",
+          "path": "oled.lit",
+          "equals": true
+        },
+        {
+          "kind": "reading",
+          "part": "servo",
+          "path": "angle",
+          "above": 80
+        },
+        {
+          "kind": "serial",
+          "matches": "গাড়ি ঢুকছে: গেট খুলছে"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার জায়গায় একটা গাড়ি দাঁড়াক: আলট্রাসনিক সেন্সরে ট্যাপ করে দূরত্ব **১০ সেমি** করো। ডিসপ্লেতে FULL আসবে। তারপর IR সেন্সরে আবার ট্যাপ করো: নতুন গাড়ির জন্য গেট বন্ধই থাকবে।",
+        "en": "Now a car parks in the space: tap the ultrasonic sensor and set the distance to **10 cm**. The display says FULL. Then tap the IR sensor again: for the new car, the gate stays shut."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "ultrasonic",
+          "prop": "distance",
+          "below": 15
+        },
+        {
+          "kind": "serial",
+          "matches": "জায়গা নেই, গেট বন্ধ থাকবে"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "দুটো সেন্সরের তথ্য মিলিয়ে সিদ্ধান্ত: গাড়ি আছে **এবং** জায়গা খালি।",
+      "একই প্রোগ্রাম সার্ভো, ডিসপ্লে আর দুই সেন্সর একসাথে চালাতে পারে।"
+    ],
+    "en": [
+      "A decision from two sensors: a car is waiting **and** the space is free.",
+      "One program can run a servo, a display and two sensors together."
+    ]
+  },
+  "tryNext": {
+    "bn": "জায়গা ভরা থাকলে একটা লাল LED জ্বালাও, খালি থাকলে সবুজ।",
+    "en": "Light a red LED when the space is full and a green one when it is free."
+  },
+  "kind": "project"
+}

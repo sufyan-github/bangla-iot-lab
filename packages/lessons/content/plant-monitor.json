@@ -1,0 +1,287 @@
+{
+  "id": "plant-monitor",
+  "order": 21,
+  "parts": ["yl-69", "dht11", "oled-ssd1306-096", "rgb-led-module"],
+  "after": ["soil-moisture", "dht11", "oled-display", "rgb-led"],
+  "title": {
+    "bn": "গাছের যত্ন",
+    "en": "Plant monitor"
+  },
+  "summary": {
+    "bn": "মাটি, তাপমাত্রা আর আর্দ্রতা মেপে ডিসপ্লেতে দেখাও; মাটি শুকালে লাল বাতি।",
+    "en": "Show soil, temperature and humidity on the display; a red light when the soil is dry."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "plant",
+  "steps": [
+    {
+      "text": {
+        "bn": "গাছের কখন পানি লাগবে তা এই যন্ত্র বলে দেবে। লাগবে: **মাটির সেন্সর**, **DHT11**, **OLED** আর **RGB LED**।\n\nমাটির সেন্সর বসাও: VCC যাবে 3V3-তে, আউটপুট যাবে **D34**-এ, GND যাবে GND-তে। তারপর DHT11: VCC যাবে 3V3-তে, DATA যাবে **D4**-এ, GND যাবে GND-তে।",
+        "en": "This device tells you when a plant needs water. It needs the **soil sensor**, the **DHT11**, the **OLED** and the **RGB LED**.\n\nPlace the soil sensor: VCC to 3V3, output to **D34**, GND to GND. Then the DHT11: VCC to 3V3, DATA to **D4**, GND to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "soil"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "soil",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "soil",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d34"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "soil",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "part",
+          "type": "dht11"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "dht11",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "dht11",
+            "pin": "data"
+          },
+          "to": {
+            "board": "d4"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "dht11",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**OLED ডিসপ্লে** বসাও: GND যাবে GND-তে, VCC যাবে 3V3-তে, SCL যাবে D22-এ, SDA যাবে D21-এ।",
+        "en": "Place the **OLED display**: GND to GND, VCC to 3V3, SCL to D22, SDA to D21."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "oled"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "scl"
+          },
+          "to": {
+            "board": "d22"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "sda"
+          },
+          "to": {
+            "board": "d21"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**RGB LED** বসাও: R, G আর B প্রতিটা নিজের ২২০ Ω রেজিস্টর হয়ে D25, D26 আর D27-এ, আর − পা GND-তে।",
+        "en": "Place the **RGB LED**: R, G and B each through their own 220 Ω resistor to D25, D26 and D27, and − to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "rgbled"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d25"
+          },
+          "to": {
+            "part": "rgbled",
+            "pin": "r"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d26"
+          },
+          "to": {
+            "part": "rgbled",
+            "pin": "g"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d27"
+          },
+          "to": {
+            "part": "rgbled",
+            "pin": "b"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rgbled",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই প্রকল্পের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও, তারপর কোড ট্যাবে প্রোগ্রামটা পড়ো। এটা আগের পাঠের ছোট ছোট প্রোগ্রাম জুড়েই বানানো।",
+        "en": "Press **Put this lesson's program on the board**, then read it in the Code tab. It is built from the small programs of the earlier lessons."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "plant"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। ডিসপ্লেতে মাটির মান, তাপমাত্রা আর আর্দ্রতা আসবে; মাটি ঠিক আছে, তাই RGB LED **সবুজ**।",
+        "en": "Press **Run**. The display shows the soil value, temperature and humidity; the soil is fine, so the RGB LED is **green**."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "oled",
+          "path": "oled.lit",
+          "equals": true
+        },
+        {
+          "kind": "reading",
+          "part": "rgbled",
+          "path": "rgb.g",
+          "above": 0.05
+        },
+        {
+          "kind": "serial",
+          "matches": "গাছ ভালো আছে"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "মাটির সেন্সরে ট্যাপ করে ভেজাভাব **১০%**-এর কম করো। LED **লাল** হবে আর ডিসপ্লেতে আসবে WATER ME।",
+        "en": "Tap the soil sensor and set the wetness below **10%**. The LED turns **red** and the display says WATER ME."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "soil",
+          "prop": "moisture",
+          "below": 0.1
+        },
+        {
+          "kind": "reading",
+          "part": "rgbled",
+          "path": "rgb.r",
+          "above": 0.05
+        },
+        {
+          "kind": "serial",
+          "matches": "পানি দাও!"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "একটা প্রোগ্রাম অনেক সেন্সর পড়ে একসাথে দেখাতে পারে।",
+      "রঙ দিয়ে এক নজরে অবস্থা বোঝানো যায়।",
+      "DHT11 দুই সেকেন্ডে একবারের বেশি পড়া যায় না, তাই `delay(2000)`।"
+    ],
+    "en": [
+      "One program can read many sensors and show them together.",
+      "A colour shows the state at a glance.",
+      "The DHT11 cannot be read more than once in two seconds, hence `delay(2000)`."
+    ]
+  },
+  "tryNext": {
+    "bn": "তাপমাত্রা ৩৫ °C-র বেশি হলে LED নীল করো: গাছের জন্য খুব গরম।",
+    "en": "Make the LED blue when the temperature is above 35 °C: too hot for the plant."
+  },
+  "kind": "project"
+}

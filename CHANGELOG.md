@@ -8,6 +8,14 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Eight project lessons**, after the kit lessons: smart street light, rain
+  alert, smart dustbin, security alarm, plant monitor, air quality monitor,
+  smart parking and an obstacle-avoiding robot. Each joins several kit parts
+  with its own ready-made ESP32 program, names the lessons worth taking first,
+  and is checked step by step like the kit lessons. The lessons page shows the
+  kit lessons and the projects in two sections.
+- A lesson check can now require **every** part of a type to pass, as both of
+  the robot's motors turning forwards.
 - **Kit lessons**: 16 guided lessons, one for each kit part the lab models, in
   Bangla and English, from the first program on the ESP32 to the motor driver.
   - Each lesson starts its own project with the board in place. Each step says

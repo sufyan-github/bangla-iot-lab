@@ -1,0 +1,237 @@
+{
+  "id": "smart-dustbin",
+  "order": 19,
+  "parts": ["hc-sr04", "sg90-servo", "buzzer-module-active", "resistor"],
+  "after": ["ultrasonic", "servo", "buzzer"],
+  "title": {
+    "bn": "স্মার্ট ডাস্টবিন",
+    "en": "Smart dustbin"
+  },
+  "summary": {
+    "bn": "হাত কাছে আনলেই ঢাকনা খোলে: ময়লা ফেলতে ঢাকনা ছুঁতে হয় না।",
+    "en": "Bring a hand close and the lid opens: no need to touch it to throw rubbish away."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "dustbin",
+  "steps": [
+    {
+      "text": {
+        "bn": "ডাস্টবিনের ঢাকনা হাতে ধরলে জীবাণু ছড়ায়। এই ডাস্টবিন **আলট্রাসনিক সেন্সর** দিয়ে হাত টের পায়, আর **সার্ভো** ঢাকনা খুলে দেয়।\n\n**আলট্রাসনিক সেন্সর** বসাও: VCC যাবে VIN-এ, GND যাবে GND-তে, Trig যাবে D5-এ। Echo থেকে ১ kΩ হয়ে D18-এ, আর D18 থেকে ২ kΩ হয়ে GND-তে: ভোল্টেজ ভাগ, যেমন আলট্রাসনিকের পাঠে করেছ।",
+        "en": "Touching a dustbin lid spreads germs. This dustbin senses a hand with an **ultrasonic sensor**, and a **servo** opens the lid.\n\nPlace the **ultrasonic sensor**: VCC to VIN, GND to GND, Trig to D5. Echo through 1 kΩ to D18, and D18 through 2 kΩ to GND: the divider from the ultrasonic lesson."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ultrasonic"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "trig"
+          },
+          "to": {
+            "board": "d5"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "echo"
+          },
+          "to": {
+            "board": "d18"
+          },
+          "through": "resistor",
+          "ohms": [800, 1200]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d18"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [1500, 2500]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**সার্ভো** বসাও: GND যাবে GND-তে, VCC যাবে VIN-এ, সংকেত যাবে D13-এ। সার্ভোর হাতটাই ঢাকনা: ০° মানে বন্ধ, ৯০° মানে খোলা।",
+        "en": "Place the **servo**: GND to GND, VCC to VIN, signal to D13. The servo's arm is the lid: 0° is closed, 90° is open."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "servo"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "signal"
+          },
+          "to": {
+            "board": "d13"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**বাজার** বসাও: + পা যাবে **D25**-এ, − পা GND-তে। ঢাকনা খোলার সময় ছোট একটা বিপ দেবে।",
+        "en": "Place the **buzzer**: + to **D25**, − to GND. It gives a short beep as the lid opens."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "buzzer"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "pos"
+          },
+          "to": {
+            "board": "d25"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "neg"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই প্রকল্পের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও, তারপর কোড ট্যাবে প্রোগ্রামটা পড়ো। এটা আগের পাঠের ছোট ছোট প্রোগ্রাম জুড়েই বানানো।",
+        "en": "Press **Put this lesson's program on the board**, then read it in the Code tab. It is built from the small programs of the earlier lessons."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "dustbin"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। সামনে কিছু নেই (৫০ সেমি দূরে): ঢাকনা বন্ধ থাকবে।",
+        "en": "Press **Run**. Nothing is near (50 cm away): the lid stays closed."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "servo",
+          "path": "angle",
+          "below": 10
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে বাধা **১০ সেমি**-তে আনো: যেন হাত এলো। ছোট বিপের পর ঢাকনা খুলবে, আর তিন সেকেন্ড পর নিজেই বন্ধ হবে।",
+        "en": "Tap the sensor and bring the obstacle to **10 cm**, like a hand. After a short beep the lid opens, and three seconds later it closes by itself."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "ultrasonic",
+          "prop": "distance",
+          "below": 20
+        },
+        {
+          "kind": "reading",
+          "part": "servo",
+          "path": "angle",
+          "above": 80
+        },
+        {
+          "kind": "reading",
+          "part": "buzzer",
+          "path": "activity",
+          "equals": 1
+        },
+        {
+          "kind": "serial",
+          "matches": "হাত এসেছে: ঢাকনা খুলছে"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "দূরত্ব মেপে একটা সীমার (`OPEN_DISTANCE`) সাথে তুলনা করে কাজ শুরু করা যায়।",
+      "`pulseIn()`-এ সময়সীমা দিলে কিছু না পেলেও প্রোগ্রাম আটকে থাকে না।"
+    ],
+    "en": [
+      "A distance compared with a limit (`OPEN_DISTANCE`) can start an action.",
+      "Giving `pulseIn()` a time limit stops the program waiting forever when nothing comes back."
+    ]
+  },
+  "tryNext": {
+    "bn": "ঢাকনা খোলা থাকার সময় তিন সেকেন্ড থেকে পাঁচ সেকেন্ড করো।",
+    "en": "Keep the lid open for five seconds instead of three."
+  },
+  "kind": "project"
+}

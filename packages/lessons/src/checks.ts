@@ -109,20 +109,24 @@ export function evaluate(check: Check, world: LessonWorld): boolean {
         return (from.includes(a) && to.includes(b)) || (from.includes(b) && to.includes(a));
       });
     }
-    case 'prop':
-      return ofType(circuit, check.part).some((component) =>
-        compare((component.props as Record<string, unknown>)[check.prop], check),
-      );
+    case 'prop': {
+      const parts = ofType(circuit, check.part);
+      const passes = (component: CircuitComponent) =>
+        compare((component.props as Record<string, unknown>)[check.prop], check);
+      return check.every ? parts.length > 0 && parts.every(passes) : parts.some(passes);
+    }
     case 'program':
       return world.uploadedStarter === check.starter;
     case 'running':
       return world.running;
     case 'no-errors':
       return result !== null && !result.diagnostics.some((d) => d.severity === 'error');
-    case 'reading':
-      return ofType(circuit, check.part).some((component) =>
-        compare(field(result?.readings[component.id], check.path), check),
-      );
+    case 'reading': {
+      const parts = ofType(circuit, check.part);
+      const passes = (component: CircuitComponent) =>
+        compare(field(result?.readings[component.id], check.path), check);
+      return check.every ? parts.length > 0 && parts.every(passes) : parts.some(passes);
+    }
     case 'serial':
       return new RegExp(check.matches, 'u').test(world.serial);
     case 'diagnostic':

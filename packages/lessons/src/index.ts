@@ -65,8 +65,20 @@ function load(): Lesson[] {
     if (problems.length > 0) throw new Error(`Lesson ${id}: ${problems.join('; ')}`);
     return raw as Lesson;
   });
+  // A lesson to take first must exist and come earlier.
+  for (const lesson of lessons) {
+    for (const id of lesson.after ?? []) {
+      const before = lessons.find((other) => other.id === id);
+      if (!before || before.order >= lesson.order) {
+        throw new Error(`Lesson ${lesson.id}: "${id}" is not an earlier lesson`);
+      }
+    }
+  }
   return lessons.sort((a, b) => a.order - b.order);
 }
+
+/** A lesson's kind; lessons that do not say are about one part. */
+export const lessonKind = (lesson: Lesson) => lesson.kind ?? 'part';
 
 /** The kit lessons, in the order they are taken. Their text is CC BY 4.0 (see content/README.md). */
 export const LESSONS: readonly Lesson[] = load();

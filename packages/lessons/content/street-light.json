@@ -1,0 +1,236 @@
+{
+  "id": "street-light",
+  "order": 17,
+  "parts": ["ldr-module", "pir-hc-sr501", "led-5mm", "resistor"],
+  "after": ["ldr-module", "pir-motion", "led-resistor"],
+  "title": {
+    "bn": "স্মার্ট রাস্তার বাতি",
+    "en": "Smart street light"
+  },
+  "summary": {
+    "bn": "দিনে বাতি বন্ধ, রাতে কম আলো, আর কেউ এলে পুরো আলো: বিদ্যুৎ বাঁচানো বাতি।",
+    "en": "Off by day, dim at night, bright when someone comes: a lamp that saves electricity."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "streetlight",
+  "steps": [
+    {
+      "text": {
+        "bn": "রাস্তার বাতি সারারাত পুরো আলোয় জ্বললে অনেক বিদ্যুৎ খরচ হয়। এই বাতি নিজে বুঝবে কখন রাত, আর কখন কেউ আসছে। লাগবে: আলো বোঝার জন্য **LDR মডিউল**, মানুষ বোঝার জন্য **PIR সেন্সর**, আর বাতি হিসেবে একটা **LED**।\n\nLDR মডিউল বসাও: VCC যাবে 3V3-তে, GND যাবে GND-তে, DO যাবে **D27**-এ, AO যাবে D34-এ।",
+        "en": "A street light at full brightness all night uses a lot of electricity. This one works out for itself when it is night and when someone is coming. It needs an **LDR module** to sense light, a **PIR sensor** to sense people, and an **LED** as the lamp.\n\nPlace the LDR module: VCC to 3V3, GND to GND, DO to **D27**, AO to D34."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ldrmodule"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ldrmodule",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ldrmodule",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ldrmodule",
+            "pin": "do"
+          },
+          "to": {
+            "board": "d27"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**PIR সেন্সর** বসাও: VCC যাবে VIN-এ, OUT যাবে **D26**-এ, GND যাবে GND-তে।",
+        "en": "Place the **PIR sensor**: VCC to VIN, OUT to **D26**, GND to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "pir"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pir",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pir",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d26"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pir",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D25 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D25 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d25"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই প্রকল্পের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও, তারপর কোড ট্যাবে প্রোগ্রামটা পড়ো। এটা আগের পাঠের ছোট ছোট প্রোগ্রাম জুড়েই বানানো।",
+        "en": "Press **Put this lesson's program on the board**, then read it in the Code tab. It is built from the small programs of the earlier lessons."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "streetlight"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। LDR এখন মাঝারি আলোয়, তাই সে রাত ধরে; কেউ নেই, তাই বাতি **কম আলোয়** জ্বলবে।",
+        "en": "Press **Run**. The LDR is in middling light, so it counts as night; nobody is there, so the lamp glows **dimly**."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.brightness",
+          "above": 0.05,
+          "below": 0.4
+        },
+        {
+          "kind": "serial",
+          "matches": "রাত, কেউ নেই: কম আলো"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "PIR-এ ট্যাপ করো: কেউ হেঁটে আসছে। বাতি **পুরো আলোয়** জ্বলবে। আবার ট্যাপ করে থামাও: কয়েক সেকেন্ড পর বাতি আবার কম আলোয় ফিরবে।",
+        "en": "Tap the PIR: someone is walking up. The lamp goes to **full brightness**. Tap again to stop: a few seconds later it goes back to dim."
+      },
+      "checks": [
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.brightness",
+          "above": 0.5
+        },
+        {
+          "kind": "serial",
+          "matches": "কেউ আসছে: পুরো আলো"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার সকাল হোক: LDR মডিউলে ট্যাপ করে আলো **৯০%**-এর বেশি করো। বাতি নিভে যাবে।",
+        "en": "Now let morning come: tap the LDR module and turn the light above **90%**. The lamp goes out."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "ldrmodule",
+          "prop": "light",
+          "above": 0.89
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "off"
+        },
+        {
+          "kind": "serial",
+          "matches": "দিনের আলো: বাতি বন্ধ"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "দুটো সেন্সরের তথ্য মিলিয়ে একটা সিদ্ধান্ত নেওয়া যায়।",
+      "`analogWrite()` দিয়ে বাতির উজ্জ্বলতা কম-বেশি করা যায়।",
+      "কম আলো মানে কম বিদ্যুৎ খরচ।"
+    ],
+    "en": [
+      "Two sensors together can make one decision.",
+      "`analogWrite()` sets how bright the lamp is.",
+      "Less light means less electricity used."
+    ]
+  },
+  "tryNext": {
+    "bn": "`DIM` বদলে ১০ করো, আর দেখো রাতের কম আলো কতটা কমে।",
+    "en": "Change `DIM` to 10 and see how much dimmer the night light gets."
+  },
+  "kind": "project"
+}
