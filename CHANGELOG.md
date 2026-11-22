@@ -8,6 +8,25 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Kit lessons**: 16 guided lessons, one for each kit part the lab models, in
+  Bangla and English, from the first program on the ESP32 to the motor driver.
+  - Each lesson starts its own project with the board in place. Each step says
+    what to build or do, and lists what the lab is checking. The lab checks
+    the student's circuit, program and what the simulation shows, so any
+    correct circuit passes, wired anywhere on the breadboard.
+  - A lesson's program goes on the board with one button. Progress is kept
+    with the project on the device; nothing leaves it.
+  - A "Lessons" page lists them in order, with how far the student has got.
+  - The lesson text is the project's own and licensed **CC BY 4.0**; the
+    programs are Apache-2.0. Nothing is taken from the handbook.
+  - Every lesson is completed by an automatic walkthrough against the real
+    simulation, so a lesson cannot ask for something the lab does not show.
+- Five more ready-made ESP32 programs, for the rain, soil, gas, IR and buzzer
+  lessons.
+- For the owner only: `scripts/private-lessons.mjs` copies the handbook's
+  chapter for each lesson into the git-ignored `private/` folder, and the app
+  shows it beside the lesson when built with `BANGLALAB_PRIVATE_LESSONS=1`.
+  An ordinary build, and every build in CI, contains none of it.
 - **The kit's L298N motor driver**, a module that sits beside the breadboard
   with thirteen terminals (circuit format version 11).
   - Its outputs lose voltage as the real chip's do (about 1.6 V with one of the

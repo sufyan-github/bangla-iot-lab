@@ -1,6 +1,10 @@
 {
   "toolchain": "clang 21.1.8 wasm-opt 120",
   "starters": {
+    "beep": {
+      "sourceHash": "f77ef1a23eec8cefd31ccb1c18614de017be8333a3a3a8771a08c167e341ac54",
+      "bytes": 10366
+    },
     "blink": {
       "sourceHash": "d23d01ad31931bdcd3687084151b1444ca058f51b4e8ac376f126ebba83794f6",
       "bytes": 9242
@@ -21,6 +25,10 @@
       "sourceHash": "97709a275276f885445332b13ac7ef8d434b59939920d5ffa32f6a595b79be2b",
       "bytes": 9921
     },
+    "gas": {
+      "sourceHash": "9500852b11c0b6920f9e1a29b85a25e0d0d06d39564f666b0cab4df2ddbad040",
+      "bytes": 39974
+    },
     "knob": {
       "sourceHash": "099fda2ac5c93e9b10e8ac0ef56fa360cde738a8a7287507c5bce04610cb2ddc",
       "bytes": 40138
@@ -37,9 +45,17 @@
       "sourceHash": "584af9fc14d224f2babe8de70df46338861a93e75391f6787166dc84cc08ab67",
       "bytes": 11579
     },
+    "obstacle": {
+      "sourceHash": "742edca8abda2037bf823df1340817605c807d8e9f7f7386834c50a564625dd6",
+      "bytes": 10613
+    },
     "oled": {
       "sourceHash": "4609b64c3d1e7fd61e5905f399e1a102639e9624345726bac8a180c172e92f27",
       "bytes": 62098
+    },
+    "rain": {
+      "sourceHash": "d19c3545fb3a89ab09ad94fd624b8041257f60550433e5e75cbfd749e4a3b6ba",
+      "bytes": 40201
     },
     "rgb": {
       "sourceHash": "a397d607f2e3d6cac139f1e34bab70242b3aa5ada2db314fdc3d94aafffc35fc",
@@ -48,6 +64,10 @@
     "servo": {
       "sourceHash": "953263000919dfb6a7800be83c5a1c5d4b7895f567378aff3d6fac4e8e95b566",
       "bytes": 11586
+    },
+    "soil": {
+      "sourceHash": "e701858805da7881c271cce1b40f48ac59d031fccecf14c1b7e3743daf867e70",
+      "bytes": 39943
     }
   }
 }

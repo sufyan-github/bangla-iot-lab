@@ -1,0 +1,165 @@
+{
+  "id": "ultrasonic",
+  "order": 10,
+  "parts": ["hc-sr04", "resistor"],
+  "title": {
+    "bn": "আলট্রাসনিক সেন্সর: দূরত্ব মাপা",
+    "en": "Ultrasonic sensor: measuring distance"
+  },
+  "summary": {
+    "bn": "শব্দের প্রতিধ্বনির সময় দিয়ে দূরত্ব মাপো।",
+    "en": "Measure distance by timing an echo of sound."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "distance",
+  "steps": [
+    {
+      "text": {
+        "bn": "HC-SR04 **Trig**-এ একটা ছোট সংকেত পেলে শব্দ ছোড়ে, আর শব্দ ফিরে আসা পর্যন্ত **Echo** HIGH রাখে: প্রতি সেন্টিমিটারে ৫৮ মাইক্রোসেকেন্ড।\n\nসেন্সরটা বসাও। **VCC** যাবে **VIN**-এ (5 V), **GND** যাবে GND-তে, **Trig** যাবে **D5**-এ।",
+        "en": "The HC-SR04 sends a burst of sound when **Trig** gets a short pulse, and holds **Echo** HIGH until the sound comes back: 58 microseconds for every centimetre.\n\nPlace the sensor. **VCC** goes to **VIN** (5 V), **GND** to GND, **Trig** to **D5**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ultrasonic"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "trig"
+          },
+          "to": {
+            "board": "d5"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "Echo পিন 5 V দেয়, তাই এখানেও ভোল্টেজ ভাগ লাগবে। Echo থেকে **১ kΩ** হয়ে **D18**-এ, আর D18 থেকে **২ kΩ** হয়ে GND-তে লাগাও। 5 V থেকে পিন পাবে প্রায় 3.3 V।",
+        "en": "The Echo pin gives 5 V, so a divider is needed here too. Connect Echo through **1 kΩ** to **D18**, and D18 through **2 kΩ** to GND. From 5 V the pin gets about 3.3 V."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ultrasonic",
+            "pin": "echo"
+          },
+          "to": {
+            "board": "d18"
+          },
+          "through": "resistor",
+          "ohms": [800, 1200]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d18"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [1500, 2500]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।\n\n`pulseIn()` মাপে Echo কতক্ষণ HIGH ছিল; ৫৮ দিয়ে ভাগ করলে সেন্টিমিটার।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does.\n\n`pulseIn()` measures how long Echo was HIGH; dividing by 58 gives centimetres."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "distance"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। সিরিয়াল মনিটরে দূরত্ব আসবে: এখন ৫০ সেন্টিমিটার।",
+        "en": "Press **Run**. The serial monitor shows the distance: 50 centimetres now."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "(^|\\n)(49|50|51)\\r?\\n",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে দূরত্ব ৫০ এসেছে",
+            "en": "The distance 50 appeared in the serial monitor"
+          }
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে বাধা **১০০ সেন্টিমিটার** দূরে সরাও। সিরিয়াল মনিটরে নতুন দূরত্ব দেখো।",
+        "en": "Tap the sensor and move the obstacle to **100 centimetres**. Watch the new distance in the serial monitor."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "ultrasonic",
+          "prop": "distance",
+          "equals": 100
+        },
+        {
+          "kind": "serial",
+          "matches": "(^|\\n)(99|100|101)\\r?\\n",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে দূরত্ব ১০০ এসেছে",
+            "en": "The distance 100 appeared in the serial monitor"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "শব্দ বাতাসে প্রতি সেকেন্ডে প্রায় ৩৪৩ মিটার যায়।",
+      "সময় মেপে দূরত্ব বের করা যায়।",
+      "৫ V-এর Echo ভোল্টেজ ভাগ দিয়ে কমাতে হয়।"
+    ],
+    "en": [
+      "Sound travels about 343 metres a second in air.",
+      "Timing can measure distance.",
+      "A 5 V Echo must be brought down with a divider."
+    ]
+  },
+  "tryNext": {
+    "bn": "একটা LED যোগ করো যেটা বাধা ২০ সেন্টিমিটারের কাছে এলে জ্বলে।",
+    "en": "Add an LED that lights when the obstacle is closer than 20 centimetres."
+  }
+}

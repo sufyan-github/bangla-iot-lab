@@ -1,0 +1,108 @@
+{
+  "id": "buzzer",
+  "order": 13,
+  "parts": ["buzzer-module-active"],
+  "title": {
+    "bn": "বাজার: শব্দ করা",
+    "en": "The buzzer: making sound"
+  },
+  "summary": {
+    "bn": "প্রোগ্রাম দিয়ে বিপ বিপ শব্দ বানাও।",
+    "en": "Make beeps from a program."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "beep",
+  "steps": [
+    {
+      "text": {
+        "bn": "**অ্যাক্টিভ বাজারের** ভেতরে নিজের দোলক আছে: ভোল্টেজ পেলেই নিজে শব্দ করে। ল্যাবে এটা দুই পায়ের সাধারণ বাজার; কিটের মডিউলে তিনটা পিন থাকে (S, মাঝেরটা, −), আর S এখানকার + পায়ের মতো কাজ করে।\n\nবাজারটা বসাও। **+** পা যাবে **D25**-এ, **−** পা যাবে GND-তে।",
+        "en": "An **active buzzer** has its own oscillator inside: give it a voltage and it sounds. In the lab it is a generic two-leg buzzer; the kit's module has three pins (S, middle, −), and S works like the + leg here.\n\nPlace the buzzer. Its **+** leg goes to **D25**, its **−** leg to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "buzzer"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "pos"
+          },
+          "to": {
+            "board": "d25"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "buzzer",
+            "pin": "neg"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "beep"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। বাজার তিনবার বিপ করবে, তারপর একটু থামবে। শব্দ বন্ধ রাখতে চাইলে উপরের শব্দ বোতাম ব্যবহার করো।",
+        "en": "Press **Run**. The buzzer beeps three times, then pauses. Use the sound button at the top if you want it quiet."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "buzzer",
+          "path": "activity",
+          "equals": 1
+        },
+        {
+          "kind": "reading",
+          "part": "buzzer",
+          "path": "activity",
+          "equals": 0
+        },
+        {
+          "kind": "serial",
+          "matches": "তিনবার বিপ"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "অ্যাক্টিভ বাজার ভোল্টেজ পেলেই শব্দ করে।",
+      "`delay()` দিয়ে শব্দ আর বিরতির দৈর্ঘ্য ঠিক করা যায়।"
+    ],
+    "en": [
+      "An active buzzer sounds whenever it has a voltage.",
+      "`delay()` sets how long each beep and pause lasts."
+    ]
+  },
+  "tryNext": {
+    "bn": "প্রোগ্রাম বদলে একটা লম্বা আর দুটো ছোট বিপ বাজাও।",
+    "en": "Change the program to play one long beep and two short ones."
+  }
+}

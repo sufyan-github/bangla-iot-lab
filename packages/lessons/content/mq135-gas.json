@@ -1,0 +1,187 @@
+{
+  "id": "mq135-gas",
+  "order": 9,
+  "parts": ["mq-135", "resistor", "led-5mm"],
+  "title": {
+    "bn": "MQ-135 গ্যাস সেন্সর আর ভোল্টেজ ভাগ",
+    "en": "MQ-135 gas sensor and a voltage divider"
+  },
+  "summary": {
+    "bn": "৫ ভোল্টের সেন্সর ৩.৩ ভোল্টের বোর্ডে নিরাপদে পড়ো।",
+    "en": "Read a 5 V sensor safely on a 3.3 V board."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "gas",
+  "steps": [
+    {
+      "text": {
+        "bn": "MQ-135-এর ভেতরে একটা ছোট হিটার আছে; এর **5 V** লাগে, তাই VCC যাবে **VIN**-এ (USB-র 5 V), আর GND যাবে GND-তে। বাতাস যত খারাপ, **AO**-র ভোল্টেজ তত বেশি: প্রায় 4 V পর্যন্ত।\n\nকিন্তু ESP32-র পিন 3.6 V-এর বেশি সইতে পারে না!",
+        "en": "The MQ-135 has a small heater inside that needs **5 V**, so VCC goes to **VIN** (USB's 5 V) and GND to GND. The worse the air, the higher **AO**'s voltage: up to about 4 V.\n\nBut an ESP32 pin cannot stand more than 3.6 V!"
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "mq135"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mq135",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mq135",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সমাধান **ভোল্টেজ ভাগ**: দুটো সমান রেজিস্টর ভোল্টেজকে অর্ধেক করে। AO থেকে **১০ kΩ** রেজিস্টর হয়ে **D34**-এ, আর D34 থেকে আরেকটা **১০ kΩ** হয়ে GND-তে লাগাও। এখন 4 V হলেও পিন পাবে মাত্র 2 V।",
+        "en": "The answer is a **voltage divider**: two equal resistors halve a voltage. Connect AO through a **10 kΩ** resistor to **D34**, and D34 through another **10 kΩ** to GND. Now even 4 V reaches the pin as only 2 V."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mq135",
+            "pin": "ao"
+          },
+          "to": {
+            "board": "d34"
+          },
+          "through": "resistor",
+          "ohms": [4700, 22000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d34"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [4700, 22000]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "gas"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। সিরিয়াল মনিটরে গ্যাসের মান আর \"বাতাস ঠিক আছে\" দেখাবে।",
+        "en": "Press **Run**. The serial monitor shows the gas value and \"বাতাস ঠিক আছে\" (the air is fine)."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "বাতাস ঠিক আছে"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে বাতাস **৮০%**-এর বেশি খারাপ করো। LED জ্বলবে, আর কোনো পিনে বেশি ভোল্টেজের সতর্কবার্তা আসবে না: ভাগ কাজ করছে।",
+        "en": "Tap the sensor and make the air more than **80%** bad. The LED lights, and there is no warning about too much voltage on a pin: the divider is doing its job."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "mq135",
+          "prop": "gas",
+          "above": 0.79
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "দুটো সমান রেজিস্টর দিয়ে ভোল্টেজ অর্ধেক করা যায়।",
+      "৫ V-এর সংকেত কখনো সরাসরি ESP32-র পিনে দিও না।",
+      "আসল MQ-135 চালুর পর কয়েক মিনিট গরম হতে দিতে হয়।"
+    ],
+    "en": [
+      "Two equal resistors halve a voltage.",
+      "Never put a 5 V signal straight on an ESP32 pin.",
+      "A real MQ-135 must warm up for some minutes after it is switched on."
+    ]
+  },
+  "tryNext": {
+    "bn": "একটা রেজিস্টর সরিয়ে বাতাস পুরো খারাপ করো আর দেখো ল্যাব কী সতর্কবার্তা দেয়। তারপর আবার লাগিয়ে দাও।",
+    "en": "Take one resistor out, make the air as bad as it goes, and see what the lab warns about. Then put it back."
+  }
+}

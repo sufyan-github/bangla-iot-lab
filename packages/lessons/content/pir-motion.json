@@ -1,0 +1,173 @@
+{
+  "id": "pir-motion",
+  "order": 11,
+  "parts": ["pir-hc-sr501", "led-5mm", "resistor"],
+  "title": {
+    "bn": "PIR গতি সেন্সর",
+    "en": "The PIR motion sensor"
+  },
+  "summary": {
+    "bn": "কেউ নড়লে টের পাও, আর বাতি জ্বালাও।",
+    "en": "Notice when someone moves, and switch on a light."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "motion",
+  "steps": [
+    {
+      "text": {
+        "bn": "HC-SR501 মানুষের মতো উষ্ণ কিছু নড়লে টের পায়। তখন তার **OUT** পিন HIGH (3.3 V) হয়, আর নড়াচড়া থামার পরেও কিছুক্ষণ HIGH থাকে। এর 5 V লাগে।\n\nসেন্সরটা বসাও। **VCC** যাবে **VIN**-এ, **OUT** যাবে **D27**-এ, **GND** যাবে GND-তে। OUT 3.3 V দেয়, তাই এখানে ভোল্টেজ ভাগ লাগে না।",
+        "en": "The HC-SR501 notices warm things that move, such as people. Its **OUT** pin then goes HIGH (3.3 V) and stays HIGH for a while after the movement stops. It needs 5 V.\n\nPlace the sensor. **VCC** goes to **VIN**, **OUT** to **D27**, **GND** to GND. OUT gives 3.3 V, so no divider is needed here."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "pir"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pir",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pir",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d27"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pir",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "motion"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**, তারপর সেন্সরের সাদা গম্বুজে ট্যাপ করো: যেন কেউ সামনে দিয়ে হাঁটছে। LED জ্বলবে আর সিরিয়াল মনিটরে আসবে \"কিছু নড়ছে!\"।",
+        "en": "Press **Run**, then tap the sensor's white dome, as if someone walked past. The LED lights and the serial monitor says \"কিছু নড়ছে!\" (something is moving)."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "pir",
+          "path": "activity",
+          "equals": 1
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "serial",
+          "matches": "কিছু নড়ছে!"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "আবার ট্যাপ করে নড়াচড়া থামাও। সেন্সর ঠিক করা সময় (৩ সেকেন্ড) পর্যন্ত HIGH থাকবে, তারপর আসবে \"সব শান্ত।\"",
+        "en": "Tap again to stop the movement. The sensor stays HIGH for its hold time (3 seconds), then the message says \"সব শান্ত।\" (all quiet)."
+      },
+      "checks": [
+        {
+          "kind": "serial",
+          "matches": "সব শান্ত।"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "off"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "PIR সেন্সর উষ্ণ জিনিসের নড়াচড়া টের পায়।",
+      "নড়াচড়া থামার পরেও আউটপুট কিছুক্ষণ HIGH থাকে।",
+      "একটা অবস্থা বদলালে একবারই জানাতে `wasMoving`-এর মতো একটা চলক রাখতে হয়।"
+    ],
+    "en": [
+      "A PIR sensor notices warm things moving.",
+      "Its output stays HIGH for a while after the movement stops.",
+      "To report a change only once, keep a variable like `wasMoving`."
+    ]
+  },
+  "tryNext": {
+    "bn": "সেন্সরে ট্যাপ করে ধরে রাখার সময় ১০ সেকেন্ড করো। এখন LED কতক্ষণ জ্বলে থাকে?",
+    "en": "Tap the sensor and set the hold time to 10 seconds. How long does the LED stay on now?"
+  }
+}

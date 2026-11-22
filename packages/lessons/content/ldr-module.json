@@ -1,0 +1,183 @@
+{
+  "id": "ldr-module",
+  "order": 6,
+  "parts": ["ldr-module", "led-5mm", "resistor"],
+  "title": {
+    "bn": "LDR মডিউল: অন্ধকারে বাতি",
+    "en": "LDR module: a light for the dark"
+  },
+  "summary": {
+    "bn": "আলো মাপো, আর অন্ধকার হলে নিজে নিজে বাতি জ্বালাও।",
+    "en": "Measure light, and switch a lamp on by itself when it gets dark."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "light",
+  "steps": [
+    {
+      "text": {
+        "bn": "**LDR** এমন রেজিস্টর যার রোধ আলো বাড়লে কমে। মডিউলের **AO** পিন আলো অনুযায়ী ভোল্টেজ দেয়, আর **DO** পিন বলে আলো ট্রিমারে ঠিক করা মাত্রার বেশি কি না।\n\nমডিউলটা বসাও। **VCC** যাবে 3V3-তে, **GND** যাবে GND-তে, **DO** যাবে **D27**-এ, **AO** যাবে **D34**-এ।",
+        "en": "An **LDR** is a resistor whose resistance falls as the light grows. The module's **AO** pin gives a voltage that follows the light, and its **DO** pin says whether the light is above the level set on its trimmer.\n\nPlace the module. **VCC** goes to 3V3, **GND** to GND, **DO** to **D27** and **AO** to **D34**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ldrmodule"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ldrmodule",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ldrmodule",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ldrmodule",
+            "pin": "do"
+          },
+          "to": {
+            "board": "d27"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ldrmodule",
+            "pin": "ao"
+          },
+          "to": {
+            "board": "d34"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "light"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। মডিউল এখন মাঝারি আলোয় আছে, যা ট্রিমারের মাত্রার চেয়ে কম: তাই সে অন্ধকার ধরে, আর LED জ্বলে। সিরিয়াল মনিটরে আলোর মান দেখো।",
+        "en": "Press **Run**. The module starts in middling light, below its trimmer's level, so it counts as dark and the LED lights. Watch the light value in the serial monitor."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "serial",
+          "matches": "আলোর মান: \\d+",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে আলোর মান এসেছে",
+            "en": "The light value appeared in the serial monitor"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "মডিউলে ট্যাপ করে আলো বাড়িয়ে **৯০%**-এর বেশি করো। LED নিভবে, মডিউলের নিজের বাতি জ্বলবে, আর আলোর মান কমে যাবে।",
+        "en": "Tap the module and turn the light up above **90%**. The LED goes out, the module's own light comes on, and the light value falls."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "ldrmodule",
+          "prop": "light",
+          "above": 0.89
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "off"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "আলো বাড়লে LDR-এর রোধ কমে, তাই AO-র ভোল্টেজ কমে।",
+      "`analogRead()` ০ থেকে ৪০৯৫-এর একটা মান দেয়।",
+      "DO পিন ট্রিমারে ঠিক করা মাত্রায় HIGH থেকে LOW হয়।"
+    ],
+    "en": [
+      "More light lowers the LDR's resistance, so AO's voltage falls.",
+      "`analogRead()` gives a value from 0 to 4095.",
+      "The DO pin switches from HIGH to LOW at the level set on the trimmer."
+    ]
+  },
+  "tryNext": {
+    "bn": "DO বাদ দিয়ে শুধু AO-র মান দিয়ে বাতি জ্বালাও: মান ২০০০-এর বেশি হলে জ্বলবে।",
+    "en": "Use only AO, not DO: light the lamp when the value is above 2000."
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "id": "esp32-blink",
+  "order": 1,
+  "parts": ["esp32-devkit-30pin", "breadboard-830", "jumper-wire", "led-5mm", "resistor"],
+  "title": {
+    "bn": "ESP32 বোর্ড: প্রথম প্রোগ্রাম",
+    "en": "The ESP32 board: your first program"
+  },
+  "summary": {
+    "bn": "বোর্ড চিনে নাও, একটা LED লাগাও, আর প্রোগ্রাম দিয়ে সেটা জ্বালাও-নেভাও।",
+    "en": "Get to know the board, connect an LED, and make a program blink it."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "blink",
+  "steps": [
+    {
+      "text": {
+        "bn": "এটা **ESP32 বোর্ড**: একটা ছোট কম্পিউটার, যার পিনগুলো দিয়ে সে বাইরের জিনিস চালাতে আর পড়তে পারে। এর পিন 3.3 V-এ কাজ করে: HIGH মানে 3.3 V, LOW মানে 0 V।\n\nপাশের **ব্রেডবোর্ডের** প্রতিটা সারির পাঁচটা ছিদ্র ভেতরে জোড়া। তাই একই সারির দুটো ছিদ্রে যা বসাবে, তারা জুড়ে যাবে।",
+        "en": "This is the **ESP32 board**: a small computer whose pins let it switch things on and read things. Its pins work at 3.3 V: HIGH means 3.3 V and LOW means 0 V.\n\nIn the **breadboard** beside it, the five holes of each row are joined inside. Anything you put in two holes of the same row is connected."
+      },
+      "checks": []
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "blink"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো** বোতামে চাপ দাও। LED এক সেকেন্ড জ্বলবে, এক সেকেন্ড নিভবে। প্রোগ্রাম `digitalWrite(ledPin, HIGH)` দিয়ে পিনে 3.3 V দেয়, আর `LOW` দিয়ে বন্ধ করে।",
+        "en": "Press **Run**. The LED is on for a second, then off for a second. The program puts 3.3 V on the pin with `digitalWrite(ledPin, HIGH)` and takes it away with `LOW`."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "off"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "ESP32-র পিন HIGH হলে 3.3 V দেয়, LOW হলে 0 V।",
+      "ব্রেডবোর্ডের একই সারির ছিদ্রগুলো জোড়া।",
+      "প্রোগ্রামের `setup()` একবার চলে, `loop()` বারবার।"
+    ],
+    "en": [
+      "An ESP32 pin gives 3.3 V when HIGH and 0 V when LOW.",
+      "Holes in the same breadboard row are joined.",
+      "A program's `setup()` runs once and `loop()` runs over and over."
+    ]
+  },
+  "tryNext": {
+    "bn": "কোড ট্যাবে `delay(1000)` বদলে `delay(200)` করো আর আবার আপলোড করো। কী হলো?",
+    "en": "In the Code tab, change `delay(1000)` to `delay(200)` and upload again. What happens?"
+  }
+}

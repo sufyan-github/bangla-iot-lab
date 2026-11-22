@@ -1,0 +1,145 @@
+{
+  "id": "ir-obstacle",
+  "order": 12,
+  "parts": ["ir-obstacle", "led-5mm", "resistor"],
+  "title": {
+    "bn": "IR বাধা সেন্সর",
+    "en": "The IR obstacle sensor"
+  },
+  "summary": {
+    "bn": "সামনে কিছু এলে টের পাও।",
+    "en": "Notice when something comes in front."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "obstacle",
+  "steps": [
+    {
+      "text": {
+        "bn": "এই সেন্সর অদৃশ্য ইনফ্রারেড আলো ছোড়ে, আর কিছুতে লেগে ফিরে এলে তার **OUT** পিন LOW করে দেয়। ল্যাবে এটা হাতে চালু-বন্ধ করা যায় এমন সাধারণ সেন্সর: দূরত্ব বা রং মাপে না।\n\nসেন্সরটা বসাও। **VCC** যাবে 3V3-তে, **OUT** যাবে **D27**-এ, **GND** যাবে GND-তে।",
+        "en": "This sensor sends out invisible infrared light, and when it bounces back off something its **OUT** pin goes LOW. In the lab it is a generic sensor you switch by hand: it does not measure distance or colour.\n\nPlace the sensor. **VCC** goes to 3V3, **OUT** to **D27**, **GND** to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ir"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ir",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ir",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d27"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ir",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "obstacle"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**, তারপর সেন্সরে ট্যাপ করো: যেন সামনে হাত রাখলে। LED জ্বলবে আর আসবে \"সামনে বাধা!\"। আবার ট্যাপ করো: \"পথ পরিষ্কার।\"",
+        "en": "Press **Run**, then tap the sensor, as if you held your hand in front. The LED lights and the message says \"সামনে বাধা!\" (obstacle ahead). Tap again: \"পথ পরিষ্কার।\" (path clear)."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "serial",
+          "matches": "সামনে বাধা!"
+        },
+        {
+          "kind": "serial",
+          "matches": "পথ পরিষ্কার।"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": ["কিছু সেন্সর \"হ্যাঁ\" বোঝাতে LOW দেয়।", "আলো ফিরে আসা দিয়ে বাধা চেনা যায়।"],
+    "en": ["Some sensors say \"yes\" with LOW.", "Light bouncing back can reveal an obstacle."]
+  },
+  "tryNext": {
+    "bn": "বাধা এলে LED-র বদলে বাজার বাজাও।",
+    "en": "Sound a buzzer instead of lighting the LED when there is an obstacle."
+  }
+}

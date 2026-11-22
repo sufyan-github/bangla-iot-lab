@@ -635,3 +635,43 @@ Sources read on 22 November 2026:
 [SunFounder's L298N module page](https://docs.sunfounder.com/projects/sf-components/en/latest/component_l298n_module.html),
 [a TT motor page](https://docs.sunfounder.com/projects/3in1-kit-r4/en/latest/components/component_tt_motor.html),
 [a discussion of the DevKitC's diode](https://forum.micropython.org/viewtopic.php?p=51413).
+
+## D-056 — The kit lessons are the project's own, under CC BY 4.0, and are checked by what the lab shows
+
+**Content.** The lessons are written for the lab, in Bangla and English, one
+for each kit part the lab models, in the order the handbook takes the kit. No
+text, picture or program comes from the handbook: its ownership and licence
+are not confirmed, and the owner's condition is that unlicensed material stays
+private. At the owner's request ("Both"), the handbook's chapter for each
+lesson can be shown beside the lesson for comparison, but only from the
+git-ignored `private/` folder and only in a build made with
+`BANGLALAB_PRIVATE_LESSONS=1`. A browser test checks that an ordinary build
+shows none of it, and a unit test that the module is empty unless asked for.
+The map from lessons to handbook chapters is kept in `private/` as well.
+
+**Licence.** The owner chose CC BY 4.0 for the lesson text (22 November 2026):
+schools and teachers may copy, translate and adapt it, with credit. The lesson
+files are in `packages/lessons/content/`, with a note saying so; the code that
+runs them and the ESP32 programs they use stay Apache-2.0.
+
+**Checks.** A step lists what must be true, as data: a part is present, two
+places are joined (directly, or through one resistor of a given range), a
+setting has a value, the lesson's program is on the board, the circuit runs,
+nothing is being damaged; and things that happened while it ran: a part's
+reading, text in the serial monitor, a warning the lab gave. A place is named
+the way a lesson talks about it ("the LED's +", "D2", "GND"), not by
+breadboard hole, so any correct circuit passes wherever it is built. Things
+that happen count once they have been seen on the step; the circuit counts
+only as it is now.
+
+**Proof.** Every lesson has a walkthrough in `packages/lessons/src/lessons.test.ts`:
+a circuit that does what the lesson asks, and what the student changes on each
+step. The test runs it against the real simulation and the shipped program and
+requires every step to complete within nine simulated seconds. A lesson that
+asks for something the lab cannot show, or a program whose output no longer
+matches what a lesson looks for, fails it.
+
+Not done: the relay module has no lesson, because the lab's relay is a bare
+relay and the kit's is a module with its own transistor; lessons for the
+handbook's projects; mapping to the NCTB curriculum; and anything a teacher
+sees. Progress is kept on the device only, as there are no accounts yet.

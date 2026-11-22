@@ -1,0 +1,197 @@
+{
+  "id": "motor-driver",
+  "order": 16,
+  "parts": ["l298n", "tt-gear-motor", "nimh-aa-pack-6"],
+  "title": {
+    "bn": "মোটর ড্রাইভার আর ব্যাটারি",
+    "en": "The motor driver and the battery"
+  },
+  "summary": {
+    "bn": "ব্যাটারির শক্তিতে মোটর চালাও, দুই দিকে আর দুই গতিতে।",
+    "en": "Run a motor from the battery, both ways and at two speeds."
+  },
+  "setup": {
+    "board": "esp32",
+    "battery": 7.2
+  },
+  "program": "motor",
+  "steps": [
+    {
+      "text": {
+        "bn": "বোর্ডের পিন মোটর চালানোর মতো কারেন্ট দিতে পারে না। **L298N** ব্যাটারির কারেন্ট মোটরে পাঠায়; পিন শুধু বলে কোন দিকে আর কত জোরে।\n\nপাশে **৭.২ V** ব্যাটারি প্যাক আছে। প্যালেট থেকে **মোটর ড্রাইভার** যোগ করো। ব্যাটারির **+** যাবে ড্রাইভারের **12V**-তে, **−** যাবে **GND**-তে। বোর্ডের GND-ও ড্রাইভারের GND-তে লাগাও: না হলে দুজনের ভোল্টেজের মাপ এক হবে না।",
+        "en": "A board pin cannot give the current a motor needs. The **L298N** passes the battery's current to the motor; the pins only say which way and how hard.\n\nA **7.2 V** battery pack is already there. Add the **motor driver** from the palette. The battery's **+** goes to the driver's **12V**, its **−** to **GND**. Join the board's GND to the driver's GND too: otherwise the two do not agree on what 0 V is."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "l298n"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "battery": "pos"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "vs"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "battery": "neg"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "gnd"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **মোটর** বোর্ডে বসাও, আর তার দুই পা ড্রাইভারের **OUT1** আর **OUT2**-তে লাগাও।",
+        "en": "Place a **motor** on the breadboard and connect its two legs to the driver's **OUT1** and **OUT2**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "motor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "*"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "out1"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "*"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "out2"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "গতি প্রোগ্রাম ঠিক করবে, তাই ড্রাইভারে ট্যাপ করে **ENA জাম্পার খোলো**। তারপর **D25** যাবে **ENA**-তে, **D26** যাবে **IN1**-এ, **D27** যাবে **IN2**-তে। জাম্পার লাগানো অবস্থায় ENA-তে 5 V থাকে: তখন ESP32-র পিন লাগালে ল্যাব সতর্ক করবে।",
+        "en": "The program will set the speed, so tap the driver and **take the ENA jumper off**. Then connect **D25** to **ENA**, **D26** to **IN1** and **D27** to **IN2**. With the jumper on, ENA carries 5 V, and the lab warns if an ESP32 pin is wired to it."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "l298n",
+          "prop": "enaJumper",
+          "equals": false
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d25"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "ena"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d26"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "in1"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d27"
+          },
+          "to": {
+            "part": "l298n",
+            "pin": "in2"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "motor"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। মোটর দুই সেকেন্ড পুরো গতিতে সামনে ঘুরবে, থামবে, তারপর অর্ধেক গতিতে পেছনে। মোটরে ট্যাপ করে দেখো সে কত ভোল্ট পাচ্ছে: ৭.২ নয়, প্রায় ৫.৫, কারণ ড্রাইভারের ভেতরে প্রায় ১.৬ V খরচ হয়।",
+        "en": "Press **Run**. The motor turns forwards at full speed for two seconds, stops, then backwards at half speed. Tap the motor to see its voltage: not 7.2 but about 5.5, because about 1.6 V is lost inside the driver."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "motor",
+          "path": "activity",
+          "above": 0.8
+        },
+        {
+          "kind": "reading",
+          "part": "motor",
+          "path": "activity",
+          "below": -0.3
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "IN1 আর IN2 দিক ঠিক করে; দুটো সমান হলে মোটর থামে।",
+      "ENA-তে PWM দিয়ে গতি বদলানো যায়।",
+      "ব্যাটারি, ড্রাইভার আর বোর্ডের GND একসাথে জুড়তে হয়।",
+      "L298N নিজে প্রায় ১.৬ V খরচ করে।"
+    ],
+    "en": [
+      "IN1 and IN2 set the direction; equal, they stop the motor.",
+      "PWM on ENA sets the speed.",
+      "The battery's, the driver's and the board's GND must be joined.",
+      "The L298N itself uses up about 1.6 V."
+    ]
+  },
+  "tryNext": {
+    "bn": "দ্বিতীয় মোটর OUT3 আর OUT4-এ লাগাও, আর IN3, IN4 দিয়ে উল্টো দিকে ঘোরাও: রোবটের দুই চাকা।",
+    "en": "Connect a second motor to OUT3 and OUT4 and turn it the other way with IN3 and IN4: a robot's two wheels."
+  }
+}

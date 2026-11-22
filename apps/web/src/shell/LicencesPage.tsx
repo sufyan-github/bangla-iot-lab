@@ -37,6 +37,14 @@ const NOTICES = [
     source: `${REPOSITORY}/tree/main/spikes/esp32-api`,
   },
   {
+    id: 'lessons',
+    name: 'Kit lessons of Bangla IoT Lab',
+    licence: 'CC-BY-4.0',
+    text: 'The text of the kit lessons, written for this project. Anyone may copy, translate and adapt it, with credit. The programs the lessons use are Apache-2.0, like the rest of the code.',
+    file: 'CC-BY-4.0.txt',
+    source: `${REPOSITORY}/tree/main/packages/lessons/content`,
+  },
+  {
     id: 'wasi-libc',
     name: 'wasi-libc',
     licence: 'MIT, BSD, ISC, Apache-2.0, CC0',

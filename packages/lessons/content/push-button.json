@@ -1,0 +1,141 @@
+{
+  "id": "push-button",
+  "order": 3,
+  "parts": ["push-button", "led-5mm", "resistor"],
+  "title": {
+    "bn": "পুশ বোতাম",
+    "en": "The push button"
+  },
+  "summary": {
+    "bn": "বোতামের অবস্থা পড়ো, আর চাপলে LED জ্বালাও।",
+    "en": "Read a button, and light an LED while it is pressed."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "button",
+  "steps": [
+    {
+      "text": {
+        "bn": "বোতাম চাপলে তার দুই পা জুড়ে যায়, ছাড়লে আলাদা হয়। বোর্ড একটা পিন **পড়ে** জানতে পারে বোতাম চাপা কি না।\n\nবোতামটা বোর্ডের মাঝখানের খাঁজের ওপর বসাও। এক পা তার দিয়ে **D4**-এ, অন্য পা **GND**-তে।",
+        "en": "A button joins its two legs while pressed and separates them when let go. The board **reads** a pin to know whether it is pressed.\n\nPlace the button across the breadboard's middle gap. Wire one leg to **D4** and the other to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "button"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "board": "d4"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।\n\n`INPUT_PULLUP` পিনটাকে ভেতর থেকে HIGH রাখে; বোতাম চাপলে পিন GND-র সাথে জুড়ে LOW হয়।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does.\n\n`INPUT_PULLUP` holds the pin HIGH from inside the chip; pressing the button joins it to GND, so it reads LOW."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "button"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। তারপর বোতামটা চেপে ধরো: LED জ্বলবে। ছেড়ে দাও: নিভে যাবে।",
+        "en": "Press **Run**. Then hold the button down: the LED lights. Let go: it goes out."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "off"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "`digitalRead()` একটা পিন HIGH না LOW তা পড়ে।",
+      "`INPUT_PULLUP` থাকলে আলাদা রেজিস্টর লাগে না।",
+      "চাপা বোতাম মানে LOW, ছাড়া বোতাম মানে HIGH।"
+    ],
+    "en": [
+      "`digitalRead()` reads whether a pin is HIGH or LOW.",
+      "With `INPUT_PULLUP` no extra resistor is needed.",
+      "A pressed button reads LOW, a released one HIGH."
+    ]
+  },
+  "tryNext": {
+    "bn": "প্রোগ্রাম বদলাও যাতে বোতাম চাপলে LED নেভে, আর ছাড়লে জ্বলে।",
+    "en": "Change the program so the LED goes out while the button is pressed and lights when it is let go."
+  }
+}

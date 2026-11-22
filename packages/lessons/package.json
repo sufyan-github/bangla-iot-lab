@@ -1,0 +1,19 @@
+{
+  "name": "@banglalab/lessons",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0 AND CC-BY-4.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@banglalab/parts": "workspace:*",
+    "@banglalab/shared": "workspace:*",
+    "@banglalab/simulation": "workspace:*",
+    "typebox": "^1.4.7"
+  }
+}

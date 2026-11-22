@@ -1,0 +1,130 @@
+{
+  "id": "led-resistor",
+  "order": 2,
+  "parts": ["led-5mm", "resistor"],
+  "title": {
+    "bn": "LED আর তার রেজিস্টর",
+    "en": "An LED and its resistor"
+  },
+  "summary": {
+    "bn": "ওহমের সূত্র দিয়ে রেজিস্টর বেছে নাও, আর দেখো রেজিস্টর ছাড়া LED-র কী হয়।",
+    "en": "Choose a resistor with Ohm's law, and see what happens to an LED without one."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "steps": [
+    {
+      "text": {
+        "bn": "একটা লাল LED জ্বলতে প্রায় 1.8 V নেয়। 3.3 V থেকে বাকি 1.5 V রেজিস্টরের ওপর পড়ে। **ওহমের সূত্র**: কারেন্ট = ভোল্টেজ ÷ রোধ। ২২০ Ω হলে 1.5 ÷ 220 ≈ 0.007 A, মানে প্রায় 7 mA: LED-র জন্য নিরাপদ।",
+        "en": "A red LED takes about 1.8 V to light. From 3.3 V, the other 1.5 V falls across the resistor. **Ohm's law**: current = voltage ÷ resistance. With 220 Ω, 1.5 ÷ 220 ≈ 0.007 A, about 7 mA: safe for the LED."
+      },
+      "checks": []
+    },
+    {
+      "text": {
+        "bn": "এবার কোনো প্রোগ্রাম লাগবে না। বোর্ডের **3V3** পিন সবসময় 3.3 V দেয়। 3V3 থেকে ২২০ Ω রেজিস্টর হয়ে LED-র লম্বা পায়ে, আর LED-র ছোট পা GND-তে লাগাও।",
+        "en": "No program is needed this time. The board's **3V3** pin always gives 3.3 V. Connect 3V3 through a 220 Ω resistor to the LED's long leg, and the LED's short leg to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "3v3"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [200, 240]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**, তারপর LED-তে ট্যাপ করো। মিটারে দেখো কত কারেন্ট যাচ্ছে: প্রায় 7 mA, হিসাবের সাথে মিলছে?",
+        "en": "Press **Run**, then tap the LED. The meter shows the current through it: about 7 mA. Does it match the sum?"
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "current",
+          "above": 0.005,
+          "below": 0.009
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "রেজিস্টরে ট্যাপ করে তার মান **১ kΩ** করো। কারেন্ট কমে প্রায় 1.5 mA হবে, আর LED ম্লান হয়ে যাবে।",
+        "en": "Tap the resistor and change it to **1 kΩ**. The current falls to about 1.5 mA and the LED gets dimmer."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "resistor",
+          "prop": "resistance",
+          "equals": 1000
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "current",
+          "above": 0.0008,
+          "below": 0.002
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার দেখো রেজিস্টর ছাড়া কী হয়। রেজিস্টর সরিয়ে LED-র লম্বা পা সরাসরি 3V3-তে লাগাও। আসল LED এভাবে মুহূর্তে পুড়ে যায়; ল্যাবে শুধু দেখো, তারপর রেজিস্টর আবার লাগিয়ে দাও।",
+        "en": "Now see what happens without a resistor. Remove it and connect the LED's long leg straight to 3V3. A real LED burns out at once like this; in the lab just watch, then put the resistor back."
+      },
+      "checks": [
+        {
+          "kind": "diagnostic",
+          "code": "led-burned",
+          "label": {
+            "bn": "ল্যাব দেখিয়েছে LED পুড়ে গেছে",
+            "en": "The lab showed the LED burned out"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "LED-র সাথে সবসময় একটা রেজিস্টর লাগে।",
+      "কারেন্ট = ভোল্টেজ ÷ রোধ।",
+      "রোধ বাড়ালে কারেন্ট কমে, LED ম্লান হয়।"
+    ],
+    "en": [
+      "An LED always needs a resistor.",
+      "Current = voltage ÷ resistance.",
+      "More resistance means less current and a dimmer LED."
+    ]
+  },
+  "tryNext": {
+    "bn": "সবুজ বা নীল LED দিয়ে একই কাজ করো। নীল LED প্রায় 3 V নেয়: 3.3 V থেকে তাকে কতটা কারেন্ট দেওয়া যায়?",
+    "en": "Try a green or blue LED. A blue LED takes about 3 V: how much current can 3.3 V give it?"
+  }
+}

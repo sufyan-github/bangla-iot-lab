@@ -1,0 +1,114 @@
+{
+  "id": "servo",
+  "order": 15,
+  "parts": ["sg90-servo"],
+  "title": {
+    "bn": "সার্ভো মোটর",
+    "en": "The servo motor"
+  },
+  "summary": {
+    "bn": "সার্ভোর হাত নির্দিষ্ট কোণে ঘোরাও।",
+    "en": "Turn a servo's arm to an exact angle."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "servo",
+  "steps": [
+    {
+      "text": {
+        "bn": "সার্ভো তার হাত ০° থেকে ১৮০°-র মধ্যে বলে দেওয়া কোণে ঘুরিয়ে ধরে রাখে। কোণ বলা হয় সংকেত পিনের পালসের দৈর্ঘ্য দিয়ে। কিটের সার্ভোর **5 V** লাগে।\n\nসার্ভোটা বসাও। **GND** (বাদামি) যাবে GND-তে, **VCC** (লাল) যাবে **VIN**-এ, **সংকেত** (কমলা) যাবে **D13**-এ।",
+        "en": "A servo turns its arm to the angle it is told, from 0° to 180°, and holds it there. The angle is given by the length of pulses on its signal pin. The kit's servo needs **5 V**.\n\nPlace the servo. **GND** (brown) goes to GND, **VCC** (red) to **VIN**, and **signal** (orange) to **D13**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "servo"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "servo",
+            "pin": "signal"
+          },
+          "to": {
+            "board": "d13"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "servo"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। সার্ভোর হাত ধীরে ধীরে ০° থেকে ১৮০° পর্যন্ত যাবে, তারপর ফিরে আসবে।",
+        "en": "Press **Run**. The arm moves slowly from 0° to 180°, then comes back."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "servo",
+          "path": "angle",
+          "above": 170
+        },
+        {
+          "kind": "reading",
+          "part": "servo",
+          "path": "angle",
+          "below": 10
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "সার্ভো পালসের দৈর্ঘ্য দেখে কোণ ঠিক করে।",
+      "সার্ভোর মোটর বেশি কারেন্ট নেয়, তাই 5 V (VIN) থেকে চালাতে হয়।"
+    ],
+    "en": [
+      "A servo sets its angle from the length of a pulse.",
+      "Its motor takes more current, so power it from 5 V (VIN)."
+    ]
+  },
+  "tryNext": {
+    "bn": "সার্ভো শুধু ০°, ৯০° আর ১৮০°-তে থামুক: প্রতিটায় এক সেকেন্ড।",
+    "en": "Make the servo stop only at 0°, 90° and 180°, for a second at each."
+  }
+}

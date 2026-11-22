@@ -12,7 +12,11 @@ import { CodePanel } from './CodePanel';
 import { Palette } from './Palette';
 import { Inspector, Messages, Meter } from './panels';
 import { SignalsPanel } from './SignalsPanel';
+import { checkStep } from '@banglalab/lessons';
+import { LessonPanel } from '../lessons/LessonPanel';
+import { useLessonState } from '../lessons/progress';
 import { setBuzzing } from './sound';
+import { matchingStarter } from './starters';
 import { useLab } from './store';
 
 const SAVE_DELAY_MS = 400;
@@ -28,12 +32,16 @@ function useProject(id: string | undefined) {
       .catch(() => undefined)
       .then((project) => {
         if (cancelled) return;
-        if (project) useLab.getState().open(project);
+        if (project) {
+          useLab.getState().open(project);
+          useLessonState.getState().open(project.id, project.lesson);
+        }
         setStatus(project ? 'ready' : 'missing');
       });
     return () => {
       cancelled = true;
       useLab.getState().close();
+      useLessonState.getState().close();
     };
   }, [id]);
   return status;
@@ -114,6 +122,47 @@ function useLiveSimulation() {
   }, [running]);
 }
 
+/**
+ * Keeps the lesson's current step up to date with the student's work: every
+ * change to the circuit, the program or what the simulation shows is checked.
+ */
+function useLessonChecks() {
+  useEffect(() => {
+    const check = () => {
+      const { lesson, progress, report } = useLessonState.getState();
+      if (!lesson || !progress) return;
+      const lab = useLab.getState();
+      const boardId = lab.circuit.components.find(isProgrammable)?.id;
+      const program = boardId ? lab.programs[boardId] : undefined;
+      const uploaded = program?.hex && program.hexSource ? program.hexSource : null;
+      report(
+        checkStep(
+          lesson.steps[progress.step]!,
+          {
+            circuit: lab.circuit,
+            result: lab.result,
+            running: lab.running,
+            serial: boardId ? (lab.serial[boardId] ?? '') : '',
+            uploadedStarter: uploaded ? (matchingStarter(uploaded, 'esp32') ?? null) : null,
+          },
+          progress.seen,
+        ),
+      );
+    };
+    check();
+    const stopLab = useLab.subscribe(check);
+    const stopLesson = useLessonState.subscribe((state, previous) => {
+      if (state.progress?.step !== previous.progress?.step || state.lesson !== previous.lesson) {
+        check();
+      }
+    });
+    return () => {
+      stopLab();
+      stopLesson();
+    };
+  }, []);
+}
+
 const MUTE_KEY = 'banglalab.mute';
 
 /** Sounds the buzzer tone while any buzzer in the circuit is active, unless muted. */
@@ -187,6 +236,7 @@ function Notice() {
 }
 
 const TAB_LABELS = {
+  lesson: 'lesson.tab',
   circuit: 'code.tabCircuit',
   code: 'code.tabCode',
   signals: 'code.tabSignals',
@@ -198,6 +248,8 @@ export function LabPage() {
   useAutosave(status === 'ready');
   useLiveSimulation();
   useKeyboardShortcuts();
+  useLessonChecks();
+  const hasLesson = useLessonState((s) => s.lesson !== null);
 
   const name = useLab((s) => s.name);
   const running = useLab((s) => s.running);
@@ -220,7 +272,9 @@ export function LabPage() {
       // Private mode: the choice lasts for this visit.
     }
   };
-  const [tab, setTab] = useState<'circuit' | 'code' | 'signals'>('circuit');
+  const [tab, setTab] = useState<'lesson' | 'circuit' | 'code' | 'signals'>('circuit');
+  // A project made from a lesson opens at its lesson.
+  useEffect(() => setTab(hasLesson ? 'lesson' : 'circuit'), [hasLesson]);
   /** The breadboard is where the circuit is built; the diagram is the same circuit as a schematic. */
   const [view, setView] = useState<'board' | 'diagram'>('board');
   const showCode = tab === 'code' && boardId !== undefined;
@@ -337,8 +391,9 @@ export function LabPage() {
         className={`w-full shrink-0 overflow-y-auto border-line bg-surface lg:border-l ${showCode ? 'lg:w-[34rem]' : 'lg:w-[21rem]'}`}
       >
         <div role="tablist" className="flex border-b border-line">
-          {(['circuit', 'code', 'signals'] as const)
+          {(['lesson', 'circuit', 'code', 'signals'] as const)
             .filter((id) => id !== 'code' || boardId !== undefined)
+            .filter((id) => id !== 'lesson' || hasLesson)
             .map((id) => (
               <button
                 key={id}
@@ -357,7 +412,9 @@ export function LabPage() {
               </button>
             ))}
         </div>
-        {showCode ? (
+        {tab === 'lesson' && hasLesson ? (
+          <LessonPanel />
+        ) : showCode ? (
           <CodePanel boardId={boardId} />
         ) : tab === 'signals' ? (
           <SignalsPanel />

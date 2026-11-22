@@ -13,6 +13,8 @@
   "dependencies": {
     "@banglalab/board-emulators": "workspace:*",
     "@banglalab/i18n": "workspace:*",
+    "@banglalab/lessons": "workspace:*",
+    "@banglalab/parts": "workspace:*",
     "@banglalab/shared": "workspace:*",
     "@banglalab/simulation": "workspace:*",
     "@codemirror/lang-cpp": "^6.0.3",

@@ -36,6 +36,16 @@ import esp32OledSource from '@banglalab/board-emulators/fixtures/esp32-starters/
 import esp32OledModule from '@banglalab/board-emulators/fixtures/esp32-starters/oled.wasm.base64?raw';
 import esp32MotorSource from '@banglalab/board-emulators/fixtures/esp32-starters/motor.ino?raw';
 import esp32MotorModule from '@banglalab/board-emulators/fixtures/esp32-starters/motor.wasm.base64?raw';
+import esp32RainSource from '@banglalab/board-emulators/fixtures/esp32-starters/rain.ino?raw';
+import esp32RainModule from '@banglalab/board-emulators/fixtures/esp32-starters/rain.wasm.base64?raw';
+import esp32SoilSource from '@banglalab/board-emulators/fixtures/esp32-starters/soil.ino?raw';
+import esp32SoilModule from '@banglalab/board-emulators/fixtures/esp32-starters/soil.wasm.base64?raw';
+import esp32GasSource from '@banglalab/board-emulators/fixtures/esp32-starters/gas.ino?raw';
+import esp32GasModule from '@banglalab/board-emulators/fixtures/esp32-starters/gas.wasm.base64?raw';
+import esp32ObstacleSource from '@banglalab/board-emulators/fixtures/esp32-starters/obstacle.ino?raw';
+import esp32ObstacleModule from '@banglalab/board-emulators/fixtures/esp32-starters/obstacle.wasm.base64?raw';
+import esp32BeepSource from '@banglalab/board-emulators/fixtures/esp32-starters/beep.ino?raw';
+import esp32BeepModule from '@banglalab/board-emulators/fixtures/esp32-starters/beep.wasm.base64?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -71,6 +81,11 @@ export const ESP32_STARTERS = {
   rgb: { source: esp32RgbSource, hex: esp32RgbModule },
   oled: { source: esp32OledSource, hex: esp32OledModule },
   motor: { source: esp32MotorSource, hex: esp32MotorModule },
+  rain: { source: esp32RainSource, hex: esp32RainModule },
+  soil: { source: esp32SoilSource, hex: esp32SoilModule },
+  gas: { source: esp32GasSource, hex: esp32GasModule },
+  obstacle: { source: esp32ObstacleSource, hex: esp32ObstacleModule },
+  beep: { source: esp32BeepSource, hex: esp32BeepModule },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

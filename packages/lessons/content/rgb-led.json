@@ -1,0 +1,138 @@
+{
+  "id": "rgb-led",
+  "order": 4,
+  "parts": ["rgb-led-module"],
+  "title": {
+    "bn": "RGB LED: রং মেশানো",
+    "en": "RGB LED: mixing colours"
+  },
+  "summary": {
+    "bn": "লাল, সবুজ আর নীল আলো মিশিয়ে নতুন রং বানাও।",
+    "en": "Mix red, green and blue light into new colours."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "rgb",
+  "steps": [
+    {
+      "text": {
+        "bn": "RGB LED-র ভেতরে তিনটা LED: লাল, সবুজ আর নীল, আর তাদের − পা একটাই। প্রতিটা রঙের নিজের রেজিস্টর লাগে।\n\nমডিউলটা বসাও। **R** পা ২২০ Ω হয়ে **D25**-এ, **G** পা ২২০ Ω হয়ে **D26**-এ, **B** পা ২২০ Ω হয়ে **D27**-এ, আর **−** পা GND-তে।",
+        "en": "Inside an RGB LED are three LEDs, red, green and blue, sharing one − leg. Each colour needs its own resistor.\n\nPlace the module. Connect **R** through 220 Ω to **D25**, **G** through 220 Ω to **D26**, **B** through 220 Ω to **D27**, and **−** to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "rgbled"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d25"
+          },
+          "to": {
+            "part": "rgbled",
+            "pin": "r"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d26"
+          },
+          "to": {
+            "part": "rgbled",
+            "pin": "g"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d27"
+          },
+          "to": {
+            "part": "rgbled",
+            "pin": "b"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rgbled",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।\n\n`analogWrite(pin, মান)` দিয়ে প্রতিটা রঙের উজ্জ্বলতা ০ থেকে ২৫৫-র মধ্যে ঠিক করা হয়।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does.\n\n`analogWrite(pin, value)` sets each colour's brightness from 0 to 255."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "rgb"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। প্রথমে লাল, সবুজ, নীল আলাদা আলাদা জ্বলবে, তারপর মিশে হলুদ, আকাশি, বেগুনি আর সাদা হবে।",
+        "en": "Press **Run**. First red, green and blue light one at a time; then they mix into yellow, cyan, purple and white."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "rgbled",
+          "path": "rgb.r",
+          "above": 0.05
+        },
+        {
+          "kind": "reading",
+          "part": "rgbled",
+          "path": "rgb.g",
+          "above": 0.05
+        },
+        {
+          "kind": "reading",
+          "part": "rgbled",
+          "path": "rgb.b",
+          "above": 0.05
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "লাল + সবুজ = হলুদ, সবুজ + নীল = আকাশি, লাল + নীল = বেগুনি, তিনটা মিলে সাদা।",
+      "প্রতিটা LED-র নিজের রেজিস্টর লাগে।",
+      "`analogWrite()` উজ্জ্বলতা বদলায়।"
+    ],
+    "en": [
+      "Red + green = yellow, green + blue = cyan, red + blue = purple, all three = white.",
+      "Each LED needs its own resistor.",
+      "`analogWrite()` changes brightness."
+    ]
+  },
+  "tryNext": {
+    "bn": "`showColour(255, 100, 0)` যোগ করে কমলা রং বানাও।",
+    "en": "Add `showColour(255, 100, 0)` to make orange."
+  }
+}

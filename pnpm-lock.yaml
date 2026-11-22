@@ -264,6 +264,12 @@ importers:
       '@banglalab/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@banglalab/lessons':
+        specifier: workspace:*
+        version: link:../../packages/lessons
+      '@banglalab/parts':
+        specifier: workspace:*
+        version: link:../../packages/parts
       '@banglalab/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -350,6 +356,21 @@ importers:
         version: 1.9.0
 
   packages/i18n: {}
+
+  packages/lessons:
+    dependencies:
+      '@banglalab/parts':
+        specifier: workspace:*
+        version: link:../parts
+      '@banglalab/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@banglalab/simulation':
+        specifier: workspace:*
+        version: link:../simulation
+      typebox:
+        specifier: ^1.4.7
+        version: 1.4.7
 
   packages/parts:
     dependencies:

@@ -1,0 +1,175 @@
+{
+  "id": "rain-sensor",
+  "order": 7,
+  "parts": ["rain-sensor", "led-5mm", "resistor"],
+  "title": {
+    "bn": "বৃষ্টি সেন্সর",
+    "en": "The rain sensor"
+  },
+  "summary": {
+    "bn": "বোর্ডে পানি পড়লে বুঝতে পারো, আর সতর্ক করো।",
+    "en": "Notice water on the sensing board, and give a warning."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "rain",
+  "steps": [
+    {
+      "text": {
+        "bn": "বৃষ্টি সেন্সরের বোর্ডে খোলা তামার দাগ আছে; পানি পড়লে দাগগুলো জুড়ে যায়। বোর্ড যত ভেজে, **AO**-র ভোল্টেজ তত কমে, আর যথেষ্ট ভিজলে **DO** LOW হয়।\n\nমডিউলটা বসাও। **VCC** যাবে 3V3-তে, **GND** যাবে GND-তে, **DO** যাবে **D27**-এ, **AO** যাবে **D34**-এ।",
+        "en": "The rain sensor's board has bare copper tracks; water joins them. The wetter the board, the lower **AO**'s voltage, and when it is wet enough **DO** goes LOW.\n\nPlace the module. **VCC** goes to 3V3, **GND** to GND, **DO** to **D27** and **AO** to **D34**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "rain"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rain",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rain",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rain",
+            "pin": "do"
+          },
+          "to": {
+            "board": "d27"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "rain",
+            "pin": "ao"
+          },
+          "to": {
+            "board": "d34"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "rain"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। বোর্ড এখন শুকনো: সিরিয়াল মনিটরে বড় একটা মান আর \"শুকনো\" দেখাবে।",
+        "en": "Press **Run**. The board is dry now: the serial monitor shows a large value and \"শুকনো\" (dry)."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "শুকনো"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে ভেজাভাব **৮০%**-এর বেশি করো। LED জ্বলবে আর সিরিয়াল মনিটরে আসবে \"বৃষ্টি হচ্ছে!\"।",
+        "en": "Tap the sensor and make it more than **80%** wet. The LED lights and the serial monitor says \"বৃষ্টি হচ্ছে!\" (it is raining)."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "rain",
+          "prop": "wetness",
+          "above": 0.79
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "serial",
+          "matches": "বৃষ্টি হচ্ছে!"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "পানি বিদ্যুৎ পরিবহন করে, তাই ভেজা বোর্ডের রোধ কমে।",
+      "AO দেখায় কতটা ভেজা, DO শুধু হ্যাঁ বা না।"
+    ],
+    "en": [
+      "Water conducts, so a wet board has less resistance.",
+      "AO shows how wet; DO only says yes or no."
+    ]
+  },
+  "tryNext": {
+    "bn": "বৃষ্টি হলে LED-র বদলে বাজার বাজাও (বাজারের পাঠ দেখো)।",
+    "en": "Sound a buzzer instead of the LED when it rains (see the buzzer lesson)."
+  }
+}

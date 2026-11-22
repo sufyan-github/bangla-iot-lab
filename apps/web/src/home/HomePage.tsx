@@ -69,6 +69,13 @@ export function HomePage() {
             >
               + {t('home.new')}
             </button>
+            <Link
+              to="/lessons"
+              data-testid="home-lessons"
+              className="flex min-h-12 items-center rounded-xl border-2 border-amber px-5 text-lg font-semibold text-paper hover:bg-paper/10"
+            >
+              {t('home.lessons')}
+            </Link>
             <button
               type="button"
               data-testid="open-example"

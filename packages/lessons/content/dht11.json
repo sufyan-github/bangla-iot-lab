@@ -1,0 +1,127 @@
+{
+  "id": "dht11",
+  "order": 5,
+  "parts": ["dht11"],
+  "title": {
+    "bn": "DHT11: তাপমাত্রা আর আর্দ্রতা",
+    "en": "DHT11: temperature and humidity"
+  },
+  "summary": {
+    "bn": "একটা তারে আসা তাপমাত্রা আর আর্দ্রতা পড়ো, সিরিয়াল মনিটরে দেখো।",
+    "en": "Read temperature and humidity over one wire, and show them in the serial monitor."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "dht",
+  "steps": [
+    {
+      "text": {
+        "bn": "DHT11 বাতাসের তাপমাত্রা আর আর্দ্রতা মাপে, আর দুটো মান একটা তারেই সংখ্যা হিসেবে পাঠায়।\n\nসেন্সরটা বসাও। **VCC** যাবে 3V3-তে, **DATA** যাবে **D4**-এ, **GND** যাবে GND-তে।",
+        "en": "The DHT11 measures the air's temperature and humidity and sends both as numbers over a single wire.\n\nPlace the sensor. **VCC** goes to 3V3, **DATA** to **D4** and **GND** to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "dht11"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "dht11",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "dht11",
+            "pin": "data"
+          },
+          "to": {
+            "board": "d4"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "dht11",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।\n\nপ্রোগ্রামটা Adafruit-এর DHT লাইব্রেরি ব্যবহার করে: আসল বোর্ডেও এই লাইব্রেরিই চলে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does.\n\nThe program uses Adafruit's DHT library: the same library a real board runs."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "dht"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**, তারপর কোড ট্যাবের সিরিয়াল মনিটরে দেখো। প্রতি দুই সেকেন্ডে তাপমাত্রা আর আর্দ্রতা আসবে।",
+        "en": "Press **Run**, then look at the serial monitor in the Code tab. Every two seconds the temperature and humidity arrive."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "তাপমাত্রা \\d+ °C",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে তাপমাত্রা এসেছে",
+            "en": "The temperature appeared in the serial monitor"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে তাপমাত্রা **৩৫ °C** করো। কয়েক সেকেন্ডের মধ্যে সিরিয়াল মনিটরে নতুন মান আসবে।",
+        "en": "Tap the sensor and set the temperature to **35 °C**. Within a few seconds the new value appears in the serial monitor."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "dht11",
+          "prop": "celsius",
+          "equals": 35
+        },
+        {
+          "kind": "serial",
+          "matches": "তাপমাত্রা 35 °C"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "DHT11 একটা তারে সংখ্যা পাঠায়, তাই অনেক পিন লাগে না।",
+      "দুবার পড়ার মাঝে অন্তত ২ সেকেন্ড অপেক্ষা করতে হয়।",
+      "`Serial.print()` দিয়ে মান সিরিয়াল মনিটরে দেখা যায়।"
+    ],
+    "en": [
+      "The DHT11 sends numbers over one wire, so it needs few pins.",
+      "Wait at least 2 seconds between readings.",
+      "`Serial.print()` shows values in the serial monitor."
+    ]
+  },
+  "tryNext": {
+    "bn": "একটা LED যোগ করো যেটা তাপমাত্রা ৩০ °C-র বেশি হলে জ্বলে।",
+    "en": "Add an LED that lights when the temperature is above 30 °C."
+  }
+}

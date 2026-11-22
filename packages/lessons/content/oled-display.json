@@ -1,0 +1,117 @@
+{
+  "id": "oled-display",
+  "order": 14,
+  "parts": ["oled-ssd1306-096"],
+  "title": {
+    "bn": "OLED ডিসপ্লে",
+    "en": "The OLED display"
+  },
+  "summary": {
+    "bn": "দুই তারের I2C পথে ছোট পর্দায় লেখা আর ছবি আঁকো।",
+    "en": "Draw text and shapes on a small screen over the two-wire I2C bus."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "oled",
+  "steps": [
+    {
+      "text": {
+        "bn": "এই ডিসপ্লেতে ১২৮ × ৬৪টা বিন্দু আছে। এটা **I2C** নামের দুই তারের পথে চলে: **SCL** (ঘড়ির তার) আর **SDA** (তথ্যের তার)।\n\nডিসপ্লেটা বসাও। **GND** যাবে GND-তে, **VCC** যাবে 3V3-তে, **SCL** যাবে **D22**-এ, **SDA** যাবে **D21**-এ। তোমার আসল মডিউলে VCC আর GND-র জায়গা উল্টো হতে পারে: গায়ের লেখা দেখে নিও।",
+        "en": "This display has 128 × 64 dots. It works over **I2C**, a path of two wires: **SCL** (the clock) and **SDA** (the data).\n\nPlace the display. **GND** goes to GND, **VCC** to 3V3, **SCL** to **D22** and **SDA** to **D21**. On your real module VCC and GND may be the other way round: read its labels."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "oled"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "scl"
+          },
+          "to": {
+            "board": "d22"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "oled",
+            "pin": "sda"
+          },
+          "to": {
+            "board": "d21"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।\n\nআঁকার পর `display.display()` না ডাকলে পর্দায় কিছুই আসে না: প্রোগ্রাম আগে মনে মনে আঁকে, তারপর একবারে পাঠায়।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does.\n\nNothing reaches the screen until `display.display()` is called: the program draws in memory first, then sends it all at once."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "oled"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। পর্দায় শিরোনাম, একটা দাগ, বড় একটা সংখ্যা আর একটা বাক্স দেখাবে; সংখ্যাটা প্রতি সেকেন্ডে বাড়বে। ডিসপ্লেতে ট্যাপ করলে পাশে বড় করে দেখা যায়।",
+        "en": "Press **Run**. The screen shows a title, a line, a large number and a box; the number goes up every second. Tap the display to see it larger at the side."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "oled",
+          "path": "oled.lit",
+          "equals": true
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "I2C-তে দুই তারে অনেক যন্ত্র কথা বলতে পারে, প্রত্যেকের নিজের ঠিকানা আছে (এই ডিসপ্লের 0x3C)।",
+      "`display.display()` আঁকা ছবি পর্দায় পাঠায়।",
+      "এই লাইব্রেরির অক্ষরে বাংলা লেখা যায় না।"
+    ],
+    "en": [
+      "On I2C many devices share two wires, each with its own address (0x3C for this display).",
+      "`display.display()` sends the drawing to the screen.",
+      "This library's letters cannot write Bangla."
+    ]
+  },
+  "tryNext": {
+    "bn": "`display.drawCircle(64, 40, 10, SSD1306_WHITE);` যোগ করে একটা বৃত্ত আঁকো।",
+    "en": "Add `display.drawCircle(64, 40, 10, SSD1306_WHITE);` to draw a circle."
+  }
+}

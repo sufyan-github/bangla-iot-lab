@@ -84,6 +84,13 @@ under other licences. Each is kept apart from the Apache-2.0 code.
 
    Listed with their licence texts in THIRD_PARTY_LICENSES.md.
 
+6. Kit lessons (CC BY 4.0)
+
+   The lesson files in packages/lessons/content/ are written for this project
+   and licensed under the Creative Commons Attribution 4.0 International
+   licence (LICENSES/CC-BY-4.0.txt), not Apache-2.0. The programs they use
+   are among the ready-made ESP32 programs described in section 2.
+
 Trademarks
 
 Arduino and UNO are trademarks of Arduino S.r.l.; Raspberry Pi is a trademark of

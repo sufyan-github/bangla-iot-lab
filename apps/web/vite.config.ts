@@ -2,10 +2,13 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { fileURLToPath } from 'node:url';
+import { privateLessons } from './private-lessons';
 
 export default defineConfig({
   plugins: [
     react(),
+    privateLessons(fileURLToPath(new URL('../../private/lessons', import.meta.url))),
     tailwindcss(),
     VitePWA({
       // Students often work with no connection, so the whole app shell is

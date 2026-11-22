@@ -16,6 +16,20 @@ export interface BoardProgram {
   engine?: 'library' | 'emulator';
 }
 
+/**
+ * Where a student is in a lesson. Kept on this device with the project the
+ * lesson made; nothing about it leaves the device.
+ */
+export interface LessonProgress {
+  id: string;
+  /** The step being shown, from 0. */
+  step: number;
+  /** Steps completed. */
+  done: number[];
+  /** Events already seen on the current step, by check index. */
+  seen: number[];
+}
+
 /** A circuit saved on this device. */
 export interface ProjectRecord {
   id: string;
@@ -25,9 +39,11 @@ export interface ProjectRecord {
   circuit: CircuitDocument;
   /** Programs by board id. Missing in projects saved before boards existed. */
   programs: Record<string, BoardProgram>;
+  /** Present when the project was started from a lesson. */
+  lesson?: LessonProgress;
 }
 
-export type ProjectContent = Pick<ProjectRecord, 'name' | 'circuit' | 'programs'>;
+export type ProjectContent = Pick<ProjectRecord, 'name' | 'circuit' | 'programs' | 'lesson'>;
 
 class LabDatabase extends Dexie {
   projects!: Table<ProjectRecord, string>;
@@ -83,6 +99,11 @@ export const projectStore = {
     if (!isCircuitDocument(content.circuit)) throw new Error('Refusing to save an invalid circuit');
     const updated = await database.projects.update(id, { ...content, updatedAt: Date.now() });
     if (updated === 0) throw new Error(`Project ${id} no longer exists`);
+  },
+
+  /** Saves how far the student has got in the project's lesson. */
+  async saveLesson(id: string, lesson: LessonProgress): Promise<void> {
+    await database.projects.update(id, { lesson });
   },
 
   async remove(id: string): Promise<void> {

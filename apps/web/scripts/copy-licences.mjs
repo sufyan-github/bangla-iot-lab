@@ -14,6 +14,7 @@ for (const [from, to] of [
   ['LICENSES/avr-libc.txt', 'avr-libc.txt'],
   ['LICENSES/wasi-libc.txt', 'wasi-libc.txt'],
   ['LICENSES/LLVM.txt', 'LLVM.txt'],
+  ['LICENSES/CC-BY-4.0.txt', 'CC-BY-4.0.txt'],
   ['third_party/adafruit-dht/license.txt', 'adafruit-dht.txt'],
   ['third_party/adafruit-gfx/license.txt', 'adafruit-gfx.txt'],
   ['third_party/adafruit-ssd1306/license.txt', 'adafruit-ssd1306.txt'],

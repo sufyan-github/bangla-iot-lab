@@ -1,0 +1,169 @@
+{
+  "id": "soil-moisture",
+  "order": 8,
+  "parts": ["yl-69", "led-5mm", "resistor"],
+  "title": {
+    "bn": "মাটির আর্দ্রতা সেন্সর",
+    "en": "The soil moisture sensor"
+  },
+  "summary": {
+    "bn": "মাটি কতটা ভেজা মাপো, আর শুকালে মনে করিয়ে দাও।",
+    "en": "Measure how wet the soil is, and remind you when it dries."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "soil",
+  "steps": [
+    {
+      "text": {
+        "bn": "মাটি যত শুকনো, সেন্সরের আউটপুট ভোল্টেজ তত বেশি। ল্যাবে এই সেন্সর তিন পায়ের সাধারণ সেন্সর হিসেবে আছে: **VCC**, **আউটপুট**, **GND**। কিটের মডিউলে চারটা পা থাকে; তার **AO** এই আউটপুটের মতোই কাজ করে।\n\nসেন্সরটা বসাও। VCC যাবে 3V3-তে, আউটপুট যাবে **D34**-এ, GND যাবে GND-তে।",
+        "en": "The drier the soil, the higher the sensor's output voltage. In the lab this sensor is a generic three-leg sensor: **VCC**, **output**, **GND**. The kit's module has four pins; its **AO** works like this output.\n\nPlace the sensor. VCC goes to 3V3, the output to **D34**, GND to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "soil"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "soil",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "soil",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d34"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "soil",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "soil"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। মাটি এখন একটু ভেজা: সিরিয়াল মনিটরে মাটির মান আর \"ঠিক আছে\" দেখাবে।",
+        "en": "Press **Run**. The soil is a little wet: the serial monitor shows its value and \"ঠিক আছে\" (all right)."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "মাটির মান: \\d+  ঠিক আছে",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে মাটির মান আর \"ঠিক আছে\" এসেছে",
+            "en": "The soil value and \"ঠিক আছে\" appeared in the serial monitor"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে ভেজাভাব **১০%**-এর কম করো, যেন মাটি শুকিয়ে গেছে। মান ৩০০০ পার হলে LED জ্বলবে আর লেখা আসবে \"পানি দাও!\"।",
+        "en": "Tap the sensor and set the wetness below **10%**, as if the soil dried out. Once the value passes 3000 the LED lights and the message says \"পানি দাও!\" (water me)."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "soil",
+          "prop": "moisture",
+          "below": 0.1
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "serial",
+          "matches": "পানি দাও!"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "অ্যানালগ সেন্সরের মান একটা সীমার (`dryLevel`) সাথে তুলনা করে সিদ্ধান্ত নেওয়া যায়।",
+      "শুকনো মাটির রোধ বেশি।"
+    ],
+    "en": [
+      "An analog reading can be compared with a limit (`dryLevel`) to make a decision.",
+      "Dry soil has more resistance."
+    ]
+  },
+  "tryNext": {
+    "bn": "`dryLevel` বদলে ২৫০০ করো। এখন কখন LED জ্বলে?",
+    "en": "Change `dryLevel` to 2500. When does the LED light now?"
+  }
+}
