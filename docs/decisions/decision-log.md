@@ -498,3 +498,46 @@ divider that takes the signal down too far gives no reading, and the sensor
 wired straight to the pin still works but raises a warning that the pin is
 getting 5 V. The earlier model handed the level to the pin directly, which made
 the wrong circuit the only one that worked.
+
+## D-053 — The kit's sensor modules are modelled from what sellers report, and where versions differ the lab takes the choice that is safe on every version
+
+The LDR, rain, MQ-135 and HC-SR501 modules and the RGB LED module are generic
+parts made by many factories, with no single datasheet and no schematic that
+comes with the kit. What the lab models is therefore labelled by how it is known:
+
+| What                                                            | How it is known                                                                                             |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| LDR and rain modules: AO falls with light or water; DO LOW then | REPORTED by sellers' pages and tutorials                                                                    |
+| MQ-135: heater about 33 Ω at 5 V                                | REPORTED: 33 Ω ± 5 % (Hanwei datasheet), 30 Ω ± 3 Ω (Winsen manual)                                         |
+| HC-SR501: 4.5 V to 20 V supply, 3.3 V output, 2.5 s blocking    | REPORTED by sellers' datasheets; one gives 8 s blocking                                                     |
+| HC-SR501: hold time                                             | REPORTED, and the sources disagree: from 0.3 s, 3 s or 5 s up to 200 s or 300 s. The lab offers 3 s to 60 s |
+| RGB LED: red 1.8 V, green and blue 2.8 V; common negative leg   | REPORTED by one maker (Joy-IT, KY-016)                                                                      |
+| Every resistance inside the modules; how far AO moves           | ESTIMATE                                                                                                    |
+
+None of it is measured. Hardware tests C11, C12, C14, C15 and C20 measure
+exactly these things on the kit's own parts, and the models change to whatever
+those tests find.
+
+Two choices follow a rule: **where versions of a part differ, model the one
+that makes a student's circuit safe on all of them.**
+
+- Some RGB LED modules carry a resistor for each colour and some carry none.
+  The lab models none, so it asks for a resistor on each colour. A circuit
+  built that way works with both versions; the other choice would teach a
+  circuit that overdrives the version without resistors.
+- A 5 V module's output is shown at 5 V, and the lab warns when it reaches an
+  ESP32 pin, even where the module's own pull-up resistor would in practice
+  limit the current to a harmless amount.
+
+The lab also now says when a module is wired to less voltage than it works on
+(D-052 covered too much voltage; this is too little). A motion sensor on 3.3 V
+and an ultrasonic sensor on 3.3 V used to do nothing without a word.
+
+Sources read on 22 November 2026:
+[HC-SR501 datasheet copy](https://courses.ece.cornell.edu/ece5990/ECE5725_Spring2020_Projects/May_15_Demo/Smart%20Lock/W_pp445_yl656/datasheet/31227sc.pdf),
+[SunFounder's HC-SR501 page](https://docs.sunfounder.com/projects/umsk/en/latest/01_components_basic/12-component_pir_motion.html),
+[Winsen's MQ-135 manual](https://www.winsen-sensor.com/manual/mq135.html),
+[Hanwei MQ-135 datasheet copy](https://datasheetq.com/pdf-view/MQ-135-HANWEI.pdf),
+[a rain sensor guide](https://randomnerdtutorials.com/?p=22600),
+[an LDR module description](https://openhw-studio.fossee.in/docs/components/openhw-ldr-module.html),
+[Joy-IT's KY-016 page](https://sensorkit.joy-it.net/en/sensors/ky-016).

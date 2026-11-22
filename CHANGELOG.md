@@ -8,6 +8,27 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Five more parts of the school kit** (circuit format version 9), each with a
+  ready-made ESP32 program where a program is needed:
+  - **LDR light sensor module** and **rain sensor module**: a voltage on AO that
+    falls with light or water, and a DO pin that goes LOW past the point set on
+    the module's trimmer, with the module's indicator light.
+  - **MQ-135 gas sensor module**: AO rises as the air gets worse. Its heater
+    takes about 150 mA from 5 V, so on an ESP32 it is powered from VIN and its
+    AO needs a divider; the lab warns about both mistakes.
+  - **HC-SR501 motion sensor**: tap it to start or stop movement. Its output
+    stays HIGH for the hold time after the movement, then it ignores movement
+    for 2.5 s, as the real one does.
+  - **RGB LED module**: three LEDs with one shared leg, each judged for too much
+    current on its own; the drawing shows the mixed colour.
+  - Ready-made programs: light in the dark, detect movement, mix colours.
+  - What each model leaves out is in its part definition. The resistances
+    inside the modules are estimates and the behaviour is as sellers report it;
+    nothing has been measured on the kit's own parts (hardware tests C11, C12,
+    C14, C15, C20).
+- **A warning when a module gets too little voltage to work**, for example a 5 V
+  motion or ultrasonic sensor wired to the ESP32's 3.3 V pin. Before, such a
+  module simply did nothing and the lab did not say why.
 - **First parts of the school kit on the ESP32** (with the lab's own model of
   the board):
   - **DHT11** temperature and humidity sensor: a new part with two sliders, its

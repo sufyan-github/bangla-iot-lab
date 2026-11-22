@@ -1002,6 +1002,242 @@ export function SensorView(props: {
   );
 }
 
+const MODULE_BOARD = {
+  ldrmodule: '#1f5fa8',
+  rain: '#a8332b',
+  mq135: '#1c4f8f',
+} as const;
+
+/**
+ * Four-pin sensor module (VCC, GND, DO, AO): the sensing part at the top, and
+ * below it the trimmer that sets where DO switches and the light that shows it.
+ */
+export function AnalogModuleView(props: {
+  first: Point;
+  last: Point;
+  kind: keyof typeof MODULE_BOARD;
+  /** Short text shown on the module: what it is sensing. */
+  label: string;
+  /** The module's indicator: lit while DO is LOW. */
+  lit: boolean;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const pins = [-length / 2, -length / 6, length / 6, length / 2];
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard
+        x={-length / 2 - 12}
+        y={-58}
+        width={length + 24}
+        height={62}
+        color={MODULE_BOARD[props.kind]}
+      />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {pins.map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      {props.kind === 'ldrmodule' && (
+        <g transform="translate(0 -44)">
+          {/* The LDR seen from above: a disc with its zig-zag track. */}
+          <circle cx={1} cy={2} r={10} fill="#000" opacity={0.25} />
+          <circle r={10} fill="#d8cdb4" stroke="#7b7362" />
+          <path
+            d="M-6 -5.5H5.5V-2.5H-5.5V0.5H5.5V3.5H-5.5V6H6"
+            fill="none"
+            stroke="#b5452c"
+            strokeWidth={1.6}
+          />
+          <circle r={10} fill="url(#shade-dome)" opacity={0.5} />
+        </g>
+      )}
+      {props.kind === 'rain' && (
+        <g transform="translate(0 -44)">
+          {/* The sensing board: two combs of bare track that water joins. */}
+          <rect x={-30} y={-10} width={60} height={20} rx={2} fill="#20242a" />
+          <path
+            d={[-24, -16, -8, 0, 8, 16, 24]
+              .map((x, i) => (i % 2 === 0 ? `M${x} -7V5` : `M${x} -5V7`))
+              .join('')}
+            stroke="#d9b65c"
+            strokeWidth={2.6}
+            strokeLinecap="round"
+          />
+          <path d="M-24 -7.4H24M-16 7.4H16" stroke="#d9b65c" strokeWidth={1.6} />
+        </g>
+      )}
+      {props.kind === 'mq135' && (
+        <g transform="translate(-14 -40)">
+          {/* The sensor's can, with the mesh the air reaches the heater through. */}
+          <circle cx={1.2} cy={2.5} r={14} fill="#000" opacity={0.28} />
+          <circle r={14} fill="url(#shade-metal)" stroke="#5d666a" />
+          <circle r={10} fill="#23282a" />
+          <circle r={10} fill="url(#mesh)" />
+          <circle r={10} fill="url(#shade-dome)" opacity={0.45} />
+        </g>
+      )}
+      {/* The trimmer: a blue block with a brass screw. */}
+      <g
+        transform={
+          props.kind === 'mq135' ? 'translate(20 -46)' : `translate(${-length / 2 + 4} -20)`
+        }
+      >
+        <rect
+          x={-7}
+          y={-7}
+          width={14}
+          height={14}
+          rx={1.5}
+          fill="#2d6fd2"
+          stroke="rgba(0,0,0,.4)"
+        />
+        <circle r={4.2} fill="#d9b65c" />
+        <path d="M-3 0H3M0 -3V3" stroke="#6d5a22" strokeWidth={1.3} />
+      </g>
+      {/* The indicator beside it. */}
+      <g
+        transform={
+          props.kind === 'mq135' ? 'translate(40 -46)' : `translate(${length / 2 - 2} -20)`
+        }
+      >
+        {props.lit && <circle r={8} fill="#58e07f" opacity={0.35} />}
+        <rect
+          x={-3.4}
+          y={-2.4}
+          width={6.8}
+          height={4.8}
+          rx={1}
+          fill={props.lit ? '#58e07f' : '#1f4a2c'}
+        />
+      </g>
+      <text
+        x={props.kind === 'mq135' ? 4 : 2}
+        y={props.kind === 'mq135' ? -12 : -15.5}
+        textAnchor="middle"
+        fontSize={11}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        {props.label}
+      </text>
+    </g>
+  );
+}
+
+/** HC-SR501 motion sensor: a white faceted dome on a small board. */
+export function PirView(props: {
+  vcc: Point;
+  gnd: Point;
+  /** Something is moving in front of it. */
+  motion: boolean;
+  /** Its output is HIGH. */
+  high: boolean;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.vcc, props.gnd);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-54} width={length + 24} height={58} color="#1d6a45" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {[-length / 2, 0, length / 2].map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      {/* Movement in front of the sensor, drawn as ripples either side of the dome. */}
+      {props.motion && (
+        <path
+          className="pir-motion"
+          d="M-22 -40A12 12 0 0 0 -22 -24M-27 -44A18 18 0 0 0 -27 -20M22 -40A12 12 0 0 1 22 -24M27 -44A18 18 0 0 1 27 -20"
+          fill="none"
+          stroke="#ffe08a"
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+      )}
+      <g transform="translate(0 -32)">
+        <circle cx={1.2} cy={2.5} r={15} fill="#000" opacity={0.28} />
+        <circle r={15} fill="#f2f3ef" stroke="#a9aea8" />
+        {/* The lens is moulded in facets. */}
+        <path
+          d="M-13 -7.5H13M-15 0H15M-13 7.5H13M-7.5 -13V13M0 -15V15M7.5 -13V13"
+          stroke="#c9cdc6"
+          strokeWidth={0.9}
+        />
+        <circle r={15} fill="url(#shade-dome)" opacity={0.75} />
+      </g>
+      <text
+        y={-8.5}
+        textAnchor="middle"
+        fontSize={9.5}
+        fontWeight={700}
+        fill={props.high ? '#ffe08a' : '#cfe6d8'}
+        pointerEvents="none"
+      >
+        {props.high ? 'HIGH' : 'LOW'}
+      </text>
+    </g>
+  );
+}
+
+/** RGB LED module: one clear LED that shows the mixture of its three colours. */
+export function RgbLedView(props: {
+  first: Point;
+  last: Point;
+  /** How bright each colour is, 0 to 1. */
+  mix: { r: number; g: number; b: number } | undefined;
+  state: LedState | undefined;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const pins = [-length / 2, -length / 6, length / 6, length / 2];
+  const { r, g, b } = props.mix ?? { r: 0, g: 0, b: 0 };
+  const strongest = Math.max(r, g, b);
+  const burned = props.state === 'burned';
+  const lit = strongest > 0 && !burned;
+  // The colour is the proportion of the three; how much of it there is, the strongest of them.
+  const part = (value: number) => Math.round((255 * value) / (strongest || 1));
+  const colour = `rgb(${part(r)} ${part(g)} ${part(b)})`;
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-50} width={length + 24} height={54} color="#1d2023" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {pins.map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      <g fontSize={8.5} fontWeight={700} fill="#dfe4e2" textAnchor="middle" pointerEvents="none">
+        {['R', 'G', 'B', '−'].map((name, i) => (
+          <text key={name} x={pins[i]} y={-9}>
+            {name}
+          </text>
+        ))}
+      </g>
+      <g transform="translate(0 -32)">
+        {lit && (
+          <circle
+            className="led-glow"
+            r={16 + 26 * strongest}
+            fill={colour}
+            opacity={0.12 + 0.2 * strongest}
+            pointerEvents="none"
+          />
+        )}
+        <circle cx={1.2} cy={2.5} r={11} fill="#000" opacity={0.28} />
+        <circle r={11} fill={burned ? '#3b3b3b' : '#e3e7e6'} />
+        {lit && <circle r={11} fill={colour} opacity={0.35 + 0.65 * strongest} />}
+        {lit && <circle r={4.6} fill="#fff" opacity={0.55 * strongest} />}
+        <circle r={11} fill="url(#shade-dome)" opacity={burned ? 0.3 : 0.9} />
+        <circle r={11} fill="none" stroke="rgba(0,0,0,.4)" strokeWidth={0.8} />
+        {burned && (
+          <path d="M-5 -5L5 5M5 -5L-5 5" stroke="#d0d0d0" strokeWidth={2} strokeLinecap="round" />
+        )}
+      </g>
+    </g>
+  );
+}
+
 /** Relay: coil legs on the left, contact legs on the right. The bar closes when the coil is energised. */
 export function RelayView(props: {
   first: Point;

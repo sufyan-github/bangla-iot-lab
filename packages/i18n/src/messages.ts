@@ -149,6 +149,38 @@ export const bn = {
     'মাটি যত ভেজা, এই সেন্সরের আউটপুট ভোল্টেজ তত কম: শুকনো অবস্থায় প্রায় 4.5 V, পুরো ভেজা অবস্থায় 1.5 V। পা: 5 V, আউটপুট, GND।',
   'part.ir.about':
     'এই সেন্সরের আউটপুট সাধারণত HIGH থাকে, সামনে কিছু এলে LOW হয়ে যায়। পা: 5 V, আউটপুট, GND। digitalRead দিয়ে পড়ো।',
+  'tool.ldrmodule': 'LDR মডিউল',
+  'tool.rain': 'বৃষ্টি সেন্সর',
+  'tool.mq135': 'গ্যাস সেন্সর',
+  'tool.pir': 'গতি সেন্সর',
+  'tool.rgbled': 'RGB LED',
+  'part.ldrmodule': 'LDR আলো সেন্সর মডিউল',
+  'part.rain': 'বৃষ্টি সেন্সর মডিউল',
+  'part.mq135': 'MQ-135 গ্যাস সেন্সর',
+  'part.pir': 'HC-SR501 গতি সেন্সর',
+  'part.rgbled': 'RGB LED মডিউল',
+  'part.ldrmodule.about':
+    'একই বোর্ডে একটা LDR, তার রেজিস্টর আর একটা কম্পারেটর। AO পিনের ভোল্টেজ আলো বাড়লে কমে: analogRead দিয়ে পড়ো। DO পিন অন্ধকারে HIGH থাকে, আর ট্রিমারে যতটা ঠিক করা আছে তার চেয়ে বেশি আলো হলে LOW হয়; মডিউলের দ্বিতীয় বাতিটা তখন জ্বলে। পা: VCC, GND, DO, AO। ESP32 বোর্ডে এটাকে 3V3 থেকে চালাও, যাতে AO-র ভোল্টেজ পিনের সীমার মধ্যে থাকে।',
+  'part.rain.about':
+    'খোলা তামার দাগওয়ালা একটা বোর্ড; পানি পড়লে দাগগুলো জুড়ে যায়। শুকনো অবস্থায় AO-র ভোল্টেজ প্রায় সাপ্লাইয়ের সমান, বোর্ড যত ভেজে তত কমে। DO শুকনো অবস্থায় HIGH, যথেষ্ট ভিজলে LOW; কতটা ভিজলে, তা ট্রিমার ঠিক করে। পা: VCC, GND, DO, AO। ESP32 বোর্ডে এটাকে 3V3 থেকে চালাও।',
+  'part.mq135.about':
+    'এই সেন্সরের ভেতরে ছোট একটা হিটার আছে। বাতাস যত খারাপ হয় (ধোঁয়া, অ্যামোনিয়া, অ্যালকোহলের বাষ্প), AO-র ভোল্টেজ তত বাড়ে; কোন গ্যাস, তা এটা আলাদা করে বলতে পারে না। AO ট্রিমারের সীমা পার হলে DO LOW হয়। হিটারের জন্য 5 V আর প্রায় 150 mA লাগে, তাই ESP32 বোর্ডে এটাকে VIN থেকে চালাও, আর AO পিনে যাওয়ার আগে দুটো রেজিস্টর দিয়ে ভোল্টেজ কমিয়ে নাও। আসল সেন্সর চালুর পর কয়েক মিনিট গরম হতে দিতে হয়। পা: VCC, GND, DO, AO।',
+  'part.pir.about':
+    'এই সেন্সর মানুষের মতো উষ্ণ কিছু নড়লে টের পায়। তখন OUT পিন HIGH (3.3 V) হয়, আর নড়াচড়া থামার পরেও ঠিক করা সময় পর্যন্ত HIGH থাকে; এরপর প্রায় ২.৫ সেকেন্ড এটা কিছুই ধরে না। এর 5 V লাগে, তাই ESP32 বোর্ডে VIN থেকে চালাও; OUT সরাসরি পিনে লাগানো যায়। আসল সেন্সর চালুর পর প্রায় এক মিনিট ভরসা করা যায় না। পা: VCC, OUT, GND। সার্কিট চলার সময় সেন্সরে ট্যাপ করে নড়াচড়া শুরু বা বন্ধ করো।',
+  'part.rgbled.about':
+    'এক খোলের ভেতরে লাল, সবুজ আর নীল তিনটা LED; তিনটার − পা একটাই। প্রতিটা রঙের জন্য আলাদা রেজিস্টর (২২০ Ω দিয়ে শুরু করো) আর আলাদা পিন দাও; analogWrite দিয়ে প্রতিটার উজ্জ্বলতা ঠিক করে যেকোনো রং বানানো যায়। লালের প্রায় 1.8 V লাগে, সবুজ আর নীলের প্রায় 2.8 V, তাই 3.3 V-এ সবুজ আর নীল কম উজ্জ্বল হয়। পা: R, G, B, −।',
+  'inspector.wetness': 'বোর্ড কতটা ভেজা',
+  'inspector.gas': 'বাতাস কতটা খারাপ',
+  'inspector.threshold': 'ট্রিমারের অবস্থান',
+  'inspector.moving': 'কিছু নড়ছে',
+  'inspector.still': 'কিছু নড়ছে না',
+  'inspector.hold': 'আউটপুট ধরে রাখার সময়',
+  'inspector.seconds': '{count} সেকেন্ড',
+  'diag.module-underpowered':
+    '{id} মাত্র {volts} পাচ্ছে। কাজ করতে এর অন্তত {limit} লাগে, তাই এখন ঠিকমতো কাজ করছে না। এর সাপ্লাই পা এমন জায়গায় লাগাও যেখানে অন্তত {limit} আছে।',
+  'code.starter.esp32.light': 'অন্ধকারে বাতি (D34, D27, D2)',
+  'code.starter.esp32.motion': 'নড়াচড়া ধরো (D27, D2)',
+  'code.starter.esp32.rgb': 'রং মেশাও (D25, D26, D27)',
   'part.relay': 'রিলে',
   'part.relay.about':
     'রিলে হলো তড়িৎচুম্বক দিয়ে চালানো সুইচ। কয়েলে (বাঁ দিকের দুই পা) কারেন্ট গেলে ভেতরের কন্টাক্ট টেনে বন্ধ হয় আর ডান দিকের দুই পা জুড়ে যায়। কয়েল প্রায় 70 mA চায়, তাই বোর্ডের পিন থেকে সরাসরি নয়, ট্রানজিস্টর দিয়ে চালাও।',
@@ -294,6 +326,7 @@ export const bn = {
   'esp32.works.6': 'ইন্টারাপ্ট আর pulseIn',
   'esp32.works.7': 'সার্ভো (ESP32Servo লাইব্রেরি), আলট্রাসনিক সেন্সর',
   'esp32.works.8': 'DHT11 তাপমাত্রা ও আর্দ্রতা সেন্সর (আসল DHT লাইব্রেরি দিয়ে)',
+  'esp32.works.9': 'কিটের LDR, বৃষ্টি, গ্যাস আর গতি সেন্সর, এবং RGB LED',
   'esp32.missing.title': 'যা এখনো কাজ করে না',
   'esp32.missing.1': 'OLED ডিসপ্লে ও অন্যান্য I2C যন্ত্রাংশ',
   'esp32.missing.2': 'সেটিংস জমিয়ে রাখা (Preferences), স্লিপ মোড',
@@ -502,6 +535,38 @@ export const en: Record<MessageKey, string> = {
     'This sensor’s output voltage falls as the soil gets wetter: about 4.5 V when dry and 1.5 V when soaked. Legs: 5 V, output, GND.',
   'part.ir.about':
     'This sensor’s output is HIGH normally and goes LOW when something is in front of it. Legs: 5 V, output, GND. Read it with digitalRead.',
+  'tool.ldrmodule': 'LDR module',
+  'tool.rain': 'Rain sensor',
+  'tool.mq135': 'Gas sensor',
+  'tool.pir': 'Motion sensor',
+  'tool.rgbled': 'RGB LED',
+  'part.ldrmodule': 'LDR light sensor module',
+  'part.rain': 'Rain sensor module',
+  'part.mq135': 'MQ-135 gas sensor',
+  'part.pir': 'HC-SR501 motion sensor',
+  'part.rgbled': 'RGB LED module',
+  'part.ldrmodule.about':
+    'An LDR with its resistor and a comparator on one board. AO gives a voltage that falls as the light grows: read it with analogRead. DO is HIGH in the dark and goes LOW once it is brighter than the trimmer is set to; the second light on the module then comes on. Legs: VCC, GND, DO, AO. On an ESP32 board power it from 3V3, so that AO stays within what a pin can stand.',
+  'part.rain.about':
+    'A board of bare copper tracks that water joins together. AO is near the supply voltage when dry and falls as the board gets wetter. DO is HIGH when dry and goes LOW once it is wet enough; the trimmer sets how wet. Legs: VCC, GND, DO, AO. On an ESP32 board power it from 3V3.',
+  'part.mq135.about':
+    'This sensor has a small heater inside. Its AO voltage rises as the air gets worse (smoke, ammonia, alcohol vapour); it cannot tell which gas it is. DO goes LOW when AO passes the trimmer’s setting. The heater needs 5 V and about 150 mA, so on an ESP32 board power it from VIN and bring AO down with two resistors before it reaches a pin. A real sensor must warm up for some minutes after it is switched on. Legs: VCC, GND, DO, AO.',
+  'part.pir.about':
+    'This sensor notices warm things that move, such as people. Its OUT pin then goes HIGH (3.3 V) and stays HIGH for the set time after the movement stops; after that it notices nothing for about 2.5 seconds. It needs 5 V, so on an ESP32 board power it from VIN; OUT can go straight to a pin. A real sensor cannot be trusted for about a minute after it is switched on. Legs: VCC, OUT, GND. While the circuit runs, tap the sensor to start or stop the movement.',
+  'part.rgbled.about':
+    'A red, a green and a blue LED in one case, sharing one − leg. Give each colour its own resistor (start with 220 Ω) and its own pin; analogWrite sets how bright each one is, so you can mix any colour. Red needs about 1.8 V, green and blue about 2.8 V, so on 3.3 V green and blue are fainter. Legs: R, G, B, −.',
+  'inspector.wetness': 'Wetness of the board',
+  'inspector.gas': 'How bad the air is',
+  'inspector.threshold': 'Trimmer setting',
+  'inspector.moving': 'Something is moving',
+  'inspector.still': 'Nothing is moving',
+  'inspector.hold': 'How long the output is held',
+  'inspector.seconds': '{count} s',
+  'diag.module-underpowered':
+    '{id} is getting only {volts}. It needs at least {limit} to work, so it is not working properly now. Connect its supply leg to something that gives at least {limit}.',
+  'code.starter.esp32.light': 'Light in the dark (D34, D27, D2)',
+  'code.starter.esp32.motion': 'Detect movement (D27, D2)',
+  'code.starter.esp32.rgb': 'Mix colours (D25, D26, D27)',
   'part.relay': 'Relay',
   'part.relay.about':
     'A relay is a switch worked by an electromagnet. Current through the coil (the two left legs) pulls the contact shut and joins the two right legs. The coil needs about 70 mA, so drive it with a transistor, not straight from a board pin.',
@@ -647,6 +712,7 @@ export const en: Record<MessageKey, string> = {
   'esp32.works.6': 'Interrupts and pulseIn',
   'esp32.works.7': 'The servo (ESP32Servo library) and the ultrasonic sensor',
   'esp32.works.8': 'The DHT11 temperature and humidity sensor (with the real DHT library)',
+  'esp32.works.9': 'The kit’s LDR, rain, gas and motion sensors, and its RGB LED',
   'esp32.missing.title': 'What does not work yet',
   'esp32.missing.1': 'The OLED display and other I2C parts',
   'esp32.missing.2': 'Saved settings (Preferences) and sleep',

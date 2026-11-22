@@ -9,9 +9,10 @@ import {
 import { BOARD_MODELS, type BoardModel } from './boards';
 import { Esp32SimBoard, esp32Emulator, parseEsp32Firmware } from './esp32-sim-board';
 import { Esp32SketchBoard } from './esp32-sketch-board';
-import { DHT11_MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
+import { MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
 import { buildNetlist, type CircuitState, type Netlist } from './netlist';
 import { Peripherals, type ScheduledInput } from './peripherals';
+import { PIR_IDLE, pirDeadline, stepPir, type PirState } from './pir';
 import {
   Observation,
   readSolution,
@@ -95,6 +96,8 @@ const EMPTY_SOLUTION: StateSolution = {
   delivering: false,
   bridged: [],
   relays: {},
+  motion: {},
+  channels: {},
   iterations: 0,
 };
 
@@ -136,6 +139,9 @@ export class SimulationSession {
   private scheduled: ScheduledInput[] = [];
   /** Ultrasonic sensors whose echo line is HIGH right now. */
   private echo: Record<string, boolean> = {};
+  /** Where each motion sensor is in its timing, and which have their output HIGH right now. */
+  private readonly pirs = new Map<string, PirState>();
+  private motion: Record<string, boolean> = {};
 
   /** Number of times the circuit was actually solved; exposed for tests and tuning. */
   solveCount = 0;
@@ -177,6 +183,10 @@ export class SimulationSession {
     for (const id of this.stored.keys()) {
       if (!document.components.some((c) => c.id === id)) this.stored.delete(id);
     }
+    for (const id of this.pirs.keys()) {
+      if (!document.components.some((c) => c.id === id && c.type === 'pir')) this.pirs.delete(id);
+    }
+    this.motion = Object.fromEntries([...this.pirs].map(([id, pir]) => [id, pir.high]));
     this.peripherals.rewire(document);
     this.scheduled = this.scheduled.filter((input) => this.boards.has(input.boardId));
     this.feedInputs();
@@ -285,6 +295,7 @@ export class SimulationSession {
       stored: Object.fromEntries(this.stored),
       relays: this.relays,
       echo: this.echo,
+      motion: this.motion,
     };
   }
 
@@ -293,6 +304,7 @@ export class SimulationSession {
     for (const [id, board] of this.boards) key += `${id}:${board.drives.join(',')};`;
     for (const [id, closed] of Object.entries(this.relays)) if (closed) key += `${id};`;
     for (const [id, high] of Object.entries(this.echo)) if (high) key += `${id}^;`;
+    for (const [id, high] of Object.entries(this.motion)) if (high) key += `${id}~;`;
     return key;
   }
 
@@ -325,6 +337,7 @@ export class SimulationSession {
       if (device.kind === 'capacitor') this.stored.set(id, (device as Capacitor).storedVoltage);
     }
     this.latest = readSolution(this.document, netlist, result.solution, result.iterations);
+    this.latest.motion = this.motion;
     // A contact that should move does so for the next step.
     this.latest.relays = this.relays;
     this.relays = relayStates(this.document, this.latest, this.relays);
@@ -361,10 +374,7 @@ export class SimulationSession {
     if (this.boards.size === 0) return;
     const solution = this.hasCapacitors ? this.latest : this.solveSteady();
     const minSupply = new Map(
-      this.document.components.map((c) => [
-        c.id,
-        c.type === 'dht11' ? DHT11_MIN_SUPPLY : MODULE_MIN_SUPPLY,
-      ]),
+      this.document.components.map((c) => [c.id, MIN_SUPPLY[c.type] ?? MODULE_MIN_SUPPLY]),
     );
     this.peripherals.setPowered(
       (id) => (solution?.parts[id]?.voltage ?? 0) >= (minSupply.get(id) ?? MODULE_MIN_SUPPLY),
@@ -461,8 +471,59 @@ export class SimulationSession {
     return (pulled?.sockets[socket]?.voltage ?? 0) > board.model.logicHigh;
   }
 
+  /**
+   * Brings every motion sensor up to the present moment: its output rises on
+   * movement and falls when its hold time has run out.
+   */
+  private stepMotion(): void {
+    const sensors = this.document.components.filter((c) => c.type === 'pir');
+    if (sensors.length === 0) return;
+    const solution = this.hasCapacitors ? this.latest : this.solveSteady();
+    const next: Record<string, boolean> = {};
+    let changed = false;
+    for (const sensor of sensors) {
+      const before = this.pirs.get(sensor.id) ?? PIR_IDLE;
+      const after = stepPir(before, this.time, {
+        motion: sensor.props.motion,
+        powered: (solution?.parts[sensor.id]?.voltage ?? 0) >= MIN_SUPPLY.pir!,
+        holdMs: sensor.props.hold * 1000,
+      });
+      this.pirs.set(sensor.id, after);
+      next[sensor.id] = after.high;
+      changed ||= after.high !== before.high;
+    }
+    if (!changed) return;
+    this.motion = next;
+    this.feedInputs();
+  }
+
+  /** The next moment a motion sensor's output changes by itself, or Infinity. */
+  private motionDeadline(): number {
+    let soonest = Infinity;
+    for (const sensor of this.document.components) {
+      if (sensor.type !== 'pir') continue;
+      const at = pirDeadline(this.pirs.get(sensor.id) ?? PIR_IDLE, sensor.props.motion);
+      if (at > this.time + 1e-9) soonest = Math.min(soonest, at);
+    }
+    return soonest;
+  }
+
   /** Moves simulated time forward. */
   advance(milliseconds: number): void {
+    const end = this.time + milliseconds;
+    // Stop at each moment a motion sensor's output changes, so that it changes on time
+    // however long the stretch asked for.
+    for (;;) {
+      this.stepMotion();
+      const until = Math.min(end, this.motionDeadline());
+      if (until > this.time) this.run(until - this.time);
+      if (this.time >= end - 1e-9) break;
+    }
+    this.time = end;
+    this.stepMotion();
+  }
+
+  private run(milliseconds: number): void {
     const end = this.time + milliseconds;
     this.clock = this.time;
     if (!this.isTimeDependent) {

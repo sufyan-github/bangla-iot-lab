@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "pir-hc-sr501",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "pir",
+  "status": "simulated",
   "family": "sensor",
   "tier": 1,
   "name": {
@@ -11,12 +10,18 @@
     "en": "HC-SR501 motion sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Its output goes high when something warm moves."
+    "bn": "সামনে কিছু নড়লে আউটপুট HIGH হয়, আর কিছুক্ষণ HIGH থাকে।",
+    "en": "Its output goes high when something warm moves, and stays high for a while."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "timing",
+    "simplified": [
+      "Movement is switched on and off by hand. Distance, direction and how warm the thing is do not matter.",
+      "It works as soon as it has power. A real one needs about a minute first, and may give false signals in that time.",
+      "The jumper is taken to be in the \"repeat\" position: more movement keeps the output high.",
+      "After its output falls it ignores movement for 2.5 seconds. Sellers' datasheets do not agree on this time, nor on the range of the hold-time trimmer.",
+      "The sensitivity trimmer is left out."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -42,5 +47,9 @@
   "variants": [],
   "catalog": {
     "keywords": ["hc-sr501", "pir"]
+  },
+  "placement": {
+    "idPrefix": "PIR",
+    "offsets": [0, 1, 2]
   }
 }

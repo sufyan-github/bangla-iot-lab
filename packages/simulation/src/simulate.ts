@@ -8,10 +8,15 @@ import {
   LED_MAX_CURRENT,
   LED_RATED_CURRENT,
   LED_VISIBLE_CURRENT,
+  MIN_SUPPLY,
+  MODULE_COMPARATOR_MIN_SUPPLY,
   MOTOR_RATED_VOLTAGE,
   MOTOR_START_VOLTAGE,
   RELAY_DROP_OUT_CURRENT,
   RELAY_PULL_IN_CURRENT,
+  RGB_CHANNELS,
+  moduleTripped,
+  type RgbChannel,
 } from './library';
 import { IDLE_STATE, buildNetlist, type CircuitState, type Netlist } from './netlist';
 
@@ -27,11 +32,14 @@ export interface Reading {
   current: number;
   /** Average watts dissipated (or delivered, for a battery or board). */
   power: number;
-  /** Only for LEDs. */
+  /** For LEDs. For an RGB LED: the worst state and the brightest of its three. */
   led?: { state: LedState; brightness: number };
+  /** Only for an RGB LED: how bright each of its three LEDs is, 0 to 1. */
+  rgb?: Record<RgbChannel, number>;
   /**
-   * For parts that do something you can see or hear: 1 while a buzzer sounds or
-   * a relay's contact is closed, and a motor's speed from −1 (full speed backwards) to 1.
+   * For parts that do something you can see or hear: 1 while a buzzer sounds, a
+   * relay's contact is closed, a sensor module's indicator is lit or a motion
+   * sensor's output is HIGH; and a motor's speed from −1 (full speed backwards) to 1.
    */
   activity?: number;
   /** Servo horn position in degrees (0-180), once a program has set it. */
@@ -53,6 +61,7 @@ export type DiagnosticCode =
   | 'legs-in-same-strip'
   | 'pin-overcurrent'
   | 'pin-overvoltage'
+  | 'module-underpowered'
   | 'solver-failed';
 
 export interface Diagnostic {
@@ -62,7 +71,10 @@ export interface Diagnostic {
   componentId?: string;
   /** For `pin-overcurrent` and `pin-overvoltage`: the board socket, e.g. "d13". */
   socket?: string;
-  /** For `pin-overvoltage`: the highest voltage seen on the pin, and what the pin can stand. */
+  /**
+   * For `pin-overvoltage`: the highest voltage seen on the pin, and what the pin can stand.
+   * For `module-underpowered`: the module's supply, and the least it works on.
+   */
   volts?: number;
   limit?: number;
 }
@@ -92,6 +104,8 @@ export interface SimulationResult {
 interface Sample {
   voltage: number;
   current: number;
+  /** For a module whose `voltage` is its output signal: what it is supplied with. */
+  supply?: number;
 }
 
 /** The circuit solved for one instant: one combination of pin levels and button presses. */
@@ -110,6 +124,10 @@ export interface StateSolution {
   bridged: string[];
   /** Which relay contacts are closed in this state. */
   relays: Record<string, boolean>;
+  /** Which motion sensors have their output HIGH in this state. */
+  motion: Record<string, boolean>;
+  /** Each LED of an RGB LED module, keyed "RGB1.r". */
+  channels: Record<string, Sample>;
   iterations: number;
 }
 
@@ -117,6 +135,8 @@ export interface StateSolution {
 const SHORT_CIRCUIT_SAG = 0.5;
 const NEGLIGIBLE_CURRENT = 1e-6;
 const REVERSED_VOLTAGE = -0.5;
+/** Below this a module's supply legs are taken as not wired up yet, and nothing is said. */
+const UNPOWERED_VOLTS = 0.5;
 
 /**
  * Works out which relay contacts should be closed for the coil currents just
@@ -139,6 +159,20 @@ export function relayStates(
   return next;
 }
 
+/**
+ * A motion sensor's output when nothing is keeping time: HIGH while something
+ * moves in front of a powered sensor.
+ */
+function motionOutputs(document: CircuitDocument, solution: StateSolution) {
+  const next: Record<string, boolean> = {};
+  for (const component of document.components) {
+    if (component.type !== 'pir') continue;
+    const powered = (solution.parts[component.id]?.voltage ?? 0) >= MIN_SUPPLY.pir!;
+    next[component.id] = component.props.motion && powered;
+  }
+  return next;
+}
+
 const sameStates = (a: Readonly<Record<string, boolean>>, b: Readonly<Record<string, boolean>>) =>
   Object.keys(b).every((id) => Boolean(a[id]) === b[id]);
 
@@ -150,16 +184,21 @@ const sameStates = (a: Readonly<Record<string, boolean>>, b: Readonly<Record<str
  */
 export function solveState(document: CircuitDocument, state: CircuitState): StateSolution | null {
   let relays = state.relays ?? {};
+  let motion = state.motion ?? {};
   let solution: StateSolution | null = null;
   for (let round = 0; round < 4; round++) {
-    const netlist = buildNetlist(document, { ...state, relays });
+    const netlist = buildNetlist(document, { ...state, relays, motion });
     const dc = solveDc(netlist.circuit);
     if (!dc.ok) return null;
     solution = readSolution(document, netlist, dc.solution, dc.iterations);
     const next = relayStates(document, solution, relays);
+    // Whether a motion sensor is powered is only known once the circuit is solved.
+    const moving = state.motion ?? motionOutputs(document, solution);
     solution.relays = next;
-    if (sameStates(relays, next)) break;
+    solution.motion = moving;
+    if (sameStates(relays, next) && sameStates(motion, moving)) break;
     relays = next;
+    motion = moving;
   }
   return solution;
 }
@@ -186,6 +225,8 @@ export function readSolution(
     delivering: false,
     bridged: netlist.bridgedParts,
     relays: {},
+    motion: {},
+    channels: {},
     iterations,
   };
 
@@ -241,12 +282,38 @@ export function readSolution(
         };
         break;
       case 'dht11':
+      case 'pir':
         // A digital sensor: what is shown is its supply, which decides whether it works.
         result.parts[id] = {
           voltage: volts(component.pins.vcc) - volts(component.pins.gnd),
           current: device?.current(solution) ?? 0,
         };
         break;
+      case 'ldrmodule':
+      case 'rain':
+      case 'mq135':
+        result.parts[id] = {
+          voltage: volts(component.pins.ao) - volts(component.pins.gnd),
+          current: device?.current(solution) ?? 0,
+          supply: volts(component.pins.vcc) - volts(component.pins.gnd),
+        };
+        break;
+      case 'rgbled': {
+        let total = 0;
+        let highest = 0;
+        for (const channel of RGB_CHANNELS) {
+          const led = netlist.circuit.devices.find((d) => d.id === `${id}:${channel}`);
+          const sample = {
+            voltage: led?.voltage(solution) ?? 0,
+            current: led?.current(solution) ?? 0,
+          };
+          result.channels[`${id}.${channel}`] = sample;
+          total += sample.current;
+          highest = Math.max(highest, sample.voltage);
+        }
+        result.parts[id] = { voltage: highest, current: total };
+        break;
+      }
       case 'temperature':
       case 'soil':
       case 'ir':
@@ -428,20 +495,38 @@ export class Observation {
         current: average((s) => s.parts[id]!.current),
         power: average((s) => s.parts[id]!.voltage * s.parts[id]!.current),
       };
-      if (component.type === 'led') {
+      if (component.type === 'led' || component.type === 'rgbled') {
         // Damage depends on the worst instant; brightness on the average (as the eye sees PWM).
-        const peak = extreme((s) => s.parts[id]!.current, Math.max);
-        const lowest = extreme((s) => s.parts[id]!.voltage, Math.min);
-        let state: LedState = 'off';
-        if (peak > LED_BURN_CURRENT) state = 'burned';
-        else if (peak > LED_MAX_CURRENT) state = 'overcurrent';
-        else if (reading.current >= LED_VISIBLE_CURRENT) state = 'on';
-        else if (lowest < REVERSED_VOLTAGE) state = 'reversed';
-        const lit = state === 'on' || state === 'overcurrent';
-        reading.led = {
-          state,
-          brightness: lit ? Math.min(1, Math.sqrt(reading.current / LED_RATED_CURRENT)) : 0,
+        const judge = (pick: (s: StateSolution) => Sample) => {
+          const current = average((s) => pick(s).current);
+          const peak = extreme((s) => pick(s).current, Math.max);
+          const lowest = extreme((s) => pick(s).voltage, Math.min);
+          let state: LedState = 'off';
+          if (peak > LED_BURN_CURRENT) state = 'burned';
+          else if (peak > LED_MAX_CURRENT) state = 'overcurrent';
+          else if (current >= LED_VISIBLE_CURRENT) state = 'on';
+          else if (lowest < REVERSED_VOLTAGE) state = 'reversed';
+          const lit = state === 'on' || state === 'overcurrent';
+          return {
+            state,
+            brightness: lit ? Math.min(1, Math.sqrt(current / LED_RATED_CURRENT)) : 0,
+          };
         };
+        if (component.type === 'led') {
+          reading.led = judge((s) => s.parts[id]!);
+        } else {
+          // Three LEDs in one case: each is judged alone, and the worst one is reported.
+          const each = RGB_CHANNELS.map((channel) => judge((s) => s.channels[`${id}.${channel}`]!));
+          const worst = (['burned', 'overcurrent', 'reversed', 'on', 'off'] as const).find((s) =>
+            each.some((led) => led.state === s),
+          )!;
+          reading.led = {
+            state: worst,
+            brightness: Math.max(...each.map((led) => led.brightness)),
+          };
+          reading.rgb = { r: each[0]!.brightness, g: each[1]!.brightness, b: each[2]!.brightness };
+        }
+        const { state } = reading.led;
         if (state === 'reversed') {
           reversedLed = true;
           result.diagnostics.push({ code: 'led-reversed', severity: 'warning', componentId: id });
@@ -457,6 +542,17 @@ export class Observation {
       }
       if (component.type === 'relay') {
         reading.activity = average((s) => (s.relays[id] ? 1 : 0)) >= 0.5 ? 1 : 0;
+      } else if (component.type === 'pir') {
+        reading.activity = average((s) => (s.motion[id] ? 1 : 0)) >= 0.5 ? 1 : 0;
+      } else if (
+        component.type === 'ldrmodule' ||
+        component.type === 'rain' ||
+        component.type === 'mq135'
+      ) {
+        // The module's second LED: lit while its comparator holds DO LOW.
+        const supply = average((s) => s.parts[id]!.supply ?? 0);
+        reading.activity =
+          moduleTripped(component) && supply >= MODULE_COMPARATOR_MIN_SUPPLY ? 1 : 0;
       } else if (component.type === 'buzzer') {
         reading.activity = reading.voltage >= BUZZER_ON_VOLTAGE ? 1 : 0;
       } else if (component.type === 'motor') {
@@ -464,6 +560,20 @@ export class Observation {
         reading.activity = turning
           ? Math.max(-1, Math.min(1, reading.voltage / MOTOR_RATED_VOLTAGE))
           : 0;
+      }
+      // A module wired to a supply that is too low for it: it looks connected and does nothing.
+      const least = MIN_SUPPLY[component.type];
+      if (least !== undefined) {
+        const supply = average((s) => s.parts[id]!.supply ?? s.parts[id]!.voltage);
+        if (supply > UNPOWERED_VOLTS && supply < least) {
+          result.diagnostics.push({
+            code: 'module-underpowered',
+            severity: 'warning',
+            componentId: id,
+            volts: supply,
+            limit: least,
+          });
+        }
       }
       result.readings[id] = reading;
     }

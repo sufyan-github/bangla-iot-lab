@@ -17,10 +17,12 @@ import { Value } from 'typebox/value';
  * 6 — a wire may carry `bends`, the points the student routed it through.
  * 7 — adds the ESP32 development board.
  * 8 — adds the DHT11 temperature and humidity sensor.
+ * 9 — adds the LDR, rain and MQ-135 gas sensor modules, the motion sensor and
+ *     the RGB LED module.
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 8;
+export const CIRCUIT_SCHEMA_VERSION = 9;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -250,6 +252,69 @@ export const Dht11Schema = Type.Object({
   }),
 });
 
+/** Legs of a four-pin sensor module, in the order printed on it. */
+const moduleLeads = Type.Object({ vcc: Hole, gnd: Hole, do: Hole, ao: Hole });
+/** The module's trimmer: where its digital output switches, as a fraction of the supply. */
+const Threshold = Type.Number({ minimum: 0.05, maximum: 0.95 });
+const Fraction = Type.Number({ minimum: 0, maximum: 1 });
+
+/**
+ * LDR light sensor module: an LDR, a comparator and a trimmer on one board.
+ * AO falls as the light grows; DO goes LOW once it is brighter than the trimmer
+ * is set to. `light` runs from 0 (dark) to 1 (bright).
+ */
+export const LdrModuleSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('ldrmodule'),
+  pins: moduleLeads,
+  props: Type.Object({ light: Fraction, threshold: Threshold }),
+});
+
+/**
+ * Rain sensor: a board of bare tracks and its comparator module. AO falls as
+ * the board gets wetter; DO goes LOW once it is wet enough. `wetness` runs from
+ * 0 (dry) to 1 (covered in water).
+ */
+export const RainSensorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('rain'),
+  pins: moduleLeads,
+  props: Type.Object({ wetness: Fraction, threshold: Threshold }),
+});
+
+/**
+ * MQ-135 gas sensor module. AO rises as the air gets worse; DO goes LOW past
+ * the trimmer's setting. `gas` runs from 0 (clean air) to 1 (thick smoke).
+ */
+export const Mq135Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('mq135'),
+  pins: moduleLeads,
+  props: Type.Object({ gas: Fraction, threshold: Threshold }),
+});
+
+/**
+ * HC-SR501 motion sensor. Its output goes HIGH when something moves in front of
+ * it and stays HIGH for `hold` seconds after the movement stops.
+ */
+export const PirSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('pir'),
+  pins: sensorLeads,
+  props: Type.Object({
+    motion: Type.Boolean(),
+    hold: Type.Number({ minimum: 1, maximum: 300 }),
+  }),
+});
+
+/** RGB LED module: a red, a green and a blue LED in one case, sharing their negative leg. */
+export const RgbLedSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('rgbled'),
+  pins: Type.Object({ r: Hole, g: Hole, b: Hole, gnd: Hole }),
+  props: noProps,
+});
+
 /** Arduino UNO-compatible board. It sits beside the breadboard; wires plug into its sockets. */
 export const UnoSchema = Type.Object({
   id: Id,
@@ -290,6 +355,11 @@ export const ComponentSchema = Type.Union([
   UltrasonicSchema,
   LcdSchema,
   Dht11Schema,
+  LdrModuleSchema,
+  RainSensorSchema,
+  Mq135Schema,
+  PirSchema,
+  RgbLedSchema,
   UnoSchema,
   Esp32Schema,
 ]);

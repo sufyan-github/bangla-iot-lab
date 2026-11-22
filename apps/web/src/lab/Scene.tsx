@@ -31,6 +31,7 @@ import {
   type Point,
 } from './geometry';
 import {
+  AnalogModuleView,
   BatteryView,
   BuzzerView,
   ButtonView,
@@ -41,9 +42,11 @@ import {
   LdrView,
   LedView,
   MotorView,
+  PirView,
   PotentiometerView,
   RelayView,
   ResistorView,
+  RgbLedView,
   SensorView,
   ServoView,
   SwitchView,
@@ -415,6 +418,46 @@ export function BoardPartDrawing(props: {
           selected={selected}
         />
       );
+    case 'ldrmodule':
+    case 'rain':
+    case 'mq135': {
+      const sensed =
+        part.type === 'ldrmodule'
+          ? part.props.light
+          : part.type === 'rain'
+            ? part.props.wetness
+            : part.props.gas;
+      return (
+        <AnalogModuleView
+          kind={part.type}
+          first={at(part.pins.vcc)}
+          last={at(part.pins.ao)}
+          label={`${props.formatNumber(Math.round(sensed * 100))}%`}
+          lit={reading?.activity === 1}
+          selected={selected}
+        />
+      );
+    }
+    case 'pir':
+      return (
+        <PirView
+          vcc={at(part.pins.vcc)}
+          gnd={at(part.pins.gnd)}
+          motion={part.props.motion}
+          high={reading?.activity === 1}
+          selected={selected}
+        />
+      );
+    case 'rgbled':
+      return (
+        <RgbLedView
+          first={at(part.pins.r)}
+          last={at(part.pins.gnd)}
+          mix={reading?.rgb}
+          state={reading?.led?.state}
+          selected={selected}
+        />
+      );
     case 'temperature':
       return (
         <SensorView
@@ -535,7 +578,15 @@ export function Scene({
             style={layerStyle(component.id)}
             data-part={component.id}
             data-pressed={component.type === 'button' ? held : undefined}
-            data-led-state={component.type === 'led' ? (reading?.led?.state ?? 'idle') : undefined}
+            data-led-state={
+              component.type === 'led' || component.type === 'rgbled'
+                ? (reading?.led?.state ?? 'idle')
+                : undefined
+            }
+            data-colours={
+              reading?.rgb &&
+              (['r', 'g', 'b'] as const).filter((c) => reading.rgb![c] > 0.05).join('')
+            }
             data-current-ma={reading ? (reading.current * 1000).toFixed(2) : undefined}
             data-voltage={reading ? reading.voltage.toFixed(3) : undefined}
             data-activity={reading?.activity?.toFixed(2)}

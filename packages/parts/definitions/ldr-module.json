@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "ldr-module",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Only a bare LDR exists. The four-pin module with its comparator is not built.",
+  "simulates": "ldrmodule",
+  "status": "simulated",
   "family": "sensor",
   "tier": 1,
   "name": {
@@ -11,12 +10,17 @@
     "en": "LDR light sensor module"
   },
   "summary": {
-    "bn": "",
-    "en": "An LDR with a comparator: an analog and a digital output."
+    "bn": "আলো মাপে: AO পিনে ভোল্টেজ, আর DO পিনে হ্যাঁ বা না।",
+    "en": "Senses light: a voltage on AO, and a yes or no on DO."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "The LDR goes from 1 MΩ in the dark to 1 kΩ in bright light, evenly; a real one differs from piece to piece and reacts slowly to darkness.",
+      "Its comparator switches cleanly at the trimmer's setting. A real one flickers when the reading sits right at that point.",
+      "The resistances inside the module are estimates; no schematic of the kit's module has been seen.",
+      "The comparator and the two indicator lights draw a few milliamps that are not counted."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -47,5 +51,9 @@
   "variants": [],
   "catalog": {
     "keywords": ["ldr module"]
+  },
+  "placement": {
+    "idPrefix": "LDM",
+    "offsets": [0, 1, 2, 3]
   }
 }

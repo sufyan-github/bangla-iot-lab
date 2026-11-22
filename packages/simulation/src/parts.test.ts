@@ -453,7 +453,8 @@ describe('servo', () => {
     // It goes up and then comes back down.
     const peak = angles.indexOf(Math.max(...angles));
     expect(angles.at(-1)!).toBeLessThan(angles[peak]!);
-  });
+    // Four simulated seconds of the processor: about four real ones, more on a busy machine.
+  }, 30_000);
 
   it('does not move without power, and ignores a pin that is merely blinking', () => {
     const unpowered = new SimulationSession(circuit([uno, servo], [['UNO1.d9', 'a12']]));

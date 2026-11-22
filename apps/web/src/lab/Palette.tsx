@@ -162,6 +162,41 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M6 15v-3q1.5-2 3 0v3M14 15h2M18 15v-3l-4-2" {...stroke} strokeWidth={1.6} />
     </>
   ),
+  ldrmodule: (
+    <>
+      <rect x="3" y="9" width="18" height="12" rx="2" {...stroke} />
+      <circle cx="12" cy="15" r="3" {...stroke} />
+      <path d="M7 2l2 3.5M12 1.5v4M17 2l-2 3.5" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  rain: (
+    <>
+      <path
+        d="M6.5 13.5a4.5 4.5 0 0 1 .8-8.9 5.5 5.5 0 0 1 10.4 1.5 3.8 3.8 0 0 1-.7 7.4z"
+        {...stroke}
+      />
+      <path d="M8 17l-1 3M12.5 17l-1 3M17 17l-1 3" {...stroke} />
+    </>
+  ),
+  mq135: (
+    <>
+      <circle cx="12" cy="12" r="8.5" {...stroke} />
+      <path d="M8 9.5h8M7 12.5h10M8.5 15.5h7" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  pir: (
+    <>
+      <path d="M5 16a7 7 0 0 1 14 0z" {...stroke} />
+      <path d="M3 20h18M12 9v7M8.5 10.5l1.5 5.5M15.5 10.5L14 16" {...stroke} strokeWidth={1.6} />
+      <path d="M4 6.5q-1.5 2 0 4M20 6.5q1.5 2 0 4" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  rgbled: (
+    <>
+      <path d="M7 13V9a5 5 0 0 1 10 0v4z" {...stroke} />
+      <path d="M5.5 13h13M8 13v8M10.7 13v6M13.3 13v8M16 13v6" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
   ir: (
     <>
       <rect x="3" y="8" width="7" height="8" rx="1.5" {...stroke} />
@@ -175,8 +210,8 @@ const GROUPS: PaletteItem[][] = [
   ['select', 'wire', 'probe'],
   ['battery', 'uno', 'esp32'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
-  ['buzzer', 'motor', 'relay', 'servo', 'lcd'],
-  ['ldr', 'temperature', 'dht11', 'soil', 'ir', 'ultrasonic'],
+  ['buzzer', 'motor', 'relay', 'servo', 'rgbled', 'lcd'],
+  ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

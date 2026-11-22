@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "mq-135",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "mq135",
+  "status": "simulated",
   "family": "sensor",
   "tier": 1,
   "name": {
@@ -11,12 +10,20 @@
     "en": "MQ-135 gas sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Responds to air quality after its heater warms up."
+    "bn": "বাতাস খারাপ হলে AO পিনের ভোল্টেজ বাড়ে। হিটারের জন্য ৫ ভোল্ট লাগে।",
+    "en": "AO rises as the air gets worse. Its heater needs 5 V."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "It answers at once. A real one must warm up for minutes before its reading settles, and for a day or more when new.",
+      "The slider is \"clean air\" to \"thick smoke\", not a gas concentration: the lab does not work out ppm, and a real sensor cannot tell one gas from another.",
+      "Temperature and humidity do not change the reading. On a real sensor they do.",
+      "On less than 4.5 V the lab warns that the heater is too cool. What a real sensor reads then is not modelled.",
+      "Its comparator switches cleanly at the trimmer's setting. A real one flickers when the reading sits right at that point.",
+      "The resistances inside the module are estimates; no schematic of the kit's module has been seen.",
+      "The comparator and the two indicator lights draw a few milliamps that are not counted."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -47,5 +54,9 @@
   "variants": [],
   "catalog": {
     "keywords": ["mq-135"]
+  },
+  "placement": {
+    "idPrefix": "MQ",
+    "offsets": [0, 1, 2, 3]
   }
 }

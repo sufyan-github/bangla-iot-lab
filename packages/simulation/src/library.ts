@@ -26,14 +26,29 @@ export const LED_FORWARD_VOLTAGE: Record<LedColor, number> = {
   white: 3.1,
 };
 
-/** Shockley parameters that reproduce the colour's forward voltage at 20 mA. */
-export function ledDiodeModel(color: LedColor): DiodeModel {
+/** Shockley parameters that reproduce a forward voltage at 20 mA. */
+export function diodeModelFor(forwardVoltage: number): DiodeModel {
   const nVt = LED_EMISSION * THERMAL_VOLTAGE;
   return {
-    saturationCurrent: LED_RATED_CURRENT / Math.expm1(LED_FORWARD_VOLTAGE[color] / nVt),
+    saturationCurrent: LED_RATED_CURRENT / Math.expm1(forwardVoltage / nVt),
     emissionCoefficient: LED_EMISSION,
   };
 }
+
+/** Shockley parameters that reproduce the colour's forward voltage at 20 mA. */
+export function ledDiodeModel(color: LedColor): DiodeModel {
+  return diodeModelFor(LED_FORWARD_VOLTAGE[color]);
+}
+
+/**
+ * The three LEDs of an RGB LED module. REPORTED by one maker of the module
+ * (Joy-IT, KY-016: red 1.8 V, green and blue 2.8 V); not measured on the kit's
+ * module. Green here is not the green of a single 5 mm LED above: an RGB LED
+ * uses a different kind, which needs nearly as much voltage as blue.
+ */
+export const RGB_CHANNELS = ['r', 'g', 'b'] as const;
+export type RgbChannel = (typeof RGB_CHANNELS)[number];
+export const RGB_FORWARD_VOLTAGE: Record<RgbChannel, number> = { r: 1.8, g: 2.8, b: 2.8 };
 
 /**
  * Internal resistance of a battery, ohms. It keeps a shorted battery solvable
@@ -117,6 +132,73 @@ export function sensorOutputFraction(
 }
 
 /**
+ * Four-pin sensor modules (LDR, rain, gas): the sensing part and a fixed
+ * resistor make a voltage divider, whose tap is the AO pin; a comparator
+ * compares the tap with a trimmer and pulls the DO pin LOW (and lights the
+ * module's second LED) on one side of it.
+ *
+ * REPORTED by sellers' pages: which way AO moves and when DO is LOW. ESTIMATE:
+ * every resistance below. No schematic of the kit's modules has been seen and
+ * nothing here is measured; hardware tests C11, C12 and C14 are there for that.
+ */
+export type AnalogModule = Extract<CircuitComponent, { type: 'ldrmodule' | 'rain' | 'mq135' }>;
+/** The fixed resistor that the LDR is in series with. ESTIMATE. */
+export const LDR_MODULE_RESISTANCE = 10_000;
+/** The resistor that holds DO HIGH; the comparator can only pull it LOW. ESTIMATE. */
+export const MODULE_DO_PULLUP = 10_000;
+/** The comparator's output while it pulls DO LOW. ESTIMATE. */
+export const MODULE_DO_LOW_RESISTANCE = 100;
+/** Below this supply the comparator and its LED do nothing (LM393: from 2 V). */
+export const MODULE_COMPARATOR_MIN_SUPPLY = 2;
+
+/**
+ * The AO pin of a four-pin module as a fraction of its supply, with nothing
+ * heavy connected to it.
+ */
+export function moduleOutputFraction(module: AnalogModule): number {
+  switch (module.type) {
+    case 'ldrmodule': {
+      // The LDR is the lower half of the divider: more light, less voltage.
+      const ldr = ldrResistance(module.props.light);
+      return ldr / (ldr + LDR_MODULE_RESISTANCE);
+    }
+    case 'rain':
+      // Dry tracks hardly conduct; water joins them. ESTIMATE of how far AO falls.
+      return 0.98 - 0.68 * module.props.wetness;
+    case 'mq135':
+      // The sensing layer conducts better in bad air, which raises AO. ESTIMATE of the range.
+      return 0.1 + 0.7 * module.props.gas;
+  }
+}
+
+/** True while the module's comparator pulls DO LOW: bright, wet, or bad air. */
+export function moduleTripped(module: AnalogModule): boolean {
+  const fraction = moduleOutputFraction(module);
+  return module.type === 'mq135'
+    ? fraction > module.props.threshold
+    : fraction < module.props.threshold;
+}
+
+/**
+ * MQ-135 heater. REPORTED: 33 Ω ± 5 % in one maker's datasheet (Hanwei), 30 Ω ± 3 Ω
+ * in another's (Winsen); both give 5 V as the heater's supply. About 150 mA.
+ */
+export const MQ135_HEATER_RESISTANCE = 33;
+
+/**
+ * HC-SR501 motion sensor. REPORTED by sellers' datasheets, which do not all
+ * agree: supply 4.5 V to 20 V; output 3.3 V or 0 V; after its output falls it
+ * ignores movement for 2.5 s (one seller says 8 s). The shortest hold time of
+ * its trimmer is given as 0.3 s, 3 s or 5 s, and the longest as 200 s or 300 s.
+ * ESTIMATE: the output and supply resistances. Nothing measured (test C15).
+ */
+export const PIR_OUTPUT_VOLTS = 3.3;
+export const PIR_OUTPUT_RESISTANCE = 1000;
+/** Draws well under a milliamp. */
+export const PIR_SUPPLY_RESISTANCE = 100_000;
+export const PIR_BLOCK_MS = 2500;
+
+/**
  * Small 5 V relay: a 70 Ω coil (71 mA at 5 V, more than a board pin may supply).
  * The contact closes once the coil carries 50 mA and stays closed until the
  * current falls below 15 mA, as a real relay holds on with less than it needs to pull in.
@@ -129,13 +211,24 @@ export const RELAY_DROP_OUT_CURRENT = 0.015;
 export const MODULE_SUPPLY_RESISTANCE = { servo: 500, ultrasonic: 330, lcd: 2500 } as const;
 /** A module counts as powered above this supply voltage. */
 export const MODULE_MIN_SUPPLY = 4;
+/**
+ * The least supply each powered module works on. Below it the module does not
+ * answer (or, for the gas sensor, its heater is too cool to trust), and the lab says so.
+ */
+export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
+  servo: MODULE_MIN_SUPPLY,
+  ultrasonic: MODULE_MIN_SUPPLY,
+  lcd: MODULE_MIN_SUPPLY,
+  dht11: 3,
+  mq135: 4.5,
+  pir: 4.5,
+};
 
 /**
  * DHT11 temperature and humidity sensor. Timing and supply from its datasheet
  * (Aosong, "DHT11 Humidity & Temperature Sensor"); none of it measured here.
  */
-/** Works from 3 V, so also from the ESP32's 3.3 V pin. */
-export const DHT11_MIN_SUPPLY = 3;
+/** It works from 3 V (see `MIN_SUPPLY`), so also from the ESP32's 3.3 V pin. */
 /** About 1 mA while measuring at 3.3 V. */
 export const DHT11_SUPPLY_RESISTANCE = 3300;
 /** The pull-up resistor on the three-pin module's data line. ESTIMATE: modules carry 4.7 kΩ to 10 kΩ. */

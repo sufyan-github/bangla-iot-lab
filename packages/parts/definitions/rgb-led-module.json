@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "rgb-led-module",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "rgbled",
+  "status": "simulated",
   "family": "output",
   "tier": 1,
   "name": {
@@ -11,12 +10,16 @@
     "en": "RGB LED module"
   },
   "summary": {
-    "bn": "",
-    "en": "Three LEDs in one, for mixing colours."
+    "bn": "এক খোলে লাল, সবুজ আর নীল LED; মিশিয়ে যেকোনো রং।",
+    "en": "A red, a green and a blue LED in one case, for mixing colours."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "The module is taken to have no resistors of its own, so the lab asks for one on each colour. Some versions of the module carry three; adding your own is safe with both.",
+      "Forward voltages are one maker's figures (red 1.8 V, green and blue 2.8 V), not measured on the kit's module.",
+      "The colour shown mixes the three brightnesses evenly. A real LED's three colours are not equally bright, and they do not blend when you look straight at it."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -53,5 +56,9 @@
   ],
   "catalog": {
     "keywords": ["rgb led module"]
+  },
+  "placement": {
+    "idPrefix": "RGB",
+    "offsets": [0, 1, 2, 3]
   }
 }

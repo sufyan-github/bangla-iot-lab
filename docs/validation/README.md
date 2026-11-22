@@ -129,9 +129,11 @@ These check the circuit solver. They need no board and can start at once.
 
 ## Section C: ESP32 board and the school kit
 
-These tests are written now so the lab can prepare, but **the simulator has no
-ESP32 yet**. Run the hardware side when a kit is available; the comparison is
-filled in when each model exists.
+These tests were written before the simulator had an ESP32. It now has one, as
+an experiment, and models of some of the kit's parts; **none of them has been
+compared with hardware**. Run the hardware side when a kit is available. What
+the simulator assumes for the newest models is listed under the table, so the
+person measuring knows what to look for.
 
 | ID  | Test                    | Set-up                                                | Measure                                                                    |
 | --- | ----------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -155,6 +157,18 @@ filled in when each model exists.
 | C18 | Battery pack under load | Both motors stalled for 1 second, then free           | Pack voltage before, during, after                                         |
 | C19 | Board current           | Idle, Wi-Fi connected, Wi-Fi sending                  | Supply current; lowest supply voltage during a send                        |
 | C20 | RGB LED module          | Each colour at full, then mixed                       | Current per colour; which pin is common                                    |
+
+**What the simulator assumes today, to be checked by C11, C12, C14, C15 and C20.**
+Every figure is reported by sellers or estimated (see decision D-053); none is
+measured.
+
+| Test | The simulator assumes                                                                                                                                        |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| C11  | AO is the LDR against 10 kΩ: about 99 % of the supply in the dark, 9 % in bright light. DO is LOW when it is brighter than the trimmer's setting             |
+| C12  | AO is 98 % of the supply when dry and 30 % when the board is covered in water. DO is LOW when wet                                                            |
+| C14  | Heater 33 Ω (about 150 mA at 5 V). AO from 10 % of the supply in clean air to 80 % in thick smoke, with no warm-up time                                      |
+| C15  | Works from 4.5 V. Output 3.3 V through about 1 kΩ. Holds for the set time after the last movement (3 s at the least), then ignores movement for 2.5 s        |
+| C20  | The negative leg is common. Red needs 1.8 V and green and blue 2.8 V at 20 mA. **No resistors on the module: please note whether the kit's module has them** |
 
 ## Section D: systems (later)
 

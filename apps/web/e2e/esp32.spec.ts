@@ -59,6 +59,9 @@ test('the code tab says the ESP32 is experimental and offers only ESP32 programs
     'servo',
     'distance',
     'dht',
+    'light',
+    'motion',
+    'rgb',
     'custom',
   ]);
 });
@@ -330,4 +333,114 @@ test('the lab warns when the ultrasonic sensor’s 5 V echo goes straight into a
   await page.getByTestId('run').click();
   await expect(page.locator('[data-diag^="pin-overvoltage"]')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('[data-diag^="pin-overvoltage"]')).toContainText('D18');
+});
+
+// ---- the kit's simple sensors and its RGB LED ----
+
+const partAttribute = (page: Page, id: string, name: string) =>
+  page.locator(`[data-part="${id}"]`).getAttribute(name);
+
+test('the kit’s five new parts can be placed and are kept', async ({ page }) => {
+  await newEsp32Circuit(page);
+  const tools = [
+    ['ldrmodule', 'a1'],
+    ['rain', 'a6'],
+    ['mq135', 'a11'],
+    ['pir', 'a16'],
+    ['rgbled', 'a20'],
+  ] as const;
+  for (const [tool, hole] of tools) await place(page, tool, hole);
+  await expect(page.locator('[data-part]')).toHaveCount(tools.length + 1);
+  await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
+  await page.reload();
+  await expect(page.locator('[data-part]')).toHaveCount(tools.length + 1);
+});
+
+test('an LDR module lights the LED in the dark, and its own light when it is bright', async ({
+  page,
+}) => {
+  await newEsp32Circuit(page);
+  await place(page, 'ldrmodule', 'c10'); // legs: c10 VCC, c11 GND, c12 DO, c13 AO
+  await place(page, 'resistor', 'c20'); // c20 – c24
+  await place(page, 'led', 'e24'); // e24 – e25
+  await wire(page, [
+    ['ESP1.3v3', 'a10'],
+    ['ESP1.gnd1', 'a11'],
+    ['ESP1.d27', 'a12'],
+    ['ESP1.d34', 'a13'],
+    ['ESP1.d2', 'a20'],
+    ['ESP1.gnd2', 'a25'],
+  ]);
+  await chooseStarter(page, 'light');
+  await page.getByTestId('run').click();
+  // It arrives in middling light, which the module still counts as dark: DO is HIGH.
+  await expect.poll(() => ledState(page), SAMPLING).toBe('on');
+  await expect.poll(() => partAttribute(page, 'LDM1', 'data-activity')).toBe('0.00');
+
+  await page.locator('[data-hit="LDM1"]').click();
+  await page.getByTestId('slider-light').fill('0.95');
+  await expect.poll(() => ledState(page), SAMPLING).toBe('off');
+  await expect.poll(() => partAttribute(page, 'LDM1', 'data-activity')).toBe('1.00');
+  // AO in bright light: a tenth of 3.3 V or so.
+  const volts = Number(await partAttribute(page, 'LDM1', 'data-voltage'));
+  expect(volts).toBeGreaterThan(0.2);
+  expect(volts).toBeLessThan(0.6);
+});
+
+test('a motion sensor holds its output after the movement stops', async ({ page }) => {
+  await newEsp32Circuit(page);
+  await place(page, 'pir', 'c10'); // legs: c10 VCC, c11 OUT, c12 GND
+  await wire(page, [
+    ['ESP1.vin', 'a10'],
+    ['ESP1.d27', 'a11'],
+    ['ESP1.gnd1', 'a12'],
+  ]);
+  await page.getByTestId('run').click();
+  const high = () => partAttribute(page, 'PIR1', 'data-activity');
+  await expect.poll(high).toBe('0.00');
+  // Something moves, then stops at once.
+  await page.locator('[data-press="PIR1"]').click();
+  await expect.poll(high, SAMPLING).toBe('1.00');
+  await page.locator('[data-press="PIR1"]').click();
+  // Still HIGH a second later; LOW once its three seconds are over.
+  await page.waitForTimeout(1000);
+  expect(await high()).toBe('1.00');
+  await expect.poll(high, SAMPLING).toBe('0.00');
+  await expect(page.locator('[data-diag^="module-underpowered"]')).toHaveCount(0);
+});
+
+test('a motion sensor on 3.3 V does nothing, and the lab says why', async ({ page }) => {
+  await newEsp32Circuit(page);
+  await place(page, 'pir', 'c10');
+  await wire(page, [
+    ['ESP1.3v3', 'a10'],
+    ['ESP1.gnd1', 'a12'],
+  ]);
+  await page.getByTestId('run').click();
+  await page.locator('[data-press="PIR1"]').click();
+  await expect(page.locator('[data-diag^="module-underpowered"]')).toBeVisible();
+  expect(await partAttribute(page, 'PIR1', 'data-activity')).toBe('0.00');
+});
+
+test('the RGB LED shows the colours the program mixes', async ({ page }) => {
+  await newEsp32Circuit(page);
+  await place(page, 'rgbled', 'e10'); // legs: e10 R, e11 G, e12 B, e13 −
+  // A resistor for each colour, each ending in that colour's column.
+  await place(page, 'resistor', 'c6'); // c6 – c10
+  await place(page, 'resistor', 'd7'); // d7 – d11
+  await place(page, 'resistor', 'b8'); // b8 – b12
+  await wire(page, [
+    ['ESP1.d25', 'a6'],
+    ['ESP1.d26', 'a7'],
+    ['ESP1.d27', 'a8'],
+    ['ESP1.gnd1', 'a13'],
+  ]);
+  await chooseStarter(page, 'rgb');
+  await page.getByTestId('run').click();
+  const colours = () => partAttribute(page, 'RGB1', 'data-colours');
+  // Each colour alone, then the mixtures, a second each.
+  for (const mix of ['r', 'g', 'b', 'rg', 'gb', 'rb', 'rgb']) {
+    await expect.poll(colours, SAMPLING).toBe(mix);
+  }
+  await expect(page.locator('[data-diag^="led-"]')).toHaveCount(0);
 });

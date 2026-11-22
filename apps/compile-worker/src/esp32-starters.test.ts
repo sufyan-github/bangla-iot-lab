@@ -17,6 +17,9 @@ describe('shipped ESP32 starter programs', () => {
       'distance.ino',
       'fade.ino',
       'knob.ino',
+      'light.ino',
+      'motion.ino',
+      'rgb.ino',
       'servo.ino',
     ]);
     for (const sketch of sketches) {

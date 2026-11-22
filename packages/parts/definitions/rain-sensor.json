@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "rain-sensor",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "rain",
+  "status": "simulated",
   "family": "sensor",
   "tier": 1,
   "name": {
@@ -11,12 +10,19 @@
     "en": "Rain sensor module"
   },
   "summary": {
-    "bn": "",
+    "bn": "বোর্ডে পানি পড়লে টের পায়।",
     "en": "Detects water on its board."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "How far AO falls for a given wetness is an estimate. On a real board it depends on how much water there is, where it lies and how clean it is.",
+      "The sensing board is drawn as part of the module; on the real one it is a separate board on two wires.",
+      "The tracks do not corrode. Real ones do when left powered while wet.",
+      "Its comparator switches cleanly at the trimmer's setting. A real one flickers when the reading sits right at that point.",
+      "The resistances inside the module are estimates; no schematic of the kit's module has been seen.",
+      "The comparator and the two indicator lights draw a few milliamps that are not counted."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -47,5 +53,9 @@
   "variants": [],
   "catalog": {
     "keywords": ["rain sensor", "rain/steam"]
+  },
+  "placement": {
+    "idPrefix": "RAIN",
+    "offsets": [0, 1, 2, 3]
   }
 }

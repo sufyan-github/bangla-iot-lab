@@ -26,6 +26,12 @@ import esp32DistanceSource from '@banglalab/board-emulators/fixtures/esp32-start
 import esp32DistanceModule from '@banglalab/board-emulators/fixtures/esp32-starters/distance.wasm.base64?raw';
 import esp32DhtSource from '@banglalab/board-emulators/fixtures/esp32-starters/dht.ino?raw';
 import esp32DhtModule from '@banglalab/board-emulators/fixtures/esp32-starters/dht.wasm.base64?raw';
+import esp32LightSource from '@banglalab/board-emulators/fixtures/esp32-starters/light.ino?raw';
+import esp32LightModule from '@banglalab/board-emulators/fixtures/esp32-starters/light.wasm.base64?raw';
+import esp32MotionSource from '@banglalab/board-emulators/fixtures/esp32-starters/motion.ino?raw';
+import esp32MotionModule from '@banglalab/board-emulators/fixtures/esp32-starters/motion.wasm.base64?raw';
+import esp32RgbSource from '@banglalab/board-emulators/fixtures/esp32-starters/rgb.ino?raw';
+import esp32RgbModule from '@banglalab/board-emulators/fixtures/esp32-starters/rgb.wasm.base64?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -56,6 +62,9 @@ export const ESP32_STARTERS = {
   servo: { source: esp32ServoSource, hex: esp32ServoModule },
   distance: { source: esp32DistanceSource, hex: esp32DistanceModule },
   dht: { source: esp32DhtSource, hex: esp32DhtModule },
+  light: { source: esp32LightSource, hex: esp32LightModule },
+  motion: { source: esp32MotionSource, hex: esp32MotionModule },
+  rgb: { source: esp32RgbSource, hex: esp32RgbModule },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

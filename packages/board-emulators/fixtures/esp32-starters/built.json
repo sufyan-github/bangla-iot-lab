@@ -25,6 +25,18 @@
       "sourceHash": "6e0607bc599d746f83968e4be4bcf0416d3f32a35648ae9dd823d9ff016f7a32",
       "bytes": 39162
     },
+    "light": {
+      "sourceHash": "67b2f0c16f2ff1552f789cf7167c657cbe55757398144c0661de535d4027e579",
+      "bytes": 38881
+    },
+    "motion": {
+      "sourceHash": "c816ac460ee9176d7b4dee94769ed3dbf54608132eae4f7cbcadf7cc6927eebb",
+      "bytes": 7838
+    },
+    "rgb": {
+      "sourceHash": "d351d4ed7e988dd1b050d718cc4a109d20c858c706def181574a7f85244c4203",
+      "bytes": 8462
+    },
     "servo": {
       "sourceHash": "d5460d5e35b8185151dbbe87a09306ec0c4877048dbbf4de5775c5773142b68f",
       "bytes": 9468

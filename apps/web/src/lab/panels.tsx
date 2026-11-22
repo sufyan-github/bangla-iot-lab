@@ -111,6 +111,78 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
+  if (part.type === 'pir') {
+    return (
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-1.5" data-testid="toggle">
+          {[false, true].map((option) => (
+            <Choice
+              key={String(option)}
+              selected={part.props.motion === option}
+              onClick={() => setProps(part.id, { motion: option })}
+            >
+              {t(option ? 'inspector.moving' : 'inspector.still')}
+            </Choice>
+          ))}
+        </div>
+        <label className="block">
+          <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+            {t('inspector.hold')}
+            <span className="font-medium text-ink tabular-nums">
+              {t('inspector.seconds', { count: number(part.props.hold) })}
+            </span>
+          </span>
+          <input
+            type="range"
+            data-testid="slider-hold"
+            min={3}
+            max={60}
+            step={1}
+            value={part.props.hold}
+            onChange={(event) => setProps(part.id, { hold: Number(event.target.value) })}
+            className="h-11 w-full accent-amber"
+          />
+        </label>
+      </div>
+    );
+  }
+  if (part.type === 'ldrmodule' || part.type === 'rain' || part.type === 'mq135') {
+    // What the module is sensing, and its trimmer: the point at which DO switches.
+    const sensed = {
+      ldrmodule: { key: 'light', label: 'inspector.light' },
+      rain: { key: 'wetness', label: 'inspector.wetness' },
+      mq135: { key: 'gas', label: 'inspector.gas' },
+    }[part.type];
+    const sliders = [
+      { ...sensed, min: 0, max: 1 },
+      { key: 'threshold', label: 'inspector.threshold', min: 0.05, max: 0.95 },
+    ] as const;
+    const values = part.props as Record<string, number>;
+    return (
+      <div className="space-y-2">
+        {sliders.map((slider) => (
+          <label key={slider.key} className="block">
+            <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+              {t(slider.label as MessageKey)}
+              <span className="font-medium text-ink tabular-nums">
+                {number(Math.round(values[slider.key]! * 100))}%
+              </span>
+            </span>
+            <input
+              type="range"
+              data-testid={`slider-${slider.key}`}
+              min={slider.min}
+              max={slider.max}
+              step={0.01}
+              value={values[slider.key]}
+              onChange={(event) => setProps(part.id, { [slider.key]: Number(event.target.value) })}
+              className="h-11 w-full accent-amber"
+            />
+          </label>
+        ))}
+      </div>
+    );
+  }
   if (part.type === 'dht11') {
     // Two things to set: what the air is like where the sensor sits.
     const sliders = [

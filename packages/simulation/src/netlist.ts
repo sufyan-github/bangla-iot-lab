@@ -23,15 +23,27 @@ import {
   CONTACT_RESISTANCE,
   DHT11_PULLUP_RESISTANCE,
   DHT11_SUPPLY_RESISTANCE,
+  LDR_MODULE_RESISTANCE,
+  MODULE_DO_LOW_RESISTANCE,
+  MODULE_DO_PULLUP,
   MOTOR_RESISTANCE,
+  MQ135_HEATER_RESISTANCE,
+  PIR_OUTPUT_RESISTANCE,
+  PIR_OUTPUT_VOLTS,
+  PIR_SUPPLY_RESISTANCE,
+  RGB_CHANNELS,
+  RGB_FORWARD_VOLTAGE,
   NPN_TRANSISTOR,
   MODULE_SUPPLY_RESISTANCE,
   RELAY_COIL_RESISTANCE,
   SENSOR_RESISTANCE,
   SILICON_DIODE,
   WIRE_RESISTANCE,
+  diodeModelFor,
   ldrResistance,
   ledDiodeModel,
+  moduleOutputFraction,
+  moduleTripped,
   sensorOutputFraction,
 } from './library';
 
@@ -50,6 +62,12 @@ export interface CircuitState {
   relays?: Readonly<Record<string, boolean>>;
   /** Ultrasonic sensors whose echo output is HIGH at the moment. */
   echo?: Readonly<Record<string, boolean>>;
+  /**
+   * Motion sensors whose output is HIGH at the moment. A running session keeps
+   * this, because the output stays HIGH for a while after the movement. When it
+   * is absent the output simply follows the movement, on a powered sensor.
+   */
+  motion?: Readonly<Record<string, boolean>>;
 }
 
 export const IDLE_STATE: CircuitState = { pressed: [], boards: {} };
@@ -284,6 +302,67 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           add(resistor(id, supply, node(component.pins.gnd), DHT11_SUPPLY_RESISTANCE)),
         );
         add(resistor(`${id}:pullup`, supply, node(component.pins.data), DHT11_PULLUP_RESISTANCE));
+        break;
+      }
+      case 'ldrmodule':
+      case 'rain':
+      case 'mq135': {
+        // The sensing divider with AO at its tap, and the comparator's output on DO:
+        // held HIGH by a resistor, pulled LOW when the module trips.
+        const supply = node(component.pins.vcc);
+        const ground = node(component.pins.gnd);
+        const tap = node(component.pins.ao);
+        const [upper, lower] =
+          component.type === 'ldrmodule'
+            ? [LDR_MODULE_RESISTANCE, ldrResistance(component.props.light)]
+            : (() => {
+                const fraction = moduleOutputFraction(component);
+                return [SENSOR_RESISTANCE * (1 - fraction), SENSOR_RESISTANCE * fraction];
+              })();
+        const divider = add(resistor(`${id}:upper`, supply, tap, Math.max(10, upper)));
+        add(resistor(`${id}:lower`, tap, ground, Math.max(10, lower)));
+        // What the gas sensor draws is nearly all its heater.
+        partDevice.set(
+          id,
+          component.type === 'mq135'
+            ? add(resistor(`${id}:heater`, supply, ground, MQ135_HEATER_RESISTANCE))
+            : divider,
+        );
+        const out = node(component.pins.do);
+        add(resistor(`${id}:pullup`, supply, out, MODULE_DO_PULLUP));
+        if (moduleTripped(component)) {
+          add(resistor(`${id}:do`, out, ground, MODULE_DO_LOW_RESISTANCE));
+        }
+        break;
+      }
+      case 'pir': {
+        const ground = node(component.pins.gnd);
+        const out = node(component.pins.out);
+        partDevice.set(
+          id,
+          add(resistor(id, node(component.pins.vcc), ground, PIR_SUPPLY_RESISTANCE)),
+        );
+        add(
+          state.motion?.[id]
+            ? theveninSource(`${id}:out`, out, ground, PIR_OUTPUT_VOLTS, PIR_OUTPUT_RESISTANCE)
+            : resistor(`${id}:out`, out, ground, PIR_OUTPUT_RESISTANCE),
+        );
+        break;
+      }
+      case 'rgbled': {
+        // Three LEDs that share their negative leg.
+        const ground = node(component.pins.gnd);
+        for (const channel of RGB_CHANNELS) {
+          const device = add(
+            diode(
+              `${id}:${channel}`,
+              node(component.pins[channel]),
+              ground,
+              diodeModelFor(RGB_FORWARD_VOLTAGE[channel]),
+            ),
+          );
+          if (channel === 'r') partDevice.set(id, device);
+        }
         break;
       }
       case 'temperature':

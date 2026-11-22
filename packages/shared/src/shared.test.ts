@@ -256,6 +256,23 @@ describe('the rest of the parts library', () => {
     });
     expect(placed('soil')).toMatchObject({ id: 'SOIL1', props: { moisture: 0.3 } });
     expect(placed('ir')).toMatchObject({ id: 'IR1', props: { detected: false } });
+    // The school kit's modules, with their legs in the order printed on them.
+    expect(placed('ldrmodule')).toMatchObject({
+      id: 'LDM1',
+      pins: { vcc: 'c10', gnd: 'c11', do: 'c12', ao: 'c13' },
+      props: { light: 0.5, threshold: 0.5 },
+    });
+    expect(placed('rain')).toMatchObject({ id: 'RAIN1', props: { wetness: 0, threshold: 0.5 } });
+    expect(placed('mq135')).toMatchObject({ id: 'MQ1', props: { gas: 0.1, threshold: 0.5 } });
+    expect(placed('pir')).toMatchObject({
+      id: 'PIR1',
+      pins: { vcc: 'c10', out: 'c11', gnd: 'c12' },
+      props: { motion: false, hold: 3 },
+    });
+    expect(placed('rgbled')).toMatchObject({
+      id: 'RGB1',
+      pins: { r: 'c10', g: 'c11', b: 'c12', gnd: 'c13' },
+    });
     expect(placed('servo')).toMatchObject({
       id: 'SRV1',
       pins: { gnd: 'c10', vcc: 'c11', signal: 'c12' },
