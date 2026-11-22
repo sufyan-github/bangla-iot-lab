@@ -12,6 +12,9 @@ export default defineConfig({
     ],
     environment: 'node',
     testTimeout: 30_000,
+    // Starting the compile worker builds the Arduino core and the ESP32 board library with
+    // its third-party libraries from an empty cache, which takes tens of seconds on CI.
+    hookTimeout: 120_000,
     fileParallelism: false,
   },
 });
