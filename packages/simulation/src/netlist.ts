@@ -47,6 +47,10 @@ import {
   OLED_PULLUP_RESISTANCE,
   OLED_SUPPLY_RESISTANCE,
   RELAY_COIL_RESISTANCE,
+  RELAY_MODULE_COIL_RESISTANCE,
+  RELAY_MODULE_IDLE_RESISTANCE,
+  RELAY_MODULE_OPTO_FORWARD,
+  RELAY_MODULE_OPTO_RESISTANCE,
   SENSOR_RESISTANCE,
   SILICON_DIODE,
   WIRE_RESISTANCE,
@@ -418,6 +422,38 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
             }
           }
         }
+        break;
+      }
+      case 'relaymodule': {
+        // The module's own load, its coil while it is energised, the optocoupler's
+        // LED on the input side of the jumper, and the contact.
+        const supply = node(component.pins.vcc);
+        const ground = node(component.pins.gnd);
+        const input = node(component.pins.in);
+        const energised = state.relays?.[id] ?? false;
+        partDevice.set(id, add(resistor(id, supply, ground, RELAY_MODULE_IDLE_RESISTANCE)));
+        if (energised) {
+          add(resistor(`${id}:coil`, supply, ground, RELAY_MODULE_COIL_RESISTANCE));
+        }
+        const middle = node(`${id}:opto`);
+        const led = diodeModelFor(RELAY_MODULE_OPTO_FORWARD);
+        if (component.props.trigger === 'low') {
+          // IN pulled LOW lets current flow from VCC through the LED into the pin.
+          add(resistor(`${id}:optoR`, supply, middle, RELAY_MODULE_OPTO_RESISTANCE));
+          add(diode(`${id}:opto`, middle, input, led));
+        } else {
+          // IN HIGH sends current through the LED to ground.
+          add(resistor(`${id}:optoR`, input, middle, RELAY_MODULE_OPTO_RESISTANCE));
+          add(diode(`${id}:opto`, middle, ground, led));
+        }
+        add(
+          resistor(
+            `${id}:contact`,
+            node(component.pins.com),
+            node(energised ? component.pins.no : component.pins.nc),
+            CONTACT_RESISTANCE,
+          ),
+        );
         break;
       }
       case 'oled': {

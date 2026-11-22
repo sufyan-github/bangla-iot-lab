@@ -31,12 +31,14 @@ describe('shipped ESP32 starter programs', () => {
       'plant.ino',
       'rain.ino',
       'rainalert.ino',
+      'relay.ino',
       'rgb.ino',
       'robot.ino',
       'security.ino',
       'servo.ino',
       'soil.ino',
       'streetlight.ino',
+      'watering.ino',
     ]);
     for (const sketch of sketches) {
       const name = sketch.replace(/\.ino$/, '');

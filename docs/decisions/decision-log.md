@@ -724,3 +724,25 @@ Not modelled: how long a write takes, flash wear, and running out of space
 in the board's inspector only while the circuit is stopped. Saved settings
 work with the lab's own model of the board; the chip emulator has no
 Preferences library yet.
+
+## D-059 — The relay module is modelled at its optocoupler, and its uncertain case is said plainly
+
+The kit's relay module was a bare relay standing in. It is now the module:
+the board pin lights an optocoupler's LED through about 1 kΩ, the module's
+transistor drives a 5 V coil from VCC, and a jumper chooses whether IN HIGH or
+IN LOW switches it on. The contact joins COM to NO when on and COM to NC when
+off.
+
+REPORTED: the coil (70 Ω, pulls in at 75 % of 5 V) from the relay maker's
+figures for this kind of relay; the optocoupler and the H/L jumper from
+sellers. ESTIMATE: the LED's resistor and the LED currents at which the relay
+pulls in (1 mA) and lets go (0.4 mA).
+
+With the jumper on L, a 3.3 V board's HIGH leaves the LED about 0.5 mA. Users
+report that some modules then cannot be switched off from an ESP32 and some
+can; the lab's model lets go. Rather than claim either, the lab warns whenever
+a LOW-trigger module's IN only gets a 3.3 V HIGH and says to use H. Hardware
+test C9 measures the kit's module.
+
+The lesson and the watering project switch only battery circuits, and say
+never to switch mains in a school lab.

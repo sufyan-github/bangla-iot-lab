@@ -1,6 +1,6 @@
 {
   "id": "plant-monitor",
-  "order": 22,
+  "order": 23,
   "parts": ["yl-69", "dht11", "oled-ssd1306-096", "rgb-led-module"],
   "after": ["soil-moisture", "dht11", "oled-display", "rgb-led"],
   "title": {

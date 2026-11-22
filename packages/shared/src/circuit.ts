@@ -22,10 +22,11 @@ import { isHole } from './breadboard';
  *     the RGB LED module.
  * 10 — adds the OLED display.
  * 11 — adds the L298N motor driver.
+ * 12 — adds the relay module.
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 11;
+export const CIRCUIT_SCHEMA_VERSION = 12;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -329,6 +330,19 @@ export const OledSchema = Type.Object({
   props: noProps,
 });
 
+/**
+ * One-channel relay module: a 5 V relay with the transistor and optocoupler
+ * that let a board pin switch it, and a jumper that chooses whether IN must be
+ * HIGH (`high`) or LOW (`low`) to switch the relay on. Its contact joins COM to
+ * NO while on and COM to NC while off.
+ */
+export const RelayModuleSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('relaymodule'),
+  pins: Type.Object({ vcc: Hole, gnd: Hole, in: Hole, com: Hole, no: Hole, nc: Hole }),
+  props: Type.Object({ trigger: Type.Union([Type.Literal('high'), Type.Literal('low')]) }),
+});
+
 /** Arduino UNO-compatible board. It sits beside the breadboard; wires plug into its sockets. */
 export const UnoSchema = Type.Object({
   id: Id,
@@ -399,6 +413,7 @@ export const ComponentSchema = Type.Union([
   PirSchema,
   RgbLedSchema,
   OledSchema,
+  RelayModuleSchema,
   UnoSchema,
   Esp32Schema,
   L298nSchema,

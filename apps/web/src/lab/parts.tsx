@@ -1469,6 +1469,103 @@ export function RelayView(props: {
   );
 }
 
+/**
+ * One-channel relay module: header pins VCC, GND and IN on the left, the
+ * blue relay, and the screw terminal for COM, NO and NC on the right. Its
+ * green light shows the relay is on; the jumper shows H or L.
+ */
+export function RelayModuleView(props: {
+  first: Point;
+  last: Point;
+  closed: boolean;
+  powered: boolean;
+  trigger: 'high' | 'low';
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const step = length / 6;
+  const leg = (i: number) => -length / 2 + step * i;
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-62} width={length + 24} height={66} color="#1d4f91" />
+      <PinHeader from={leg(0)} to={leg(2)} />
+      {[0, 1, 2].map((i) => (
+        <SolderDot key={i} x={leg(i)} />
+      ))}
+      {/* The screw terminal, green, over the three contact legs. */}
+      <rect
+        x={leg(4) - 11}
+        y={-14}
+        width={leg(6) - leg(4) + 22}
+        height={18}
+        rx={2}
+        fill="#2f8f5b"
+      />
+      {[4, 5, 6].map((i) => (
+        <g key={i}>
+          <circle cx={leg(i)} cy={-5} r={5.5} fill="url(#shade-metal)" stroke="#59626a" />
+          <path d={`M${leg(i) - 3.5} -5H${leg(i) + 3.5}`} stroke="#4b545b" strokeWidth={1.5} />
+        </g>
+      ))}
+      {/* The relay itself: a blue cube. */}
+      <rect x={leg(3) - 4} y={-56} width={leg(6) - leg(3) + 14} height={38} rx={2} fill="#2c63c9" />
+      <rect
+        x={leg(3) - 4}
+        y={-56}
+        width={leg(6) - leg(3) + 14}
+        height={38}
+        rx={2}
+        fill="url(#shade-side)"
+      />
+      <text
+        x={(leg(3) + leg(6)) / 2 + 3}
+        y={-33}
+        textAnchor="middle"
+        fontSize={9}
+        fontWeight={700}
+        fill="#e9f0ff"
+      >
+        5V
+      </text>
+      {/* The power light and the relay's light. */}
+      <circle cx={leg(0) - 2} cy={-50} r={2.8} fill={props.powered ? '#ff5340' : '#5a1f1a'} />
+      {props.closed && <circle cx={leg(1) + 4} cy={-50} r={7} fill="#58e07f" opacity={0.35} />}
+      <circle cx={leg(1) + 4} cy={-50} r={2.8} fill={props.closed ? '#58e07f' : '#1f4a2c'} />
+      {/* The trigger jumper: on H or on L. */}
+      <g transform={`translate(${leg(1)} -32)`}>
+        <text x={-9} y={3} fontSize={7.5} fontWeight={700} fill="#dfe9f5" textAnchor="middle">
+          H
+        </text>
+        <text x={9} y={3} fontSize={7.5} fontWeight={700} fill="#dfe9f5" textAnchor="middle">
+          L
+        </text>
+        <rect
+          x={props.trigger === 'high' ? -6 : -2}
+          y={-6}
+          width={8}
+          height={12}
+          rx={1.5}
+          fill="#f2c230"
+          stroke="#8a6a10"
+        />
+      </g>
+      <g fontSize={7} fontWeight={700} fill="#dfe9f5" textAnchor="middle" pointerEvents="none">
+        {['VCC', 'GND', 'IN'].map((name, i) => (
+          <text key={name} x={leg(i)} y={-9.5}>
+            {name}
+          </text>
+        ))}
+        {['COM', 'NO', 'NC'].map((name, i) => (
+          <text key={name} x={leg(i + 4)} y={-17.5} fill="#123">
+            {name}
+          </text>
+        ))}
+      </g>
+    </g>
+  );
+}
+
 /** Hobby servo: the arm on top turns to the commanded angle (straight up is 90°). */
 export function ServoView(props: {
   gnd: Point;

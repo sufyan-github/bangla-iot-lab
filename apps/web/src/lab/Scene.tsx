@@ -48,6 +48,7 @@ import {
   OledView,
   PirView,
   PotentiometerView,
+  RelayModuleView,
   RelayView,
   ResistorView,
   RgbLedView,
@@ -401,6 +402,17 @@ export function BoardPartDrawing(props: {
           first={at(part.pins.vss)}
           last={at(part.pins.k)}
           lines={reading?.lcd?.lines}
+          selected={selected}
+        />
+      );
+    case 'relaymodule':
+      return (
+        <RelayModuleView
+          first={at(part.pins.vcc)}
+          last={at(part.pins.nc)}
+          closed={reading?.activity === 1}
+          powered={(reading?.voltage ?? 0) > 2}
+          trigger={part.props.trigger}
           selected={selected}
         />
       );

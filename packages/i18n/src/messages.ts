@@ -281,6 +281,17 @@ export const bn = {
   'settings.erase': 'জমা রাখা সব মুছে ফেলো',
   'settings.eraseStopped': 'মুছতে হলে আগে সার্কিট বন্ধ করো।',
   'code.starter.esp32.counter': 'কতবার চালু হলো, মনে রাখো (D4)',
+  'tool.relaymodule': 'রিলে মডিউল',
+  'part.relaymodule': 'রিলে মডিউল (১ চ্যানেল)',
+  'part.relaymodule.about':
+    'বোর্ডের পিন দিয়ে আলাদা একটা সার্কিট (পাম্প, বড় বাতি) চালু-বন্ধ করার সুইচ। VCC যাবে VIN-এ (5 V), GND যাবে GND-তে, IN যাবে একটা পিনে। রিলে চালু হলে COM আর NO জুড়ে যায়, বন্ধ থাকলে COM আর NC। জাম্পার H-এ থাকলে IN HIGH হলে চালু হয়, L-এ থাকলে LOW হলে। ESP32-র সাথে জাম্পার H-এ রাখো। স্কুলের ল্যাবে রিলে দিয়ে কখনো বাসার বিদ্যুৎ (২২০ V) চালাবে না: শুধু ব্যাটারির সার্কিট।',
+  'inspector.trigger': 'জাম্পার: কখন চালু হবে',
+  'inspector.trigger.high': 'H: IN HIGH হলে',
+  'inspector.trigger.low': 'L: IN LOW হলে',
+  'diag.relay-low-trigger':
+    '{id}-র জাম্পার L-এ, আর IN পাচ্ছে মাত্র 3.3 V-এর HIGH। অনেক মডিউল 3.3 V-এ ঠিকমতো বন্ধ হয় না; ল্যাবের মডেলে হয়, কিন্তু আসল মডিউলে নাও হতে পারে। জাম্পারটা H-এ সরাও।',
+  'code.starter.esp32.relay': 'রিলে দিয়ে বাতি (D26)',
+  'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'part.relay': 'রিলে',
   'part.relay.about':
     'রিলে হলো তড়িৎচুম্বক দিয়ে চালানো সুইচ। কয়েলে (বাঁ দিকের দুই পা) কারেন্ট গেলে ভেতরের কন্টাক্ট টেনে বন্ধ হয় আর ডান দিকের দুই পা জুড়ে যায়। কয়েল প্রায় 70 mA চায়, তাই বোর্ডের পিন থেকে সরাসরি নয়, ট্রানজিস্টর দিয়ে চালাও।',
@@ -770,6 +781,17 @@ export const en: Record<MessageKey, string> = {
   'settings.erase': 'Erase everything saved',
   'settings.eraseStopped': 'Stop the circuit first to erase them.',
   'code.starter.esp32.counter': 'Count the starts (D4)',
+  'tool.relaymodule': 'Relay module',
+  'part.relaymodule': 'Relay module (1 channel)',
+  'part.relaymodule.about':
+    'A switch that lets a board pin turn a separate circuit (a pump, a bigger lamp) on and off. VCC goes to VIN (5 V), GND to GND, IN to a pin. When the relay is on, COM is joined to NO; when off, COM is joined to NC. With the jumper on H it switches on when IN is HIGH; on L, when IN is LOW. With an ESP32, keep the jumper on H. In a school lab never switch mains (220 V) with a relay: battery circuits only.',
+  'inspector.trigger': 'Jumper: when it switches on',
+  'inspector.trigger.high': 'H: when IN is HIGH',
+  'inspector.trigger.low': 'L: when IN is LOW',
+  'diag.relay-low-trigger':
+    "{id}'s jumper is on L, and IN gets only a 3.3 V HIGH. Many modules do not switch off reliably from 3.3 V; the lab's model does, but a real module may not. Move the jumper to H.",
+  'code.starter.esp32.relay': 'Lamp through a relay (D26)',
+  'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'part.relay': 'Relay',
   'part.relay.about':
     'A relay is a switch worked by an electromagnet. Current through the coil (the two left legs) pulls the contact shut and joins the two right legs. The coil needs about 70 mA, so drive it with a transistor, not straight from a board pin.',

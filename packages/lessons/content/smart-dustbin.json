@@ -1,6 +1,6 @@
 {
   "id": "smart-dustbin",
-  "order": 20,
+  "order": 21,
   "parts": ["hc-sr04", "sg90-servo", "buzzer-module-active", "resistor"],
   "after": ["ultrasonic", "servo", "buzzer"],
   "title": {

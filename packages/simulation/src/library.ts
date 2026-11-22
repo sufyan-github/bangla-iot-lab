@@ -248,6 +248,25 @@ export const L298N_LOGIC_MIN = 4.5;
 export const L298N_JUMPER_RESISTANCE = 1;
 
 /**
+ * One-channel 5 V relay module. REPORTED, by the relay maker for a 5 V relay of
+ * this kind: a 70 Ω coil that must pull in at 75 % of 5 V (3.75 V). REPORTED by
+ * sellers: an optocoupler drives the module's transistor, and a jumper chooses
+ * HIGH or LOW to switch on. ESTIMATE: the optocoupler's LED resistor, the LED
+ * currents at which the relay pulls in and lets go, and the lights' current.
+ * Nothing measured (hardware test C9).
+ */
+export const RELAY_MODULE_COIL_RESISTANCE = 70;
+export const RELAY_MODULE_OPTO_RESISTANCE = 1000;
+/** An infrared LED, about 1.2 V. */
+export const RELAY_MODULE_OPTO_FORWARD = 1.2;
+export const RELAY_MODULE_PULL_IN = 0.001;
+export const RELAY_MODULE_DROP_OUT = 0.0004;
+/** A 5 V relay lets go once its coil has less than about this. ESTIMATE (makers give 10 % of rated). */
+export const RELAY_MODULE_HOLD_VOLTS = 1.5;
+/** The power light, about 2 mA. */
+export const RELAY_MODULE_IDLE_RESISTANCE = 2200;
+
+/**
  * Small 5 V relay: a 70 Ω coil (71 mA at 5 V, more than a board pin may supply).
  * The contact closes once the coil carries 50 mA and stays closed until the
  * current falls below 15 mA, as a real relay holds on with less than it needs to pull in.
@@ -273,6 +292,7 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   pir: 4.5,
   oled: 3,
   l298n: 6.5,
+  relaymodule: 3.75,
 };
 
 /**

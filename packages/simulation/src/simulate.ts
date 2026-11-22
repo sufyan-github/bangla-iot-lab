@@ -23,6 +23,9 @@ import {
   MOTOR_RATED_VOLTAGE,
   MOTOR_START_VOLTAGE,
   RELAY_DROP_OUT_CURRENT,
+  RELAY_MODULE_DROP_OUT,
+  RELAY_MODULE_HOLD_VOLTS,
+  RELAY_MODULE_PULL_IN,
   RELAY_PULL_IN_CURRENT,
   RGB_CHANNELS,
   moduleTripped,
@@ -87,6 +90,7 @@ export type DiagnosticCode =
   | 'pin-overvoltage'
   | 'module-underpowered'
   | 'supply-backfeed'
+  | 'relay-low-trigger'
   | 'solver-failed';
 
 export interface Diagnostic {
@@ -178,6 +182,15 @@ export function relayStates(
 ): Record<string, boolean> {
   const next: Record<string, boolean> = {};
   for (const component of document.components) {
+    if (component.type === 'relaymodule') {
+      // The optocoupler's LED current decides; the coil also needs enough supply.
+      const led = Math.abs(solution.channels[`${component.id}.opto`]?.current ?? 0);
+      const supply = solution.parts[component.id]?.voltage ?? 0;
+      next[component.id] = current[component.id]
+        ? led > RELAY_MODULE_DROP_OUT && supply > RELAY_MODULE_HOLD_VOLTS
+        : led >= RELAY_MODULE_PULL_IN && supply >= MIN_SUPPLY.relaymodule!;
+      continue;
+    }
     if (component.type !== 'relay') continue;
     const coil = Math.abs(solution.parts[component.id]?.current ?? 0);
     next[component.id] = current[component.id]
@@ -375,6 +388,26 @@ export function readSolution(
           current: device?.current(solution) ?? 0,
         };
         break;
+      case 'relaymodule': {
+        // What it takes from its supply, and what its input sees.
+        const fromSupply = ['', ':coil', ...(component.props.trigger === 'low' ? [':optoR'] : [])]
+          .map((suffix) => netlist.circuit.devices.find((d) => d.id === `${id}${suffix}`))
+          .reduce((sum, d) => sum + (d?.current(solution) ?? 0), 0);
+        result.parts[id] = {
+          voltage: volts(component.pins.vcc) - volts(component.pins.gnd),
+          current: fromSupply,
+        };
+        const led = netlist.circuit.devices.find((d) => d.id === `${id}:opto`);
+        result.channels[`${id}.opto`] = {
+          voltage: led?.voltage(solution) ?? 0,
+          current: led?.current(solution) ?? 0,
+        };
+        result.channels[`${id}.in`] = {
+          voltage: volts(component.pins.in) - volts(component.pins.gnd),
+          current: 0,
+        };
+        break;
+      }
       case 'dht11':
       case 'pir':
         // A digital sensor: what is shown is its supply, which decides whether it works.
@@ -655,8 +688,20 @@ export class Observation {
           });
         }
       }
-      if (component.type === 'relay') {
+      if (component.type === 'relay' || component.type === 'relaymodule') {
         reading.activity = average((s) => (s.relays[id] ? 1 : 0)) >= 0.5 ? 1 : 0;
+        // A LOW-trigger module whose IN only gets a 3.3 V HIGH: on some modules a 3.3 V
+        // pin cannot switch it off. The lab's model does switch off; it says so plainly.
+        if (component.type === 'relaymodule' && component.props.trigger === 'low') {
+          const highest = extreme((s) => s.channels[`${id}.in`]?.voltage ?? 0, Math.max);
+          if (highest > 2.5 && highest < 4) {
+            result.diagnostics.push({
+              code: 'relay-low-trigger',
+              severity: 'warning',
+              componentId: id,
+            });
+          }
+        }
       } else if (component.type === 'l298n') {
         // Its light: on while its logic has power.
         reading.activity = average((s) => (s.drivers[id]?.awake ? 1 : 0)) >= 0.5 ? 1 : 0;

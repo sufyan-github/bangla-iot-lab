@@ -32,10 +32,10 @@ export function LessonPanel() {
   const sameKind = LESSONS.filter((l) => lessonKind(l) === lessonKind(lesson));
   const position = sameKind.indexOf(lesson) + 1;
 
-  const putProgram = () => {
-    if (boardId && lesson.program) {
-      useLab.getState().uploadProgram(boardId, starterProgram(lesson.program, 'esp32'));
-    }
+  const putProgram = async () => {
+    if (!boardId || !lesson.program) return;
+    const program = await starterProgram(lesson.program, 'esp32');
+    useLab.getState().uploadProgram(boardId, program);
   };
   const openNext = async () => {
     if (!next) return;
@@ -89,7 +89,7 @@ export function LessonPanel() {
             type="button"
             data-testid="lesson-program"
             disabled={!boardId}
-            onClick={putProgram}
+            onClick={() => void putProgram()}
             className="mt-3 min-h-11 rounded-lg bg-amber px-4 font-semibold text-ink hover:brightness-105 disabled:opacity-50"
           >
             {t('lesson.program')}

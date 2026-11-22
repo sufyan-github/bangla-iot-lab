@@ -182,6 +182,24 @@ function PartSettings({ part }: { part: CircuitComponent }) {
     );
   }
   if (part.type === 'oled') return <OledPreview id={part.id} />;
+  if (part.type === 'relaymodule') {
+    return (
+      <fieldset>
+        <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.trigger')}</legend>
+        <div className="flex flex-wrap gap-1.5" data-testid="relay-trigger">
+          {(['high', 'low'] as const).map((trigger) => (
+            <Choice
+              key={trigger}
+              selected={part.props.trigger === trigger}
+              onClick={() => setProps(part.id, { trigger })}
+            >
+              {t(trigger === 'high' ? 'inspector.trigger.high' : 'inspector.trigger.low')}
+            </Choice>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
   if (part.type === 'l298n') {
     // The two small jumpers that keep each motor channel switched on.
     const jumpers = [

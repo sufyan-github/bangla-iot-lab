@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "relay-module-1ch",
-  "simulates": "relay",
-  "status": "generic",
-  "statusNote": "The bare relay stands in. The driver, optocoupler and high/low trigger jumper are not modelled.",
+  "simulates": "relaymodule",
+  "status": "simulated",
   "family": "actuator",
   "tier": 1,
   "name": {
@@ -11,12 +10,17 @@
     "en": "1-channel relay module"
   },
   "summary": {
-    "bn": "",
-    "en": "A relay with its driver and trigger jumper."
+    "bn": "বোর্ডের পিন দিয়ে বড় কোনো সার্কিট চালু-বন্ধ করার সুইচ।",
+    "en": "A switch for a bigger circuit, worked by a board pin."
   },
   "model": {
     "level": "electrical",
-    "simplified": []
+    "simplified": [
+      "The input is an optocoupler's LED behind 1 kΩ, and the relay pulls in once 1 mA flows through it and lets go below 0.4 mA. These values are estimates; modules differ, and hardware test C9 measures the kit's.",
+      "The relay's coil is 70 Ω and needs 3.75 V to pull in, from the relay maker's figures for a 5 V relay; it takes effect at once, with no delay and no click.",
+      "The contact is a 0.05 Ω switch with no limit on what it carries. A real one is rated for a few amperes, and must never switch mains voltage in a school lab.",
+      "The module's two lights draw a fixed small current; there is no spike when the coil switches off."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -37,10 +41,29 @@
       "id": "in",
       "label": "IN",
       "role": "input"
+    },
+    {
+      "id": "com",
+      "label": "COM",
+      "role": "passive"
+    },
+    {
+      "id": "no",
+      "label": "NO",
+      "role": "passive"
+    },
+    {
+      "id": "nc",
+      "label": "NC",
+      "role": "passive"
     }
   ],
   "variants": [],
   "catalog": {
     "keywords": ["relay module", "1-ch relay", "1-ch 5 v relay"]
+  },
+  "placement": {
+    "idPrefix": "RLY",
+    "offsets": [0, 1, 2, 4, 5, 6]
   }
 }

@@ -58,10 +58,10 @@ export function CodePanel({ boardId }: { boardId: string }) {
     serialBox.current?.scrollTo({ top: serialBox.current.scrollHeight });
   }, [serial]);
 
-  const chooseStarter = (id: string) => {
+  const chooseStarter = async (id: string) => {
     if (id === 'custom') return;
     build.reset();
-    const starter = starterProgram(id, board);
+    const starter = await starterProgram(id, board);
     // Ready-made programs ship built for the lab's own model of the board. For
     // the chip emulator only the sketch is taken: it is built when uploaded.
     if (engine === 'emulator') setSource(boardId, starter.source);
@@ -120,7 +120,7 @@ export function CodePanel({ boardId }: { boardId: string }) {
         <select
           data-testid="starter"
           value={matchingStarter(source, board) ?? 'custom'}
-          onChange={(event) => chooseStarter(event.target.value)}
+          onChange={(event) => void chooseStarter(event.target.value)}
           className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-3"
         >
           {starterIds(board).map((id) => (

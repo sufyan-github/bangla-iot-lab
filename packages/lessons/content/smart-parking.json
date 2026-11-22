@@ -1,6 +1,6 @@
 {
   "id": "smart-parking",
-  "order": 24,
+  "order": 25,
   "parts": ["ir-obstacle", "hc-sr04", "sg90-servo", "oled-ssd1306-096", "resistor"],
   "after": ["ir-obstacle", "ultrasonic", "servo", "oled-display"],
   "title": {

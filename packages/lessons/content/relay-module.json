@@ -1,0 +1,183 @@
+{
+  "id": "relay-module",
+  "order": 18,
+  "parts": ["relay-module-1ch", "led-5mm", "resistor", "battery"],
+  "title": {
+    "bn": "রিলে মডিউল: আলাদা সার্কিট চালানো",
+    "en": "The relay module: switching another circuit"
+  },
+  "summary": {
+    "bn": "বোর্ডের ছোট্ট সংকেত দিয়ে ব্যাটারির আলাদা একটা সার্কিট চালু-বন্ধ করো।",
+    "en": "Switch a separate battery circuit on and off with the board's small signal."
+  },
+  "setup": {
+    "board": "esp32",
+    "battery": 6
+  },
+  "program": "relay",
+  "steps": [
+    {
+      "text": {
+        "bn": "**রিলে** একটা সুইচ, যা তড়িৎচুম্বক দিয়ে চলে। বোর্ডের পিন রিলের কয়েল চালানোর মতো কারেন্ট দিতে পারে না, তাই মডিউলে একটা ট্রানজিস্টর আর অপটোকাপলার থাকে: পিন শুধু ২ মিলিঅ্যাম্পিয়ারের মতো দেয়। রিলের কন্টাক্ট বোর্ড থেকে পুরো আলাদা: তাই অন্য ব্যাটারির পাম্প বা বাতি চালাতে পারে।\n\n**সাবধান:** স্কুলের ল্যাবে কখনো রিলে দিয়ে বাসার বিদ্যুৎ (২২০ V) চালাবে না।",
+        "en": "A **relay** is a switch worked by an electromagnet. A board pin cannot give the current its coil needs, so the module has a transistor and an optocoupler: the pin only gives about 2 mA. The relay's contact is completely separate from the board, so it can switch a pump or a lamp on another battery.\n\n**Careful:** in a school lab, never switch mains (220 V) with a relay."
+      },
+      "checks": []
+    },
+    {
+      "text": {
+        "bn": "**রিলে মডিউল** বসাও: VCC যাবে **VIN**-এ (রিলের 5 V লাগে), GND যাবে GND-তে, IN যাবে **D26**-এ। মডিউলে ট্যাপ করে দেখো জাম্পার **H**-এ আছে: তাহলে IN HIGH হলে রিলে চালু হবে।",
+        "en": "Place the **relay module**: VCC to **VIN** (the relay needs 5 V), GND to GND, IN to **D26**. Tap the module and check the jumper is on **H**: then the relay switches on when IN is HIGH."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "relaymodule"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "relaymodule",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "relaymodule",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "relaymodule",
+            "pin": "in"
+          },
+          "to": {
+            "board": "d26"
+          }
+        },
+        {
+          "kind": "prop",
+          "part": "relaymodule",
+          "prop": "trigger",
+          "equals": "high"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার রিলে যে সার্কিট চালাবে: পাশের **৬ V** ব্যাটারির + যাবে মডিউলের **COM**-এ। **NO** থেকে ২২০ Ω রেজিস্টর হয়ে LED-র লম্বা পায়ে, আর LED-র ছোট পা যাবে ব্যাটারির −-এ। রিলে চালু হলে COM আর NO জুড়ে যায়, আর বাতি জ্বলে।",
+        "en": "Now the circuit the relay switches: the **6 V** battery's + goes to the module's **COM**. From **NO**, through a 220 Ω resistor to the LED's long leg, and the LED's short leg to the battery's −. When the relay is on, COM is joined to NO and the lamp lights."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "battery": "pos"
+          },
+          "to": {
+            "part": "relaymodule",
+            "pin": "com"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "relaymodule",
+            "pin": "no"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "battery": "neg"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "relay"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। রিলে দুই সেকেন্ড চালু, দুই সেকেন্ড বন্ধ থাকবে; মডিউলের সবুজ বাতি আর তোমার LED একসাথে জ্বলবে-নিভবে। বোর্ডে ট্যাপ করে দেখো D26 কত কম কারেন্ট দিচ্ছে।",
+        "en": "Press **Run**. The relay is on for two seconds and off for two; the module's green light and your LED go on and off together. Tap the board to see how little current D26 gives."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "relaymodule",
+          "path": "activity",
+          "equals": 1
+        },
+        {
+          "kind": "reading",
+          "part": "relaymodule",
+          "path": "activity",
+          "equals": 0
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "off"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "রিলে অল্প কারেন্টের সংকেত দিয়ে আলাদা সার্কিট চালু-বন্ধ করে।",
+      "চালু থাকলে COM–NO জোড়া, বন্ধ থাকলে COM–NC।",
+      "ESP32-র সাথে জাম্পার H-এ রাখো।"
+    ],
+    "en": [
+      "A relay lets a small signal switch a separate circuit.",
+      "On: COM–NO joined; off: COM–NC joined.",
+      "With an ESP32, keep the jumper on H."
+    ]
+  },
+  "tryNext": {
+    "bn": "LED-টা NO থেকে সরিয়ে NC-তে লাগাও। এখন কখন জ্বলে?",
+    "en": "Move the LED from NO to NC. When does it light now?"
+  }
+}

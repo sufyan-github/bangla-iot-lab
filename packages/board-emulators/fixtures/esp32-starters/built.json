@@ -81,6 +81,10 @@
       "sourceHash": "edb350580d3147f61ab651d715e9a8e9d2709289c61faba50f9de15feca418f4",
       "bytes": 11848
     },
+    "relay": {
+      "sourceHash": "69a4f30302f9ae0e5da6ea4fc8f81601de19cd3ffea5bed454276df52cc4c8e8",
+      "bytes": 10268
+    },
     "rgb": {
       "sourceHash": "c1886de9fadc992efc43d2202da2a75053d674cff25ef72b29d93008e492af83",
       "bytes": 10586
@@ -104,6 +108,10 @@
     "streetlight": {
       "sourceHash": "36ccb33e9004aeb77f009db69935c35e38a690f127eb1e87f8d2144bb2d6921d",
       "bytes": 40532
+    },
+    "watering": {
+      "sourceHash": "cd2af1304f0cbde1b0edc79f80d0ac0299a784ba4b81561babc5f56317d4fcd6",
+      "bytes": 10806
     }
   }
 }

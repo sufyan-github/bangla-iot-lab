@@ -39,7 +39,9 @@ export function HomePage() {
   const projects = useQuery({ queryKey: ['projects'], queryFn: projectStore.list });
 
   const create = useMutation({
-    mutationFn: (content: ProjectContent) => projectStore.create(content),
+    // Content may be waiting for a ready-made program to load.
+    mutationFn: async (content: ProjectContent | Promise<ProjectContent>) =>
+      projectStore.create(await content),
     onSuccess: (project) => navigate(`/lab/${project.id}`),
   });
   const remove = useMutation({
@@ -94,11 +96,13 @@ export function HomePage() {
               type="button"
               data-testid="open-example-uno"
               onClick={() =>
-                create.mutate({
-                  name: t('home.exampleUnoName'),
-                  circuit: unoCircuitExample(),
-                  programs: { UNO1: starterProgram('blink') },
-                })
+                create.mutate(
+                  starterProgram('blink').then((program) => ({
+                    name: t('home.exampleUnoName'),
+                    circuit: unoCircuitExample(),
+                    programs: { UNO1: program },
+                  })),
+                )
               }
               className="min-h-12 rounded-xl border-2 border-paper/70 px-5 text-lg font-medium hover:bg-paper/10"
             >
@@ -108,11 +112,13 @@ export function HomePage() {
               type="button"
               data-testid="open-example-esp32"
               onClick={() =>
-                create.mutate({
-                  name: t('home.exampleEsp32Name'),
-                  circuit: esp32CircuitExample(),
-                  programs: { ESP1: starterProgram('blink', 'esp32') },
-                })
+                create.mutate(
+                  starterProgram('blink', 'esp32').then((program) => ({
+                    name: t('home.exampleEsp32Name'),
+                    circuit: esp32CircuitExample(),
+                    programs: { ESP1: program },
+                  })),
+                )
               }
               className="min-h-12 rounded-xl border-2 border-paper/70 px-5 text-lg font-medium hover:bg-paper/10"
             >

@@ -8,6 +8,14 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The kit's relay module** (circuit format version 12): VCC, GND and IN, a
+  COM/NO/NC contact, and the H/L jumper that sets whether IN must be HIGH or
+  LOW to switch it on. The board pin only drives the optocoupler (about 2 mA);
+  the coil's current comes from VIN. It warns when the jumper is on L and IN
+  only gets a 3.3 V HIGH, and when the module has too little supply.
+- A kit lesson on the relay module, and a ninth project, **automatic
+  watering**: a soil sensor and a relay switching a pump on its own battery,
+  with two limits so the pump does not chatter.
 - **Saved settings on the ESP32** (the Preferences library), in the lab's own
   model of the board. Values are kept by namespace and key with their type, as
   in the chip's flash, and outlast stopping the circuit, uploading a new
@@ -168,6 +176,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Fixed
 
+- The app's main file had grown past the 2 MiB that can be kept for working
+  offline, because every ready-made ESP32 program was built into it. Each
+  program is now a file of its own, fetched when it is chosen and still kept
+  for working offline; the main file went from 2.14 MB to 1.05 MB.
 - The diagram view now draws the ESP32 board's supply and ground pins. Before,
   only the UNO-compatible board's were drawn, so a wire to the ESP32's 3V3, VIN
   or GND ended at nothing on the board's side.

@@ -94,6 +94,7 @@ const BODY_HEIGHT: Partial<Record<string, number>> = {
   pir: 42,
   rgbled: 38,
   oled: 86,
+  relaymodule: 58,
   relay: 26,
   servo: 36,
   ultrasonic: 38,

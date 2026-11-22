@@ -13,57 +13,33 @@ import fadeSource from '@banglalab/board-emulators/fixtures/starters/fade.ino?ra
 import knobHex from '@banglalab/board-emulators/fixtures/starters/knob.hex?raw';
 import knobSource from '@banglalab/board-emulators/fixtures/starters/knob.ino?raw';
 import esp32BlinkSource from '@banglalab/board-emulators/fixtures/esp32-starters/blink.ino?raw';
-import esp32BlinkModule from '@banglalab/board-emulators/fixtures/esp32-starters/blink.wasm.base64?raw';
 import esp32ButtonSource from '@banglalab/board-emulators/fixtures/esp32-starters/button.ino?raw';
-import esp32ButtonModule from '@banglalab/board-emulators/fixtures/esp32-starters/button.wasm.base64?raw';
 import esp32FadeSource from '@banglalab/board-emulators/fixtures/esp32-starters/fade.ino?raw';
-import esp32FadeModule from '@banglalab/board-emulators/fixtures/esp32-starters/fade.wasm.base64?raw';
 import esp32KnobSource from '@banglalab/board-emulators/fixtures/esp32-starters/knob.ino?raw';
-import esp32KnobModule from '@banglalab/board-emulators/fixtures/esp32-starters/knob.wasm.base64?raw';
 import esp32ServoSource from '@banglalab/board-emulators/fixtures/esp32-starters/servo.ino?raw';
-import esp32ServoModule from '@banglalab/board-emulators/fixtures/esp32-starters/servo.wasm.base64?raw';
 import esp32DistanceSource from '@banglalab/board-emulators/fixtures/esp32-starters/distance.ino?raw';
-import esp32DistanceModule from '@banglalab/board-emulators/fixtures/esp32-starters/distance.wasm.base64?raw';
 import esp32DhtSource from '@banglalab/board-emulators/fixtures/esp32-starters/dht.ino?raw';
-import esp32DhtModule from '@banglalab/board-emulators/fixtures/esp32-starters/dht.wasm.base64?raw';
 import esp32LightSource from '@banglalab/board-emulators/fixtures/esp32-starters/light.ino?raw';
-import esp32LightModule from '@banglalab/board-emulators/fixtures/esp32-starters/light.wasm.base64?raw';
 import esp32MotionSource from '@banglalab/board-emulators/fixtures/esp32-starters/motion.ino?raw';
-import esp32MotionModule from '@banglalab/board-emulators/fixtures/esp32-starters/motion.wasm.base64?raw';
 import esp32RgbSource from '@banglalab/board-emulators/fixtures/esp32-starters/rgb.ino?raw';
-import esp32RgbModule from '@banglalab/board-emulators/fixtures/esp32-starters/rgb.wasm.base64?raw';
 import esp32OledSource from '@banglalab/board-emulators/fixtures/esp32-starters/oled.ino?raw';
-import esp32OledModule from '@banglalab/board-emulators/fixtures/esp32-starters/oled.wasm.base64?raw';
 import esp32MotorSource from '@banglalab/board-emulators/fixtures/esp32-starters/motor.ino?raw';
-import esp32MotorModule from '@banglalab/board-emulators/fixtures/esp32-starters/motor.wasm.base64?raw';
 import esp32RainSource from '@banglalab/board-emulators/fixtures/esp32-starters/rain.ino?raw';
-import esp32RainModule from '@banglalab/board-emulators/fixtures/esp32-starters/rain.wasm.base64?raw';
 import esp32SoilSource from '@banglalab/board-emulators/fixtures/esp32-starters/soil.ino?raw';
-import esp32SoilModule from '@banglalab/board-emulators/fixtures/esp32-starters/soil.wasm.base64?raw';
 import esp32GasSource from '@banglalab/board-emulators/fixtures/esp32-starters/gas.ino?raw';
-import esp32GasModule from '@banglalab/board-emulators/fixtures/esp32-starters/gas.wasm.base64?raw';
 import esp32ObstacleSource from '@banglalab/board-emulators/fixtures/esp32-starters/obstacle.ino?raw';
-import esp32ObstacleModule from '@banglalab/board-emulators/fixtures/esp32-starters/obstacle.wasm.base64?raw';
 import esp32BeepSource from '@banglalab/board-emulators/fixtures/esp32-starters/beep.ino?raw';
-import esp32BeepModule from '@banglalab/board-emulators/fixtures/esp32-starters/beep.wasm.base64?raw';
 import esp32StreetlightSource from '@banglalab/board-emulators/fixtures/esp32-starters/streetlight.ino?raw';
-import esp32StreetlightModule from '@banglalab/board-emulators/fixtures/esp32-starters/streetlight.wasm.base64?raw';
 import esp32RainalertSource from '@banglalab/board-emulators/fixtures/esp32-starters/rainalert.ino?raw';
-import esp32RainalertModule from '@banglalab/board-emulators/fixtures/esp32-starters/rainalert.wasm.base64?raw';
 import esp32DustbinSource from '@banglalab/board-emulators/fixtures/esp32-starters/dustbin.ino?raw';
-import esp32DustbinModule from '@banglalab/board-emulators/fixtures/esp32-starters/dustbin.wasm.base64?raw';
 import esp32SecuritySource from '@banglalab/board-emulators/fixtures/esp32-starters/security.ino?raw';
-import esp32SecurityModule from '@banglalab/board-emulators/fixtures/esp32-starters/security.wasm.base64?raw';
 import esp32PlantSource from '@banglalab/board-emulators/fixtures/esp32-starters/plant.ino?raw';
-import esp32PlantModule from '@banglalab/board-emulators/fixtures/esp32-starters/plant.wasm.base64?raw';
 import esp32AirqualitySource from '@banglalab/board-emulators/fixtures/esp32-starters/airquality.ino?raw';
-import esp32AirqualityModule from '@banglalab/board-emulators/fixtures/esp32-starters/airquality.wasm.base64?raw';
 import esp32ParkingSource from '@banglalab/board-emulators/fixtures/esp32-starters/parking.ino?raw';
-import esp32ParkingModule from '@banglalab/board-emulators/fixtures/esp32-starters/parking.wasm.base64?raw';
 import esp32RobotSource from '@banglalab/board-emulators/fixtures/esp32-starters/robot.ino?raw';
-import esp32RobotModule from '@banglalab/board-emulators/fixtures/esp32-starters/robot.wasm.base64?raw';
 import esp32CounterSource from '@banglalab/board-emulators/fixtures/esp32-starters/counter.ino?raw';
-import esp32CounterModule from '@banglalab/board-emulators/fixtures/esp32-starters/counter.wasm.base64?raw';
+import esp32RelaySource from '@banglalab/board-emulators/fixtures/esp32-starters/relay.ino?raw';
+import esp32WateringSource from '@banglalab/board-emulators/fixtures/esp32-starters/watering.ino?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -84,44 +60,54 @@ export const STARTERS = {
 
 /**
  * Ready-made programs for the ESP32 board, built against the lab's own board
- * library (experimental). `hex` here is the sketch module in base64.
+ * library (experimental). Only their text is here; each built module (base64)
+ * is a file of its own, fetched when the program is chosen, so that the app
+ * itself stays small. All of them are kept for working offline.
  */
 export const ESP32_STARTERS = {
-  blink: { source: esp32BlinkSource, hex: esp32BlinkModule },
-  button: { source: esp32ButtonSource, hex: esp32ButtonModule },
-  fade: { source: esp32FadeSource, hex: esp32FadeModule },
-  knob: { source: esp32KnobSource, hex: esp32KnobModule },
-  servo: { source: esp32ServoSource, hex: esp32ServoModule },
-  distance: { source: esp32DistanceSource, hex: esp32DistanceModule },
-  dht: { source: esp32DhtSource, hex: esp32DhtModule },
-  light: { source: esp32LightSource, hex: esp32LightModule },
-  motion: { source: esp32MotionSource, hex: esp32MotionModule },
-  rgb: { source: esp32RgbSource, hex: esp32RgbModule },
-  oled: { source: esp32OledSource, hex: esp32OledModule },
-  motor: { source: esp32MotorSource, hex: esp32MotorModule },
-  rain: { source: esp32RainSource, hex: esp32RainModule },
-  soil: { source: esp32SoilSource, hex: esp32SoilModule },
-  gas: { source: esp32GasSource, hex: esp32GasModule },
-  obstacle: { source: esp32ObstacleSource, hex: esp32ObstacleModule },
-  beep: { source: esp32BeepSource, hex: esp32BeepModule },
-  streetlight: { source: esp32StreetlightSource, hex: esp32StreetlightModule },
-  rainalert: { source: esp32RainalertSource, hex: esp32RainalertModule },
-  dustbin: { source: esp32DustbinSource, hex: esp32DustbinModule },
-  security: { source: esp32SecuritySource, hex: esp32SecurityModule },
-  plant: { source: esp32PlantSource, hex: esp32PlantModule },
-  airquality: { source: esp32AirqualitySource, hex: esp32AirqualityModule },
-  parking: { source: esp32ParkingSource, hex: esp32ParkingModule },
-  robot: { source: esp32RobotSource, hex: esp32RobotModule },
-  counter: { source: esp32CounterSource, hex: esp32CounterModule },
+  blink: { source: esp32BlinkSource },
+  button: { source: esp32ButtonSource },
+  fade: { source: esp32FadeSource },
+  knob: { source: esp32KnobSource },
+  servo: { source: esp32ServoSource },
+  distance: { source: esp32DistanceSource },
+  dht: { source: esp32DhtSource },
+  light: { source: esp32LightSource },
+  motion: { source: esp32MotionSource },
+  rgb: { source: esp32RgbSource },
+  oled: { source: esp32OledSource },
+  motor: { source: esp32MotorSource },
+  rain: { source: esp32RainSource },
+  soil: { source: esp32SoilSource },
+  gas: { source: esp32GasSource },
+  obstacle: { source: esp32ObstacleSource },
+  beep: { source: esp32BeepSource },
+  streetlight: { source: esp32StreetlightSource },
+  rainalert: { source: esp32RainalertSource },
+  dustbin: { source: esp32DustbinSource },
+  security: { source: esp32SecuritySource },
+  plant: { source: esp32PlantSource },
+  airquality: { source: esp32AirqualitySource },
+  parking: { source: esp32ParkingSource },
+  robot: { source: esp32RobotSource },
+  counter: { source: esp32CounterSource },
+  relay: { source: esp32RelaySource },
+  watering: { source: esp32WateringSource },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;
 export const STARTER_IDS = Object.keys(STARTERS) as StarterId[];
 
-const BY_BOARD: Record<ProgrammableType, Record<string, { source: string; hex: string }>> = {
+const BY_BOARD: Record<ProgrammableType, Record<string, { source: string }>> = {
   uno: STARTERS,
   esp32: ESP32_STARTERS,
 };
+
+const ESP32_FOLDER = '../../../../packages/board-emulators/fixtures/esp32-starters/';
+const ESP32_MODULES = import.meta.glob<string>(
+  '../../../../packages/board-emulators/fixtures/esp32-starters/*.wasm.base64',
+  { query: '?raw', import: 'default' },
+);
 
 /** The ready-made programs a kind of board has, in the order they are offered. */
 export function starterIds(board: ProgrammableType): string[] {
@@ -133,10 +119,20 @@ export function starterLabel(board: ProgrammableType, id: string): MessageKey {
   return (board === 'uno' ? `code.starter.${id}` : `code.starter.esp32.${id}`) as MessageKey;
 }
 
-export function starterProgram(id: string, board: ProgrammableType = 'uno'): BoardProgram {
-  const starter = BY_BOARD[board][id];
-  if (!starter) throw new Error(`the ${board} board has no ready-made program "${id}"`);
-  return { source: starter.source, hex: starter.hex, hexSource: starter.source };
+/** A ready-made program, with its built firmware, ready to upload. */
+export async function starterProgram(
+  id: string,
+  board: ProgrammableType = 'uno',
+): Promise<BoardProgram> {
+  if (board === 'uno') {
+    const starter = STARTERS[id as StarterId];
+    if (!starter) throw new Error(`the uno board has no ready-made program "${id}"`);
+    return { source: starter.source, hex: starter.hex, hexSource: starter.source };
+  }
+  const starter = ESP32_STARTERS[id as keyof typeof ESP32_STARTERS];
+  const load = ESP32_MODULES[`${ESP32_FOLDER}${id}.wasm.base64`];
+  if (!starter || !load) throw new Error(`the esp32 board has no ready-made program "${id}"`);
+  return { source: starter.source, hex: (await load()).trim(), hexSource: starter.source };
 }
 
 /** The starter a program is still identical to, if any. */

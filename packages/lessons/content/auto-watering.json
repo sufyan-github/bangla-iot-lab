@@ -1,0 +1,248 @@
+{
+  "id": "auto-watering",
+  "order": 27,
+  "parts": ["yl-69", "relay-module-1ch", "tt-gear-motor", "battery"],
+  "after": ["soil-moisture", "relay-module"],
+  "title": {
+    "bn": "নিজে নিজে পানি দেওয়া",
+    "en": "Automatic watering"
+  },
+  "summary": {
+    "bn": "মাটি শুকালে পাম্প চালু, ভিজলে বন্ধ: গাছের যত্ন কেউ না থাকলেও।",
+    "en": "The pump starts when the soil is dry and stops when it is wet: care for a plant while nobody is there."
+  },
+  "setup": {
+    "board": "esp32",
+    "battery": 6
+  },
+  "program": "watering",
+  "steps": [
+    {
+      "text": {
+        "bn": "এই প্রকল্পে মাটির সেন্সর বলে কখন পানি লাগবে, আর **রিলে** একটা **পাম্প** চালু করে। পাম্প চলে নিজের ব্যাটারিতে। ল্যাবে পাম্পের জায়গায় একটা মোটর আছে।\n\nমাটির সেন্সর বসাও: VCC যাবে 3V3-তে, আউটপুট যাবে **D34**-এ, GND যাবে GND-তে।",
+        "en": "In this project the soil sensor says when water is needed, and a **relay** switches a **pump** on. The pump runs on its own battery. In the lab a motor stands in for the pump.\n\nPlace the soil sensor: VCC to 3V3, output to **D34**, GND to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "soil"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "soil",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "soil",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d34"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "soil",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**রিলে মডিউল** বসাও: VCC যাবে **VIN**-এ (রিলের 5 V লাগে), GND যাবে GND-তে, IN যাবে **D26**-এ। মডিউলে ট্যাপ করে দেখো জাম্পার **H**-এ আছে: তাহলে IN HIGH হলে রিলে চালু হবে।",
+        "en": "Place the **relay module**: VCC to **VIN** (the relay needs 5 V), GND to GND, IN to **D26**. Tap the module and check the jumper is on **H**: then the relay switches on when IN is HIGH."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "relaymodule"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "relaymodule",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "relaymodule",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "relaymodule",
+            "pin": "in"
+          },
+          "to": {
+            "board": "d26"
+          }
+        },
+        {
+          "kind": "prop",
+          "part": "relaymodule",
+          "prop": "trigger",
+          "equals": "high"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**পাম্পের** জন্য একটা **মোটর** বসাও। ৬ V ব্যাটারির + যাবে মডিউলের **COM**-এ, **NO** যাবে মোটরের এক পায়ে, আর মোটরের অন্য পা যাবে ব্যাটারির −-এ।",
+        "en": "Place a **motor** for the **pump**. The 6 V battery's + goes to the module's **COM**, **NO** to one leg of the motor, and the motor's other leg to the battery's −."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "motor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "battery": "pos"
+          },
+          "to": {
+            "part": "relaymodule",
+            "pin": "com"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "relaymodule",
+            "pin": "no"
+          },
+          "to": {
+            "part": "motor",
+            "pin": "*"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "*"
+          },
+          "to": {
+            "battery": "neg"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও** বোতামে চাপ দাও। কোড ট্যাবে গিয়ে প্রোগ্রামটা পড়ে দেখো: প্রতিটা লাইনের পাশে বাংলায় লেখা আছে সে কী করে।",
+        "en": "Press **Put this lesson's program on the board**. Then open the Code tab and read it: every line has a note saying what it does."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "watering"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। মাটি এখন একটু ভেজা: পাম্প বন্ধ।",
+        "en": "Press **Run**. The soil is a little wet: the pump is off."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "মাটি দেখছি"
+        },
+        {
+          "kind": "reading",
+          "part": "motor",
+          "path": "activity",
+          "equals": 0
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "মাটির সেন্সরে ট্যাপ করে ভেজাভাব **১০%**-এর কম করো। পাম্প চালু হবে।",
+        "en": "Tap the soil sensor and set the wetness below **10%**. The pump starts."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "soil",
+          "prop": "moisture",
+          "below": 0.1
+        },
+        {
+          "kind": "reading",
+          "part": "motor",
+          "path": "activity",
+          "above": 0.5
+        },
+        {
+          "kind": "serial",
+          "matches": "মাটি শুকনো: পাম্প চালু"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার ভেজাভাব **৬০%** করো: যেন পানি পেয়ে মাটি ভিজেছে। পাম্প বন্ধ হবে।",
+        "en": "Now set the wetness to **60%**, as if the water soaked in. The pump stops."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "soil",
+          "prop": "moisture",
+          "above": 0.5
+        },
+        {
+          "kind": "serial",
+          "matches": "মাটি ভেজা: পাম্প বন্ধ"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "রিলে দিয়ে বোর্ড আলাদা ব্যাটারির পাম্প চালাতে পারে।",
+      "দুটো আলাদা সীমা (চালু ৩০০০-এর বেশিতে, বন্ধ ২৫০০-এর কমে) থাকলে পাম্প বারবার চালু-বন্ধ হয় না।"
+    ],
+    "en": [
+      "With a relay the board can run a pump on a separate battery.",
+      "Two different limits (on above 3000, off below 2500) stop the pump switching on and off over and over."
+    ]
+  },
+  "tryNext": {
+    "bn": "পাম্প একবারে ১০ সেকেন্ডের বেশি চলবে না, এমন নিয়ম যোগ করো: মাটির সেন্সর নষ্ট হলেও পানি উপচে পড়বে না।",
+    "en": "Add a rule that the pump never runs more than 10 seconds at a time, so a broken sensor cannot flood the plant."
+  },
+  "kind": "project"
+}

@@ -352,6 +352,56 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       ],
     },
   },
+  'relay-module': {
+    components: [
+      esp32,
+      { id: 'BAT1', type: 'battery', props: { voltage: 6 } },
+      part(
+        'RLY1',
+        'relaymodule',
+        { vcc: 'c10', gnd: 'c11', in: 'c12', com: 'c14', no: 'c15', nc: 'c16' },
+        { trigger: 'high' },
+      ),
+      part('R1', 'resistor', { a: 'b15', b: 'b19' }, { resistance: 220 }),
+      part('LED1', 'led', { anode: 'd19', cathode: 'd20' }, { color: 'red' }),
+    ],
+    wires: [
+      ['ESP1.vin', 'a10'],
+      ['ESP1.gnd1', 'a11'],
+      ['ESP1.d26', 'a12'],
+      ['BAT1.pos', 'a14'],
+      ['BAT1.neg', 'a20'],
+    ],
+  },
+  'auto-watering': {
+    components: [
+      esp32,
+      { id: 'BAT1', type: 'battery', props: { voltage: 6 } },
+      part('SOIL1', 'soil', { vcc: 'c1', out: 'c2', gnd: 'c3' }, { moisture: 0.3 }),
+      part(
+        'RLY1',
+        'relaymodule',
+        { vcc: 'c10', gnd: 'c11', in: 'c12', com: 'c14', no: 'c15', nc: 'c16' },
+        { trigger: 'high' },
+      ),
+      part('M1', 'motor', { a: 'c20', b: 'c23' }),
+    ],
+    wires: [
+      ['ESP1.3v3', 'a1'],
+      ['ESP1.d34', 'a2'],
+      ['ESP1.gnd1', 'a3'],
+      ['ESP1.vin', 'a10'],
+      ['ESP1.gnd1', 'a11'],
+      ['ESP1.d26', 'a12'],
+      ['BAT1.pos', 'a14'],
+      ['a15', 'a20'],
+      ['BAT1.neg', 'a23'],
+    ],
+    actions: {
+      5: [{ set: 'SOIL1', props: { moisture: 0.05 } }],
+      6: [{ set: 'SOIL1', props: { moisture: 0.6 } }],
+    },
+  },
   // ---- projects ----
   'street-light': {
     components: [

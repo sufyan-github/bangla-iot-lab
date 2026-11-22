@@ -1,6 +1,6 @@
 {
   "id": "rain-alert",
-  "order": 19,
+  "order": 20,
   "parts": ["rain-sensor", "sg90-servo", "buzzer-module-active"],
   "after": ["rain-sensor", "servo", "buzzer"],
   "title": {
