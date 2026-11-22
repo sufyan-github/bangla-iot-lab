@@ -26,6 +26,8 @@ import {
   readSolution,
   relayStates,
   sameChips,
+  sameSensing,
+  sensorStates,
   sameDrivers,
   solveState,
   type SimulationResult,
@@ -112,6 +114,7 @@ const EMPTY_SOLUTION: StateSolution = {
   channels: {},
   drivers: {},
   chips: {},
+  sensing: {},
   floating: [],
   unsettled: false,
   iterations: 0,
@@ -168,6 +171,8 @@ export class SimulationSession {
   private drivers: Record<string, DriverState> = {};
   /** What each logic chip was last found to be doing. */
   private chips: Record<string, ChipState> = {};
+  /** What each sensor that depends on the circuit itself last saw. */
+  private sensing: Record<string, number> = {};
 
   /** Number of times the circuit was actually solved; exposed for tests and tuning. */
   solveCount = 0;
@@ -339,6 +344,7 @@ export class SimulationSession {
       motion: this.motion,
       drivers: this.drivers,
       chips: this.chips,
+      sensing: this.sensing,
     };
   }
 
@@ -369,6 +375,7 @@ export class SimulationSession {
       this.relays = solution.relays;
       this.drivers = solution.drivers;
       this.chips = solution.chips;
+      this.sensing = solution.sensing;
     }
     return solution;
   }
@@ -403,6 +410,12 @@ export class SimulationSession {
     const chips = chipStates(this.document, this.latest, this.chips);
     if (!sameChips(this.chips, chips)) {
       this.chips = chips;
+      this.stepping = null;
+    }
+    this.latest.sensing = this.sensing;
+    const sensing = sensorStates(this.document, this.latest);
+    if (!sameSensing(this.sensing, sensing)) {
+      this.sensing = sensing;
       this.stepping = null;
     }
     return this.latest;
@@ -495,12 +508,14 @@ export class SimulationSession {
     const relays = this.relays;
     const drivers = this.drivers;
     const chips = this.chips;
+    const sensing = this.sensing;
     this.echo = { ...echo, [input.sensorId]: input.level };
     const volts = this.solveSteady()?.sockets[`${boardId}.${terminal}`]?.voltage;
     this.echo = echo;
     this.relays = relays;
     this.drivers = drivers;
     this.chips = chips;
+    this.sensing = sensing;
     if (volts === undefined) return input.level;
     if (volts > board.model.logicHigh) return true;
     if (volts < board.model.logicLow) return false;
@@ -534,12 +549,14 @@ export class SimulationSession {
     const relays = this.relays;
     const drivers = this.drivers;
     const chips = this.chips;
+    const sensing = this.sensing;
     board.drives[pin] = 'pullup';
     const pulled = this.solveSteady();
     board.drives[pin] = before;
     this.relays = relays;
     this.drivers = drivers;
     this.chips = chips;
+    this.sensing = sensing;
     return (pulled?.sockets[socket]?.voltage ?? 0) > board.model.logicHigh;
   }
 

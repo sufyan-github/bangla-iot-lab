@@ -1027,6 +1027,9 @@ const SENSOR_BOARD = {
   soil: '#2f6b4a',
   ir: '#1f5fa8',
   dht11: '#1d3f66',
+  voltagesensor: '#b9372b',
+  tds: '#1f5f9e',
+  turbidity: '#1f5f9e',
 } as const;
 
 /** Three-pin sensor module: a small board standing behind its supply, output and ground legs. */
@@ -1074,6 +1077,21 @@ export function SensorView(props: {
         [-9, 9].map((x) => (
           <rect key={x} x={x - 3} y={-33} width={6} height={9} rx={1.5} fill="#d9b65c" />
         ))}
+      {props.kind === 'voltagesensor' && (
+        <>
+          {/* The screw terminal the voltage to measure goes into. */}
+          <rect x={-length / 2 - 8} y={-33} width={20} height={11} rx={1.5} fill="#2f9a5a" />
+          <circle cx={-length / 2 - 3} cy={-27.5} r={3} fill="#c9cdd0" />
+          <circle cx={-length / 2 + 7} cy={-27.5} r={3} fill="#c9cdd0" />
+        </>
+      )}
+      {(props.kind === 'tds' || props.kind === 'turbidity') && (
+        <>
+          {/* The white socket the probe's cable plugs into. */}
+          <rect x={length / 2 - 4} y={-33} width={12} height={9} rx={1} fill="#eceae4" />
+          <path d={`M${length / 2 - 1} -28.5h6`} stroke="#9b978d" strokeWidth={1.4} />
+        </>
+      )}
       {props.kind === 'ir' && (
         <>
           <circle cx={-7} cy={-29} r={4.2} fill="#e9ecea" stroke="#8d9396" />
@@ -1106,6 +1124,8 @@ const MODULE_BOARD = {
   ldrmodule: '#1f5fa8',
   rain: '#a8332b',
   mq135: '#1c4f8f',
+  mq7: '#2a6b3c',
+  ph: '#1f4f9a',
 } as const;
 
 /**
@@ -1124,6 +1144,9 @@ export function AnalogModuleView(props: {
 }) {
   const { length, transform } = between(props.first, props.last);
   const pins = [-length / 2, -length / 6, length / 6, length / 2];
+  // Modules with a large part on top (a gas sensor's can, the pH probe's socket) carry
+  // their trimmer and light beside it.
+  const topSensor = props.kind === 'mq135' || props.kind === 'mq7' || props.kind === 'ph';
   return (
     <g transform={transform}>
       {props.selected && <SelectionHalo length={length} />}
@@ -1167,7 +1190,16 @@ export function AnalogModuleView(props: {
           <path d="M-24 -7.4H24M-16 7.4H16" stroke="#d9b65c" strokeWidth={1.6} />
         </g>
       )}
-      {props.kind === 'mq135' && (
+      {props.kind === 'ph' && (
+        <g transform="translate(-14 -40)">
+          {/* The BNC socket the pH probe's cable screws onto. */}
+          <circle cx={1.2} cy={2.5} r={12} fill="#000" opacity={0.28} />
+          <circle r={12} fill="url(#shade-metal)" stroke="#5d666a" />
+          <circle r={7} fill="#e8e3d6" stroke="#5d666a" />
+          <circle r={2.2} fill="#b98a2e" />
+        </g>
+      )}
+      {(props.kind === 'mq135' || props.kind === 'mq7') && (
         <g transform="translate(-14 -40)">
           {/* The sensor's can, with the mesh the air reaches the heater through. */}
           <circle cx={1.2} cy={2.5} r={14} fill="#000" opacity={0.28} />
@@ -1178,11 +1210,7 @@ export function AnalogModuleView(props: {
         </g>
       )}
       {/* The trimmer: a blue block with a brass screw. */}
-      <g
-        transform={
-          props.kind === 'mq135' ? 'translate(20 -46)' : `translate(${-length / 2 + 4} -20)`
-        }
-      >
+      <g transform={topSensor ? 'translate(20 -46)' : `translate(${-length / 2 + 4} -20)`}>
         <rect
           x={-7}
           y={-7}
@@ -1196,11 +1224,7 @@ export function AnalogModuleView(props: {
         <path d="M-3 0H3M0 -3V3" stroke="#6d5a22" strokeWidth={1.3} />
       </g>
       {/* The indicator beside it. */}
-      <g
-        transform={
-          props.kind === 'mq135' ? 'translate(40 -46)' : `translate(${length / 2 - 2} -20)`
-        }
-      >
+      <g transform={topSensor ? 'translate(40 -46)' : `translate(${length / 2 - 2} -20)`}>
         {props.lit && <circle r={8} fill="#58e07f" opacity={0.35} />}
         <rect
           x={-3.4}
@@ -1212,10 +1236,61 @@ export function AnalogModuleView(props: {
         />
       </g>
       <text
-        x={props.kind === 'mq135' ? 4 : 2}
-        y={props.kind === 'mq135' ? -12 : -15.5}
+        x={topSensor ? 4 : 2}
+        y={topSensor ? -12 : -15.5}
         textAnchor="middle"
         fontSize={11}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        {props.label}
+      </text>
+    </g>
+  );
+}
+
+/**
+ * ACS712 current sensor module: the screw terminal the measured current goes
+ * through on the left, the chip in the middle, and its three-pin header.
+ */
+export function Acs712View(props: {
+  first: Point;
+  last: Point;
+  /** Short text shown on the module: the chip's range. */
+  label: string;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const at = (offset: number) => -length / 2 + (offset * length) / 5;
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-34} width={length + 24} height={40} color="#b9372b" />
+      <PinHeader from={at(3)} to={at(5)} />
+      {[0, 1, 3, 4, 5].map((offset) => (
+        <SolderDot key={offset} x={at(offset)} />
+      ))}
+      {/* The blue screw terminal over IP+ and IP−. */}
+      <rect x={at(0) - 8} y={-32} width={at(1) - at(0) + 16} height={14} rx={1.5} fill="#2d6fd2" />
+      {[0, 1].map((offset) => (
+        <g key={offset} transform={`translate(${at(offset)} -25)`}>
+          <circle r={4.2} fill="#c9cdd0" />
+          <path d="M-2.8 0H2.8" stroke="#6b7073" strokeWidth={1.3} />
+        </g>
+      ))}
+      {/* The chip, with its legs either side. */}
+      <rect x={at(2) - 7} y={-30} width={14} height={11} rx={1} fill="#17191b" />
+      <path
+        d={[-5, -1.7, 1.7, 5].map((x) => `M${at(2) + x} -32v2M${at(2) + x} -19v2`).join('')}
+        stroke="#b8bcbf"
+        strokeWidth={1.2}
+      />
+      <text
+        x={at(4)}
+        y={-13}
+        textAnchor="middle"
+        fontSize={10.5}
         fontWeight={700}
         fill="#fff"
         pointerEvents="none"

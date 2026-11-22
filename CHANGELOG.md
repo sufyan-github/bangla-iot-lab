@@ -8,6 +8,19 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Six sensor modules beyond the school kit** (circuit format version 14):
+  a 0–25 V voltage sensor, the ACS712 current sensor (5 A, 20 A or 30 A), the
+  MQ-7 carbon monoxide sensor, a pH sensor module, a TDS meter and a turbidity
+  sensor. Each follows the figures its maker or sellers give, marked as such;
+  the ACS712's output follows the current actually flowing through it in the
+  circuit, and the TDS meter's output does not change with its supply.
+- Warnings for a voltage sensor given more than its 25 V, and a current sensor
+  carrying more than its range.
+- Two lessons, each checked step by step by the lab: **water quality** (TDS
+  and turbidity, and why a formula made for 5 V is wrong on the board's VIN)
+  and **measuring power** (voltage, current and power of a motor). Their
+  ready-made programs are `water` and `power`.
+- Hardware tests E1 to E6 for the six modules.
 - **Logic chips drawn with their gates in the diagram view.** A chip is a box
   with a textbook symbol inside for each gate in use (AND, OR, XOR, NOT, and
   NAND and NOR with their small circle), each leg named as in the datasheet

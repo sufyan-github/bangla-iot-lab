@@ -33,6 +33,7 @@ import {
   type Point,
 } from './geometry';
 import {
+  Acs712View,
   AnalogModuleView,
   BatteryView,
   BuzzerView,
@@ -448,19 +449,29 @@ export function BoardPartDrawing(props: {
       );
     case 'ldrmodule':
     case 'rain':
-    case 'mq135': {
-      const sensed =
-        part.type === 'ldrmodule'
-          ? part.props.light
-          : part.type === 'rain'
-            ? part.props.wetness
-            : part.props.gas;
+    case 'mq135':
+    case 'mq7':
+    case 'ph': {
+      const label =
+        part.type === 'ph'
+          ? `pH ${props.formatNumber(part.props.ph)}`
+          : `${props.formatNumber(
+              Math.round(
+                (part.type === 'ldrmodule'
+                  ? part.props.light
+                  : part.type === 'rain'
+                    ? part.props.wetness
+                    : part.type === 'mq7'
+                      ? part.props.co
+                      : part.props.gas) * 100,
+              ),
+            )}%`;
       return (
         <AnalogModuleView
           kind={part.type}
           first={at(part.pins.vcc)}
           last={at(part.pins.ao)}
-          label={`${props.formatNumber(Math.round(sensed * 100))}%`}
+          label={label}
           lit={reading?.activity === 1}
           selected={selected}
         />
@@ -494,6 +505,40 @@ export function BoardPartDrawing(props: {
           last={at(part.pins.gnd)}
           mix={reading?.rgb}
           state={reading?.led?.state}
+          selected={selected}
+        />
+      );
+    case 'voltagesensor':
+      return (
+        <SensorView
+          kind="voltagesensor"
+          vcc={at(part.pins.vin)}
+          gnd={at(part.pins.s)}
+          label="0–25V"
+          selected={selected}
+        />
+      );
+    case 'tds':
+    case 'turbidity':
+      return (
+        <SensorView
+          kind={part.type}
+          vcc={at(part.pins.out)}
+          gnd={at(part.pins.gnd)}
+          label={
+            part.type === 'tds'
+              ? `${props.formatNumber(part.props.ppm)} ppm`
+              : `${props.formatNumber(part.props.ntu)} NTU`
+          }
+          selected={selected}
+        />
+      );
+    case 'acs712':
+      return (
+        <Acs712View
+          first={at(part.pins.ip1)}
+          last={at(part.pins.gnd)}
+          label={part.props.range}
           selected={selected}
         />
       );

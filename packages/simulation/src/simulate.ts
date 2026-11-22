@@ -25,6 +25,8 @@ import {
   L298N_LOGIC_VOLTS,
   L298N_REGULATOR_DROPOUT,
   MIN_SUPPLY,
+  ACS712_RANGE_AMPS,
+  VOLTAGE_SENSOR_MAX,
   MODULE_COMPARATOR_MIN_SUPPLY,
   MOTOR_RATED_VOLTAGE,
   MOTOR_START_VOLTAGE,
@@ -103,6 +105,8 @@ export type DiagnosticCode =
   | 'chip-output-overcurrent'
   | 'logic-input-floating'
   | 'logic-oscillates'
+  | 'voltage-sensor-overrange'
+  | 'current-sensor-overrange'
   | 'solver-failed';
 
 export interface Diagnostic {
@@ -116,6 +120,7 @@ export interface Diagnostic {
    * For `pin-overvoltage`: the highest voltage seen on the pin, and what the pin can stand.
    * For `module-underpowered`: the module's supply, and the least it works on.
    * For `supply-backfeed`: the voltage a board's supply pin is being fed from outside.
+   * For `voltage-sensor-overrange`: the voltage measured, and the module's rating.
    */
   volts?: number;
   limit?: number;
@@ -174,6 +179,8 @@ export interface StateSolution {
   drivers: Record<string, DriverState>;
   /** What each logic chip is doing in this state. */
   chips: Record<string, ChipState>;
+  /** What each sensor that depends on the circuit itself saw in this state. */
+  sensing: Record<string, number>;
   /** Logic chip inputs joined to nothing at all, as "U1.p2". */
   floating: string[];
   /** True when the logic chips never settled: a circuit that keeps changing by itself. */
@@ -298,6 +305,29 @@ export function chipStates(
   return next;
 }
 
+/**
+ * What each sensor whose output depends on the circuit is seeing in the voltages
+ * just solved: the current through a current sensor, the supply of a TDS meter.
+ */
+export function sensorStates(
+  document: CircuitDocument,
+  solution: StateSolution,
+): Record<string, number> {
+  const next: Record<string, number> = {};
+  for (const component of document.components) {
+    if (component.type === 'acs712')
+      next[component.id] = solution.parts[component.id]?.current ?? 0;
+    if (component.type === 'tds') next[component.id] = solution.parts[component.id]?.supply ?? 0;
+  }
+  return next;
+}
+
+/** Sensing states agree when no sensor's value moved by more than a microampere or microvolt. */
+export const sameSensing = (
+  a: Readonly<Record<string, number>>,
+  b: Readonly<Record<string, number>>,
+) => Object.keys(b).every((id) => Math.abs((a[id] ?? 0) - b[id]!) < 1e-6);
+
 export function sameChips(
   a: Readonly<Record<string, ChipState>>,
   b: Readonly<Record<string, ChipState>>,
@@ -357,6 +387,8 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
   let motion = state.motion ?? {};
   let drivers = state.drivers ?? {};
   let chips = state.chips ?? {};
+  let sensing = state.sensing ?? {};
+  const hasSensor = document.components.some((c) => c.type === 'acs712' || c.type === 'tds');
   const hasDriver = document.components.some((c) => c.type === 'l298n');
   const hasChip = document.components.some((c) => c.type === 'logic');
   let solution: StateSolution | null = null;
@@ -365,7 +397,7 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
   const rounds = hasChip ? 24 : hasDriver ? 12 : 4;
   let settled = false;
   for (let round = 0; round < rounds; round++) {
-    const netlist = buildNetlist(document, { ...state, relays, motion, drivers, chips });
+    const netlist = buildNetlist(document, { ...state, relays, motion, drivers, chips, sensing });
     const dc = solveDc(netlist.circuit);
     if (!dc.ok) return null;
     solution = readSolution(document, netlist, dc.solution, dc.iterations);
@@ -374,15 +406,18 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     const moving = state.motion ?? motionOutputs(document, solution);
     const driving = hasDriver ? driverStates(document, solution, drivers) : drivers;
     const logic = hasChip ? chipStates(document, solution, chips) : chips;
+    const seen = hasSensor ? sensorStates(document, solution) : sensing;
     solution.relays = next;
     solution.motion = moving;
     solution.drivers = drivers;
     solution.chips = chips;
+    solution.sensing = sensing;
     if (
       sameStates(relays, next) &&
       sameStates(motion, moving) &&
       sameDrivers(drivers, driving) &&
-      sameChips(chips, logic)
+      sameChips(chips, logic) &&
+      sameSensing(sensing, seen)
     ) {
       settled = true;
       break;
@@ -391,6 +426,7 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     motion = moving;
     drivers = driving;
     chips = logic;
+    sensing = seen;
   }
   // Gates that keep changing each other (a NOT gate fed its own output) never settle.
   if (solution && hasChip && !settled) solution.unsettled = true;
@@ -423,6 +459,7 @@ export function readSolution(
     channels: {},
     drivers: {},
     chips: {},
+    sensing: {},
     floating: [],
     unsettled: false,
     iterations,
@@ -510,8 +547,34 @@ export function readSolution(
       case 'ldrmodule':
       case 'rain':
       case 'mq135':
+      case 'mq7':
+      case 'ph':
         result.parts[id] = {
           voltage: volts(component.pins.ao) - volts(component.pins.gnd),
+          current: device?.current(solution) ?? 0,
+          supply: volts(component.pins.vcc) - volts(component.pins.gnd),
+        };
+        break;
+      case 'tds':
+      case 'turbidity':
+        result.parts[id] = {
+          voltage: volts(component.pins.out) - volts(component.pins.gnd),
+          current: device?.current(solution) ?? 0,
+          supply: volts(component.pins.vcc) - volts(component.pins.gnd),
+        };
+        break;
+      case 'voltagesensor':
+        // What it measures, and its output: a fifth of that.
+        result.parts[id] = {
+          voltage: volts(component.pins.s) - volts(component.pins.gnd),
+          current: device?.current(solution) ?? 0,
+          supply: volts(component.pins.vin) - volts(component.pins.gnd),
+        };
+        break;
+      case 'acs712':
+        // Its output, the current it senses, and its supply.
+        result.parts[id] = {
+          voltage: volts(component.pins.out) - volts(component.pins.gnd),
           current: device?.current(solution) ?? 0,
           supply: volts(component.pins.vcc) - volts(component.pins.gnd),
         };
@@ -831,7 +894,9 @@ export class Observation {
       } else if (
         component.type === 'ldrmodule' ||
         component.type === 'rain' ||
-        component.type === 'mq135'
+        component.type === 'mq135' ||
+        component.type === 'mq7' ||
+        component.type === 'ph'
       ) {
         // The module's second LED: lit while its comparator holds DO LOW.
         const supply = average((s) => s.parts[id]!.supply ?? 0);
@@ -880,7 +945,30 @@ export class Observation {
           });
         }
       }
+      if (component.type === 'voltagesensor') {
+        const measured = extreme((s) => s.parts[id]!.supply ?? 0, Math.max);
+        if (measured > VOLTAGE_SENSOR_MAX) {
+          result.diagnostics.push({
+            code: 'voltage-sensor-overrange',
+            severity: 'warning',
+            componentId: id,
+            volts: measured,
+            limit: VOLTAGE_SENSOR_MAX,
+          });
+        }
+      }
+      if (component.type === 'acs712') {
+        const amps = extreme((s) => Math.abs(s.parts[id]!.current), Math.max);
+        if (amps > ACS712_RANGE_AMPS[component.props.range]) {
+          result.diagnostics.push({
+            code: 'current-sensor-overrange',
+            severity: 'warning',
+            componentId: id,
+          });
+        }
+      }
       // A module wired to a supply that is too low for it: it looks connected and does nothing.
+      // The voltage sensor's "supply" is what it measures, so it has no least supply.
       const least = MIN_SUPPLY[component.type];
       if (least !== undefined) {
         const supply = average((s) => s.parts[id]!.supply ?? s.parts[id]!.voltage);

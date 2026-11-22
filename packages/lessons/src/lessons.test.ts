@@ -663,6 +663,62 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     ],
     actions: { 6: [{ set: 'US1', props: { distance: 10 } }] },
   },
+  'water-quality': {
+    components: [
+      esp32,
+      part('TDS1', 'tds', { out: 'c1', vcc: 'c2', gnd: 'c3' }, { ppm: 150 }),
+      part('TU1', 'turbidity', { out: 'c6', vcc: 'c7', gnd: 'c8' }, { ntu: 10 }),
+      part('R2', 'resistor', { a: 'd6', b: 'd10' }, { resistance: 10_000 }),
+      part('R3', 'resistor', { a: 'b10', b: 'b14' }, { resistance: 10_000 }),
+      ...lamp,
+    ],
+    wires: [
+      ['ESP1.d35', 'a1'],
+      ['ESP1.3v3', 'a2'],
+      ['ESP1.gnd1', 'a3'],
+      ['ESP1.vin', 'a7'],
+      ['ESP1.gnd1', 'a8'],
+      ['ESP1.d34', 'a10'],
+      ['ESP1.gnd1', 'a14'],
+      ...lampWires,
+    ],
+    actions: {
+      5: [{ set: 'TDS1', props: { ppm: 600 } }],
+      6: [
+        { set: 'TDS1', props: { ppm: 150 } },
+        { set: 'TU1', props: { ntu: 2500 } },
+      ],
+    },
+  },
+  'measuring-power': {
+    components: [
+      esp32,
+      { id: 'BAT1', type: 'battery', props: { voltage: 7.2 } },
+      part('VS1', 'voltagesensor', { vin: 'c1', gnd: 'c2', s: 'c3' }),
+      part(
+        'CS1',
+        'acs712',
+        { ip1: 'c5', ip2: 'c6', vcc: 'c8', out: 'c9', gnd: 'c10' },
+        { range: '5A' },
+      ),
+      part('S1', 'switch', { a: 'c13', b: 'c15' }, { closed: false }),
+      part('M1', 'motor', { a: 'c18', b: 'c21' }),
+    ],
+    wires: [
+      ['BAT1.pos', 'a1'],
+      ['BAT1.neg', 'a2'],
+      ['ESP1.gnd1', 'b2'],
+      ['ESP1.d35', 'a3'],
+      ['BAT1.pos', 'a5'],
+      ['a6', 'a13'],
+      ['a15', 'a18'],
+      ['a21', 'BAT1.neg'],
+      ['ESP1.vin', 'a8'],
+      ['ESP1.d34', 'a9'],
+      ['ESP1.gnd2', 'a10'],
+    ],
+    actions: { 5: [{ set: 'S1', props: { closed: true } }] },
+  },
 };
 
 /** The longest a student would have to watch for a step to complete, in simulated time. */

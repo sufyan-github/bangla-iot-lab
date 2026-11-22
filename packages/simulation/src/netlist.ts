@@ -41,6 +41,20 @@ import {
   MODULE_DO_PULLUP,
   MOTOR_RESISTANCE,
   MQ135_HEATER_RESISTANCE,
+  MQ7_HEATER_RESISTANCE,
+  ACS712_OUTPUT_RESISTANCE,
+  ACS712_PATH_RESISTANCE,
+  ACS712_SUPPLY_RESISTANCE,
+  MIN_SUPPLY,
+  TDS_OUTPUT_RESISTANCE,
+  TDS_SUPPLY_RESISTANCE,
+  TURBIDITY_OUTPUT_RESISTANCE,
+  TURBIDITY_SUPPLY_RESISTANCE,
+  VOLTAGE_SENSOR_LOWER,
+  VOLTAGE_SENSOR_UPPER,
+  acs712OutputFraction,
+  tdsVolts,
+  turbidityVolts,
   PIR_OUTPUT_RESISTANCE,
   PIR_OUTPUT_VOLTS,
   PIR_SUPPLY_RESISTANCE,
@@ -95,6 +109,12 @@ export interface CircuitState {
   drivers?: Readonly<Record<string, DriverState>>;
   /** What each logic chip is doing: like a driver, worked out from the circuit's own voltages. */
   chips?: Readonly<Record<string, ChipState>>;
+  /**
+   * What a sensor whose output depends on the circuit itself is seeing: for a
+   * current sensor the current through it in amperes, for a TDS meter its supply
+   * in volts. Worked out from the circuit's own voltages, like a driver's state.
+   */
+  sensing?: Readonly<Record<string, number>>;
 }
 
 /** A logic chip at one instant: whether it has power, and the level of each pin it reads or drives. */
@@ -516,7 +536,9 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
       }
       case 'ldrmodule':
       case 'rain':
-      case 'mq135': {
+      case 'mq135':
+      case 'mq7':
+      case 'ph': {
         // The sensing divider with AO at its tap, and the comparator's output on DO:
         // held HIGH by a resistor, pulled LOW when the module trips.
         const supply = node(component.pins.vcc);
@@ -531,18 +553,85 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
               })();
         const divider = add(resistor(`${id}:upper`, supply, tap, Math.max(10, upper)));
         add(resistor(`${id}:lower`, tap, ground, Math.max(10, lower)));
-        // What the gas sensor draws is nearly all its heater.
+        // What a gas sensor draws is nearly all its heater.
+        const heater =
+          component.type === 'mq135'
+            ? MQ135_HEATER_RESISTANCE
+            : component.type === 'mq7'
+              ? MQ7_HEATER_RESISTANCE
+              : null;
         partDevice.set(
           id,
-          component.type === 'mq135'
-            ? add(resistor(`${id}:heater`, supply, ground, MQ135_HEATER_RESISTANCE))
-            : divider,
+          heater === null ? divider : add(resistor(`${id}:heater`, supply, ground, heater)),
         );
         const out = node(component.pins.do);
         add(resistor(`${id}:pullup`, supply, out, MODULE_DO_PULLUP));
         if (moduleTripped(component)) {
           add(resistor(`${id}:do`, out, ground, MODULE_DO_LOW_RESISTANCE));
         }
+        break;
+      }
+      case 'voltagesensor': {
+        // Two resistors, and S at their tap.
+        const tap = node(component.pins.s);
+        partDevice.set(id, add(resistor(id, node(component.pins.vin), tap, VOLTAGE_SENSOR_UPPER)));
+        add(resistor(`${id}:lower`, tap, node(component.pins.gnd), VOLTAGE_SENSOR_LOWER));
+        break;
+      }
+      case 'acs712': {
+        // The current path, and OUT as a share of the supply that moves with the current
+        // through it, as solved a moment ago: the path does not feel what OUT does.
+        partDevice.set(
+          id,
+          add(
+            resistor(
+              id,
+              node(component.pins.ip1),
+              node(component.pins.ip2),
+              ACS712_PATH_RESISTANCE,
+            ),
+          ),
+        );
+        const supply = node(component.pins.vcc);
+        const ground = node(component.pins.gnd);
+        const out = node(component.pins.out);
+        const fraction = acs712OutputFraction(component.props.range, state.sensing?.[id] ?? 0);
+        add(resistor(`${id}:supply`, supply, ground, ACS712_SUPPLY_RESISTANCE));
+        add(resistor(`${id}:upper`, supply, out, ACS712_OUTPUT_RESISTANCE / fraction));
+        add(resistor(`${id}:lower`, out, ground, ACS712_OUTPUT_RESISTANCE / (1 - fraction)));
+        break;
+      }
+      case 'tds': {
+        // Its output does not follow the supply, but needs one: off until the supply is enough.
+        const ground = node(component.pins.gnd);
+        const out = node(component.pins.out);
+        partDevice.set(
+          id,
+          add(resistor(id, node(component.pins.vcc), ground, TDS_SUPPLY_RESISTANCE)),
+        );
+        const powered = (state.sensing?.[id] ?? 0) >= MIN_SUPPLY.tds!;
+        add(
+          powered
+            ? theveninSource(
+                `${id}:out`,
+                out,
+                ground,
+                tdsVolts(component.props.ppm),
+                TDS_OUTPUT_RESISTANCE,
+              )
+            : resistor(`${id}:out`, out, ground, TDS_OUTPUT_RESISTANCE),
+        );
+        break;
+      }
+      case 'turbidity': {
+        // A share of the supply at the output, and the module's own supply current.
+        const supply = node(component.pins.vcc);
+        const ground = node(component.pins.gnd);
+        const out = node(component.pins.out);
+        const fraction = turbidityVolts(component.props.ntu) / 5;
+        partDevice.set(id, add(resistor(id, supply, ground, TURBIDITY_SUPPLY_RESISTANCE)));
+        add(resistor(`${id}:upper`, supply, out, TURBIDITY_OUTPUT_RESISTANCE / fraction));
+        add(resistor(`${id}:lower`, out, ground, TURBIDITY_OUTPUT_RESISTANCE / (1 - fraction)));
         break;
       }
       case 'pir': {

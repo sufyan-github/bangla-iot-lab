@@ -1,6 +1,7 @@
 import type { MessageKey } from '@banglalab/i18n';
 import {
   LED_COLORS,
+  ACS712_RANGES,
   LOGIC_CHIPS,
   LOGIC_CHIP_GATES,
   type CircuitComponent,
@@ -289,12 +290,79 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
-  if (part.type === 'ldrmodule' || part.type === 'rain' || part.type === 'mq135') {
+  if (part.type === 'ph') {
+    // The water's pH, and the trimmer: the point at which DO switches.
+    return (
+      <div className="space-y-2">
+        <label className="block">
+          <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+            {t('inspector.ph')}
+            <span className="font-medium text-ink tabular-nums">{number(part.props.ph)}</span>
+          </span>
+          <input
+            type="range"
+            data-testid="slider-ph"
+            min={0}
+            max={14}
+            step={0.1}
+            value={part.props.ph}
+            onChange={(event) => setProps(part.id, { ph: Number(event.target.value) })}
+            className="h-11 w-full accent-amber"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+            {t('inspector.threshold')}
+            <span className="font-medium text-ink tabular-nums">
+              {number(Math.round(part.props.threshold * 100))}%
+            </span>
+          </span>
+          <input
+            type="range"
+            data-testid="slider-threshold"
+            min={0.05}
+            max={0.95}
+            step={0.01}
+            value={part.props.threshold}
+            onChange={(event) => setProps(part.id, { threshold: Number(event.target.value) })}
+            className="h-11 w-full accent-amber"
+          />
+        </label>
+      </div>
+    );
+  }
+  if (part.type === 'acs712') {
+    // The module is sold with one of three chips, which differ only in range.
+    return (
+      <label className="block">
+        <span className="mb-1.5 block text-sm text-ink-soft">{t('inspector.range')}</span>
+        <select
+          data-testid="acs712-range"
+          value={part.props.range}
+          onChange={(event) => setProps(part.id, { range: event.target.value })}
+          className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-3"
+        >
+          {ACS712_RANGES.map((range) => (
+            <option key={range} value={range}>
+              ±{range}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
+  if (
+    part.type === 'ldrmodule' ||
+    part.type === 'rain' ||
+    part.type === 'mq135' ||
+    part.type === 'mq7'
+  ) {
     // What the module is sensing, and its trimmer: the point at which DO switches.
     const sensed = {
       ldrmodule: { key: 'light', label: 'inspector.light' },
       rain: { key: 'wetness', label: 'inspector.wetness' },
       mq135: { key: 'gas', label: 'inspector.gas' },
+      mq7: { key: 'co', label: 'inspector.co' },
     }[part.type];
     const sliders = [
       { ...sensed, min: 0, max: 1 },
@@ -362,9 +430,13 @@ function PartSettings({ part }: { part: CircuitComponent }) {
     part.type === 'ldr' ||
     part.type === 'soil' ||
     part.type === 'temperature' ||
-    part.type === 'ultrasonic'
+    part.type === 'ultrasonic' ||
+    part.type === 'tds' ||
+    part.type === 'turbidity'
   ) {
     const slider = {
+      tds: { key: 'ppm', label: 'inspector.ppm', min: 0, max: 1000, step: 10 },
+      turbidity: { key: 'ntu', label: 'inspector.ntu', min: 0, max: 3000, step: 10 },
       ldr: { key: 'light', label: 'inspector.light', min: 0, max: 1, step: 0.01 },
       soil: { key: 'moisture', label: 'inspector.moisture', min: 0, max: 1, step: 0.01 },
       temperature: { key: 'celsius', label: 'inspector.temperature', min: 0, max: 100, step: 1 },
@@ -376,7 +448,11 @@ function PartSettings({ part }: { part: CircuitComponent }) {
         ? `${number(value)}°C`
         : part.type === 'ultrasonic'
           ? `${number(value)} cm`
-          : `${number(Math.round(value * 100))}%`;
+          : part.type === 'tds'
+            ? `${number(value)} ppm`
+            : part.type === 'turbidity'
+              ? `${number(value)} NTU`
+              : `${number(Math.round(value * 100))}%`;
     return (
       <label className="block">
         <span className="mb-1.5 flex justify-between text-sm text-ink-soft">

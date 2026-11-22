@@ -1,0 +1,249 @@
+{
+  "id": "water-quality",
+  "order": 28,
+  "parts": ["tds-meter", "turbidity-sensor", "resistor", "led-5mm"],
+  "title": {
+    "bn": "পানির মান: TDS আর ঘোলাত্ব",
+    "en": "Water quality: TDS and turbidity"
+  },
+  "summary": {
+    "bn": "পানিতে কত কিছু মিশে আছে আর পানি কতটা ঘোলা, দুটোই মাপো।",
+    "en": "Measure how much is dissolved in water and how cloudy it is."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "water",
+  "steps": [
+    {
+      "text": {
+        "bn": "**TDS মিটার** বসাও। এটা বলে পানিতে কত লবণ আর খনিজ মিশে আছে, ppm-এ। এটা ৩.৩ V-এ চলে, আর এর ভোল্টেজ ২.৩ V-এর বেশি ওঠে না, তাই সোজা পিনে দেওয়া যায়: **+** যাবে **3V3**-এ, **−** যাবে **GND**-তে, **A** যাবে **D35**-এ।",
+        "en": "Place the **TDS meter**. It tells how much salt and mineral is dissolved in the water, in ppm. It runs on 3.3 V and its output never goes above 2.3 V, so it can go straight to a pin: **+** to **3V3**, **−** to **GND**, **A** to **D35**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "tds"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tds",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tds",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tds",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d35"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার **ঘোলাত্ব সেন্সর**। এর **5 V** লাগে, তাই **+** যাবে **VIN**-এ আর **−** যাবে GND-তে। পরিষ্কার পানিতে এর **A** প্রায় ৪ V: ESP32-র পিনের জন্য বেশি! তাই **ভোল্টেজ ভাগ**: A থেকে **১০ kΩ** হয়ে **D34**-এ, আর D34 থেকে আরেকটা **১০ kΩ** হয়ে GND-তে।",
+        "en": "Now the **turbidity sensor**. It needs **5 V**, so **+** goes to **VIN** and **−** to GND. In clear water its **A** is about 4 V: too much for an ESP32 pin! So use a **voltage divider**: A through a **10 kΩ** resistor to **D34**, and D34 through another **10 kΩ** to GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "turbidity"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "turbidity",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "turbidity",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "turbidity",
+            "pin": "out"
+          },
+          "to": {
+            "board": "d34"
+          },
+          "through": "resistor",
+          "ohms": [4700, 22000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d34"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [4700, 22000]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। কোড ট্যাবে পড়ে দেখো: TDS-এর জন্য প্রোগ্রাম নির্মাতার সূত্র দিয়ে ভোল্টেজকে ppm বানায়। ঘোলাত্বের জন্য নির্মাতার সূত্র ঠিক ৫ V-এর জন্য, কিন্তু VIN-এ সেন্সর একটু কম পায়; তাই প্রোগ্রাম চালুর সময় পরিষ্কার পানির ভোল্টেজ মনে রাখে, আর পরে তার সাথে তুলনা করে।",
+        "en": "**Put this lesson's program on the board.** Read it in the Code tab: for TDS it turns the voltage into ppm with the maker's formula. For turbidity the maker's formula is for exactly 5 V, but on VIN the sensor gets a little less; so the program remembers the voltage in clear water when it starts, and compares with that."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "water"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "পানি পরিষ্কার রেখে **চালু করো**। সিরিয়াল মনিটরে TDS আর ঘোলাত্ব দেখাবে, সাথে \"পানি ঠিক আছে\"।",
+        "en": "With the water clear, press **Run**. The serial monitor shows the TDS and the turbidity, and \"পানি ঠিক আছে\" (the water is fine)."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "পানি ঠিক আছে"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "TDS মিটারে ট্যাপ করে দ্রবীভূত পদার্থ **৫০০ ppm**-এর বেশি করো, যেন পানিতে অনেক লবণ। LED জ্বলবে।",
+        "en": "Tap the TDS meter and raise the dissolved solids above **500 ppm**, as if the water were salty. The LED lights."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "tds",
+          "prop": "ppm",
+          "above": 500
+        },
+        {
+          "kind": "serial",
+          "matches": "দ্রবীভূত পদার্থ বেশি"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার TDS আবার কমাও (৫০০-এর নিচে), আর ঘোলাত্ব সেন্সরে ট্যাপ করে পানি **২০০০ NTU**-এর বেশি ঘোলা করো। সিরিয়াল মনিটর বলবে \"পানি ঘোলা\", আর কোনো পিনে বেশি ভোল্টেজের সতর্কবার্তা আসবে না।",
+        "en": "Now bring the TDS back down (below 500), tap the turbidity sensor and make the water cloudier than **2000 NTU**. The serial monitor says \"পানি ঘোলা\" (the water is cloudy), and there is no warning about too much voltage on a pin."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "tds",
+          "prop": "ppm",
+          "below": 500
+        },
+        {
+          "kind": "prop",
+          "part": "turbidity",
+          "prop": "ntu",
+          "above": 2000
+        },
+        {
+          "kind": "serial",
+          "matches": "পানি ঘোলা"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "TDS মিটারের ভোল্টেজ ৩.৩ V-এর মধ্যে থাকে, তাই সোজা পিনে দেওয়া যায়; ঘোলাত্ব সেন্সরের জন্য ভোল্টেজ ভাগ লাগে।",
+      "নির্মাতার সূত্র যে সরবরাহের জন্য, সরবরাহ বদলালে সেই সূত্র আর ঠিক থাকে না।",
+      "জানা অবস্থায় (পরিষ্কার পানি) মেপে রেখে তার সাথে তুলনা করা একধরনের ক্যালিব্রেশন।"
+    ],
+    "en": [
+      "The TDS meter's voltage stays within 3.3 V, so it can go straight to a pin; the turbidity sensor needs a divider.",
+      "A maker's formula holds for the supply it was made for; on another supply it is no longer right.",
+      "Measuring a known state (clear water) and comparing with it is a kind of calibration."
+    ]
+  },
+  "tryNext": {
+    "bn": "দুটো ১০ kΩ রেজিস্টর সরিয়ে A সোজা D34-এ দাও, আর দেখো ল্যাব কী সতর্কবার্তা দেয়। তারপর আবার লাগিয়ে দাও।",
+    "en": "Take the two 10 kΩ resistors out, put A straight on D34, and see what the lab warns about. Then put them back."
+  }
+}

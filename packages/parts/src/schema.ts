@@ -76,7 +76,7 @@ export const PartDefinitionSchema = Type.Object({
     /** "validated" only when `record` points at a bench record in docs/validation/records. */
     state: Type.Union([Type.Literal('not-checked'), Type.Literal('validated')]),
     /** Ids of the hardware tests in docs/validation that cover this part. */
-    tests: Type.Array(Type.String({ pattern: '^[A-D][0-9]+$' })),
+    tests: Type.Array(Type.String({ pattern: '^[A-E][0-9]+$' })),
     record: Type.Optional(Type.String({ minLength: 1 })),
   }),
   pins: Type.Array(PinSchema),

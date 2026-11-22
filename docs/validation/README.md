@@ -174,6 +174,33 @@ measured.
 | C18  | The pack is 7.2 V with 0.5 Ω inside it, whatever its charge                                                                                                                                                                                                                     |
 | C20  | The negative leg is common. Red needs 1.8 V and green and blue 2.8 V at 20 mA. **No resistors on the module: please note whether the kit's module has them**                                                                                                                    |
 
+## Section E: sensor modules outside the kit
+
+Six modules modelled for projects beyond the school kit. Each needs the module
+itself, a 5 V bench supply or the board's VIN, and a multimeter; E4 to E6 need
+water samples (see each row). Every figure the simulator uses is reported by a
+maker or seller, or estimated (decision D-062); none is measured.
+
+| Test | Module                | Set-up                                                        | Record                                                       |
+| ---- | --------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
+| E1   | 0–25 V voltage sensor | Bench supply at 3, 6, 9 and 12 V on VCC and GND               | S voltage at each; the two resistors measured out of circuit |
+| E2   | ACS712 current sensor | 5 V supply; a known load at 0, 0.5, 1 and 2 A through IP+/IP− | OUT at each current; which chip (5, 20 or 30 A) is fitted    |
+| E3   | MQ-7 carbon monoxide  | 5 V on the heater, clean air, 10 minutes                      | AO every minute; heater current                              |
+| E4   | pH sensor module      | pH 4, 7 and 10 buffer solutions, after setting the offset     | Po voltage in each; which pin order the board has            |
+| E5   | TDS meter             | Distilled water, tap water, a salt solution; 3.3 V then 5 V   | A voltage in each, on both supplies; a TDS pen's reading     |
+| E6   | Turbidity sensor      | Clear water, then water with a little milk, on 5 V and on VIN | A voltage in each, on both supplies                          |
+
+**What the simulator assumes today.**
+
+| Test | The simulator assumes                                                                                                                                                       |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E1   | S is exactly a fifth of the input (30 kΩ and 7.5 kΩ)                                                                                                                        |
+| E2   | OUT is half the supply with no current and moves 185, 100 or 66 mV per ampere at 5 V, both scaled with the supply. About 10 mA of supply current                            |
+| E3   | Heater 31 Ω (about 160 mA at 5 V), held at 5 V with no 5 V / 1.4 V cycle. AO from 10 % of the supply in clean air to 80 %, with no warm-up                                  |
+| E4   | AO 2.5 V at pH 7 on 5 V, 0.18 V higher per pH unit more acid, scaled with the supply                                                                                        |
+| E5   | A follows DFRobot's formula at 25 °C and does not change with the supply (3.0 V to 5.5 V)                                                                                   |
+| E6   | A is about 4.2 V in clear water at 5 V and follows the curve users report from DFRobot's chart, scaled with the supply. **Please note how far A moves between 5 V and VIN** |
+
 ## Section D: systems (later)
 
 Solar charging over a day, LoRa range and airtime, GSM peak current, and
@@ -227,4 +254,5 @@ One file per test run in `records/`, named `<test id>-<yyyy-mm-dd>.md`, from
 | A       | 10    | 0   | 0      | 0      |
 | B       | 10    | 0   | 0      | 0      |
 | C       | 20    | 0   | 0      | 0      |
+| E       | 6     | 0   | 0      | 0      |
 | P       | 3     | 0   | 0      | 0      |

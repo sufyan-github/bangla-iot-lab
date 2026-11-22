@@ -1,30 +1,65 @@
 {
   "formatVersion": 1,
   "id": "acs712",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "acs712",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "ACS712 current sensor",
+    "bn": "ACS712 কারেন্ট সেন্সর",
     "en": "ACS712 current sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "IP+ থেকে IP− দিয়ে যত কারেন্ট যায়, OUT পিনের ভোল্টেজ তত বদলায়। শূন্য কারেন্টে OUT হয় সরবরাহের অর্ধেক।",
+    "en": "OUT moves with the current through IP+ and IP−; with no current it is half the supply."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "The current path is 1.2 mΩ and OUT is half the supply plus 185, 100 or 66 mV for each ampere, scaled with the supply, as Allegro's datasheet gives for the 5 A, 20 A and 30 A versions. Its offset error, noise and temperature drift are not modelled.",
+      "It answers at once; the real chip takes a few microseconds.",
+      "Past its range the lab warns; a real chip's output stops near its supply rails.",
+      "On the real module IP+ and IP− are a screw terminal on one side and VCC, OUT and GND a header on the other. The lab puts all five in a row with a gap between the two groups.",
+      "Its output resistance and its supply current (about 10 mA) are estimates."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E2"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "ip1",
+      "label": "IP+",
+      "role": "passive"
+    },
+    {
+      "id": "ip2",
+      "label": "IP−",
+      "role": "passive"
+    },
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "out",
+      "label": "OUT",
+      "role": "output"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["acs712"]
+  },
+  "placement": {
+    "idPrefix": "CS",
+    "offsets": [0, 1, 3, 4, 5]
   }
 }

@@ -73,6 +73,10 @@
       "sourceHash": "806afee831bee59a2d268b785fbfea7fd96cb2cb06ddcc5691fac5e33323321e",
       "bytes": 68391
     },
+    "power": {
+      "sourceHash": "d8db4be53a70f7e9ecc6a49b79919acf3870d5b90113543faf694d8f9a712080",
+      "bytes": 39659
+    },
     "rain": {
       "sourceHash": "4bbcae78b742076189736a72aa84572d97350940d6cd5953618eadb559e63029",
       "bytes": 40201
@@ -108,6 +112,10 @@
     "streetlight": {
       "sourceHash": "36ccb33e9004aeb77f009db69935c35e38a690f127eb1e87f8d2144bb2d6921d",
       "bytes": 40532
+    },
+    "water": {
+      "sourceHash": "f84bc2ab70ee80a327fca713bc662ae1eade5ef78f1612b896820767cc98528d",
+      "bytes": 38722
     },
     "watering": {
       "sourceHash": "cd2af1304f0cbde1b0edc79f80d0ac0299a784ba4b81561babc5f56317d4fcd6",

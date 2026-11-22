@@ -106,6 +106,12 @@ export const BOX_TYPES = new Set([
   'ldrmodule',
   'rain',
   'mq135',
+  'mq7',
+  'ph',
+  'voltagesensor',
+  'acs712',
+  'tds',
+  'turbidity',
   'pir',
   'rgbled',
   'oled',
@@ -151,7 +157,16 @@ export function pinLabel(component: CircuitComponent, pin: string): string {
   }
   // The ESP32's pins are named as printed on the board.
   if (component.type === 'esp32') return pin.startsWith('gnd') ? 'GND' : pin.toUpperCase();
-  const short: Record<string, string> = { anode: '+', cathode: '−', pos: '+', neg: '−' };
+  const short: Record<string, string> = {
+    anode: '+',
+    cathode: '−',
+    pos: '+',
+    neg: '−',
+    ip1: 'IP+',
+    ip2: 'IP−',
+    // The voltage sensor's input terminal, marked VCC on the module.
+    vin: 'VCC',
+  };
   return short[pin] ?? pin.toUpperCase();
 }
 

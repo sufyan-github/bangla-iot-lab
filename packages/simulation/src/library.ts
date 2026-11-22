@@ -1,5 +1,5 @@
 import { THERMAL_VOLTAGE, type DiodeModel, type TransistorModel } from '@banglalab/circuit-engine';
-import type { CircuitComponent, LedColor } from '@banglalab/shared';
+import type { Acs712Range, CircuitComponent, LedColor } from '@banglalab/shared';
 
 /**
  * Electrical data for the parts students can use. Values are typical datasheet
@@ -142,7 +142,12 @@ export function sensorOutputFraction(
  * every resistance below. No schematic of the kit's modules has been seen and
  * nothing here is measured; hardware tests C11, C12 and C14 are there for that.
  */
-export type AnalogModule = Extract<CircuitComponent, { type: 'ldrmodule' | 'rain' | 'mq135' }>;
+export type AnalogModule = Extract<
+  CircuitComponent,
+  { type: 'ldrmodule' | 'rain' | 'mq135' | 'mq7' | 'ph' }
+>;
+/** Modules whose AO rises with what they sense, so DO trips above the trimmer's setting. */
+const RISING_MODULES = new Set(['mq135', 'mq7', 'ph']);
 /** The fixed resistor that the LDR is in series with. ESTIMATE. */
 export const LDR_MODULE_RESISTANCE = 10_000;
 /** The resistor that holds DO HIGH; the comparator can only pull it LOW. ESTIMATE. */
@@ -169,13 +174,18 @@ export function moduleOutputFraction(module: AnalogModule): number {
     case 'mq135':
       // The sensing layer conducts better in bad air, which raises AO. ESTIMATE of the range.
       return 0.1 + 0.7 * module.props.gas;
+    case 'mq7':
+      // The same kind of sensing layer, for carbon monoxide. ESTIMATE of the range, as for the MQ-135.
+      return 0.1 + 0.7 * module.props.co;
+    case 'ph':
+      return Math.min(0.98, Math.max(0.02, PH_NEUTRAL_FRACTION + (7 - module.props.ph) * PH_SLOPE));
   }
 }
 
 /** True while the module's comparator pulls DO LOW: bright, wet, or bad air. */
 export function moduleTripped(module: AnalogModule): boolean {
   const fraction = moduleOutputFraction(module);
-  return module.type === 'mq135'
+  return RISING_MODULES.has(module.type)
     ? fraction > module.props.threshold
     : fraction < module.props.threshold;
 }
@@ -185,6 +195,89 @@ export function moduleTripped(module: AnalogModule): boolean {
  * in another's (Winsen); both give 5 V as the heater's supply. About 150 mA.
  */
 export const MQ135_HEATER_RESISTANCE = 33;
+
+/** MQ-7 heater. REPORTED: 31 Ω ± 3 Ω in Hanwei's datasheet (a later version says 29 Ω). */
+export const MQ7_HEATER_RESISTANCE = 31;
+
+/**
+ * pH module (PH-4502C). REPORTED by sellers and users, after the board's offset
+ * is set: 2.5 V at pH 7 on a 5 V supply, and about 0.18 V more for each pH unit
+ * more acid (one user's buffers read 3.04 V at pH 4.01 and 2.54 V at pH 6.86).
+ * ESTIMATE: that both scale with the supply. As shares of 5 V:
+ */
+export const PH_NEUTRAL_FRACTION = 0.5;
+export const PH_SLOPE = 0.18 / 5;
+
+/**
+ * 0–25 V voltage sensor module. REPORTED by sellers: a 30 kΩ and 7.5 kΩ divider,
+ * so S is a fifth of the input, rated to 25 V.
+ */
+export const VOLTAGE_SENSOR_UPPER = 30_000;
+export const VOLTAGE_SENSOR_LOWER = 7_500;
+export const VOLTAGE_SENSOR_MAX = 25;
+
+/**
+ * ACS712 current sensor. REPORTED in Allegro's datasheet: a 1.2 mΩ current path;
+ * a 4.5 V to 5.5 V supply; OUT is half the supply with no current, and moves by
+ * 185, 100 or 66 mV per ampere for the 5 A, 20 A and 30 A versions at 5 V; both
+ * are ratiometric, that is, they scale with the supply. About 10 mA supply current.
+ * ESTIMATE: the output resistance, and how the supply current is split below.
+ */
+export const ACS712_PATH_RESISTANCE = 0.0012;
+export const ACS712_SENSITIVITY: Record<Acs712Range, number> = {
+  '5A': 0.185,
+  '20A': 0.1,
+  '30A': 0.066,
+};
+export const ACS712_RANGE_AMPS: Record<Acs712Range, number> = { '5A': 5, '20A': 20, '30A': 30 };
+export const ACS712_OUTPUT_RESISTANCE = 1000;
+export const ACS712_SUPPLY_RESISTANCE = 570;
+/** OUT as a share of the supply, for a current from IP+ to IP−; it cannot leave the rails. */
+export function acs712OutputFraction(range: Acs712Range, amps: number): number {
+  return Math.min(0.98, Math.max(0.02, 0.5 + (ACS712_SENSITIVITY[range] * amps) / 5));
+}
+
+/**
+ * TDS meter (DFRobot SEN0244). REPORTED by DFRobot: 3.3 V to 5.5 V supply,
+ * 3 to 6 mA, output 0 to 2.3 V for 0 to 1000 ppm, and the formula their sample
+ * code turns the voltage back into ppm with, at 25 °C. ESTIMATE: that the output
+ * does not depend on the supply (their page gives one output range for all of
+ * it), and its output resistance.
+ */
+export const TDS_MAX_VOLTS = 2.3;
+export const TDS_OUTPUT_RESISTANCE = 1000;
+export const TDS_SUPPLY_RESISTANCE = 1100;
+export const tdsPpm = (volts: number) =>
+  (133.42 * volts ** 3 - 255.86 * volts ** 2 + 857.39 * volts) * 0.5;
+/** The output voltage that the formula reads as `ppm`. */
+export function tdsVolts(ppm: number): number {
+  let low = 0;
+  let high = TDS_MAX_VOLTS;
+  for (let i = 0; i < 40; i++) {
+    const middle = (low + high) / 2;
+    if (tdsPpm(middle) < ppm) low = middle;
+    else high = middle;
+  }
+  return (low + high) / 2;
+}
+
+/**
+ * Turbidity sensor (DFRobot SEN0189). REPORTED by DFRobot: a 5 V supply, up to
+ * 40 mA, output 0 to 4.5 V, about 4.1 V in clean water and lower as the water
+ * gets cloudier. REPORTED by users reading DFRobot's published curve (a picture
+ * on their page): NTU = −1120.4 V² + 5742.3 V − 4352.9, from about 4.2 V (clear)
+ * to 2.5 V (3000 NTU). ESTIMATE: that it scales with the supply, its output
+ * resistance and its supply current.
+ */
+export const TURBIDITY_SUPPLY_RESISTANCE = 170;
+export const TURBIDITY_OUTPUT_RESISTANCE = 1000;
+/** The output voltage at 5 V for a turbidity, from the users' formula's falling side. */
+export function turbidityVolts(ntu: number): number {
+  const a = 1120.4;
+  const b = 5742.3;
+  const room = b * b - 4 * a * (4352.9 + ntu);
+  return (b + Math.sqrt(Math.max(0, room))) / (2 * a);
+}
 
 /**
  * HC-SR501 motion sensor. REPORTED by sellers' datasheets, which do not all
@@ -306,6 +399,12 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   lcd: MODULE_MIN_SUPPLY,
   dht11: 3,
   mq135: 4.5,
+  mq7: 4.5,
+  ph: 4.5,
+  acs712: 4.5,
+  // DFRobot gives 3.3 V as its least supply; a 3.3 V rail that sags a little under load still counts.
+  tds: 3,
+  turbidity: 4.5,
   pir: 4.5,
   oled: 3,
   l298n: 6.5,

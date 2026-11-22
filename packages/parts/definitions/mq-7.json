@@ -1,30 +1,61 @@
 {
   "formatVersion": 1,
   "id": "mq-7",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "mq7",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "MQ-7 carbon monoxide sensor",
+    "bn": "MQ-7 কার্বন মনোক্সাইড সেন্সর",
     "en": "MQ-7 carbon monoxide sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "বাতাসে কার্বন মনোক্সাইড বাড়লে AO পিনের ভোল্টেজ বাড়ে। হিটারের জন্য ৫ ভোল্ট লাগে।",
+    "en": "AO rises with carbon monoxide in the air. Its heater needs 5 V."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "The heater is held at 5 V. The maker's datasheet asks for it to be switched between 5 V for 60 s and 1.4 V for 90 s, and to read only at the end of the low phase; most modules sold do not do this. The lab does not model the cycle, so a real module's reading moves in a way the lab's does not.",
+      "The slider is \"clean air\" to \"a lot of carbon monoxide\", not a concentration: the lab does not work out ppm.",
+      "It answers at once, with no warm-up.",
+      "Temperature, humidity and other gases do not change the reading.",
+      "Its comparator switches cleanly at the trimmer's setting.",
+      "The resistances inside the module are estimates."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E3"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "do",
+      "label": "DO",
+      "role": "output"
+    },
+    {
+      "id": "ao",
+      "label": "AO",
+      "role": "output"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["mq-7"]
+  },
+  "placement": {
+    "idPrefix": "MQ",
+    "offsets": [0, 1, 2, 3]
   }
 }

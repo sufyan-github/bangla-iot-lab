@@ -1,30 +1,60 @@
 {
   "formatVersion": 1,
   "id": "ph-sensor",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "ph",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "Analog pH sensor kit",
-    "en": "Analog pH sensor kit"
+    "bn": "pH সেন্সর মডিউল",
+    "en": "pH sensor module"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "পানি যত অম্লীয়, AO পিনের ভোল্টেজ তত বেশি। pH ৭-এ প্রায় ২.৫ ভোল্ট।",
+    "en": "The more acid the water, the higher AO. About 2.5 V at pH 7."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "AO is 2.5 V at pH 7 on a 5 V supply and changes about 0.18 V for each pH unit, higher for acid, as sellers and users report for the common PH-4502C board after its offset is set. It is taken as a share of the supply. A real probe must be calibrated with buffer solutions, and its slope changes with temperature and age.",
+      "The board's pins are marked Po and Do; the lab calls them AO and DO, like its other modules. Its temperature output (To) is not modelled.",
+      "Its comparator (DO) switches when AO passes the trimmer's setting, that is, when the water is more acid than the setting.",
+      "It answers at once; a real probe takes seconds to settle.",
+      "The resistances inside the module are estimates."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E4"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "do",
+      "label": "DO",
+      "role": "output"
+    },
+    {
+      "id": "ao",
+      "label": "AO",
+      "role": "output"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["ph sensor"]
+  },
+  "placement": {
+    "idPrefix": "PH",
+    "offsets": [0, 1, 2, 3]
   }
 }

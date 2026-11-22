@@ -229,6 +229,51 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M8 20v2M11 20v2M14 20v2M17 20v2" {...stroke} strokeWidth={1.6} />
     </>
   ),
+  voltagesensor: (
+    <>
+      <path d="M12 3v4M12 17v4" {...stroke} />
+      <path d="M12 7l3 1-6 2 6 2-6 2 3 1v2" {...stroke} strokeWidth={1.6} />
+      <path d="M17 6.5l2.5 5-2.5 5" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  acs712: (
+    <>
+      <rect x="6" y="6" width="12" height="12" rx="1.5" {...stroke} />
+      <path d="M2 12h4M18 12h4" {...stroke} />
+      <path d="M9 12h6M12.5 9.5l2.5 2.5-2.5 2.5" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  mq7: (
+    <>
+      <circle cx="12" cy="12" r="8.5" {...stroke} />
+      <text x="12" y="15" textAnchor="middle" fontSize="8" fontWeight="700" fill="currentColor">
+        CO
+      </text>
+    </>
+  ),
+  ph: (
+    <>
+      <path d="M10 2.5h4v13a2 2 0 0 1-4 0z" {...stroke} />
+      <path d="M10 10h4" {...stroke} strokeWidth={1.6} />
+      <path d="M5 20.5h14" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  tds: (
+    <>
+      <path
+        d="M12 3c3.5 4.5 5.5 7.5 5.5 10.5a5.5 5.5 0 0 1-11 0C6.5 10.5 8.5 7.5 12 3z"
+        {...stroke}
+      />
+      <path d="M9.5 15h1M13.5 13h1M11.5 17.5h1" {...stroke} strokeWidth={2} />
+    </>
+  ),
+  turbidity: (
+    <>
+      <path d="M6 4h12l-1.5 16h-9z" {...stroke} />
+      <path d="M7 11h10" {...stroke} strokeWidth={1.6} />
+      <path d="M8.5 14.5h1M12 16h1M14.5 13.5h1" {...stroke} strokeWidth={2} />
+    </>
+  ),
   ir: (
     <>
       <rect x="3" y="8" width="7" height="8" rx="1.5" {...stroke} />
@@ -245,6 +290,7 @@ const GROUPS: PaletteItem[][] = [
   ['buzzer', 'motor', 'l298n', 'relay', 'relaymodule', 'servo', 'rgbled', 'lcd', 'oled'],
   ['logic'],
   ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
+  ['voltagesensor', 'acs712', 'mq7', 'ph', 'tds', 'turbidity'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

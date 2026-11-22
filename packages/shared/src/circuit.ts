@@ -27,7 +27,7 @@ import { isHole } from './breadboard';
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 13;
+export const CIRCUIT_SCHEMA_VERSION = 14;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -299,6 +299,64 @@ export const Mq135Schema = Type.Object({
 });
 
 /**
+ * MQ-7 carbon monoxide sensor module: like the MQ-135, AO rises with the gas.
+ * `co` runs from 0 (clean air) to 1 (a lot of carbon monoxide).
+ */
+export const Mq7Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('mq7'),
+  pins: moduleLeads,
+  props: Type.Object({ co: Fraction, threshold: Threshold }),
+});
+
+/** pH sensor module: AO rises as the water gets more acid; DO goes LOW past the trimmer. */
+export const PhSensorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('ph'),
+  pins: moduleLeads,
+  props: Type.Object({ ph: Type.Number({ minimum: 0, maximum: 14 }), threshold: Threshold }),
+});
+
+/** 0–25 V voltage sensor module: a 30 kΩ and 7.5 kΩ divider, S at its tap. */
+export const VoltageSensorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('voltagesensor'),
+  pins: Type.Object({ vin: Hole, gnd: Hole, s: Hole }),
+  props: noProps,
+});
+
+export const ACS712_RANGES = ['5A', '20A', '30A'] as const;
+export type Acs712Range = (typeof ACS712_RANGES)[number];
+/**
+ * ACS712 current sensor module: the current through IP+ to IP− moves OUT away
+ * from half its supply. `range` is the version of the chip on the module.
+ */
+export const Acs712Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('acs712'),
+  pins: Type.Object({ ip1: Hole, ip2: Hole, vcc: Hole, out: Hole, gnd: Hole }),
+  props: Type.Object({
+    range: Type.Union([Type.Literal('5A'), Type.Literal('20A'), Type.Literal('30A')]),
+  }),
+});
+
+/** TDS meter: its output rises with the dissolved solids in the water, `ppm` from 0 to 1000. */
+export const TdsSensorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('tds'),
+  pins: sensorLeads,
+  props: Type.Object({ ppm: Type.Number({ minimum: 0, maximum: 1000 }) }),
+});
+
+/** Turbidity sensor: its output falls as the water gets cloudier, `ntu` from 0 to 3000. */
+export const TurbiditySensorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('turbidity'),
+  pins: sensorLeads,
+  props: Type.Object({ ntu: Type.Number({ minimum: 0, maximum: 3000 }) }),
+});
+
+/**
  * HC-SR501 motion sensor. Its output goes HIGH when something moves in front of
  * it and stays HIGH for `hold` seconds after the movement stops.
  */
@@ -503,6 +561,12 @@ export const ComponentSchema = Type.Union([
   LdrModuleSchema,
   RainSensorSchema,
   Mq135Schema,
+  Mq7Schema,
+  PhSensorSchema,
+  VoltageSensorSchema,
+  Acs712Schema,
+  TdsSensorSchema,
+  TurbiditySensorSchema,
   PirSchema,
   RgbLedSchema,
   OledSchema,

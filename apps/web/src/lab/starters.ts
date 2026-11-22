@@ -40,6 +40,8 @@ import esp32RobotSource from '@banglalab/board-emulators/fixtures/esp32-starters
 import esp32CounterSource from '@banglalab/board-emulators/fixtures/esp32-starters/counter.ino?raw';
 import esp32RelaySource from '@banglalab/board-emulators/fixtures/esp32-starters/relay.ino?raw';
 import esp32WateringSource from '@banglalab/board-emulators/fixtures/esp32-starters/watering.ino?raw';
+import esp32WaterSource from '@banglalab/board-emulators/fixtures/esp32-starters/water.ino?raw';
+import esp32PowerSource from '@banglalab/board-emulators/fixtures/esp32-starters/power.ino?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -93,6 +95,8 @@ export const ESP32_STARTERS = {
   counter: { source: esp32CounterSource },
   relay: { source: esp32RelaySource },
   watering: { source: esp32WateringSource },
+  water: { source: esp32WaterSource },
+  power: { source: esp32PowerSource },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

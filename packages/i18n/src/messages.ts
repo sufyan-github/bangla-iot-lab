@@ -291,7 +291,42 @@ export const bn = {
   'diag.relay-low-trigger':
     '{id}-র জাম্পার L-এ, আর IN পাচ্ছে মাত্র 3.3 V-এর HIGH। অনেক মডিউল 3.3 V-এ ঠিকমতো বন্ধ হয় না; ল্যাবের মডেলে হয়, কিন্তু আসল মডিউলে নাও হতে পারে। জাম্পারটা H-এ সরাও।',
   'code.starter.esp32.relay': 'রিলে দিয়ে বাতি (D26)',
+  'code.starter.esp32.water': 'পানির মান (D35, D34, D2)',
+  'code.starter.esp32.power': 'ভোল্টেজ, কারেন্ট, ক্ষমতা (D35, D34)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
+  'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
+  'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
+  'part.voltagesensor.about':
+    'দুটো রেজিস্টর (30 kΩ আর 7.5 kΩ) দিয়ে বানানো: যে ভোল্টেজ মাপবে তা VCC আর GND-তে লাগাও, S পিনে পাবে তার ৫ ভাগের ১ ভাগ। বোর্ড S পড়ে ৫ দিয়ে গুণ করলেই আসল ভোল্টেজ। ২৫ V-এর বেশি দিও না। ESP32-এর পিন ৩.৩ V পর্যন্ত সয়, তাই ESP32-এ এটা দিয়ে ১৬.৫ V পর্যন্ত মাপা যায়। পা: VCC, GND, S।',
+  'tool.acs712': 'কারেন্ট সেন্সর',
+  'part.acs712': 'ACS712 কারেন্ট সেন্সর',
+  'part.acs712.about':
+    'যে কারেন্ট মাপবে, তা IP+ থেকে IP− দিয়ে পাঠাও: সার্কিটের তারের মাঝখানে এটাকে বসাও। কোনো কারেন্ট না থাকলে OUT হয় সরবরাহের অর্ধেক (৫ V-এ ২.৫ V); প্রতি অ্যাম্পিয়ারে 5 A সংস্করণে 185 mV, 20 A-তে 100 mV, 30 A-তে 66 mV বদলায়। কারেন্ট উল্টো দিকে গেলে OUT কমে। এর জন্য ৫ V লাগে। ESP32-এ OUT ৩.৩ V পার হতে পারে, তাই পিনে যাওয়ার আগে দুটো রেজিস্টর দিয়ে কমিয়ে নাও। পা: IP+, IP−, তারপর VCC, OUT, GND।',
+  'inspector.range': 'কোন সংস্করণ',
+  'tool.mq7': 'CO সেন্সর',
+  'part.mq7': 'MQ-7 কার্বন মনোক্সাইড সেন্সর',
+  'part.mq7.about':
+    'কার্বন মনোক্সাইড (CO) একটা বিষাক্ত গ্যাস, যার কোনো রং বা গন্ধ নেই। বাতাসে CO বাড়লে AO-র ভোল্টেজ বাড়ে; AO ট্রিমারের সীমা পার হলে DO LOW হয়। হিটারের জন্য 5 V আর প্রায় 160 mA লাগে। নির্মাতা বলে হিটারটা ৬০ সেকেন্ড 5 V আর ৯০ সেকেন্ড 1.4 V-এ পালা করে চালাতে হয়; ল্যাব সেটা দেখায় না, সব সময় 5 V ধরে নেয়। পা: VCC, GND, DO, AO।',
+  'inspector.co': 'বাতাসে কতটা CO',
+  'tool.ph': 'pH সেন্সর',
+  'part.ph': 'pH সেন্সর মডিউল',
+  'part.ph.about':
+    'pH বলে পানি কতটা অম্লীয় (৭-এর কম) বা ক্ষারীয় (৭-এর বেশি)। বিশুদ্ধ পানির pH ৭। pH ৭-এ AO প্রায় ২.৫ V; পানি যত অম্লীয়, AO তত বাড়ে, প্রতি pH-এ প্রায় ০.১৮ V। আসল প্রোবকে আগে জানা pH-এর দ্রবণে ক্যালিব্রেট করতে হয়। বোর্ডে পিনের নাম Po আর Do; ল্যাবে AO আর DO। পা: VCC, GND, DO, AO।',
+  'inspector.ph': 'পানির pH',
+  'tool.tds': 'TDS মিটার',
+  'part.tds': 'TDS মিটার',
+  'part.tds.about':
+    'TDS মানে পানিতে কত দ্রবীভূত পদার্থ (লবণ, খনিজ), ppm-এ। বৃষ্টির পানিতে খুব কম, কলের পানিতে কয়েকশো। দ্রবীভূত পদার্থ যত বেশি, A পিনের ভোল্টেজ তত বেশি, ০ থেকে ২.৩ V পর্যন্ত; সরবরাহ ৩.৩ V হোক বা ৫ V, একই থাকে। নির্মাতার সূত্র: ppm = (133.42V³ − 255.86V² + 857.39V) × 0.5, ২৫ °C-এ। পা: A, +, −।',
+  'inspector.ppm': 'দ্রবীভূত পদার্থ (ppm)',
+  'tool.turbidity': 'ঘোলাত্ব সেন্সর',
+  'part.turbidity': 'ঘোলাত্ব (টার্বিডিটি) সেন্সর',
+  'part.turbidity.about':
+    'পানি কতটা ঘোলা, তা NTU-তে মাপে। পরিষ্কার পানিতে A প্রায় ৪.১ V; পানি যত ঘোলা, A তত কমে। এর জন্য ৫ V লাগে, আর ESP32-এর পিনের জন্য A বেশি: পিনে যাওয়ার আগে দুটো রেজিস্টর দিয়ে কমিয়ে নাও। পা: A, +, −।',
+  'inspector.ntu': 'ঘোলাত্ব (NTU)',
+  'diag.voltage-sensor-overrange':
+    '{id} মাপছে {volts}, কিন্তু এটা {limit} পর্যন্ত মাপার জন্য বানানো। আসল মডিউলের রেজিস্টর এতে গরম হয়ে নষ্ট হতে পারে।',
+  'diag.current-sensor-overrange':
+    '{id}-এর ভেতর দিয়ে এর মাপার সীমার চেয়ে বেশি কারেন্ট যাচ্ছে। OUT আর ঠিক মান দেখাবে না: বড় সংস্করণ বেছে নাও, বা কারেন্ট কমাও।',
   'tool.logic': 'লজিক চিপ',
   'part.logic': 'লজিক চিপ (74HC)',
   'part.logic.about':
@@ -817,7 +852,42 @@ export const en: Record<MessageKey, string> = {
   'diag.relay-low-trigger':
     "{id}'s jumper is on L, and IN gets only a 3.3 V HIGH. Many modules do not switch off reliably from 3.3 V; the lab's model does, but a real module may not. Move the jumper to H.",
   'code.starter.esp32.relay': 'Lamp through a relay (D26)',
+  'code.starter.esp32.water': 'Water quality (D35, D34, D2)',
+  'code.starter.esp32.power': 'Voltage, current, power (D35, D34)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
+  'tool.voltagesensor': 'Voltage sensor',
+  'part.voltagesensor': '0–25 V voltage sensor',
+  'part.voltagesensor.about':
+    'Two resistors (30 kΩ and 7.5 kΩ): put the voltage to measure on VCC and GND, and S gives a fifth of it. The board reads S and multiplies by 5. Do not give it more than 25 V. An ESP32 pin stands 3.3 V, so on an ESP32 it measures up to 16.5 V. Legs: VCC, GND, S.',
+  'tool.acs712': 'Current sensor',
+  'part.acs712': 'ACS712 current sensor',
+  'part.acs712.about':
+    'Send the current to measure in at IP+ and out at IP−: put it in the middle of a wire of the circuit. With no current OUT is half its supply (2.5 V on 5 V); it moves 185 mV per ampere on the 5 A version, 100 mV on the 20 A and 66 mV on the 30 A, and the other way for a current the other way. It needs 5 V. On an ESP32 OUT can pass 3.3 V, so bring it down with two resistors before it reaches a pin. Legs: IP+, IP−, then VCC, OUT, GND.',
+  'inspector.range': 'Which version',
+  'tool.mq7': 'CO sensor',
+  'part.mq7': 'MQ-7 carbon monoxide sensor',
+  'part.mq7.about':
+    'Carbon monoxide (CO) is a poisonous gas with no colour or smell. AO rises as there is more CO in the air; DO goes LOW when AO passes the trimmer’s setting. The heater needs 5 V and about 160 mA. The maker says to switch the heater between 5 V for 60 s and 1.4 V for 90 s; the lab does not show this and keeps it at 5 V. Legs: VCC, GND, DO, AO.',
+  'inspector.co': 'How much CO in the air',
+  'tool.ph': 'pH sensor',
+  'part.ph': 'pH sensor module',
+  'part.ph.about':
+    'pH says how acid (below 7) or alkaline (above 7) water is. Pure water is pH 7. At pH 7 AO is about 2.5 V; the more acid the water, the higher AO, by about 0.18 V for each pH unit. A real probe must first be calibrated in solutions of known pH. On the board the pins are marked Po and Do; the lab calls them AO and DO. Legs: VCC, GND, DO, AO.',
+  'inspector.ph': 'pH of the water',
+  'tool.tds': 'TDS meter',
+  'part.tds': 'TDS meter',
+  'part.tds.about':
+    'TDS is how much is dissolved in water (salts, minerals), in ppm. Rain water has very little, tap water a few hundred. The more there is, the higher A, from 0 to 2.3 V, whether the supply is 3.3 V or 5 V. The maker’s formula: ppm = (133.42V³ − 255.86V² + 857.39V) × 0.5, at 25 °C. Legs: A, +, −.',
+  'inspector.ppm': 'Dissolved solids (ppm)',
+  'tool.turbidity': 'Turbidity sensor',
+  'part.turbidity': 'Turbidity sensor',
+  'part.turbidity.about':
+    'Measures how cloudy water is, in NTU. In clear water A is about 4.1 V; the cloudier the water, the lower A. It needs 5 V, and A is too much for an ESP32 pin: bring it down with two resistors before it reaches a pin. Legs: A, +, −.',
+  'inspector.ntu': 'Cloudiness (NTU)',
+  'diag.voltage-sensor-overrange':
+    '{id} is measuring {volts}, but it is made for up to {limit}. A real module’s resistors may overheat and fail.',
+  'diag.current-sensor-overrange':
+    'More current is going through {id} than it is made to measure. OUT no longer shows the right value: choose a bigger version, or lower the current.',
   'tool.logic': 'Logic chip',
   'part.logic': 'Logic chip (74HC)',
   'part.logic.about':

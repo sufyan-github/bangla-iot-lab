@@ -1,30 +1,54 @@
 {
   "formatVersion": 1,
   "id": "tds-meter",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "tds",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "TDS meter module",
+    "bn": "TDS মিটার মডিউল",
     "en": "TDS meter module"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "পানিতে দ্রবীভূত পদার্থ যত বেশি, A পিনের ভোল্টেজ তত বেশি (০ থেকে ২.৩ ভোল্ট)।",
+    "en": "The more dissolved solids in the water, the higher A, from 0 to 2.3 V."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "A is the voltage that DFRobot's own sample code turns back into the TDS value, at 25 °C: ppm = (133.42 V³ − 255.86 V² + 857.39 V) × 0.5. The water's temperature is not modelled.",
+      "It works on 3.3 V to 5.5 V and its output does not change with the supply, as DFRobot's page gives. The lab lets it work from 3.0 V, so that a 3.3 V supply sagging a little under load still counts; below that it says the meter is underpowered and A stays at 0.",
+      "The real board drives the probe with an alternating signal; the lab only models its output.",
+      "Its output resistance and supply current are estimates."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E5"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "out",
+      "label": "A",
+      "role": "output"
+    },
+    {
+      "id": "vcc",
+      "label": "+",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "−",
+      "role": "ground"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["tds meter"]
+  },
+  "placement": {
+    "idPrefix": "TDS",
+    "offsets": [0, 1, 2]
   }
 }

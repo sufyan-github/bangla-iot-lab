@@ -80,6 +80,8 @@ test('the code tab says the ESP32 is experimental and offers only ESP32 programs
     'counter',
     'relay',
     'watering',
+    'water',
+    'power',
     'custom',
   ]);
 });

@@ -1,30 +1,53 @@
 {
   "formatVersion": 1,
   "id": "voltage-module-25v",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "voltagesensor",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "0–25 V voltage divider module",
-    "en": "0–25 V voltage divider module"
+    "bn": "০–২৫ V ভোল্টেজ সেন্সর মডিউল",
+    "en": "0–25 V voltage sensor module"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "মাপার ভোল্টেজকে ৫ ভাগের ১ ভাগ করে S পিনে দেয়।",
+    "en": "Gives a fifth of the voltage it measures on its S pin."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "The module is two resistors, 30 kΩ and 7.5 kΩ, as sellers describe it; the lab takes them as exact. Real ones are within a few percent.",
+      "On the real module the voltage to measure goes to a screw terminal (VCC, GND) and the board reads S and − on a three-pin header, whose + pin is not connected. The lab puts the three legs that matter in a row.",
+      "It is rated for 25 V; the lab warns above that. On a board that reads up to 3.3 V, S reaches its limit at 16.5 V."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E1"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vin",
+      "label": "VCC",
+      "role": "passive"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "s",
+      "label": "S",
+      "role": "output"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["voltage detection module"]
+  },
+  "placement": {
+    "idPrefix": "VS",
+    "offsets": [0, 1, 2]
   }
 }

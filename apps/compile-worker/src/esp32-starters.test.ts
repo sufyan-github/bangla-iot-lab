@@ -29,6 +29,7 @@ describe('shipped ESP32 starter programs', () => {
       'oled.ino',
       'parking.ino',
       'plant.ino',
+      'power.ino',
       'rain.ino',
       'rainalert.ino',
       'relay.ino',
@@ -38,6 +39,7 @@ describe('shipped ESP32 starter programs', () => {
       'servo.ino',
       'soil.ino',
       'streetlight.ino',
+      'water.ino',
       'watering.ino',
     ]);
     for (const sketch of sketches) {

@@ -1,30 +1,54 @@
 {
   "formatVersion": 1,
   "id": "turbidity-sensor",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "turbidity",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "Turbidity sensor",
+    "bn": "ঘোলাত্ব (টার্বিডিটি) সেন্সর",
     "en": "Turbidity sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "পানি যত ঘোলা, A পিনের ভোল্টেজ তত কম। পরিষ্কার পানিতে প্রায় ৪.১ ভোল্ট।",
+    "en": "The cloudier the water, the lower A. About 4.1 V in clean water."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "DFRobot gives about 4.1 V in clean water on a 5 V supply and says the output falls as the water gets cloudier. Their curve of volts against NTU is published only as a picture; the lab uses the formula users report reading from it, NTU = −1120.4 V² + 5742.3 V − 4352.9, from about 4.2 V (clear) to 2.5 V (3000 NTU). It is taken as a share of the supply.",
+      "The module's digital output and its switch are not modelled: A is always the analog signal.",
+      "Light from outside, bubbles and temperature do not change the reading.",
+      "Its output resistance and supply current (up to 40 mA, by DFRobot) are estimates."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E6"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "out",
+      "label": "A",
+      "role": "output"
+    },
+    {
+      "id": "vcc",
+      "label": "+",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "−",
+      "role": "ground"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["turbidity"]
+  },
+  "placement": {
+    "idPrefix": "TU",
+    "offsets": [0, 1, 2]
   }
 }

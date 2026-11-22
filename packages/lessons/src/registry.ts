@@ -7,25 +7,27 @@ import l4 from '../content/esp32-blink.json' with { type: 'json' };
 import l5 from '../content/ir-obstacle.json' with { type: 'json' };
 import l6 from '../content/ldr-module.json' with { type: 'json' };
 import l7 from '../content/led-resistor.json' with { type: 'json' };
-import l8 from '../content/motor-driver.json' with { type: 'json' };
-import l9 from '../content/mq135-gas.json' with { type: 'json' };
-import l10 from '../content/obstacle-robot.json' with { type: 'json' };
-import l11 from '../content/oled-display.json' with { type: 'json' };
-import l12 from '../content/pir-motion.json' with { type: 'json' };
-import l13 from '../content/plant-monitor.json' with { type: 'json' };
-import l14 from '../content/push-button.json' with { type: 'json' };
-import l15 from '../content/rain-alert.json' with { type: 'json' };
-import l16 from '../content/rain-sensor.json' with { type: 'json' };
-import l17 from '../content/relay-module.json' with { type: 'json' };
-import l18 from '../content/rgb-led.json' with { type: 'json' };
-import l19 from '../content/saved-settings.json' with { type: 'json' };
-import l20 from '../content/security-alarm.json' with { type: 'json' };
-import l21 from '../content/servo.json' with { type: 'json' };
-import l22 from '../content/smart-dustbin.json' with { type: 'json' };
-import l23 from '../content/smart-parking.json' with { type: 'json' };
-import l24 from '../content/soil-moisture.json' with { type: 'json' };
-import l25 from '../content/street-light.json' with { type: 'json' };
-import l26 from '../content/ultrasonic.json' with { type: 'json' };
+import l8 from '../content/measuring-power.json' with { type: 'json' };
+import l9 from '../content/motor-driver.json' with { type: 'json' };
+import l10 from '../content/mq135-gas.json' with { type: 'json' };
+import l11 from '../content/obstacle-robot.json' with { type: 'json' };
+import l12 from '../content/oled-display.json' with { type: 'json' };
+import l13 from '../content/pir-motion.json' with { type: 'json' };
+import l14 from '../content/plant-monitor.json' with { type: 'json' };
+import l15 from '../content/push-button.json' with { type: 'json' };
+import l16 from '../content/rain-alert.json' with { type: 'json' };
+import l17 from '../content/rain-sensor.json' with { type: 'json' };
+import l18 from '../content/relay-module.json' with { type: 'json' };
+import l19 from '../content/rgb-led.json' with { type: 'json' };
+import l20 from '../content/saved-settings.json' with { type: 'json' };
+import l21 from '../content/security-alarm.json' with { type: 'json' };
+import l22 from '../content/servo.json' with { type: 'json' };
+import l23 from '../content/smart-dustbin.json' with { type: 'json' };
+import l24 from '../content/smart-parking.json' with { type: 'json' };
+import l25 from '../content/soil-moisture.json' with { type: 'json' };
+import l26 from '../content/street-light.json' with { type: 'json' };
+import l27 from '../content/ultrasonic.json' with { type: 'json' };
+import l28 from '../content/water-quality.json' with { type: 'json' };
 
 export const LESSON_FILES: unknown[] = [
   l0,
@@ -55,4 +57,6 @@ export const LESSON_FILES: unknown[] = [
   l24,
   l25,
   l26,
+  l27,
+  l28,
 ];

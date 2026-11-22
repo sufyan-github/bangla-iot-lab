@@ -807,3 +807,49 @@ same criteria. The recommendation:
 **What could change it:** the speed of option C on a real low-cost phone, which
 has not been measured. If the worst-case test sketch runs slower than a real
 board there, the recommendation is to be revisited.
+
+## D-062 — Sensor modules beyond the kit follow their makers' figures, and say where each comes from
+
+Stage 1 of the component plan adds six analog modules: the 0–25 V voltage
+sensor, the ACS712 current sensor, the MQ-7, a pH module, a TDS meter and a
+turbidity sensor. Each figure the model uses is labelled in the code and in the
+part's definition by where it comes from (checked on 22 November 2026):
+
+- **From the maker's own documents (REPORTED):** the ACS712's 1.2 mΩ current
+  path, 4.5–5.5 V supply and 185/100/66 mV per ampere at 5 V, ratiometric
+  (Allegro); the MQ-7's 31 Ω heater and its 5 V / 1.4 V heating cycle
+  (Hanwei); the TDS meter's 3.3–5.5 V supply, 0–2.3 V output and the formula in
+  its sample code (DFRobot); the turbidity sensor's 5 V supply, 0–4.5 V output,
+  about 4.1 V in clean water and falling as the water clouds (DFRobot).
+- **From sellers and users (REPORTED, weaker):** the voltage sensor's 30 kΩ and
+  7.5 kΩ divider; the pH module's 2.5 V at pH 7 and about 0.18 V per pH unit;
+  the turbidity curve in NTU, which DFRobot publishes only as a picture and
+  users have fitted as NTU = −1120.4 V² + 5742.3 V − 4352.9.
+- **ESTIMATE:** output and supply resistances; that the pH and turbidity
+  outputs scale with the supply; that the TDS output does not.
+
+DFRobot's TDS sample code is under the LGPL. The lab uses the formula in it, a
+fact about the meter, and none of the code.
+
+**The circuit decides two of the outputs.** The ACS712's output depends on the
+current through it, and the TDS meter's on whether it has a supply. Both are
+worked out from the solved circuit and solved again until they agree, as the
+motor driver and logic chips already are (`sensing` in the circuit state).
+The current path does not feel what the output does, so this settles in one
+extra round.
+
+**What is left out, and said in each part's notes:** the MQ-7's heating cycle
+(the lab holds 5 V, as most modules sold do), warm-up times, temperature
+effects, the pH probe's calibration and ageing, the TDS meter's alternating
+drive, the turbidity module's digital output, the ACS712's offset error and
+noise. The TDS meter is allowed to work from 3.0 V rather than its stated
+3.3 V, so a 3.3 V rail that sags slightly under load still powers it.
+
+**A lesson makes the supply visible.** On the ESP32 the turbidity sensor runs
+from VIN, about 4.6 V in the lab's model, and the maker's 5 V curve then reads
+clean water as about 1500 NTU. The water lesson's program remembers the
+sensor's voltage in clean water when it starts and compares with that, and the
+lesson says why. The power lesson's program measures the ACS712's zero-current
+output at start and scales its sensitivity with it, for the same reason.
+
+Six hardware tests, E1 to E6, are written for these modules; none is run.
