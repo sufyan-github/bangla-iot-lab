@@ -83,6 +83,22 @@ describe('circuit document', () => {
       false,
     );
     expect(isCircuitDocument({ ...example, wires: [{ id: 'W1', from: 'a1' }] })).toBe(false);
+    // A hole whose name looks right but which the board does not have: column 34, a rail's gap.
+    const wire = { id: 'W9', color: '#000000' };
+    expect(isCircuitDocument({ ...example, wires: [{ ...wire, from: 'a1', to: 'c34' }] })).toBe(
+      false,
+    );
+    expect(isCircuitDocument({ ...example, wires: [{ ...wire, from: 'tp6', to: 'a1' }] })).toBe(
+      false,
+    );
+    expect(
+      isCircuitDocument({
+        ...example,
+        components: [
+          { id: 'R9', type: 'resistor', pins: { a: 'c30', b: 'c34' }, props: { resistance: 220 } },
+        ],
+      }),
+    ).toBe(false);
     expect(
       isCircuitDocument({
         ...example,

@@ -98,6 +98,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Fixed
 
+- A saved circuit that names a hole the breadboard does not have (a column past
+  30, or a gap in a rail) is now refused when it is opened. Before, it was
+  accepted and the leg was silently connected to nothing.
 - A sketch that keeps a web page in a raw string (`R"HTML( … )HTML"`) no longer
   fails to compile. The JavaScript functions in the page were being mistaken for
   functions of the sketch.

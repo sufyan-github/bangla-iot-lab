@@ -1,5 +1,6 @@
 import { Type, type Static } from 'typebox';
 import { Value } from 'typebox/value';
+import { isHole } from './breadboard';
 
 /**
  * The saved form of a circuit. This is the contract between the editor, the
@@ -402,7 +403,15 @@ export function emptyCircuit(): CircuitDocument {
 
 /** True when `value` is a structurally valid circuit document. */
 export function isCircuitDocument(value: unknown): value is CircuitDocument {
-  return Value.Check(CircuitDocumentSchema, value);
+  if (!Value.Check(CircuitDocumentSchema, value)) return false;
+  // The pattern for a hole's name also fits holes the board does not have (column 34,
+  // the gaps in a rail). A leg or wire in one of those would connect to nothing.
+  return (
+    value.components.every((component) => componentHoles(component).every(isHole)) &&
+    value.wires.every((wire) =>
+      [wire.from, wire.to].every((end) => end.includes('.') || isHole(end)),
+    )
+  );
 }
 
 /**

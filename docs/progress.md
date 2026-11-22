@@ -40,13 +40,13 @@ curriculum depend on that board.
 
 ## Test results
 
-| Suite                                                                                                                               | Result on 21 November 2026                                   |
-| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Lint, formatting, types, licence check                                                                                              | Clean                                                        |
-| Unit tests                                                                                                                          | 365 passed                                                   |
-| Integration tests (database, compiler sandbox, emulators, firmware source, ESP32 board library, ESP32 compile paths, chip emulator) | 85 passed                                                    |
-| Browser tests, desktop and phone sizes                                                                                              | 94 tests. Last full local run: 94 passed; see the note below |
-| Hardware tests                                                                                                                      | None run                                                     |
+| Suite                                                                                                                               | Result on 22 November 2026                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Lint, formatting, types, licence check                                                                                              | Clean                                                          |
+| Unit tests                                                                                                                          | 388 passed                                                     |
+| Integration tests (database, compiler sandbox, emulators, firmware source, ESP32 board library, ESP32 compile paths, chip emulator) | 85 passed                                                      |
+| Browser tests, desktop and phone sizes                                                                                              | 104 tests. Last full local run: 104 passed; see the note below |
+| Hardware tests                                                                                                                      | None run                                                       |
 
 **Known issue with the browser tests.** A few tests wait a fixed number of
 seconds for something the simulation does in real time (a servo sweep, a compile,
