@@ -8,6 +8,20 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Two I2C sensors** (circuit format version 16): the BME280 (temperature,
+  humidity and air pressure) and the INA219 (current and voltage monitor).
+  Each chip is answered register by register as its maker's datasheet gives
+  them, and ESP32 programs read them through Adafruit's own libraries, built
+  unmodified into the program as on a real board: BME280 2.3.0, INA219 1.2.3,
+  BusIO 1.17.4 and the unified sensor library 1.1.15. Their licences are
+  shown in the application.
+- Ready-made programs `weather` and `monitor`, and two lessons, each checked
+  step by step by the lab: **weather station** (I2C and addresses) and
+  **current monitor** (current and power of a motor at 9 V and 6 V).
+- A warning when a 3.3 V module (the BME280) is given more than 3.6 V.
+- The board library has Arduino's `Stream`, and the register helpers that
+  BusIO's SPI code uses; SPI itself is still not modelled.
+- Hardware tests E11 and E12.
 - **Power parts** (circuit format version 15): an 18650 lithium-ion cell, the
   TP4056 charger module with its protection, the LM2596 step-down regulator
   and a 5 V solar panel.

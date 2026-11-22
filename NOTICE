@@ -51,9 +51,17 @@ under other licences. Each is kept apart from the Apache-2.0 code.
      licence, which also covers the start-up picture the library draws). Their
      sources, unmodified, and licence texts are in third_party/adafruit-gfx/
      and third_party/adafruit-ssd1306/. The graphics library's extra fonts are
-     not included. Two header files of Adafruit's BusIO 1.17.4 (Copyright 2017
-     Adafruit Industries, MIT licence) are in third_party/adafruit-busio/ and
-     are read when such a program is compiled; none of BusIO's code is in it.
+     not included;
+   - in programs that use them: Adafruit's BusIO 1.17.4 (Copyright 2017
+     Adafruit Industries, MIT licence), Adafruit's unified sensor library
+     1.1.15 (Copyright 2008 The Android Open Source Project, updated by
+     Adafruit Industries; Apache License 2.0), Adafruit's
+     BME280 library 2.3.0 (Copyright 2015 Limor Fried and Kevin Townsend for
+     Adafruit Industries, BSD 3-clause licence) and Adafruit's INA219 library
+     1.2.3 (Copyright 2012 Adafruit Industries, BSD 3-clause licence). Their
+     sources, unmodified, and licence texts are in third_party/adafruit-busio/,
+     third_party/adafruit-sensor/, third_party/adafruit-bme280/ and
+     third_party/adafruit-ina219/.
 
 3. ESP32 firmware for the chip emulator (experimental; LGPL-2.1-or-later)
 

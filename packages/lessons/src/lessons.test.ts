@@ -766,6 +766,52 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       ],
     },
   },
+  'weather-station': {
+    components: [
+      esp32,
+      part(
+        'BME1',
+        'bme280',
+        { vcc: 'c10', gnd: 'c11', scl: 'c12', sda: 'c13' },
+        { celsius: 28, humidity: 70, hpa: 1010, address: 0x76 },
+      ),
+      ...lamp,
+    ],
+    wires: [
+      ['ESP1.3v3', 'a10'],
+      ['ESP1.gnd1', 'a11'],
+      ['ESP1.d22', 'a12'],
+      ['ESP1.d21', 'a13'],
+      ...lampWires,
+    ],
+    actions: { 5: [{ set: 'BME1', props: { humidity: 88 } }] },
+  },
+  'current-monitor': {
+    components: [
+      esp32,
+      { id: 'BAT1', type: 'battery', props: { voltage: 9 } },
+      part('INA1', 'ina219', {
+        vcc: 'c10',
+        gnd: 'c11',
+        scl: 'c12',
+        sda: 'c13',
+        vinm: 'c14',
+        vinp: 'c15',
+      }),
+      part('M1', 'motor', { a: 'c20', b: 'c23' }),
+    ],
+    wires: [
+      ['ESP1.3v3', 'a10'],
+      ['ESP1.gnd1', 'a11'],
+      ['ESP1.d22', 'a12'],
+      ['ESP1.d21', 'a13'],
+      ['BAT1.pos', 'a15'],
+      ['a14', 'a20'],
+      ['a23', 'BAT1.neg'],
+      ['ESP1.gnd2', 'b23'],
+    ],
+    actions: { 5: [{ set: 'BAT1', props: { voltage: 6 } }] },
+  },
 };
 
 /** The longest a student would have to watch for a step to complete, in simulated time. */

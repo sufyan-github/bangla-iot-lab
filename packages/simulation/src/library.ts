@@ -361,6 +361,24 @@ export const SOLAR_DIODE: DiodeModel = {
 };
 
 /**
+ * BME280 module. REPORTED by Bosch: 1.71 V to 3.6 V. ESTIMATE: the module's
+ * supply current and its 10 kΩ pull-ups on SCL and SDA.
+ */
+export const BME280_MAX_SUPPLY = 3.6;
+export const BME280_SUPPLY_RESISTANCE = 33_000;
+/**
+ * INA219 module. REPORTED by TI: 3 V to 5.5 V, bus voltage up to 26 V. REPORTED
+ * by Adafruit (its module and library): a 0.1 Ω shunt, address 0x40, gain /8
+ * (±320 mV, so ±3.2 A). ESTIMATE: about 1 mA of supply, 10 kΩ pull-ups.
+ */
+export const INA219_SHUNT = 0.1;
+export const INA219_ADDRESS = 0x40;
+export const INA219_MAX_SHUNT_VOLTS = 0.32;
+export const INA219_MAX_BUS = 26;
+export const INA219_SUPPLY_RESISTANCE = 5_000;
+export const I2C_MODULE_PULLUP = 10_000;
+
+/**
  * Turbidity sensor (DFRobot SEN0189). REPORTED by DFRobot: a 5 V supply, up to
  * 40 mA, output 0 to 4.5 V, about 4.1 V in clean water and lower as the water
  * gets cloudier. REPORTED by users reading DFRobot's published curve (a picture
@@ -505,6 +523,8 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   tds: 3,
   turbidity: 4.5,
   lm2596: 4.5,
+  bme280: 1.71,
+  ina219: 3,
   pir: 4.5,
   oled: 3,
   l298n: 6.5,

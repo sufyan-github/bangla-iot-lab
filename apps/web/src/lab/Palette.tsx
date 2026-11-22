@@ -229,6 +229,20 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M8 20v2M11 20v2M14 20v2M17 20v2" {...stroke} strokeWidth={1.6} />
     </>
   ),
+  bme280: (
+    <>
+      <path d="M8 14V5a2 2 0 0 1 4 0v9a3.5 3.5 0 1 1-4 0z" {...stroke} />
+      <path d="M15 7h5M15 11h5M15 15h3" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  ina219: (
+    <>
+      <rect x="3" y="6" width="18" height="12" rx="2" {...stroke} />
+      <text x="12" y="14.5" textAnchor="middle" fontSize="7" fontWeight="700" fill="currentColor">
+        mA
+      </text>
+    </>
+  ),
   cell: (
     <>
       <rect x="3" y="8" width="16" height="8" rx="3" {...stroke} />
@@ -320,6 +334,7 @@ const GROUPS: PaletteItem[][] = [
   ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
   ['voltagesensor', 'acs712', 'mq7', 'ph', 'tds', 'turbidity'],
   ['cell', 'tp4056', 'lm2596', 'solar'],
+  ['bme280', 'ina219'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

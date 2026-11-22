@@ -44,6 +44,10 @@ import {
   MQ135_HEATER_RESISTANCE,
   MQ7_HEATER_RESISTANCE,
   CELL_RESISTANCE,
+  BME280_SUPPLY_RESISTANCE,
+  I2C_MODULE_PULLUP,
+  INA219_SHUNT,
+  INA219_SUPPLY_RESISTANCE,
   CHARGER_OFF_PASS,
   CHARGER_VOLTS,
   PROTECTION_OPEN,
@@ -756,6 +760,28 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
               : resistor(id, outp, outn, REGULATOR_OFF),
           ),
         );
+        break;
+      }
+      case 'bme280':
+      case 'ina219': {
+        // Its supply current, and the module's pull-ups on the two bus lines. What
+        // travels on the bus is answered by the session, an exchange at a time.
+        const supply = node(component.pins.vcc);
+        const ground = node(component.pins.gnd);
+        const own =
+          component.type === 'bme280' ? BME280_SUPPLY_RESISTANCE : INA219_SUPPLY_RESISTANCE;
+        const draw = add(resistor(`${id}:supply`, supply, ground, own));
+        add(resistor(`${id}:scl`, supply, node(component.pins.scl), I2C_MODULE_PULLUP));
+        add(resistor(`${id}:sda`, supply, node(component.pins.sda), I2C_MODULE_PULLUP));
+        if (component.type === 'ina219') {
+          // The current to measure goes through its shunt, from VIN+ to VIN−.
+          partDevice.set(
+            id,
+            add(resistor(id, node(component.pins.vinp), node(component.pins.vinm), INA219_SHUNT)),
+          );
+        } else {
+          partDevice.set(id, draw);
+        }
         break;
       }
       case 'pir': {

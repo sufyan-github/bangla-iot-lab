@@ -26,6 +26,9 @@ import {
   L298N_REGULATOR_DROPOUT,
   MIN_SUPPLY,
   ACS712_RANGE_AMPS,
+  BME280_MAX_SUPPLY,
+  INA219_MAX_BUS,
+  INA219_MAX_SHUNT_VOLTS,
   CELL_CUTOFF_VOLTS,
   CELL_OVERCHARGE_VOLTS,
   CELL_SHORT_AMPS,
@@ -139,6 +142,7 @@ export type DiagnosticCode =
   | 'regulator-input-high'
   | 'regulator-overload'
   | 'regulator-dropout'
+  | 'module-overvoltage'
   | 'solver-failed';
 
 export interface Diagnostic {
@@ -827,6 +831,28 @@ export function readSolution(
         };
         break;
       }
+      case 'bme280':
+        // What decides whether it works: its supply.
+        result.parts[id] = {
+          voltage: volts(component.pins.vcc) - volts(component.pins.gnd),
+          current: device?.current(solution) ?? 0,
+          supply: volts(component.pins.vcc) - volts(component.pins.gnd),
+        };
+        break;
+      case 'ina219': {
+        // Its supply, the current through its shunt, and what its chip measures.
+        const supply = volts(component.pins.vcc) - volts(component.pins.gnd);
+        result.parts[id] = { voltage: supply, current: device?.current(solution) ?? 0, supply };
+        result.channels[`${id}.shunt`] = {
+          voltage: volts(component.pins.vinp) - volts(component.pins.vinm),
+          current: device?.current(solution) ?? 0,
+        };
+        result.channels[`${id}.bus`] = {
+          voltage: volts(component.pins.vinm) - volts(component.pins.gnd),
+          current: 0,
+        };
+        break;
+      }
       case 'voltagesensor':
         // What it measures, and its output: a fifth of that.
         result.parts[id] = {
@@ -1312,6 +1338,38 @@ export class Observation {
             componentId: id,
             volts: lowest,
             limit: component.props.volts + REGULATOR_DROP,
+          });
+        }
+      }
+      if (component.type === 'bme280') {
+        const supply = extreme((s) => s.parts[id]!.supply ?? 0, Math.max);
+        if (supply > BME280_MAX_SUPPLY) {
+          result.diagnostics.push({
+            code: 'module-overvoltage',
+            severity: 'error',
+            componentId: id,
+            volts: supply,
+            limit: BME280_MAX_SUPPLY,
+          });
+        }
+      }
+      if (component.type === 'ina219') {
+        const shunt = extreme((s) => Math.abs(s.channels[`${id}.shunt`]?.voltage ?? 0), Math.max);
+        const bus = extreme((s) => s.channels[`${id}.bus`]?.voltage ?? 0, Math.max);
+        if (shunt > INA219_MAX_SHUNT_VOLTS) {
+          result.diagnostics.push({
+            code: 'current-sensor-overrange',
+            severity: 'warning',
+            componentId: id,
+          });
+        }
+        if (bus > INA219_MAX_BUS) {
+          result.diagnostics.push({
+            code: 'voltage-sensor-overrange',
+            severity: 'warning',
+            componentId: id,
+            volts: bus,
+            limit: INA219_MAX_BUS,
           });
         }
       }

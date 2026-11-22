@@ -27,7 +27,7 @@ import { isHole } from './breadboard';
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 15;
+export const CIRCUIT_SCHEMA_VERSION = 16;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -402,6 +402,30 @@ export const SolarPanelSchema = Type.Object({
 });
 
 /**
+ * BME280 module on I2C. What it senses is set on its sliders; `address` is the
+ * one its SDO pad gives it (0x76 or 0x77).
+ */
+export const Bme280Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('bme280'),
+  pins: Type.Object({ vcc: Hole, gnd: Hole, scl: Hole, sda: Hole }),
+  props: Type.Object({
+    celsius: Type.Number({ minimum: -40, maximum: 85 }),
+    humidity: Type.Number({ minimum: 0, maximum: 100 }),
+    hpa: Type.Number({ minimum: 300, maximum: 1100 }),
+    address: Type.Union([Type.Literal(0x76), Type.Literal(0x77)]),
+  }),
+});
+
+/** INA219 module on I2C: the current through VIN+ to VIN−, and the voltage at VIN−. */
+export const Ina219Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('ina219'),
+  pins: Type.Object({ vcc: Hole, gnd: Hole, scl: Hole, sda: Hole, vinm: Hole, vinp: Hole }),
+  props: noProps,
+});
+
+/**
  * HC-SR501 motion sensor. Its output goes HIGH when something moves in front of
  * it and stays HIGH for `hold` seconds after the movement stops.
  */
@@ -616,6 +640,8 @@ export const ComponentSchema = Type.Union([
   Tp4056Schema,
   Lm2596Schema,
   SolarPanelSchema,
+  Bme280Schema,
+  Ina219Schema,
   PirSchema,
   RgbLedSchema,
   OledSchema,

@@ -1,30 +1,60 @@
 {
   "formatVersion": 1,
   "id": "bme280",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "bme280",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "BME280 temperature, humidity and pressure sensor",
+    "bn": "BME280 তাপমাত্রা, আর্দ্রতা ও বায়ুচাপ সেন্সর",
     "en": "BME280 temperature, humidity and pressure sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "I2C দিয়ে তাপমাত্রা, আর্দ্রতা আর বায়ুচাপ পাঠায়। ৩.৩ ভোল্টে চলে।",
+    "en": "Sends temperature, humidity and air pressure over I2C. Runs on 3.3 V."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "The chip is answered register by register as Bosch's datasheet gives them; the program runs Adafruit's own library (2.3.0) to read it. The chip's factory trimming values are example values, the same for every sensor in the lab; the lab writes the raw readings they turn back into the sliders' values.",
+      "It answers with the values on its sliders at once: no measuring time, noise, filter or self-heating, and its oversampling and standby settings are kept but change nothing.",
+      "It is the common four-pin module with no regulator, for 3.3 V: above 3.6 V the lab warns. Its I2C address is 0x76 or 0x77, as its SDO pad sets it; the lab sets it in the inspector.",
+      "Its SPI connection is not modelled: the lab has no SPI.",
+      "Its supply current and the module's 10 kΩ pull-ups are estimates."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E11"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VIN",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "scl",
+      "label": "SCL",
+      "role": "input"
+    },
+    {
+      "id": "sda",
+      "label": "SDA",
+      "role": "bidirectional"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["bme280"]
+  },
+  "placement": {
+    "idPrefix": "BME",
+    "offsets": [0, 1, 2, 3]
   }
 }

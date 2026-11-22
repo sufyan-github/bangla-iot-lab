@@ -19,6 +19,9 @@ for (const [from, to] of [
   ['third_party/adafruit-gfx/license.txt', 'adafruit-gfx.txt'],
   ['third_party/adafruit-ssd1306/license.txt', 'adafruit-ssd1306.txt'],
   ['third_party/adafruit-busio/LICENSE', 'adafruit-busio.txt'],
+  ['third_party/adafruit-sensor/LICENSE.txt', 'adafruit-sensor.txt'],
+  ['third_party/adafruit-bme280/LICENSE', 'adafruit-bme280.txt'],
+  ['third_party/adafruit-ina219/license.txt', 'adafruit-ina219.txt'],
   ['LICENSES/OFL-1.1-AnekBangla.txt', 'OFL-1.1-AnekBangla.txt'],
 ]) {
   cpSync(path.join(root, from), path.join(target, to));

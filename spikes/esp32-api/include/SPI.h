@@ -7,6 +7,15 @@
 #include <Arduino.h>
 
 #define SPI_HAS_TRANSACTION
+
+// Libraries that drive SPI pins by hand (Adafruit's BusIO among them) write the
+// pins' output registers directly, as they may on a real ESP32. Here those
+// writes land in a register that nothing reads, like every other SPI transfer.
+inline volatile uint32_t spi_unmodelled_register = 0;
+#define digitalPinToPort(pin) (0)
+#define digitalPinToBitMask(pin) (1UL << ((pin) & 31))
+#define portOutputRegister(port) (&spi_unmodelled_register)
+#define portInputRegister(port) (&spi_unmodelled_register)
 #define SPI_LSBFIRST 0
 #define SPI_MSBFIRST 1
 #define SPI_MODE0 0

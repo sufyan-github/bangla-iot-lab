@@ -114,6 +114,8 @@ export const BOX_TYPES = new Set([
   'turbidity',
   'tp4056',
   'lm2596',
+  'bme280',
+  'ina219',
   'pir',
   'rgbled',
   'oled',
@@ -175,6 +177,8 @@ export function pinLabel(component: CircuitComponent, pin: string): string {
     bn: 'B−',
     outp: 'OUT+',
     outn: 'OUT−',
+    vinp: 'VIN+',
+    vinm: 'VIN−',
   };
   return short[pin] ?? pin.toUpperCase();
 }

@@ -293,6 +293,8 @@ export const bn = {
   'code.starter.esp32.relay': 'রিলে দিয়ে বাতি (D26)',
   'code.starter.esp32.water': 'পানির মান (D35, D34, D2)',
   'code.starter.esp32.power': 'ভোল্টেজ, কারেন্ট, ক্ষমতা (D35, D34)',
+  'code.starter.esp32.weather': 'আবহাওয়া কেন্দ্র (BME280: D22, D21)',
+  'code.starter.esp32.monitor': 'কারেন্ট মনিটর (INA219: D22, D21)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -363,6 +365,18 @@ export const bn = {
     '{id} থেকে ৩ A-এর বেশি নেওয়া হচ্ছে: এর সীমার বাইরে। আসল মডিউল খুব গরম হয়ে বন্ধ হয়ে যাবে।',
   'diag.regulator-dropout':
     '{id}-এর ইনপুট মাত্র {volts}; ঠিক করা আউটপুট দিতে অন্তত {limit} লাগে। এখন আউটপুট ঠিক করা মানের চেয়ে কম।',
+  'tool.bme280': 'BME280',
+  'part.bme280': 'BME280 আবহাওয়া সেন্সর',
+  'part.bme280.about':
+    'তাপমাত্রা, বাতাসের আর্দ্রতা আর বায়ুচাপ মাপে, আর I2C দিয়ে বোর্ডকে জানায়: মাত্র দুটো তার, SCL আর SDA, যা আরও অনেক I2C যন্ত্র ভাগ করে নিতে পারে। এই মডিউল ৩.৩ V-এর: VIN যাবে 3V3-এ, ৫ V-এ নয়। ESP32-এ SCL যায় D22-এ, SDA যায় D21-এ। এর ঠিকানা 0x76 (কোনো কোনো মডিউলে 0x77)। পা: VIN, GND, SCL, SDA।',
+  'inspector.pressure': 'বায়ুচাপ',
+  'inspector.address': 'I2C ঠিকানা',
+  'tool.ina219': 'INA219',
+  'part.ina219': 'INA219 কারেন্ট ও ভোল্টেজ মনিটর',
+  'part.ina219.about':
+    'যে কারেন্ট মাপবে তা VIN+ দিয়ে ঢুকে ০.১ Ω রেজিস্টর পেরিয়ে VIN− দিয়ে বেরোয়; চিপ সেই রেজিস্টরের ভোল্টেজ আর VIN−-এর ভোল্টেজ মেপে কারেন্ট আর ক্ষমতা হিসাব করে, I2C দিয়ে পাঠায়। ±৩.২ A আর ২৬ V পর্যন্ত মাপে। VCC ৩ থেকে ৫.৫ V। লোডের − বোর্ডের GND-তেও লাগাও। পা: VCC, GND, SCL, SDA, VIN−, VIN+।',
+  'diag.module-overvoltage':
+    '{id} পাচ্ছে {volts}, কিন্তু এটা সর্বোচ্চ {limit}-এর জন্য বানানো। আসল মডিউল নষ্ট হতে পারে: 3V3 দাও।',
   'tool.logic': 'লজিক চিপ',
   'part.logic': 'লজিক চিপ (74HC)',
   'part.logic.about':
@@ -890,6 +904,8 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.relay': 'Lamp through a relay (D26)',
   'code.starter.esp32.water': 'Water quality (D35, D34, D2)',
   'code.starter.esp32.power': 'Voltage, current, power (D35, D34)',
+  'code.starter.esp32.weather': 'Weather station (BME280: D22, D21)',
+  'code.starter.esp32.monitor': 'Current monitor (INA219: D22, D21)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -960,6 +976,18 @@ export const en: Record<MessageKey, string> = {
     'More than 3 A is being taken from {id}: past its limit. A real module would get very hot and shut down.',
   'diag.regulator-dropout':
     '{id} gets only {volts} in; it needs at least {limit} to give the output it is set to. Its output is lower than set.',
+  'tool.bme280': 'BME280',
+  'part.bme280': 'BME280 weather sensor',
+  'part.bme280.about':
+    'Measures temperature, humidity and air pressure, and tells the board over I2C: just two wires, SCL and SDA, which many I2C devices can share. This module is for 3.3 V: VIN goes to 3V3, not 5 V. On the ESP32, SCL goes to D22 and SDA to D21. Its address is 0x76 (0x77 on some modules). Legs: VIN, GND, SCL, SDA.',
+  'inspector.pressure': 'Air pressure',
+  'inspector.address': 'I2C address',
+  'tool.ina219': 'INA219',
+  'part.ina219': 'INA219 current and voltage monitor',
+  'part.ina219.about':
+    'The current to measure goes in at VIN+, through a 0.1 Ω resistor and out at VIN−; the chip measures the voltage across that resistor and at VIN−, works out current and power, and sends them over I2C. It measures up to ±3.2 A and 26 V. VCC is 3 to 5.5 V. Join the load’s − to the board’s GND as well. Legs: VCC, GND, SCL, SDA, VIN−, VIN+.',
+  'diag.module-overvoltage':
+    '{id} is getting {volts}, but it is made for {limit} at most. A real module may be destroyed: give it 3V3.',
   'tool.logic': 'Logic chip',
   'part.logic': 'Logic chip (74HC)',
   'part.logic.about':

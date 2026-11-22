@@ -34,6 +34,8 @@ import {
 } from './geometry';
 import {
   Acs712View,
+  Bme280View,
+  Ina219View,
   CellView,
   Lm2596View,
   SolarView,
@@ -348,6 +350,17 @@ export function BoardPartDrawing(props: {
           selected={selected}
         />
       );
+    case 'bme280':
+      return (
+        <Bme280View
+          first={at(part.pins.vcc)}
+          last={at(part.pins.sda)}
+          label={`${props.formatNumber(part.props.celsius)}°`}
+          selected={selected}
+        />
+      );
+    case 'ina219':
+      return <Ina219View first={at(part.pins.vcc)} last={at(part.pins.vinp)} selected={selected} />;
     case 'cell':
       return (
         <CellView

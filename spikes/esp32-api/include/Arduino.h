@@ -278,8 +278,19 @@ class Print {
   virtual void flush() {}
 };
 
+/**
+ * Something that can be read as well as printed to, as in Arduino's own core.
+ * Libraries take a Stream when they print to "wherever the sketch says".
+ */
+class Stream : public Print {
+ public:
+  virtual int available() = 0;
+  virtual int read() = 0;
+  virtual int peek() = 0;
+};
+
 /** The serial port to the computer: what the serial monitor shows and sends. */
-class HardwareSerial : public Print {
+class HardwareSerial : public Stream {
  public:
   void begin(unsigned long baud, uint32_t config = 0, int8_t rx = -1, int8_t tx = -1) { (void)baud, (void)config, (void)rx, (void)tx; }
   void end() {}
@@ -290,9 +301,9 @@ class HardwareSerial : public Print {
   size_t write(uint8_t c) override;
   size_t write(const uint8_t* buffer, size_t size) override;
 
-  int available();
-  int read();
-  int peek();
+  int available() override;
+  int read() override;
+  int peek() override;
   String readString();
   String readStringUntil(char terminator);
   long parseInt();

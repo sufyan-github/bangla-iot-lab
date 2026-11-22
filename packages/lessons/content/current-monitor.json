@@ -1,0 +1,215 @@
+{
+  "id": "current-monitor",
+  "order": 33,
+  "parts": ["ina219", "dc-motor"],
+  "title": {
+    "bn": "I2C কারেন্ট মনিটর: INA219",
+    "en": "An I2C current monitor: the INA219"
+  },
+  "summary": {
+    "bn": "একটা মোটর কত কারেন্ট আর ক্ষমতা নেয়, বোর্ড দিয়ে মাপো।",
+    "en": "Measure with the board how much current and power a motor takes."
+  },
+  "setup": {
+    "board": "esp32",
+    "battery": 9
+  },
+  "program": "monitor",
+  "steps": [
+    {
+      "text": {
+        "bn": "**INA219** বসাও। এর **VCC** যাবে **3V3**-এ, **GND** যাবে **GND**-তে।",
+        "en": "Place the **INA219**. Its **VCC** goes to **3V3**, and **GND** to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ina219"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ina219",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ina219",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "I2C-তে মাত্র দুটো তার লাগে: **SCL** (ঘড়ি) যাবে **D22**-এ, **SDA** (ডেটা) যাবে **D21**-এ। একই দুটো তারে অনেক I2C যন্ত্র বসানো যায়; প্রত্যেকের আলাদা **ঠিকানা** থাকে, বোর্ড ঠিকানা দিয়ে যার সাথে কথা বলবে তাকে ডাকে।",
+        "en": "I2C needs only two wires: **SCL** (clock) goes to **D22** and **SDA** (data) to **D21**. Many I2C devices can share the same two wires; each has its own **address**, and the board calls the one it wants by its address."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ina219",
+            "pin": "scl"
+          },
+          "to": {
+            "board": "d22"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ina219",
+            "pin": "sda"
+          },
+          "to": {
+            "board": "d21"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার **মোটর**। কারেন্টকে INA219-এর ভেতর দিয়ে যেতে হবে: ব্যাটারির **+** থেকে **VIN+**, **VIN−** থেকে মোটর, আর মোটর থেকে ব্যাটারির **−**। ব্যাটারির **−** বোর্ডের **GND**-তেও লাগাও, যাতে VIN−-এর ভোল্টেজ মাপা যায়।",
+        "en": "Now the **motor**. The current must go through the INA219: battery **+** to **VIN+**, **VIN−** to the motor, and the motor to the battery's **−**. Join the battery's **−** to the board's **GND** too, so the voltage at VIN− can be measured."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "motor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ina219",
+            "pin": "vinp"
+          },
+          "to": {
+            "battery": "pos"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ina219",
+            "pin": "vinm"
+          },
+          "to": {
+            "part": "motor",
+            "pin": "*"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "*"
+          },
+          "to": {
+            "battery": "neg"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "battery": "neg"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। এটা Adafruit-এর INA219 লাইব্রেরি ব্যবহার করে। চিপ নিজেই কারেন্ট আর ক্ষমতা হিসাব করে রাখে; প্রোগ্রাম শুধু পড়ে।",
+        "en": "**Put this lesson's program on the board.** It uses Adafruit's INA219 library. The chip works out the current and power itself; the program just reads them."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "monitor"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। মোটর ঘুরবে, আর সিরিয়াল মনিটরে প্রায় ৮.৮ V, প্রায় ৩৫০ mA আর প্রায় ৩ W দেখাবে।",
+        "en": "Press **Run**. The motor turns, and the serial monitor shows about 8.8 V, about 350 mA and about 3 W."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "INA219 পাওয়া গেছে"
+        },
+        {
+          "kind": "reading",
+          "part": "motor",
+          "path": "activity",
+          "above": 0
+        },
+        {
+          "kind": "serial",
+          "matches": "কারেন্ট: 3[4-6]\\d\\.\\d mA",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে কারেন্ট প্রায় ৩৫০ mA",
+            "en": "The serial monitor shows about 350 mA"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "ব্যাটারিতে ট্যাপ করে **৬ V** করো। মোটর ধীরে ঘুরবে, আর কারেন্ট কমে প্রায় ২৩০ mA হবে: মোটর একটা রেজিস্টরের মতো, ভোল্টেজ কমলে কারেন্টও কমে।",
+        "en": "Tap the battery and make it **6 V**. The motor slows, and the current falls to about 230 mA: the motor acts like a resistor, so less voltage means less current."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "battery",
+          "prop": "voltage",
+          "below": 7
+        },
+        {
+          "kind": "serial",
+          "matches": "কারেন্ট: 2[2-4]\\d\\.\\d mA",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে কারেন্ট প্রায় ২৩০ mA",
+            "en": "The serial monitor shows about 230 mA"
+          }
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "INA219 একটা ছোট রেজিস্টরের দুই পাশের ভোল্টেজ মেপে কারেন্ট বের করে।",
+      "কারেন্ট মাপতে হলে কারেন্টকে সেন্সরের ভেতর দিয়ে যেতে হয়; ভোল্টেজ মাপতে মাটি (GND) এক হতে হয়।",
+      "একই I2C তারে BME280 আর INA219 দুটোই রাখা যায়: তাদের ঠিকানা আলাদা।"
+    ],
+    "en": [
+      "The INA219 finds the current from the voltage across a small resistor.",
+      "To measure a current it must flow through the sensor; to measure a voltage the grounds must be joined.",
+      "A BME280 and an INA219 can share the same I2C wires: their addresses differ."
+    ]
+  },
+  "tryNext": {
+    "bn": "একই SCL আর SDA তারে একটা BME280-ও লাগাও, আর দুটো সেন্সর একসাথে পড়ার প্রোগ্রাম লেখো।",
+    "en": "Add a BME280 on the same SCL and SDA wires, and write a program that reads both sensors."
+  }
+}

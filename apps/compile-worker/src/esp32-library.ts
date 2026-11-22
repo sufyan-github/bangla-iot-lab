@@ -45,11 +45,40 @@ export const ESP32_EXTRA_LIBRARIES = [
     sources: ['Adafruit_SSD1306.cpp'],
     headers: ['Adafruit_SSD1306.h', 'splash.h'],
   },
-  // Two headers of Adafruit's BusIO 1.17.4 (MIT), which the graphics library's header names.
+  // Adafruit's BusIO 1.17.4 (MIT): the I2C and SPI device classes the sensor libraries use.
   {
     dir: path.join(THIRD_PARTY, 'adafruit-busio'),
-    sources: [],
-    headers: ['Adafruit_I2CDevice.h', 'Adafruit_SPIDevice.h'],
+    sources: [
+      'Adafruit_I2CDevice.cpp',
+      'Adafruit_SPIDevice.cpp',
+      'Adafruit_BusIO_Register.cpp',
+      'Adafruit_GenericDevice.cpp',
+    ],
+    headers: [
+      'Adafruit_I2CDevice.h',
+      'Adafruit_SPIDevice.h',
+      'Adafruit_BusIO_Register.h',
+      'Adafruit_GenericDevice.h',
+      'Adafruit_I2CRegister.h',
+    ],
+  },
+  // Adafruit's unified sensor interface 1.1.15 (Apache-2.0), which the BME280 library uses.
+  {
+    dir: path.join(THIRD_PARTY, 'adafruit-sensor'),
+    sources: ['Adafruit_Sensor.cpp'],
+    headers: ['Adafruit_Sensor.h'],
+  },
+  // Adafruit's BME280 library 2.3.0 (BSD): temperature, humidity and pressure.
+  {
+    dir: path.join(THIRD_PARTY, 'adafruit-bme280'),
+    sources: ['Adafruit_BME280.cpp'],
+    headers: ['Adafruit_BME280.h'],
+  },
+  // Adafruit's INA219 library 1.2.3 (BSD): current and voltage monitor.
+  {
+    dir: path.join(THIRD_PARTY, 'adafruit-ina219'),
+    sources: ['Adafruit_INA219.cpp'],
+    headers: ['Adafruit_INA219.h'],
   },
 ] as const;
 /** Every file the built library depends on, for telling when it has changed. */

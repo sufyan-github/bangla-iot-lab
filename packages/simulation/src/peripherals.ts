@@ -9,6 +9,7 @@ import type { I2cResult, I2cTransfer, PinDrive } from '@banglalab/board-emulator
 import {
   DHT11_START_MS,
   DHT11_TIMING_US,
+  INA219_ADDRESS,
   OLED_ADDRESS,
   SERVO_MAX_PULSE_US,
   SERVO_MIN_PULSE_US,
@@ -17,6 +18,7 @@ import {
   ULTRASONIC_MS_PER_CM,
 } from './library';
 import { netName } from './netlist';
+import { Bme280, Ina219, type I2cDevice, type Ina219Inputs } from './i2c-sensors';
 import { Ssd1306 } from './ssd1306';
 
 /** Turns bytes into base64 text, in a browser, a worker or Node. */
@@ -107,6 +109,11 @@ export class Peripherals {
   private lcds: { id: string; rs?: PinKey; e?: PinKey; data: (PinKey | undefined)[] }[] = [];
   private dhts: { id: string; data?: PinKey; celsius: number; humidity: number }[] = [];
   private oleds: { id: string; sda?: PinKey; scl?: PinKey }[] = [];
+  /** Sensors on an I2C bus, each answering at its own address. */
+  private i2cSensors: { id: string; sda?: PinKey; scl?: PinKey; address: number }[] = [];
+  private readonly sensorChips = new Map<string, I2cDevice>();
+  /** What each current monitor sees in the circuit now. */
+  private measured: (id: string) => Ina219Inputs = () => ({ shunt: 0, bus: 0 });
   private readonly panels = new Map<string, Ssd1306>();
   /** Each panel's picture as text, with the version of the picture it was made from. */
   private readonly pictures = new Map<string, { version: number; pixels: string }>();
@@ -135,6 +142,7 @@ export class Peripherals {
     this.lcds = [];
     this.dhts = [];
     this.oleds = [];
+    this.i2cSensors = [];
     this.sensorInputs.clear();
     for (const component of document.components) {
       if (component.type === 'servo') {
@@ -161,6 +169,26 @@ export class Peripherals {
           sda: pinOf.direct(component.pins.sda),
           scl: pinOf.direct(component.pins.scl),
         });
+      } else if (component.type === 'bme280' || component.type === 'ina219') {
+        if (component.type === 'bme280') {
+          const weather = {
+            celsius: component.props.celsius,
+            humidity: component.props.humidity,
+            hpa: component.props.hpa,
+          };
+          const chip = this.sensorChips.get(component.id);
+          if (chip instanceof Bme280) chip.setWeather(weather);
+          else this.sensorChips.set(component.id, new Bme280(weather));
+        } else if (!this.sensorChips.has(component.id)) {
+          const id = component.id;
+          this.sensorChips.set(id, new Ina219(() => this.measured(id)));
+        }
+        this.i2cSensors.push({
+          id: component.id,
+          sda: pinOf.direct(component.pins.sda),
+          scl: pinOf.direct(component.pins.scl),
+          address: component.type === 'bme280' ? component.props.address : INA219_ADDRESS,
+        });
       } else if (component.type === 'lcd') {
         if (!this.displays.has(component.id)) this.displays.set(component.id, new Hd44780());
         const { pins } = component;
@@ -180,6 +208,7 @@ export class Peripherals {
       this.dhtBusyUntil,
       this.panels,
       this.pictures,
+      this.sensorChips,
     ]) {
       for (const id of map.keys()) if (!present.has(id)) map.delete(id);
     }
@@ -195,6 +224,13 @@ export class Peripherals {
     this.powered = powered;
     // A display that loses its supply forgets its picture and its settings.
     for (const [id, panel] of this.panels) if (!powered(id)) panel.reset();
+    // So does a sensor: its settings go back to how the chip starts.
+    for (const [id, chip] of this.sensorChips) if (!powered(id)) chip.reset();
+  }
+
+  /** Tells each current monitor what it measures in the circuit as now solved. */
+  setMeasured(measured: (id: string) => Ina219Inputs): void {
+    this.measured = measured;
   }
 
   /**
@@ -211,6 +247,13 @@ export class Peripherals {
       const panel = this.panels.get(oled.id)!;
       panel.write(transfer.write);
       return { status: 0, read: panel.read(transfer.readLength) };
+    }
+    for (const sensor of this.i2cSensors) {
+      if (sensor.sda !== sda || sensor.scl !== scl || transfer.address !== sensor.address) continue;
+      if (!this.powered(sensor.id)) continue;
+      const chip = this.sensorChips.get(sensor.id)!;
+      chip.write(transfer.write);
+      return { status: 0, read: chip.read(transfer.readLength) };
     }
     return { status: 2 };
   }

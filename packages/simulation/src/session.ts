@@ -487,6 +487,10 @@ export class SimulationSession {
     this.peripherals.setPowered(
       (id) => (solution?.parts[id]?.voltage ?? 0) >= (minSupply.get(id) ?? MODULE_MIN_SUPPLY),
     );
+    this.peripherals.setMeasured((id) => ({
+      shunt: solution?.channels[`${id}.shunt`]?.voltage ?? 0,
+      bus: solution?.channels[`${id}.bus`]?.voltage ?? 0,
+    }));
     for (const [id, board] of this.boards) {
       const { model } = board;
       for (let pin = 0; pin < model.pinCount; pin++) {

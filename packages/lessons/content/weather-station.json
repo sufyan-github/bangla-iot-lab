@@ -1,0 +1,200 @@
+{
+  "id": "weather-station",
+  "order": 32,
+  "parts": ["bme280", "resistor", "led-5mm"],
+  "title": {
+    "bn": "আবহাওয়া কেন্দ্র: BME280 আর I2C",
+    "en": "Weather station: the BME280 and I2C"
+  },
+  "summary": {
+    "bn": "দুটো তারে তাপমাত্রা, আর্দ্রতা আর বায়ুচাপ পড়ো।",
+    "en": "Read temperature, humidity and air pressure over two wires."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "weather",
+  "steps": [
+    {
+      "text": {
+        "bn": "**BME280** বসাও। এই মডিউল **৩.৩ V**-এর: এর **VIN** যাবে **3V3**-এ (৫ V নয়!), আর **GND** যাবে **GND**-তে।",
+        "en": "Place the **BME280**. This module is for **3.3 V**: its **VIN** goes to **3V3** (not 5 V!), and **GND** to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "bme280"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "bme280",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "bme280",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "I2C-তে মাত্র দুটো তার লাগে: **SCL** (ঘড়ি) যাবে **D22**-এ, **SDA** (ডেটা) যাবে **D21**-এ। একই দুটো তারে অনেক I2C যন্ত্র বসানো যায়; প্রত্যেকের আলাদা **ঠিকানা** থাকে, বোর্ড ঠিকানা দিয়ে যার সাথে কথা বলবে তাকে ডাকে।",
+        "en": "I2C needs only two wires: **SCL** (clock) goes to **D22** and **SDA** (data) to **D21**. Many I2C devices can share the same two wires; each has its own **address**, and the board calls the one it wants by its address."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "bme280",
+            "pin": "scl"
+          },
+          "to": {
+            "board": "d22"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "bme280",
+            "pin": "sda"
+          },
+          "to": {
+            "board": "d21"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। এটা Adafruit-এর BME280 লাইব্রেরি ব্যবহার করে, আসল বোর্ডেও ঠিক এটাই চলে। `bme.begin(0x76)` সেন্সরকে তার ঠিকানায় খোঁজে।",
+        "en": "**Put this lesson's program on the board.** It uses Adafruit's BME280 library, the same one that runs on a real board. `bme.begin(0x76)` looks for the sensor at its address."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "weather"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। সিরিয়াল মনিটরে \"BME280 পাওয়া গেছে\", তারপর প্রতি দুই সেকেন্ডে তাপমাত্রা, আর্দ্রতা আর বায়ুচাপ দেখাবে।",
+        "en": "Press **Run**. The serial monitor shows \"BME280 পাওয়া গেছে\" (BME280 found), then the temperature, humidity and pressure every two seconds."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "BME280 পাওয়া গেছে"
+        },
+        {
+          "kind": "serial",
+          "matches": "বায়ুচাপ: \\d+\\.\\d hPa",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে বায়ুচাপ দেখাচ্ছে",
+            "en": "The serial monitor shows the air pressure"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে আর্দ্রতা **৮০%**-এর বেশি করো, যেন বর্ষার দিন। LED জ্বলবে।",
+        "en": "Tap the sensor and raise the humidity above **80%**, as on a monsoon day. The LED lights."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "bme280",
+          "prop": "humidity",
+          "above": 80
+        },
+        {
+          "kind": "serial",
+          "matches": "আর্দ্রতা: (8[1-9]|9\\d|100) %",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে আর্দ্রতা ৮০%-এর বেশি",
+            "en": "The serial monitor shows more than 80% humidity"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "I2C-তে দুটো তার (SCL আর SDA) দিয়ে অনেক যন্ত্রের সাথে কথা বলা যায়; প্রত্যেকের নিজের ঠিকানা থাকে।",
+      "সেন্সরের লাইব্রেরি তার ভেতরের হিসাব করে দেয়: প্রোগ্রাম শুধু °C, % আর hPa পায়।",
+      "৩.৩ V-এর মডিউল ৫ V-এ দিলে নষ্ট হতে পারে।"
+    ],
+    "en": [
+      "I2C talks to many devices over two wires (SCL and SDA); each has its own address.",
+      "The sensor's library does its sums inside: the program just gets °C, % and hPa.",
+      "A 3.3 V module given 5 V may be destroyed."
+    ]
+  },
+  "tryNext": {
+    "bn": "সেন্সরের ঠিকানা 0x77 করে বোর্ড আবার চালু করো: প্রোগ্রাম কী বলে দেখো। তারপর প্রোগ্রামে ঠিকানা বদলে দেখো।",
+    "en": "Set the sensor's address to 0x77 and restart the board: see what the program says. Then change the address in the program."
+  }
+}

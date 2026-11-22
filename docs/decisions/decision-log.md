@@ -903,3 +903,46 @@ looks after a cell is found from the wires, since the solver treats wires as
 resistors.
 
 Four hardware tests, E7 to E10, are written for these parts; none is run.
+
+## D-064 — I2C sensors are their chips' registers, read by the real libraries
+
+Stage 3 adds the BME280 and the INA219. Each is modelled as its chip's
+registers on the I2C bus, answered as the maker's datasheet gives them; the
+program reads them through Adafruit's own libraries, built unmodified into
+every ESP32 program as D-051 says, as on a real board. Their licences were
+read at the release tags used (22–23 November 2026): BME280 library 2.3.0 and
+INA219 library 1.2.3 are BSD 3-clause, BusIO 1.17.4 is MIT, the unified sensor
+library 1.1.15 is Apache-2.0 (its header is Copyright 2008 The Android Open
+Source Project, updated by Adafruit). All four are shown on the licences page
+and in NOTICE.
+
+**The BME280** answers with chip id 0x60 and a set of factory trimming values.
+Each real chip has its own; the lab's are example values, the same for every
+sensor. When the program reads, the lab writes the raw readings that Bosch's
+formulas, as the library implements them, turn back into the values on the
+sliders: run backwards by searching, with the library's own integer
+arithmetic. A test reads them back through those formulas: temperature exact,
+pressure within 0.0005 hPa, humidity within 0.006 %. It is the four-pin 3.3 V
+module with no regulator: above 3.6 V the lab warns, and its pull-ups would
+then put 5 V on the board's pins, which the lab also reports.
+
+**The INA219** follows TI's datasheet (REPORTED): shunt voltage in 10 µV
+steps, bus voltage in 4 mV steps, current = shunt × calibration / 4096, power =
+current × bus / 5000, and nothing in the current and power registers until
+the program writes a calibration. It reads the voltages from the solved
+circuit at the moment of the exchange, with the 0.1 Ω shunt that Adafruit's
+module and library assume.
+
+**What was needed in the board library.** BusIO's SPI code writes pins
+through their output registers, as it may on a real ESP32; the lab has no SPI
+(D-054), so `SPI.h` now gives those register helpers pointing at a register
+nothing reads, and hand-driven SPI goes nowhere like the rest. BusIO's
+register class prints to a `Stream`, which the board library now has, with the
+serial port as one. That makes every program about 200 bytes larger; the
+ready-made programs were rebuilt. Programs that do not use BusIO do not carry
+its code.
+
+**Not modelled:** measuring time, noise, filtering and self-heating; the
+INA219's averaging and its address pads; SPI.
+
+Hardware tests E11 and E12 are written; none is run.

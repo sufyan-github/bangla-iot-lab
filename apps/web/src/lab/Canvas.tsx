@@ -101,6 +101,8 @@ const BODY_HEIGHT: Partial<Record<string, number>> = {
   solar: 62,
   tp4056: 38,
   lm2596: 58,
+  bme280: 40,
+  ina219: 46,
   pir: 42,
   rgbled: 38,
   oled: 86,

@@ -1,30 +1,70 @@
 {
   "formatVersion": 1,
   "id": "ina219",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "ina219",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "INA219 current and voltage monitor",
+    "bn": "INA219 কারেন্ট ও ভোল্টেজ মনিটর",
     "en": "INA219 current and voltage monitor"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "VIN+ থেকে VIN− দিয়ে যাওয়া কারেন্ট আর VIN−-এর ভোল্টেজ মেপে I2C দিয়ে পাঠায়।",
+    "en": "Measures the current through VIN+ to VIN− and the voltage at VIN−, and sends them over I2C."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "The chip is answered register by register as TI's datasheet gives them: shunt voltage in 10 µV steps, bus voltage in 4 mV steps, and current and power worked out from the calibration the program writes. The program runs Adafruit's own library (1.2.3) to read it.",
+      "Its shunt is 0.1 Ω, as on Adafruit's module and the library's default settings, so it reads up to 3.2 A either way at the library's default gain.",
+      "It answers at once, with no averaging, noise or offset; its conversion time and averaging settings are kept but change nothing.",
+      "It works from 3 V to 5.5 V (TI). Its I2C address is 0x40; the address pads are not modelled.",
+      "Its supply current and the module's 10 kΩ pull-ups are estimates."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E12"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "scl",
+      "label": "SCL",
+      "role": "input"
+    },
+    {
+      "id": "sda",
+      "label": "SDA",
+      "role": "bidirectional"
+    },
+    {
+      "id": "vinm",
+      "label": "VIN−",
+      "role": "passive"
+    },
+    {
+      "id": "vinp",
+      "label": "VIN+",
+      "role": "passive"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["ina219"]
+  },
+  "placement": {
+    "idPrefix": "INA",
+    "offsets": [0, 1, 2, 3, 4, 5]
   }
 }

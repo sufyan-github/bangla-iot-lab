@@ -1477,6 +1477,75 @@ export function Lm2596View(props: {
   );
 }
 
+/** BME280 module: a small purple board with the sensor's silver can, and its four pins. */
+export function Bme280View(props: { first: Point; last: Point; label: string; selected: boolean }) {
+  const { length, transform } = between(props.first, props.last);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 10} y={-40} width={length + 20} height={46} color="#5b2a86" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {[0, 1, 2, 3].map((i) => (
+        <SolderDot key={i} x={-length / 2 + (i * length) / 3} />
+      ))}
+      <rect
+        x={-6}
+        y={-34}
+        width={12}
+        height={10}
+        rx={1.5}
+        fill="url(#shade-metal)"
+        stroke="#5d666a"
+      />
+      <circle cx={-2.5} cy={-31} r={1} fill="#23282a" />
+      <text
+        x={0}
+        y={-12}
+        textAnchor="middle"
+        fontSize={10.5}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        {props.label}
+      </text>
+    </g>
+  );
+}
+
+/** INA219 module: its blue board, the shunt resistor marked R100, the chip and the VIN terminal. */
+export function Ina219View(props: { first: Point; last: Point; selected: boolean }) {
+  const { length, transform } = between(props.first, props.last);
+  const at = (i: number) => -length / 2 + (i * length) / 5;
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 10} y={-46} width={length + 20} height={52} color="#1f5fa8" />
+      <PinHeader from={at(0)} to={at(5)} />
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <SolderDot key={i} x={at(i)} />
+      ))}
+      <rect x={at(4) - 6} y={-42} width={at(5) - at(4) + 12} height={14} rx={1.5} fill="#2f9a5a" />
+      <rect x={-18} y={-36} width={16} height={7} rx={1} fill="#17191b" />
+      <text x={-10} y={-31} textAnchor="middle" fontSize={5} fill="#c9cdd0" pointerEvents="none">
+        R100
+      </text>
+      <rect x={2} y={-38} width={12} height={10} rx={1} fill="#17191b" />
+      <text
+        x={0}
+        y={-12}
+        textAnchor="middle"
+        fontSize={10.5}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        INA219
+      </text>
+    </g>
+  );
+}
+
 /** HC-SR501 motion sensor: a white faceted dome on a small board. */
 export function PirView(props: {
   vcc: Point;

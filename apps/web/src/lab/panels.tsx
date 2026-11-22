@@ -346,6 +346,53 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
+  if (part.type === 'bme280') {
+    // The weather where it sits, and its address on the bus.
+    const sliders = [
+      { key: 'celsius', label: 'inspector.temperature', min: -40, max: 85, step: 0.5, unit: '°C' },
+      { key: 'humidity', label: 'inspector.humidity', min: 0, max: 100, step: 1, unit: '%' },
+      { key: 'hpa', label: 'inspector.pressure', min: 300, max: 1100, step: 1, unit: ' hPa' },
+    ] as const;
+    return (
+      <div className="space-y-2">
+        {sliders.map((slider) => (
+          <label key={slider.key} className="block">
+            <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+              {t(slider.label)}
+              <span className="font-medium text-ink tabular-nums">
+                {number(part.props[slider.key])}
+                {slider.unit}
+              </span>
+            </span>
+            <input
+              type="range"
+              data-testid={`slider-${slider.key}`}
+              min={slider.min}
+              max={slider.max}
+              step={slider.step}
+              value={part.props[slider.key]}
+              onChange={(event) => setProps(part.id, { [slider.key]: Number(event.target.value) })}
+              className="h-11 w-full accent-amber"
+            />
+          </label>
+        ))}
+        <fieldset>
+          <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.address')}</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {[0x76, 0x77].map((address) => (
+              <Choice
+                key={address}
+                selected={part.props.address === address}
+                onClick={() => setProps(part.id, { address })}
+              >
+                0x{address.toString(16)}
+              </Choice>
+            ))}
+          </div>
+        </fieldset>
+      </div>
+    );
+  }
   if (part.type === 'cell') {
     // How full it is, how big it is, and how long the present current would take.
     return <CellSettings part={part} />;
