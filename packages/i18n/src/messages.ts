@@ -327,6 +327,42 @@ export const bn = {
     '{id} মাপছে {volts}, কিন্তু এটা {limit} পর্যন্ত মাপার জন্য বানানো। আসল মডিউলের রেজিস্টর এতে গরম হয়ে নষ্ট হতে পারে।',
   'diag.current-sensor-overrange':
     '{id}-এর ভেতর দিয়ে এর মাপার সীমার চেয়ে বেশি কারেন্ট যাচ্ছে। OUT আর ঠিক মান দেখাবে না: বড় সংস্করণ বেছে নাও, বা কারেন্ট কমাও।',
+  'tool.cell': '১৮৬৫০ সেল',
+  'part.cell': '১৮৬৫০ লিথিয়াম-আয়ন সেল',
+  'part.cell.about':
+    'রিচার্জেবল সেল: খালি হলে প্রায় ৩.০ V, অর্ধেক ভরা প্রায় ৩.৭ V, পুরো ভরা ৪.২ V। একে কখনো সরাসরি ৫ V-এ চার্জ কোরো না, আর ২.৫ V-এর নিচে খালি কোরো না: চার্জার আর সুরক্ষা মডিউল (যেমন TP4056) দিয়ে চালাও। দুই পা শর্ট করলে অনেক কারেন্ট যায়, সেল গরম হয়ে বিপজ্জনক হতে পারে। পা: +, −।',
+  'inspector.charge': 'কতটা চার্জ আছে',
+  'inspector.capacity': 'ধারণক্ষমতা',
+  'cell.charging': '{current} দিয়ে চার্জ হচ্ছে: পুরো ভরতে প্রায় {hours} ঘণ্টা।',
+  'cell.giving': '{current} দিচ্ছে: খালি হতে প্রায় {hours} ঘণ্টা।',
+  'tool.tp4056': 'চার্জার (TP4056)',
+  'part.tp4056': 'TP4056 চার্জার মডিউল',
+  'part.tp4056.about':
+    'লিথিয়াম সেলের চার্জার, সুরক্ষাসহ। IN+ আর IN−-এ ৪ থেকে ৮ V দাও (যেমন ৫ V বা সোলার প্যানেল), সেল যাবে B+ আর B−-এ, আর যা চালাবে তা OUT+ আর OUT−-এ। সেলকে ১ A পর্যন্ত কারেন্টে ৪.২ V পর্যন্ত চার্জ করে: চার্জ হওয়ার সময় লাল বাতি, ভরা হলে নীল। সেল ২.৪ V-এর নিচে নামলে বা ৩ A-এর বেশি লাগলে OUT কেটে দেয়। পা: IN+, IN−, B+, B−, OUT+, OUT−।',
+  'tool.lm2596': 'স্টেপ-ডাউন (LM2596)',
+  'part.lm2596': 'LM2596 স্টেপ-ডাউন রেগুলেটর',
+  'part.lm2596.about':
+    'বেশি ভোল্টেজকে কম, স্থির ভোল্টেজে নামায়, প্রায় অপচয় ছাড়া: ৯ V থেকে ৫ V বানাতে ইনপুট থেকে আউটপুটের চেয়ে কম কারেন্ট নেয়। ট্রিমার দিয়ে আউটপুট ঠিক করো। ইনপুট আউটপুটের চেয়ে অন্তত প্রায় ১.২ V বেশি হতে হয়; ৪০ V-এর বেশি ইনপুট বা ৩ A-এর বেশি আউটপুট দিও না। পা: IN+, IN−, OUT−, OUT+।',
+  'inspector.outputVolts': 'আউটপুট ভোল্টেজ',
+  'tool.solar': 'সোলার প্যানেল',
+  'part.solar': '৫ V সোলার প্যানেল',
+  'part.solar.about':
+    'আলো থেকে বিদ্যুৎ। পুরো রোদে খোলা অবস্থায় প্রায় ৭ V আর শর্ট করলে প্রায় ১.১ A দেয়; সবচেয়ে বেশি শক্তি দেয় ৫ থেকে ৬ V-এর কাছে। আলো কমলে কারেন্ট প্রায় সমান হারে কমে। সেল চার্জ করতে TP4056-এর IN-এ লাগাও। পা: +, −।',
+  'inspector.sunlight': 'রোদ কতটা',
+  'diag.cell-overcharge':
+    '{id} চার্জ হচ্ছে, কিন্তু ৪.২ V-এ থামানোর কিছু নেই ({volts} পর্যন্ত উঠছে)। লিথিয়াম সেল বেশি চার্জ হলে গরম হয়ে আগুন ধরতে পারে: চার্জার মডিউল (TP4056) দিয়ে চার্জ করো।',
+  'diag.cell-overdischarge':
+    '{id} {volts}-এ নেমে গেছে; লিথিয়াম সেল {limit}-এর নিচে খালি করলে নষ্ট হয়। সুরক্ষা মডিউল দিয়ে চালাও, বা আগে চার্জ করো।',
+  'diag.charger-input-high':
+    '{id}-এর ইনপুটে {volts}; এর চিপ সর্বোচ্চ {limit} সইতে পারে। আসল মডিউল নষ্ট হয়ে যেতে পারে: ৫ V দাও।',
+  'diag.protection-tripped':
+    '{id}-এর সুরক্ষা OUT কেটে দিয়েছে: হয় সেল খুব খালি, নয় লোড ৩ A-এর বেশি নিচ্ছে। লোড সরালে (আর সেল ৩ V-এর ওপরে থাকলে) আবার চালু হয়।',
+  'diag.regulator-input-high':
+    '{id}-এর ইনপুটে {volts}; LM2596 সর্বোচ্চ {limit} পর্যন্ত চলে। আসল মডিউল নষ্ট হয়ে যেতে পারে।',
+  'diag.regulator-overload':
+    '{id} থেকে ৩ A-এর বেশি নেওয়া হচ্ছে: এর সীমার বাইরে। আসল মডিউল খুব গরম হয়ে বন্ধ হয়ে যাবে।',
+  'diag.regulator-dropout':
+    '{id}-এর ইনপুট মাত্র {volts}; ঠিক করা আউটপুট দিতে অন্তত {limit} লাগে। এখন আউটপুট ঠিক করা মানের চেয়ে কম।',
   'tool.logic': 'লজিক চিপ',
   'part.logic': 'লজিক চিপ (74HC)',
   'part.logic.about':
@@ -888,6 +924,42 @@ export const en: Record<MessageKey, string> = {
     '{id} is measuring {volts}, but it is made for up to {limit}. A real module’s resistors may overheat and fail.',
   'diag.current-sensor-overrange':
     'More current is going through {id} than it is made to measure. OUT no longer shows the right value: choose a bigger version, or lower the current.',
+  'tool.cell': '18650 cell',
+  'part.cell': '18650 lithium-ion cell',
+  'part.cell.about':
+    'A rechargeable cell: about 3.0 V empty, about 3.7 V half full, 4.2 V full. Never charge it straight from 5 V, and never empty it below 2.5 V: use a charger and protection module (such as the TP4056). Shorting its legs sends a very large current and can make it dangerously hot. Legs: +, −.',
+  'inspector.charge': 'How charged it is',
+  'inspector.capacity': 'Capacity',
+  'cell.charging': 'Charging at {current}: about {hours} hours to full.',
+  'cell.giving': 'Giving {current}: about {hours} hours to empty.',
+  'tool.tp4056': 'Charger (TP4056)',
+  'part.tp4056': 'TP4056 charger module',
+  'part.tp4056.about':
+    'A lithium cell charger with protection. Give IN+ and IN− 4 to 8 V (5 V, or a solar panel); the cell goes on B+ and B−, and what it powers on OUT+ and OUT−. It charges the cell at up to 1 A, to 4.2 V: a red light while charging, blue when full. It cuts off OUT when the cell falls below 2.4 V or the load takes more than 3 A. Legs: IN+, IN−, B+, B−, OUT+, OUT−.',
+  'tool.lm2596': 'Step-down (LM2596)',
+  'part.lm2596': 'LM2596 step-down regulator',
+  'part.lm2596.about':
+    'Turns a higher voltage into a lower, steady one with little waste: making 5 V from 9 V it takes less current from its input than it gives. Its trimmer sets the output. The input must be at least about 1.2 V above the output; do not give it more than 40 V in or take more than 3 A out. Legs: IN+, IN−, OUT−, OUT+.',
+  'inspector.outputVolts': 'Output voltage',
+  'tool.solar': 'Solar panel',
+  'part.solar': '5 V solar panel',
+  'part.solar.about':
+    'Electricity from light. In full sun it gives about 7 V with nothing connected and about 1.1 A into a short; it gives most power near 5 to 6 V. With less light its current falls in step. To charge a cell, connect it to a TP4056’s IN. Legs: +, −.',
+  'inspector.sunlight': 'How much sun',
+  'diag.cell-overcharge':
+    '{id} is being charged with nothing to stop it at 4.2 V (it reaches {volts}). An overcharged lithium cell can overheat and catch fire: charge it through a charger module (TP4056).',
+  'diag.cell-overdischarge':
+    '{id} has fallen to {volts}; a lithium cell emptied below {limit} is damaged. Run it through a protection module, or charge it first.',
+  'diag.charger-input-high':
+    '{id} has {volts} on its input; its chip stands {limit} at most. A real module may be destroyed: give it 5 V.',
+  'diag.protection-tripped':
+    '{id}’s protection has cut off OUT: either the cell is too empty or the load takes more than 3 A. It connects again once the load is taken away (with the cell above 3 V).',
+  'diag.regulator-input-high':
+    '{id} has {volts} on its input; the LM2596 works up to {limit}. A real module may be destroyed.',
+  'diag.regulator-overload':
+    'More than 3 A is being taken from {id}: past its limit. A real module would get very hot and shut down.',
+  'diag.regulator-dropout':
+    '{id} gets only {volts} in; it needs at least {limit} to give the output it is set to. Its output is lower than set.',
   'tool.logic': 'Logic chip',
   'part.logic': 'Logic chip (74HC)',
   'part.logic.about':

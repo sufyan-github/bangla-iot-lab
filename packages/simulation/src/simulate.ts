@@ -26,6 +26,27 @@ import {
   L298N_REGULATOR_DROPOUT,
   MIN_SUPPLY,
   ACS712_RANGE_AMPS,
+  CELL_CUTOFF_VOLTS,
+  CELL_OVERCHARGE_VOLTS,
+  CELL_SHORT_AMPS,
+  CHARGER_AMPS,
+  CHARGER_MAX_INPUT,
+  CHARGER_MIN_INPUT,
+  CHARGER_MIN_PASS,
+  CHARGER_OFF_PASS,
+  CHARGER_TRICKLE_AMPS,
+  CHARGER_TRICKLE_BELOW,
+  CHARGER_VOLTS,
+  PROTECTION_CUTOFF_VOLTS,
+  PROTECTION_LOAD_GONE_VOLTS,
+  PROTECTION_MAX_AMPS,
+  PROTECTION_RELEASE_VOLTS,
+  REGULATOR_DROP,
+  REGULATOR_EFFICIENCY,
+  REGULATOR_MAX_AMPS,
+  REGULATOR_MAX_INPUT,
+  REGULATOR_OFF,
+  REGULATOR_OWN_AMPS,
   VOLTAGE_SENSOR_MAX,
   MODULE_COMPARATOR_MIN_SUPPLY,
   MOTOR_RATED_VOLTAGE,
@@ -40,7 +61,11 @@ import {
   type RgbChannel,
 } from './library';
 import {
+  CHARGER_IDLE,
   CHIP_IDLE,
+  REGULATOR_IDLE,
+  type ChargerState,
+  type RegulatorState,
   DRIVER_IDLE,
   IDLE_STATE,
   buildNetlist,
@@ -107,6 +132,13 @@ export type DiagnosticCode =
   | 'logic-oscillates'
   | 'voltage-sensor-overrange'
   | 'current-sensor-overrange'
+  | 'cell-overcharge'
+  | 'cell-overdischarge'
+  | 'charger-input-high'
+  | 'protection-tripped'
+  | 'regulator-input-high'
+  | 'regulator-overload'
+  | 'regulator-dropout'
   | 'solver-failed';
 
 export interface Diagnostic {
@@ -181,6 +213,10 @@ export interface StateSolution {
   chips: Record<string, ChipState>;
   /** What each sensor that depends on the circuit itself saw in this state. */
   sensing: Record<string, number>;
+  /** What each charger module is doing in this state. */
+  chargers: Record<string, ChargerState>;
+  /** What each step-down regulator is doing in this state. */
+  regulators: Record<string, RegulatorState>;
   /** Logic chip inputs joined to nothing at all, as "U1.p2". */
   floating: string[];
   /** True when the logic chips never settled: a circuit that keeps changing by itself. */
@@ -328,6 +364,142 @@ export const sameSensing = (
   b: Readonly<Record<string, number>>,
 ) => Object.keys(b).every((id) => Math.abs((a[id] ?? 0) - b[id]!) < 1e-6);
 
+/**
+ * What each TP4056 does for the voltages just solved. A linear charger: its pass
+ * transistor is set to give the charge current, or is fully on when the input
+ * cannot give that much; once the cell reaches 4.2 V it holds 4.2 V, drawing what
+ * it gives from its input. Its protection cuts off the output below 2.4 V or past
+ * about 3 A, and lets go once the cell is above 3.0 V and the load is gone.
+ */
+export function chargerStates(
+  document: CircuitDocument,
+  solution: StateSolution,
+  current: Readonly<Record<string, ChargerState>>,
+): Record<string, ChargerState> {
+  const next: Record<string, ChargerState> = {};
+  for (const component of document.components) {
+    if (component.type !== 'tp4056') continue;
+    const before = current[component.id] ?? CHARGER_IDLE;
+    const at = (pin: keyof typeof component.pins) =>
+      solution.nodes[netName(component.pins[pin])] ?? 0;
+    const input = at('inp') - at('inn');
+    const cell = at('bp') - at('bn');
+    const charging = solution.parts[component.id]?.current ?? 0;
+    const output = solution.channels[`${component.id}.out`];
+
+    let tripped = before.tripped;
+    if (!tripped) {
+      const overloaded = Math.abs(output?.current ?? 0) > PROTECTION_MAX_AMPS;
+      const emptied = cell > 0.5 && cell < PROTECTION_CUTOFF_VOLTS;
+      tripped = overloaded || emptied;
+    } else if (
+      cell >= PROTECTION_RELEASE_VOLTS &&
+      Math.abs(output?.voltage ?? 0) < PROTECTION_LOAD_GONE_VOLTS
+    ) {
+      tripped = false;
+    }
+
+    const target = cell < CHARGER_TRICKLE_BELOW ? CHARGER_TRICKLE_AMPS : CHARGER_AMPS;
+    const starting = () => ({
+      mode: 'pass' as const,
+      ohms: Math.max(CHARGER_MIN_PASS, (input - cell) / target),
+      amps: 0,
+    });
+    let state: Omit<ChargerState, 'tripped'>;
+    if (before.mode === 'off') {
+      state =
+        input >= CHARGER_MIN_INPUT && input > cell + 0.05
+          ? starting()
+          : { mode: 'off', ohms: CHARGER_OFF_PASS, amps: 0 };
+    } else if (before.mode === 'pass') {
+      if (charging < -1e-6) {
+        // The input has gone: the cell would feed it backwards.
+        state = { mode: 'off', ohms: CHARGER_OFF_PASS, amps: 0 };
+      } else if (cell > CHARGER_VOLTS) {
+        state = { mode: 'hold', ohms: CHARGER_OFF_PASS, amps: charging };
+      } else {
+        const ohms = before.ohms * (Math.max(charging, 1e-9) / target);
+        state = {
+          mode: 'pass',
+          ohms: Math.min(CHARGER_OFF_PASS, Math.max(CHARGER_MIN_PASS, ohms)),
+          amps: charging,
+        };
+      }
+    } else if (charging > target * 1.0001) {
+      // The cell takes more than the charge current at 4.2 V: back to the current limit.
+      state = starting();
+    } else if (input < cell + 0.05) {
+      // The input cannot keep up: the pass transistor is fully on.
+      state =
+        input < 1
+          ? { mode: 'off', ohms: CHARGER_OFF_PASS, amps: 0 }
+          : { mode: 'pass', ohms: CHARGER_MIN_PASS, amps: charging };
+    } else {
+      state = { mode: 'hold', ohms: CHARGER_OFF_PASS, amps: Math.max(0, charging) };
+    }
+    next[component.id] = { ...state, tripped };
+  }
+  return next;
+}
+
+export const sameChargers = (
+  a: Readonly<Record<string, ChargerState>>,
+  b: Readonly<Record<string, ChargerState>>,
+) =>
+  Object.keys(b).every((id) => {
+    const x = a[id] ?? CHARGER_IDLE;
+    const y = b[id]!;
+    return (
+      x.mode === y.mode &&
+      x.tripped === y.tripped &&
+      Math.abs(x.ohms / y.ohms - 1) < 1e-3 &&
+      Math.abs(x.amps - y.amps) < 1e-5
+    );
+  });
+
+/**
+ * What each LM2596 does for the voltages just solved: the output it can make
+ * from its input, and how heavy a load that input is for the power it gives.
+ */
+export function regulatorStates(
+  document: CircuitDocument,
+  solution: StateSolution,
+): Record<string, RegulatorState> {
+  const next: Record<string, RegulatorState> = {};
+  for (const component of document.components) {
+    if (component.type !== 'lm2596') continue;
+    const reading = solution.parts[component.id];
+    const input = reading?.supply ?? 0;
+    const on = input >= MIN_SUPPLY.lm2596!;
+    if (!on) {
+      next[component.id] = REGULATOR_IDLE;
+      continue;
+    }
+    const delivered = Math.max(0, (reading?.voltage ?? 0) * (reading?.current ?? 0));
+    const drawn = delivered / REGULATOR_EFFICIENCY + input * REGULATOR_OWN_AMPS;
+    next[component.id] = {
+      on,
+      volts: Math.max(0, Math.min(component.props.volts, input - REGULATOR_DROP)),
+      inputOhms: Math.min(REGULATOR_OFF, Math.max(1, (input * input) / drawn)),
+    };
+  }
+  return next;
+}
+
+export const sameRegulators = (
+  a: Readonly<Record<string, RegulatorState>>,
+  b: Readonly<Record<string, RegulatorState>>,
+) =>
+  Object.keys(b).every((id) => {
+    const x = a[id] ?? REGULATOR_IDLE;
+    const y = b[id]!;
+    return (
+      x.on === y.on &&
+      Math.abs(x.volts - y.volts) < 1e-4 &&
+      Math.abs(x.inputOhms / y.inputOhms - 1) < 1e-3
+    );
+  });
+
 export function sameChips(
   a: Readonly<Record<string, ChipState>>,
   b: Readonly<Record<string, ChipState>>,
@@ -388,16 +560,30 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
   let drivers = state.drivers ?? {};
   let chips = state.chips ?? {};
   let sensing = state.sensing ?? {};
+  let chargers = state.chargers ?? {};
+  let regulators = state.regulators ?? {};
+  const hasCharger = document.components.some((c) => c.type === 'tp4056');
+  const hasRegulator = document.components.some((c) => c.type === 'lm2596');
   const hasSensor = document.components.some((c) => c.type === 'acs712' || c.type === 'tds');
   const hasDriver = document.components.some((c) => c.type === 'l298n');
   const hasChip = document.components.some((c) => c.type === 'logic');
   let solution: StateSolution | null = null;
   // A motor driver needs a few more rounds: its regulator, then its logic, then its outputs.
   // Logic chips need one round for each gate a signal passes through.
-  const rounds = hasChip ? 24 : hasDriver ? 12 : 4;
+  // A charger or regulator finds its operating point over a few rounds too.
+  const rounds = hasChip || hasCharger || hasRegulator ? 24 : hasDriver ? 12 : 4;
   let settled = false;
   for (let round = 0; round < rounds; round++) {
-    const netlist = buildNetlist(document, { ...state, relays, motion, drivers, chips, sensing });
+    const netlist = buildNetlist(document, {
+      ...state,
+      relays,
+      motion,
+      drivers,
+      chips,
+      sensing,
+      chargers,
+      regulators,
+    });
     const dc = solveDc(netlist.circuit);
     if (!dc.ok) return null;
     solution = readSolution(document, netlist, dc.solution, dc.iterations);
@@ -407,17 +593,23 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     const driving = hasDriver ? driverStates(document, solution, drivers) : drivers;
     const logic = hasChip ? chipStates(document, solution, chips) : chips;
     const seen = hasSensor ? sensorStates(document, solution) : sensing;
+    const charging = hasCharger ? chargerStates(document, solution, chargers) : chargers;
+    const regulating = hasRegulator ? regulatorStates(document, solution) : regulators;
     solution.relays = next;
     solution.motion = moving;
     solution.drivers = drivers;
     solution.chips = chips;
     solution.sensing = sensing;
+    solution.chargers = chargers;
+    solution.regulators = regulators;
     if (
       sameStates(relays, next) &&
       sameStates(motion, moving) &&
       sameDrivers(drivers, driving) &&
       sameChips(chips, logic) &&
-      sameSensing(sensing, seen)
+      sameSensing(sensing, seen) &&
+      sameChargers(chargers, charging) &&
+      sameRegulators(regulators, regulating)
     ) {
       settled = true;
       break;
@@ -427,10 +619,31 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     drivers = driving;
     chips = logic;
     sensing = seen;
+    chargers = charging;
+    regulators = regulating;
   }
   // Gates that keep changing each other (a NOT gate fed its own output) never settle.
   if (solution && hasChip && !settled) solution.unsettled = true;
   return solution;
+}
+
+/**
+ * Which net each place is on once wires are counted as joins: two places that
+ * map to the same name are joined by wires and breadboard strips alone.
+ */
+function joinedByWires(document: CircuitDocument): (endpoint: string) => string {
+  const parent = new Map<string, string>();
+  const find = (key: string): string => {
+    const up = parent.get(key) ?? key;
+    if (up === key) return key;
+    const root = find(up);
+    parent.set(key, root);
+    return root;
+  };
+  for (const wire of document.wires) {
+    parent.set(find(netName(wire.from)), find(netName(wire.to)));
+  }
+  return (endpoint) => find(netName(endpoint));
 }
 
 /** Turns solver output back into per-part, per-wire and per-socket values. */
@@ -460,6 +673,8 @@ export function readSolution(
     drivers: {},
     chips: {},
     sensing: {},
+    chargers: {},
+    regulators: {},
     floating: [],
     unsettled: false,
     iterations,
@@ -563,6 +778,55 @@ export function readSolution(
           supply: volts(component.pins.vcc) - volts(component.pins.gnd),
         };
         break;
+      case 'cell': {
+        // Its voltage, and the current into its + terminal: positive while it charges.
+        result.parts[id] = {
+          voltage: volts(component.pins.pos) - volts(component.pins.neg),
+          current: device?.current(solution) ?? 0,
+        };
+        // Whether a charger looks after it: its + joined by wires to a charger's B+.
+        const joined = joinedByWires(document);
+        const pos = joined(component.pins.pos);
+        const managed = document.components.some(
+          (c) => c.type === 'tp4056' && joined(c.pins.bp) === pos,
+        );
+        result.channels[`${id}.charger`] = { voltage: managed ? 1 : 0, current: 0 };
+        break;
+      }
+      case 'solar':
+        // What it gives: its voltage and the current out of its + wire.
+        result.parts[id] = {
+          voltage: volts(component.pins.pos) - volts(component.pins.neg),
+          current: device?.current(solution) ?? 0,
+        };
+        break;
+      case 'tp4056': {
+        // The cell's voltage, the charge current going into it, and the input.
+        const holding = device?.kind === 'thevenin-source';
+        const through = device?.current(solution) ?? 0;
+        result.parts[id] = {
+          voltage: volts(component.pins.bp) - volts(component.pins.bn),
+          current: holding ? -through : through,
+          supply: volts(component.pins.inp) - volts(component.pins.inn),
+        };
+        // Its protected output: the gap across the protection, and the current through it.
+        const protect = netlist.circuit.devices.find((d) => d.id === `${id}:protect`);
+        result.channels[`${id}.out`] = {
+          voltage: volts(component.pins.outn) - volts(component.pins.bn),
+          current: protect?.current(solution) ?? 0,
+        };
+        break;
+      }
+      case 'lm2596': {
+        // Its output and the current it gives, and its input.
+        const regulating = device?.kind === 'thevenin-source';
+        result.parts[id] = {
+          voltage: volts(component.pins.outp) - volts(component.pins.outn),
+          current: regulating ? -(device?.current(solution) ?? 0) : 0,
+          supply: volts(component.pins.inp) - volts(component.pins.inn),
+        };
+        break;
+      }
       case 'voltagesensor':
         // What it measures, and its output: a fifth of that.
         result.parts[id] = {
@@ -764,7 +1028,10 @@ export class Observation {
       result.diagnostics.push({ code: 'legs-in-same-strip', severity: 'warning', componentId });
     }
 
-    const sources = document.components.filter((c) => c.type === 'battery' || isProgrammable(c));
+    // Anything that can drive a current: a battery, a board, a cell or a solar panel.
+    const sources = document.components.filter(
+      (c) => c.type === 'battery' || c.type === 'cell' || c.type === 'solar' || isProgrammable(c),
+    );
     if (sources.length === 0) result.diagnostics.push({ code: 'no-battery', severity: 'info' });
 
     const shorted = new Set(states.flatMap(([s]) => s.shorted));
@@ -902,6 +1169,14 @@ export class Observation {
         const supply = average((s) => s.parts[id]!.supply ?? 0);
         reading.activity =
           moduleTripped(component) && supply >= MODULE_COMPARATOR_MIN_SUPPLY ? 1 : 0;
+      } else if (component.type === 'tp4056') {
+        // Red while charging, blue once the current has fallen below a tenth: full.
+        const input = average((s) => s.parts[id]!.supply ?? 0);
+        const charging = average((s) => s.parts[id]!.current);
+        reading.activity = input < CHARGER_MIN_INPUT ? 0 : charging >= CHARGER_AMPS / 10 ? 1 : 2;
+      } else if (component.type === 'lm2596') {
+        // Its power light.
+        reading.activity = average((s) => s.parts[id]!.supply ?? 0) >= MIN_SUPPLY.lm2596! ? 1 : 0;
       } else if (component.type === 'buzzer') {
         reading.activity = reading.voltage >= BUZZER_ON_VOLTAGE ? 1 : 0;
       } else if (component.type === 'motor') {
@@ -954,6 +1229,89 @@ export class Observation {
             componentId: id,
             volts: measured,
             limit: VOLTAGE_SENSOR_MAX,
+          });
+        }
+      }
+      if (component.type === 'cell') {
+        const highest = extreme((s) => s.parts[id]!.voltage, Math.max);
+        const lowest = extreme((s) => s.parts[id]!.voltage, Math.min);
+        const charging = extreme((s) => s.parts[id]!.current, Math.max);
+        const delivering = extreme((s) => s.parts[id]!.current, Math.min);
+        const peak = extreme((s) => Math.abs(s.parts[id]!.current), Math.max);
+        if (peak > CELL_SHORT_AMPS) {
+          result.diagnostics.push({ code: 'short-circuit', severity: 'error', componentId: id });
+        } else if (
+          charging > 0.01 &&
+          (highest > CELL_OVERCHARGE_VOLTS ||
+            // Charged by something with nothing to stop it at 4.2 V: it will be overcharged.
+            (charging > 0.05 && !states.every(([s]) => s.channels[`${id}.charger`]?.voltage)))
+        ) {
+          result.diagnostics.push({
+            code: 'cell-overcharge',
+            severity: 'error',
+            componentId: id,
+            volts: highest,
+            limit: CHARGER_VOLTS,
+          });
+        } else if (lowest < CELL_CUTOFF_VOLTS && delivering < -0.01) {
+          result.diagnostics.push({
+            code: 'cell-overdischarge',
+            severity: 'warning',
+            componentId: id,
+            volts: lowest,
+            limit: CELL_CUTOFF_VOLTS,
+          });
+        }
+      }
+      if (component.type === 'tp4056') {
+        const input = extreme((s) => s.parts[id]!.supply ?? 0, Math.max);
+        if (input > CHARGER_MAX_INPUT) {
+          result.diagnostics.push({
+            code: 'charger-input-high',
+            severity: 'error',
+            componentId: id,
+            volts: input,
+            limit: CHARGER_MAX_INPUT,
+          });
+        }
+        if (states.some(([s]) => s.chargers[id]?.tripped)) {
+          result.diagnostics.push({
+            code: 'protection-tripped',
+            severity: 'warning',
+            componentId: id,
+          });
+        }
+      }
+      if (component.type === 'lm2596') {
+        const input = extreme((s) => s.parts[id]!.supply ?? 0, Math.max);
+        const lowest = extreme((s) => s.parts[id]!.supply ?? 0, Math.min);
+        const load = extreme((s) => s.parts[id]!.current, Math.max);
+        if (input > REGULATOR_MAX_INPUT) {
+          result.diagnostics.push({
+            code: 'regulator-input-high',
+            severity: 'error',
+            componentId: id,
+            volts: input,
+            limit: REGULATOR_MAX_INPUT,
+          });
+        }
+        if (load > REGULATOR_MAX_AMPS) {
+          result.diagnostics.push({
+            code: 'regulator-overload',
+            severity: 'warning',
+            componentId: id,
+          });
+        }
+        if (
+          lowest >= MIN_SUPPLY.lm2596! &&
+          lowest - REGULATOR_DROP < component.props.volts - 0.01
+        ) {
+          result.diagnostics.push({
+            code: 'regulator-dropout',
+            severity: 'warning',
+            componentId: id,
+            volts: lowest,
+            limit: component.props.volts + REGULATOR_DROP,
           });
         }
       }

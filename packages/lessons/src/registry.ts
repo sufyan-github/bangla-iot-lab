@@ -25,9 +25,11 @@ import l22 from '../content/servo.json' with { type: 'json' };
 import l23 from '../content/smart-dustbin.json' with { type: 'json' };
 import l24 from '../content/smart-parking.json' with { type: 'json' };
 import l25 from '../content/soil-moisture.json' with { type: 'json' };
-import l26 from '../content/street-light.json' with { type: 'json' };
-import l27 from '../content/ultrasonic.json' with { type: 'json' };
-import l28 from '../content/water-quality.json' with { type: 'json' };
+import l26 from '../content/solar-charging.json' with { type: 'json' };
+import l27 from '../content/step-down.json' with { type: 'json' };
+import l28 from '../content/street-light.json' with { type: 'json' };
+import l29 from '../content/ultrasonic.json' with { type: 'json' };
+import l30 from '../content/water-quality.json' with { type: 'json' };
 
 export const LESSON_FILES: unknown[] = [
   l0,
@@ -59,4 +61,6 @@ export const LESSON_FILES: unknown[] = [
   l26,
   l27,
   l28,
+  l29,
+  l30,
 ];

@@ -853,3 +853,53 @@ lesson says why. The power lesson's program measures the ACS712's zero-current
 output at start and scales its sensitivity with it, for the same reason.
 
 Six hardware tests, E1 to E6, are written for these modules; none is run.
+
+## D-063 — Power parts: a cell set by hand, a linear charger, and a regulator by its power
+
+Stage 2 of the component plan adds the 18650 cell, the TP4056 charger module,
+the LM2596 step-down regulator and a 5 V solar panel. Where each figure comes
+from (checked on 23 November 2026):
+
+- **REPORTED by makers:** the TP4056's 4.2 V (±1.5 %), 1200 V / R_PROG (1 A with
+  the module's 1.2 kΩ), 130 mA below 2.9 V, end of charge at a tenth, and 4.0 to
+  8.0 V input; the DW01A's 2.4 V cut-off and 3.0 V release; the LM2596's 40 V
+  input, 3 A, 1.23 V reference, 73 % at 12 V to 3 V and 3 A, and a 1.16 V to
+  1.5 V switch drop; cell datasheets' 4.2 V charge, 2.5 V cut-off and 35 to
+  100 mΩ; DFRobot's 7.2 V open-circuit voltage for a 5 V 1 A panel.
+- **ESTIMATE:** the cell's voltage against how full it is (the usual shape, not
+  one maker's curve), 50 mΩ inside it; the panel's 1.1 A light current and its
+  cells' figures; the regulator's 80 % efficiency, 1.2 V drop and 5 mA; the
+  protection's 3 A limit; the charger's least pass resistance.
+
+**How full the cell is, is set by hand and does not change while the circuit
+runs.** Charging an 18650 takes hours; the lab shows the current and the time it
+would take instead of running that long. Running real time down would make the
+lab slow to use and its tests slow, and would hide nothing the current does
+not already show.
+
+**The charger is modelled as what it is: a linear charger.** Its pass
+transistor is a resistance that the solver sets, round by round, to give the
+charge current; once the cell reaches 4.2 V it holds 4.2 V and draws what that
+takes from its input. When the input cannot supply the charge current (a dim
+panel) the resistance reaches its least value and the cell takes what the
+input gives, at an input just above the cell's voltage, as on the real module.
+Once started it keeps charging while its input stays above the cell (the
+datasheet's undervoltage and sleep thresholds are not modelled separately).
+It shows a full cell when the current falls below a tenth, but keeps holding
+4.2 V rather than switching off and restarting.
+
+**The regulator is modelled by its power,** not its switching: its output
+holds the set voltage while its input is at least 1.2 V higher, and its input
+is a load that takes the power the output gives at 80 %, plus 5 mA of its own.
+There is no ripple.
+
+**The panel** is a light current beside a diode string fitted to its open-circuit
+voltage, which needed a current source in the circuit solver; the solver now
+has one, with its SPICE form.
+
+**A lithium cell charged by anything but a charger is warned about**, even
+before its voltage passes 4.25 V: nothing would stop it at 4.2 V. Which charger
+looks after a cell is found from the wires, since the solver treats wires as
+resistors.
+
+Four hardware tests, E7 to E10, are written for these parts; none is run.

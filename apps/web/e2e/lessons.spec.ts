@@ -27,9 +27,9 @@ test('the lessons page lists the kit lessons, then the projects, in order', asyn
   await page.getByTestId('nav-lessons').click();
   await expect(page).toHaveURL(/\/lessons$/);
   const parts = page.getByTestId('lesson-list').getByTestId('lesson-card');
-  await expect(parts).toHaveCount(20);
+  await expect(parts).toHaveCount(22);
   await expect(parts.first()).toHaveAttribute('data-lesson', 'esp32-blink');
-  await expect(parts.last()).toHaveAttribute('data-lesson', 'measuring-power');
+  await expect(parts.last()).toHaveAttribute('data-lesson', 'solar-charging');
   await expect(parts.first()).toHaveAttribute('data-state', 'new');
   const projects = page.getByTestId('project-lesson-list').getByTestId('lesson-card');
   await expect(projects).toHaveCount(9);

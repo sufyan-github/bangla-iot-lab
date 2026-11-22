@@ -2,6 +2,7 @@ import type { PinDrive } from '@banglalab/board-emulators';
 import {
   THERMAL_VOLTAGE,
   capacitor,
+  currentSource,
   diode,
   npnTransistor,
   resistor,
@@ -42,6 +43,18 @@ import {
   MOTOR_RESISTANCE,
   MQ135_HEATER_RESISTANCE,
   MQ7_HEATER_RESISTANCE,
+  CELL_RESISTANCE,
+  CHARGER_OFF_PASS,
+  CHARGER_VOLTS,
+  PROTECTION_OPEN,
+  PROTECTION_RESISTANCE,
+  REGULATOR_OFF,
+  REGULATOR_OUTPUT_RESISTANCE,
+  SOLAR_DIODE,
+  SOLAR_LIGHT_AMPS,
+  SOLAR_SERIES_RESISTANCE,
+  SOLAR_SHUNT_RESISTANCE,
+  cellVolts,
   ACS712_OUTPUT_RESISTANCE,
   ACS712_PATH_RESISTANCE,
   ACS712_SUPPLY_RESISTANCE,
@@ -115,7 +128,37 @@ export interface CircuitState {
    * in volts. Worked out from the circuit's own voltages, like a driver's state.
    */
   sensing?: Readonly<Record<string, number>>;
+  /** What each charger module is doing; worked out from the circuit's own voltages. */
+  chargers?: Readonly<Record<string, ChargerState>>;
+  /** What each step-down regulator is doing; worked out likewise. */
+  regulators?: Readonly<Record<string, RegulatorState>>;
 }
+
+/**
+ * A TP4056 at one instant. `pass` charging through its pass transistor, of
+ * `ohms`; `hold` holding the cell at 4.2 V while the input supplies `amps`.
+ * `tripped` is its protection, which has cut off the output.
+ */
+export interface ChargerState {
+  mode: 'off' | 'pass' | 'hold';
+  ohms: number;
+  amps: number;
+  tripped: boolean;
+}
+export const CHARGER_IDLE: ChargerState = {
+  mode: 'off',
+  ohms: CHARGER_OFF_PASS,
+  amps: 0,
+  tripped: false,
+};
+
+/** An LM2596 at one instant: the output it can make, and the load its input is. */
+export interface RegulatorState {
+  on: boolean;
+  volts: number;
+  inputOhms: number;
+}
+export const REGULATOR_IDLE: RegulatorState = { on: false, volts: 0, inputOhms: REGULATOR_OFF };
 
 /** A logic chip at one instant: whether it has power, and the level of each pin it reads or drives. */
 export interface ChipState {
@@ -632,6 +675,87 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         partDevice.set(id, add(resistor(id, supply, ground, TURBIDITY_SUPPLY_RESISTANCE)));
         add(resistor(`${id}:upper`, supply, out, TURBIDITY_OUTPUT_RESISTANCE / fraction));
         add(resistor(`${id}:lower`, out, ground, TURBIDITY_OUTPUT_RESISTANCE / (1 - fraction)));
+        break;
+      }
+      case 'cell':
+        // Its resting voltage for how full it is, behind its own resistance.
+        partDevice.set(
+          id,
+          add(
+            theveninSource(
+              id,
+              node(component.pins.pos),
+              node(component.pins.neg),
+              cellVolts(component.props.charge),
+              CELL_RESISTANCE,
+            ),
+          ),
+        );
+        break;
+      case 'solar': {
+        // Light current, beside the cells' junctions and a leak across them, then the
+        // resistance of its wiring in series.
+        const cells = node(`${id}:cells`);
+        const negative = node(component.pins.neg);
+        add(
+          currentSource(`${id}:light`, cells, negative, SOLAR_LIGHT_AMPS * component.props.light),
+        );
+        add(diode(`${id}:cells`, cells, negative, SOLAR_DIODE));
+        add(resistor(`${id}:shunt`, cells, negative, SOLAR_SHUNT_RESISTANCE));
+        partDevice.set(
+          id,
+          add(resistor(id, cells, node(component.pins.pos), SOLAR_SERIES_RESISTANCE)),
+        );
+        break;
+      }
+      case 'tp4056': {
+        // IN− and B− are the same copper; OUT+ is B+; OUT− reaches B− through the
+        // protection's transistors. The charger itself is between IN+ and B+.
+        const charger = state.chargers?.[id] ?? CHARGER_IDLE;
+        const inn = node(component.pins.inn);
+        const bp = node(component.pins.bp);
+        const bn = node(component.pins.bn);
+        add(resistor(`${id}:common`, inn, bn, WIRE_RESISTANCE));
+        add(resistor(`${id}:out`, bp, node(component.pins.outp), WIRE_RESISTANCE));
+        add(
+          resistor(
+            `${id}:protect`,
+            node(component.pins.outn),
+            bn,
+            charger.tripped ? PROTECTION_OPEN : PROTECTION_RESISTANCE,
+          ),
+        );
+        const inp = node(component.pins.inp);
+        if (charger.mode === 'hold') {
+          // Holding 4.2 V on the cell, and drawing what it gives from the input.
+          partDevice.set(id, add(theveninSource(id, bp, bn, CHARGER_VOLTS, 0.05)));
+          add(currentSource(`${id}:in`, inn, inp, charger.amps));
+          add(resistor(`${id}:pass`, inp, bp, CHARGER_OFF_PASS));
+        } else {
+          partDevice.set(
+            id,
+            add(resistor(id, inp, bp, charger.mode === 'pass' ? charger.ohms : CHARGER_OFF_PASS)),
+          );
+        }
+        break;
+      }
+      case 'lm2596': {
+        // IN− and OUT− are one ground. The input is a load that takes the power the
+        // output gives, and some; the output holds what the regulator can make.
+        const regulator = state.regulators?.[id] ?? REGULATOR_IDLE;
+        const inn = node(component.pins.inn);
+        const outn = node(component.pins.outn);
+        add(resistor(`${id}:common`, inn, outn, WIRE_RESISTANCE));
+        add(resistor(`${id}:in`, node(component.pins.inp), inn, regulator.inputOhms));
+        const outp = node(component.pins.outp);
+        partDevice.set(
+          id,
+          add(
+            regulator.on
+              ? theveninSource(id, outp, outn, regulator.volts, REGULATOR_OUTPUT_RESISTANCE)
+              : resistor(id, outp, outn, REGULATOR_OFF),
+          ),
+        );
         break;
       }
       case 'pir': {

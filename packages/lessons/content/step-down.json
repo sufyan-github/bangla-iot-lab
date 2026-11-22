@@ -1,0 +1,179 @@
+{
+  "id": "step-down",
+  "order": 30,
+  "parts": ["lm2596", "dc-motor"],
+  "title": {
+    "bn": "স্টেপ-ডাউন রেগুলেটর: ৯ V থেকে ৫ V",
+    "en": "Step-down regulator: 5 V from 9 V"
+  },
+  "summary": {
+    "bn": "বেশি ভোল্টেজ থেকে কম, স্থির ভোল্টেজ বানাও, আর দেখো ইনপুট কতটা কম কারেন্ট নেয়।",
+    "en": "Make a lower, steady voltage from a higher one, and see how little current its input takes."
+  },
+  "setup": {
+    "board": "esp32",
+    "battery": 9
+  },
+  "steps": [
+    {
+      "text": {
+        "bn": "**LM2596** বসাও। এর **IN+** যাবে ৯ V ব্যাটারির **+**-এ, আর **IN−** যাবে ব্যাটারির **−**-এ।",
+        "en": "Place the **LM2596**. Its **IN+** goes to the 9 V battery's **+**, and **IN−** to the battery's **−**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "lm2596"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lm2596",
+            "pin": "inp"
+          },
+          "to": {
+            "battery": "pos"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lm2596",
+            "pin": "inn"
+          },
+          "to": {
+            "battery": "neg"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "মডিউলে ট্যাপ করে এর ট্রিমার ঘুরিয়ে আউটপুট **৫ V** করো (৪.৯ থেকে ৫.১ V)।",
+        "en": "Tap the module and turn its trimmer to make the output **5 V** (4.9 to 5.1 V)."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "lm2596",
+          "prop": "volts",
+          "above": 4.9
+        },
+        {
+          "kind": "prop",
+          "part": "lm2596",
+          "prop": "volts",
+          "below": 5.1
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **মোটর** বসাও। এর এক পা যাবে **OUT+**-এ আর অন্য পা **OUT−**-এ।",
+        "en": "Place a **motor**. One leg goes to **OUT+** and the other to **OUT−**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "motor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "*"
+          },
+          "to": {
+            "part": "lm2596",
+            "pin": "outp"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "motor",
+            "pin": "*"
+          },
+          "to": {
+            "part": "lm2596",
+            "pin": "outn"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। মোটর ঘুরবে। মিটারে দেখো: রেগুলেটর মোটরকে ৫ V-এ প্রায় ০.২ A দিচ্ছে, কিন্তু ব্যাটারি থেকে নিচ্ছে প্রায় ০.১৪ A। কারণ এটা বাড়তি ভোল্টেজ গরম করে নষ্ট করে না, ক্ষমতায় বদলে দেয়: ৯ V × ০.১৪ A ≈ ১.৩ W ঢোকে, ৫ V × ০.২ A = ১ W বেরোয়।",
+        "en": "Press **Run**. The motor turns. Look at the meter: the regulator gives the motor about 0.2 A at 5 V, but takes only about 0.14 A from the battery. It does not burn off the extra voltage as heat; it turns it into current: 9 V × 0.14 A ≈ 1.3 W goes in, 5 V × 0.2 A = 1 W comes out."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "lm2596",
+          "path": "voltage",
+          "above": 4.8
+        },
+        {
+          "kind": "reading",
+          "part": "motor",
+          "path": "activity",
+          "above": 0
+        },
+        {
+          "kind": "reading",
+          "part": "battery",
+          "path": "current",
+          "below": 0.17,
+          "label": {
+            "bn": "ব্যাটারি থেকে মোটরের চেয়ে কম কারেন্ট যাচ্ছে",
+            "en": "The battery gives less current than the motor takes"
+          }
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার ট্রিমার ঘুরিয়ে আউটপুট **৮ V**-এর বেশি করো। ৯ V থেকে এটা পারে না: সুইচের নিজের প্রায় ১.২ V লাগে। ল্যাব সতর্ক করবে।",
+        "en": "Now turn the trimmer above **8 V**. From 9 V it cannot do that: its own switch needs about 1.2 V. The lab warns you."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "lm2596",
+          "prop": "volts",
+          "above": 8
+        },
+        {
+          "kind": "diagnostic",
+          "code": "regulator-dropout",
+          "label": {
+            "bn": "ল্যাব বলছে ইনপুট যথেষ্ট নয়",
+            "en": "The lab says the input is not enough"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "স্টেপ-ডাউন রেগুলেটর বেশি ভোল্টেজ থেকে কম, স্থির ভোল্টেজ বানায়।",
+      "এটা ইনপুট থেকে আউটপুটের চেয়ে কম কারেন্ট নিতে পারে: ক্ষমতা (V × A) প্রায় একই থাকে, একটু হারায়।",
+      "ইনপুটকে আউটপুটের চেয়ে অন্তত প্রায় ১.২ V বেশি হতে হয়।"
+    ],
+    "en": [
+      "A step-down regulator makes a lower, steady voltage from a higher one.",
+      "It can take less current from its input than it gives: the power (V × A) stays about the same, less a little lost.",
+      "Its input must be at least about 1.2 V above its output."
+    ]
+  },
+  "tryNext": {
+    "bn": "ব্যাটারির ভোল্টেজ বদলাও (ব্যাটারিতে ট্যাপ করো): আউটপুট ৫ V-ই থাকে কি না দেখো।",
+    "en": "Change the battery's voltage (tap the battery): see whether the output stays at 5 V."
+  }
+}

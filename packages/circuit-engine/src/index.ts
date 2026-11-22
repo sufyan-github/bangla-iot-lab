@@ -1,6 +1,7 @@
 export { solveDc, solveTimeStep, type Circuit, type DcOptions, type DcResult } from './dc';
 export {
   capacitor,
+  currentSource,
   diode,
   npnTransistor,
   resistor,
@@ -9,6 +10,7 @@ export {
   GMIN,
   THERMAL_VOLTAGE,
   type Capacitor,
+  type CurrentSource,
   type Device,
   type Diode,
   type DiodeModel,

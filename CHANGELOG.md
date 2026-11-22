@@ -8,6 +8,33 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Power parts** (circuit format version 15): an 18650 lithium-ion cell, the
+  TP4056 charger module with its protection, the LM2596 step-down regulator
+  and a 5 V solar panel.
+  - The cell's voltage follows how full it is (set on its slider); the lab
+    shows the current going in or out and how many hours that would take to
+    fill or empty it.
+  - The charger charges at 1 A to 4.2 V, with a red light while charging and a
+    blue one when full; on a dim panel it charges with what the panel can
+    give. Its protection cuts off the output past about 3 A or below 2.4 V.
+  - The regulator holds the voltage set on its trimmer and takes less current
+    from its input than it gives.
+  - The panel gives about 7.2 V open and 1.1 A into a short in full sun,
+    falling with the light.
+- Warnings for a lithium cell charged with nothing to stop it at 4.2 V, a cell
+  emptied below 2.5 V, a charger given more than 8 V, its protection cutting
+  off, and a regulator over 40 V in, over 3 A out, or with too little input
+  for its setting.
+- Two lessons, each checked step by step by the lab: **step-down regulator**
+  (5 V from 9 V for a motor) and **solar charging** (a cell charged in sun
+  that lights a lamp at night).
+- The circuit solver has a current source.
+- Hardware tests E7 to E10 for the four power parts.
+
+### Fixed
+
+- A circuit powered only by a cell or a solar panel is no longer told it has
+  no battery.
 - **Six sensor modules beyond the school kit** (circuit format version 14):
   a 0–25 V voltage sensor, the ACS712 current sensor (5 A, 20 A or 30 A), the
   MQ-7 carbon monoxide sensor, a pH sensor module, a TDS meter and a turbidity

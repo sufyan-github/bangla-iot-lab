@@ -12,7 +12,9 @@ import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
 import {
   buildNetlist,
+  type ChargerState,
   type ChipState,
+  type RegulatorState,
   type CircuitState,
   type DriverState,
   type Netlist,
@@ -28,6 +30,10 @@ import {
   sameChips,
   sameSensing,
   sensorStates,
+  chargerStates,
+  regulatorStates,
+  sameChargers,
+  sameRegulators,
   sameDrivers,
   solveState,
   type SimulationResult,
@@ -115,6 +121,8 @@ const EMPTY_SOLUTION: StateSolution = {
   drivers: {},
   chips: {},
   sensing: {},
+  chargers: {},
+  regulators: {},
   floating: [],
   unsettled: false,
   iterations: 0,
@@ -173,6 +181,9 @@ export class SimulationSession {
   private chips: Record<string, ChipState> = {};
   /** What each sensor that depends on the circuit itself last saw. */
   private sensing: Record<string, number> = {};
+  /** What each charger and step-down regulator was last found to be doing. */
+  private chargers: Record<string, ChargerState> = {};
+  private regulators: Record<string, RegulatorState> = {};
 
   /** Number of times the circuit was actually solved; exposed for tests and tuning. */
   solveCount = 0;
@@ -345,6 +356,8 @@ export class SimulationSession {
       drivers: this.drivers,
       chips: this.chips,
       sensing: this.sensing,
+      chargers: this.chargers,
+      regulators: this.regulators,
     };
   }
 
@@ -355,6 +368,10 @@ export class SimulationSession {
     for (const [id, high] of Object.entries(this.echo)) if (high) key += `${id}^;`;
     for (const [id, high] of Object.entries(this.motion)) if (high) key += `${id}~;`;
     // A latch made of gates remembers: the same pin levels can leave it either way.
+    // A charger's protection remembers that it cut off.
+    for (const [id, charger] of Object.entries(this.chargers)) {
+      if (charger.tripped) key += `${id}!;`;
+    }
     for (const [id, chip] of Object.entries(this.chips)) {
       key += `${id}#${Object.values(chip.outputs).map(Number).join('')};`;
     }
@@ -376,6 +393,8 @@ export class SimulationSession {
       this.drivers = solution.drivers;
       this.chips = solution.chips;
       this.sensing = solution.sensing;
+      this.chargers = solution.chargers;
+      this.regulators = solution.regulators;
     }
     return solution;
   }
@@ -416,6 +435,18 @@ export class SimulationSession {
     const sensing = sensorStates(this.document, this.latest);
     if (!sameSensing(this.sensing, sensing)) {
       this.sensing = sensing;
+      this.stepping = null;
+    }
+    this.latest.chargers = this.chargers;
+    const chargers = chargerStates(this.document, this.latest, this.chargers);
+    if (!sameChargers(this.chargers, chargers)) {
+      this.chargers = chargers;
+      this.stepping = null;
+    }
+    this.latest.regulators = this.regulators;
+    const regulators = regulatorStates(this.document, this.latest);
+    if (!sameRegulators(this.regulators, regulators)) {
+      this.regulators = regulators;
       this.stepping = null;
     }
     return this.latest;
@@ -509,6 +540,8 @@ export class SimulationSession {
     const drivers = this.drivers;
     const chips = this.chips;
     const sensing = this.sensing;
+    const chargers = this.chargers;
+    const regulators = this.regulators;
     this.echo = { ...echo, [input.sensorId]: input.level };
     const volts = this.solveSteady()?.sockets[`${boardId}.${terminal}`]?.voltage;
     this.echo = echo;
@@ -516,6 +549,8 @@ export class SimulationSession {
     this.drivers = drivers;
     this.chips = chips;
     this.sensing = sensing;
+    this.chargers = chargers;
+    this.regulators = regulators;
     if (volts === undefined) return input.level;
     if (volts > board.model.logicHigh) return true;
     if (volts < board.model.logicLow) return false;
@@ -550,6 +585,8 @@ export class SimulationSession {
     const drivers = this.drivers;
     const chips = this.chips;
     const sensing = this.sensing;
+    const chargers = this.chargers;
+    const regulators = this.regulators;
     board.drives[pin] = 'pullup';
     const pulled = this.solveSteady();
     board.drives[pin] = before;
@@ -557,6 +594,8 @@ export class SimulationSession {
     this.drivers = drivers;
     this.chips = chips;
     this.sensing = sensing;
+    this.chargers = chargers;
+    this.regulators = regulators;
     return (pulled?.sockets[socket]?.voltage ?? 0) > board.model.logicHigh;
   }
 

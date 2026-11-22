@@ -262,6 +262,105 @@ export function tdsVolts(ppm: number): number {
 }
 
 /**
+ * 18650 lithium-ion cell. REPORTED by cell datasheets: charged to 4.2 V, cut off
+ * at 2.5 V (some say 3.0 V), 35 to 100 mΩ inside (measured at 1 kHz). ESTIMATE:
+ * the curve below, the usual shape of a cell's resting voltage against how full
+ * it is, and 50 mΩ. No one maker's curve is used.
+ */
+export const CELL_RESISTANCE = 0.05;
+export const CELL_FULL_VOLTS = 4.2;
+export const CELL_CUTOFF_VOLTS = 2.5;
+/** Above this a cell is being overcharged. */
+export const CELL_OVERCHARGE_VOLTS = 4.25;
+/** More than this through a cell is a short circuit, whatever the cell. ESTIMATE. */
+export const CELL_SHORT_AMPS = 10;
+const CELL_CURVE: readonly [number, number][] = [
+  [0, 3.0],
+  [0.05, 3.3],
+  [0.1, 3.45],
+  [0.2, 3.55],
+  [0.3, 3.62],
+  [0.4, 3.68],
+  [0.5, 3.74],
+  [0.6, 3.81],
+  [0.7, 3.89],
+  [0.8, 3.97],
+  [0.9, 4.07],
+  [1, 4.2],
+];
+/** The cell's resting voltage when it is `charge` full (0 to 1). */
+export function cellVolts(charge: number): number {
+  const c = Math.min(1, Math.max(0, charge));
+  for (let i = 1; i < CELL_CURVE.length; i++) {
+    const [x1, y1] = CELL_CURVE[i]!;
+    const [x0, y0] = CELL_CURVE[i - 1]!;
+    if (c <= x1) return y0 + ((y1 - y0) * (c - x0)) / (x1 - x0);
+  }
+  return CELL_FULL_VOLTS;
+}
+
+/**
+ * TP4056 charger. REPORTED in its datasheet (and its clones'): 4.2 V ± 1.5 %;
+ * 1200 V / R_PROG of charge current, 1 A with the 1.2 kΩ the common module has;
+ * 130 mA below 2.9 V; finished at a tenth of the charge current; input 4.0 V to
+ * 8.0 V. A linear charger: what goes into the cell comes from the input.
+ * ESTIMATE: the pass transistor's least resistance, and that it keeps charging
+ * while its input stays above the cell once started.
+ */
+export const CHARGER_VOLTS = 4.2;
+export const CHARGER_AMPS = 1;
+export const CHARGER_TRICKLE_AMPS = 0.13;
+export const CHARGER_TRICKLE_BELOW = 2.9;
+export const CHARGER_MIN_INPUT = 4;
+export const CHARGER_MAX_INPUT = 8;
+export const CHARGER_MIN_PASS = 0.3;
+export const CHARGER_OFF_PASS = 1e7;
+/**
+ * The module's protection (DW01A and two transistors). REPORTED by the DW01A's
+ * makers: cut-off below 2.4 V, released above 3.0 V. ESTIMATE: about 3 A before
+ * it cuts off (it depends on the transistors), 50 mΩ through them, and that it
+ * releases once the load is taken away, which it senses on OUT−.
+ */
+export const PROTECTION_CUTOFF_VOLTS = 2.4;
+export const PROTECTION_RELEASE_VOLTS = 3;
+export const PROTECTION_MAX_AMPS = 3;
+export const PROTECTION_RESISTANCE = 0.05;
+export const PROTECTION_OPEN = 1e8;
+export const PROTECTION_LOAD_GONE_VOLTS = 1;
+
+/**
+ * LM2596 step-down regulator. REPORTED by TI and onsemi: input up to 40 V, 3 A
+ * out, output from 1.23 V; 73 % efficient at 12 V in, 3 V out, 3 A; the switch
+ * drops 1.16 V (TI) to 1.5 V (onsemi) at 3 A. ESTIMATE: 1.2 V of drop at any
+ * load, 80 % efficiency, 5 mA of its own, 4.5 V as its least input.
+ */
+export const REGULATOR_DROP = 1.2;
+export const REGULATOR_EFFICIENCY = 0.8;
+export const REGULATOR_OWN_AMPS = 0.005;
+export const REGULATOR_MAX_INPUT = 40;
+export const REGULATOR_MAX_AMPS = 3;
+export const REGULATOR_OUTPUT_RESISTANCE = 0.05;
+export const REGULATOR_OFF = 1e6;
+
+/**
+ * 5 V solar panel. REPORTED by DFRobot for its 5 V 1 A panel: 7.2 V open
+ * circuit, 1 A at most. ESTIMATE: 1.1 A of light current in full sun, a string of
+ * twelve cells (emission coefficient 1.3 each), 0.3 Ω in series and 300 Ω across.
+ */
+export const SOLAR_LIGHT_AMPS = 1.1;
+export const SOLAR_OPEN_VOLTS = 7.2;
+export const SOLAR_SERIES_RESISTANCE = 0.3;
+export const SOLAR_SHUNT_RESISTANCE = 300;
+const SOLAR_EMISSION = 1.3 * 12;
+export const SOLAR_DIODE: DiodeModel = {
+  // Chosen so the panel gives exactly its open-circuit voltage in full sun.
+  saturationCurrent:
+    (SOLAR_LIGHT_AMPS - SOLAR_OPEN_VOLTS / SOLAR_SHUNT_RESISTANCE) /
+    (Math.exp(SOLAR_OPEN_VOLTS / (SOLAR_EMISSION * THERMAL_VOLTAGE)) - 1),
+  emissionCoefficient: SOLAR_EMISSION,
+};
+
+/**
  * Turbidity sensor (DFRobot SEN0189). REPORTED by DFRobot: a 5 V supply, up to
  * 40 mA, output 0 to 4.5 V, about 4.1 V in clean water and lower as the water
  * gets cloudier. REPORTED by users reading DFRobot's published curve (a picture
@@ -405,6 +504,7 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   // DFRobot gives 3.3 V as its least supply; a 3.3 V rail that sags a little under load still counts.
   tds: 3,
   turbidity: 4.5,
+  lm2596: 4.5,
   pir: 4.5,
   oled: 3,
   l298n: 6.5,

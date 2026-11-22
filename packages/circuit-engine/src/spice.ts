@@ -2,6 +2,7 @@ import { THERMAL_VOLTAGE } from './devices';
 import type { Circuit } from './dc';
 import type {
   Capacitor,
+  CurrentSource,
   Diode,
   NpnTransistor,
   Resistor,
@@ -40,6 +41,10 @@ export function toSpiceDeck(
     } else if (device.kind === 'capacitor') {
       const c = device as Capacitor;
       lines.push(`C${name} ${c.a} ${c.b} ${c.capacitance} IC=${c.storedVoltage}`);
+    } else if (device.kind === 'current-source') {
+      // SPICE's current flows from its first node, through the source, to its second.
+      const i = device as CurrentSource;
+      lines.push(`I${name} ${i.negative} ${i.positive} DC ${i.amps}`);
     } else if (device.kind === 'thevenin-source') {
       // Written as an ideal source plus resistor; the internal node is named, not numbered.
       const t = device as TheveninSource;

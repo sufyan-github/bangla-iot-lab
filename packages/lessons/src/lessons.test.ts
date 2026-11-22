@@ -719,6 +719,53 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     ],
     actions: { 5: [{ set: 'S1', props: { closed: true } }] },
   },
+  'step-down': {
+    components: [
+      esp32,
+      { id: 'BAT1', type: 'battery', props: { voltage: 9 } },
+      part('REG1', 'lm2596', { inp: 'c1', inn: 'c2', outn: 'c6', outp: 'c7' }, { volts: 5 }),
+      part('M1', 'motor', { a: 'c10', b: 'c13' }),
+    ],
+    wires: [
+      ['BAT1.pos', 'a1'],
+      ['BAT1.neg', 'a2'],
+      ['a7', 'a10'],
+      ['a13', 'b6'],
+    ],
+    actions: { 4: [{ set: 'REG1', props: { volts: 8.5 } }] },
+  },
+  'solar-charging': {
+    components: [
+      esp32,
+      part('PV1', 'solar', { pos: 'a1', neg: 'a3' }, { light: 1 }),
+      part('CHG1', 'tp4056', {
+        inp: 'c5',
+        inn: 'c6',
+        bp: 'c8',
+        bn: 'c9',
+        outp: 'c11',
+        outn: 'c12',
+      }),
+      part('CELL1', 'cell', { pos: 'c20', neg: 'c26' }, { charge: 0.5, capacity: 2600 }),
+      ...lamp,
+    ],
+    wires: [
+      ['b1', 'a5'],
+      ['b3', 'a6'],
+      ['a20', 'a8'],
+      ['a26', 'a9'],
+      ['a11', 'j20'],
+      ['a12', 'j25'],
+    ],
+    actions: {
+      3: [{ set: 'PV1', props: { light: 0.3 } }],
+      4: [{ set: 'PV1', props: { light: 0 } }],
+      5: [
+        { set: 'PV1', props: { light: 1 } },
+        { set: 'CELL1', props: { charge: 1 } },
+      ],
+    },
+  },
 };
 
 /** The longest a student would have to watch for a step to complete, in simulated time. */

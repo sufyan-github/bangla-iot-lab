@@ -1,30 +1,59 @@
 {
   "formatVersion": 1,
   "id": "lm2596",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "lm2596",
+  "status": "simulated",
   "family": "power",
   "tier": 2,
   "name": {
-    "bn": "LM2596 buck converter",
-    "en": "LM2596 buck converter"
+    "bn": "LM2596 স্টেপ-ডাউন রেগুলেটর",
+    "en": "LM2596 step-down regulator"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "বেশি ভোল্টেজকে কম, স্থির ভোল্টেজে নামায় (যেমন ৯ V থেকে ৫ V), ৩ A পর্যন্ত। ট্রিমার ঘুরিয়ে আউটপুট ঠিক করা হয়।",
+    "en": "Turns a higher voltage into a lower, steady one (such as 9 V into 5 V), up to 3 A. Its trimmer sets the output."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "Its output holds the voltage set on its trimmer while the input is at least about 1.2 V higher (the switch's own drop, from TI's datasheet); below that the output follows the input, 1.2 V lower. It works from 4.5 V in.",
+      "It draws from its input the power it gives, divided by an efficiency of 80 % (an estimate: TI gives 73 % at 12 V in, 3 V out and 3 A, and more at lighter loads), plus about 5 mA of its own.",
+      "It switches at 150 kHz on the real board; the lab shows the averaged result, with no ripple.",
+      "The lab warns above 40 V in or 3 A out. Its heat is not modelled."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E9"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "inp",
+      "label": "IN+",
+      "role": "power"
+    },
+    {
+      "id": "inn",
+      "label": "IN−",
+      "role": "ground"
+    },
+    {
+      "id": "outn",
+      "label": "OUT−",
+      "role": "ground"
+    },
+    {
+      "id": "outp",
+      "label": "OUT+",
+      "role": "output"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["lm2596"]
+  },
+  "placement": {
+    "idPrefix": "REG",
+    "offsets": [0, 1, 5, 6]
   }
 }

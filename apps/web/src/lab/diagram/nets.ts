@@ -112,6 +112,8 @@ export const BOX_TYPES = new Set([
   'acs712',
   'tds',
   'turbidity',
+  'tp4056',
+  'lm2596',
   'pir',
   'rgbled',
   'oled',
@@ -166,6 +168,13 @@ export function pinLabel(component: CircuitComponent, pin: string): string {
     ip2: 'IP−',
     // The voltage sensor's input terminal, marked VCC on the module.
     vin: 'VCC',
+    // The charger's and regulator's pads, as printed on their boards.
+    inp: 'IN+',
+    inn: 'IN−',
+    bp: 'B+',
+    bn: 'B−',
+    outp: 'OUT+',
+    outn: 'OUT−',
   };
   return short[pin] ?? pin.toUpperCase();
 }

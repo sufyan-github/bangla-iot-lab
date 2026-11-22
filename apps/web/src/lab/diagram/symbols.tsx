@@ -38,6 +38,27 @@ function twoLegSymbol(type: CircuitComponent['type'], state: SymbolState): React
   switch (type) {
     case 'resistor':
       return <path d={`M0 0H20${ZIGZAG.slice(5)}H${W}`} />;
+    case 'cell':
+      // A cell: the long plate is +, on the first leg's side.
+      return (
+        <>
+          <path d="M0 0H35M45 0H80M35 -13V13" />
+          <path d="M45 -7V7" strokeWidth={4.5} />
+        </>
+      );
+    case 'solar':
+      // A solar cell: a cell in a circle, with light falling on it.
+      return (
+        <>
+          <path d="M0 0H26M54 0H80" />
+          <circle cx={40} cy={0} r={14} fill="var(--color-surface)" />
+          <path d="M37 -9V9" />
+          <path d="M43 -5V5" strokeWidth={3.5} />
+          {/* Light falling on it from the upper right, clear of the name above it. */}
+          <path d="M62 -24l-7 9M70 -20l-7 9" strokeWidth={1.4} />
+          <path d="M55 -15l4 -1.2M55 -15l0.8 -4M63 -11l4 -1.2M63 -11l0.8 -4" strokeWidth={1.4} />
+        </>
+      );
     case 'led':
     case 'diode':
       return (

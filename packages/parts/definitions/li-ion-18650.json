@@ -1,30 +1,49 @@
 {
   "formatVersion": 1,
   "id": "li-ion-18650",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "cell",
+  "status": "simulated",
   "family": "power",
   "tier": 2,
   "name": {
-    "bn": "18650 lithium-ion cell",
+    "bn": "১৮৬৫০ লিথিয়াম-আয়ন সেল",
     "en": "18650 lithium-ion cell"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "৩.০ থেকে ৪.২ ভোল্টের রিচার্জেবল সেল; কতটা চার্জ আছে তার ওপর ভোল্টেজ নির্ভর করে।",
+    "en": "A rechargeable cell of 3.0 to 4.2 V; its voltage depends on how charged it is."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "How full the cell is, is set on its slider and does not change while the circuit runs: the lab shows the current going in or out and how long that would take to fill or empty it, rather than running for hours.",
+      "Its voltage follows a typical curve from 3.0 V empty to 4.2 V full (an estimate of the usual shape; each make of cell differs), behind 50 mΩ inside it (datasheets give 35 to 100 mΩ).",
+      "It does not warm up, age or lose capacity, and its voltage does not sag more under a long, heavy load.",
+      "It is drawn in a holder with two leads; the lab does not model a cell without one."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E7"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "pos",
+      "label": "+",
+      "role": "power"
+    },
+    {
+      "id": "neg",
+      "label": "−",
+      "role": "ground"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["18650 li-ion cell"]
+  },
+  "placement": {
+    "idPrefix": "CELL",
+    "offsets": [0, 6]
   }
 }

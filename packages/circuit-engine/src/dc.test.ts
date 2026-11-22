@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { solveDc } from './dc';
 import {
+  currentSource,
   diode,
   limitJunctionVoltage,
   npnTransistor,
@@ -55,6 +56,23 @@ describe('DC operating point', () => {
     expect(r.voltage(solution) + vd).toBeCloseTo(9, 9);
     expect(vd).toBeGreaterThan(1.7);
     expect(vd).toBeLessThan(1.9);
+  });
+
+  it('drives its current through a resistor, and in parallel with a diode it clamps', () => {
+    // 2 mA into 1 kΩ: 2 V.
+    const alone = solved({
+      nodeCount: 2,
+      devices: [currentSource('I1', 1, 0, 0.002), resistor('R1', 1, 0, 1000)],
+    });
+    expect(alone.solution.voltage(1)).toBeCloseTo(2, 9);
+    // The same source across a forward diode: the diode takes the current, at its own voltage.
+    const model = { saturationCurrent: 1e-14, emissionCoefficient: 1 };
+    const clamped = solved({
+      nodeCount: 2,
+      devices: [currentSource('I1', 1, 0, 0.002), diode('D1', 1, 0, model)],
+    });
+    const v = clamped.solution.voltage(1);
+    expect(model.saturationCurrent * (Math.exp(v / THERMAL_VOLTAGE) - 1)).toBeCloseTo(0.002, 7);
   });
 
   it('gives a floating part 0 V and no current rather than failing', () => {

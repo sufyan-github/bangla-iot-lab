@@ -1301,6 +1301,182 @@ export function Acs712View(props: {
   );
 }
 
+/** 18650 cell lying in its black holder above its two leads, with how full it is. */
+export function CellView(props: {
+  pos: Point;
+  neg: Point;
+  /** Short text on the cell: how full it is. */
+  label: string;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.pos, props.neg);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      {[-length / 2, length / 2].map((x) => (
+        <path key={x} d={`M${x} 0V-12`} stroke="#c9302c" strokeWidth={2.2} />
+      ))}
+      <rect x={-length / 2 - 8} y={-38} width={length + 16} height={28} rx={4} fill="#1c1e20" />
+      <rect x={-length / 2 - 2} y={-34} width={length + 4} height={20} rx={9} fill="#2f7d4f" />
+      <rect
+        x={-length / 2 - 2}
+        y={-34}
+        width={length + 4}
+        height={20}
+        rx={9}
+        fill="url(#shade-metal)"
+        opacity={0.35}
+      />
+      <rect x={-length / 2 - 6} y={-29} width={5} height={10} rx={1.5} fill="#c9cdd0" />
+      <text
+        x={-length / 2 + 6}
+        y={-20}
+        fontSize={10}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        +
+      </text>
+      <text
+        x={0}
+        y={-19.5}
+        textAnchor="middle"
+        fontSize={10.5}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        {props.label}
+      </text>
+    </g>
+  );
+}
+
+/** Small solar panel standing above its two wires: dark cells with silver lines, brighter in light. */
+export function SolarView(props: { pos: Point; neg: Point; light: number; selected: boolean }) {
+  const { length, transform } = between(props.pos, props.neg);
+  const width = 64;
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      {[-length / 2, length / 2].map((x, i) => (
+        <path
+          key={x}
+          d={`M${x} 0V-14`}
+          stroke={i === 0 ? '#c9302c' : '#23282b'}
+          strokeWidth={2.2}
+        />
+      ))}
+      <rect x={-width / 2} y={-62} width={width} height={48} rx={3} fill="#d9dcdd" />
+      <rect x={-width / 2 + 3} y={-59} width={width - 6} height={42} fill="#1d3557" />
+      <path
+        d={
+          [-1, 0, 1].map((i) => `M${(i * (width - 6)) / 4} -59v42`).join('') +
+          [1, 2].map((i) => `M${-width / 2 + 3} ${-59 + i * 14}h${width - 6}`).join('')
+        }
+        stroke="#a9b4bd"
+        strokeWidth={0.8}
+      />
+      <rect
+        x={-width / 2 + 3}
+        y={-59}
+        width={width - 6}
+        height={42}
+        fill="#ffe08a"
+        opacity={0.3 * props.light}
+      />
+    </g>
+  );
+}
+
+/**
+ * TP4056 charger module: its USB socket and IN pads on the left, the chip, the
+ * red and blue lights, and the B and OUT pads.
+ */
+export function Tp4056View(props: {
+  first: Point;
+  last: Point;
+  /** 1 charging (red light), 2 full (blue light), 0 neither. */
+  state: number;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const at = (offset: number) => -length / 2 + (offset * length) / 7;
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 14} y={-38} width={length + 28} height={44} color="#1f5fa8" />
+      {[0, 1, 3, 4, 6, 7].map((offset) => (
+        <SolderDot key={offset} x={at(offset)} />
+      ))}
+      <rect x={-length / 2 - 18} y={-32} width={14} height={18} rx={2} fill="#c9cdd0" />
+      <rect x={at(2) - 7} y={-30} width={14} height={11} rx={1} fill="#17191b" />
+      <rect x={at(5) - 6} y={-30} width={12} height={8} rx={1} fill="#17191b" />
+      {[
+        { x: at(3) - 3, on: props.state === 1, color: '#ff5340' },
+        { x: at(4) + 3, on: props.state === 2, color: '#4a8dff' },
+      ].map((light) => (
+        <g key={light.x} transform={`translate(${light.x} -12)`}>
+          {light.on && <circle r={7} fill={light.color} opacity={0.4} />}
+          <rect
+            x={-3}
+            y={-2}
+            width={6}
+            height={4}
+            rx={1}
+            fill={light.on ? light.color : '#3a3f44'}
+          />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/** LM2596 step-down module: its big coil, the chip, the blue trimmer and its power light. */
+export function Lm2596View(props: {
+  first: Point;
+  last: Point;
+  /** Short text on the module: the voltage it is set to. */
+  label: string;
+  lit: boolean;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 10} y={-58} width={length + 20} height={64} color="#1f5fa8" />
+      {[0, 1, 5, 6].map((offset) => (
+        <SolderDot key={offset} x={-length / 2 + (offset * length) / 6} />
+      ))}
+      <rect x={-12} y={-52} width={24} height={24} rx={3} fill="#232628" />
+      <text x={0} y={-36} textAnchor="middle" fontSize={8} fill="#9aa1a6" pointerEvents="none">
+        330
+      </text>
+      <g transform={`translate(${length / 2 - 2} -44)`}>
+        <rect x={-6} y={-8} width={12} height={16} rx={1.5} fill="#2d6fd2" />
+        <circle r={3.4} fill="#d9b65c" />
+      </g>
+      <g transform={`translate(${-length / 2 + 2} -44)`}>
+        {props.lit && <circle r={7} fill="#ff5340" opacity={0.4} />}
+        <rect x={-3} y={-2} width={6} height={4} rx={1} fill={props.lit ? '#ff5340' : '#5a1f1a'} />
+      </g>
+      <text
+        x={0}
+        y={-14}
+        textAnchor="middle"
+        fontSize={11}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        {props.label}
+      </text>
+    </g>
+  );
+}
+
 /** HC-SR501 motion sensor: a white faceted dome on a small board. */
 export function PirView(props: {
   vcc: Point;

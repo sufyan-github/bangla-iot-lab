@@ -124,6 +124,62 @@ function SavedSettings({ boardId }: { boardId: string }) {
   );
 }
 
+const CELL_CAPACITIES = [1500, 2000, 2600, 3000, 3500];
+
+function CellSettings({ part }: { part: Extract<CircuitComponent, { type: 'cell' }> }) {
+  const { setProps } = useLab.getState();
+  const { t, quantity, number } = useT();
+  const amps = useLab((s) => s.result?.readings[part.id]?.current ?? 0);
+  const { charge, capacity } = part.props;
+  // Hours to fill or empty it at the present current; the lab does not run that long.
+  const amphours = capacity / 1000;
+  const hours = amps > 0 ? (amphours * (1 - charge)) / amps : (amphours * charge) / -amps;
+  return (
+    <div className="space-y-3">
+      <label className="block">
+        <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+          {t('inspector.charge')}
+          <span className="font-medium text-ink tabular-nums">
+            {number(Math.round(charge * 100))}%
+          </span>
+        </span>
+        <input
+          type="range"
+          data-testid="slider-charge"
+          min={0}
+          max={1}
+          step={0.01}
+          value={charge}
+          onChange={(event) => setProps(part.id, { charge: Number(event.target.value) })}
+          className="h-11 w-full accent-amber"
+        />
+      </label>
+      <fieldset>
+        <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.capacity')}</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {CELL_CAPACITIES.map((mah) => (
+            <Choice
+              key={mah}
+              selected={capacity === mah}
+              onClick={() => setProps(part.id, { capacity: mah })}
+            >
+              {number(mah)} mAh
+            </Choice>
+          ))}
+        </div>
+      </fieldset>
+      {Math.abs(amps) > 0.001 && Number.isFinite(hours) && (
+        <p data-testid="cell-time" className="text-sm text-ink-soft">
+          {t(amps > 0 ? 'cell.charging' : 'cell.giving', {
+            current: quantity(Math.abs(amps), 'A'),
+            hours: number(Math.round(hours * 10) / 10),
+          })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function PartSettings({ part }: { part: CircuitComponent }) {
   const { setProps } = useLab.getState();
   const { t, quantity, number } = useT();
@@ -288,6 +344,54 @@ function PartSettings({ part }: { part: CircuitComponent }) {
           />
         </label>
       </div>
+    );
+  }
+  if (part.type === 'cell') {
+    // How full it is, how big it is, and how long the present current would take.
+    return <CellSettings part={part} />;
+  }
+  if (part.type === 'lm2596') {
+    return (
+      <label className="block">
+        <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+          {t('inspector.outputVolts')}
+          <span className="font-medium text-ink tabular-nums">
+            {quantity(part.props.volts, 'V')}
+          </span>
+        </span>
+        <input
+          type="range"
+          data-testid="slider-volts"
+          min={1.25}
+          max={35}
+          step={0.05}
+          value={part.props.volts}
+          onChange={(event) => setProps(part.id, { volts: Number(event.target.value) })}
+          className="h-11 w-full accent-amber"
+        />
+      </label>
+    );
+  }
+  if (part.type === 'solar') {
+    return (
+      <label className="block">
+        <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+          {t('inspector.sunlight')}
+          <span className="font-medium text-ink tabular-nums">
+            {number(Math.round(part.props.light * 100))}%
+          </span>
+        </span>
+        <input
+          type="range"
+          data-testid="slider-light"
+          min={0}
+          max={1}
+          step={0.01}
+          value={part.props.light}
+          onChange={(event) => setProps(part.id, { light: Number(event.target.value) })}
+          className="h-11 w-full accent-amber"
+        />
+      </label>
     );
   }
   if (part.type === 'ph') {

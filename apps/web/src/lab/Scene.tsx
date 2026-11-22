@@ -34,6 +34,10 @@ import {
 } from './geometry';
 import {
   Acs712View,
+  CellView,
+  Lm2596View,
+  SolarView,
+  Tp4056View,
   AnalogModuleView,
   BatteryView,
   BuzzerView,
@@ -341,6 +345,43 @@ export function BoardPartDrawing(props: {
           a={at(part.pins.a)}
           b={at(part.pins.b)}
           light={part.props.light}
+          selected={selected}
+        />
+      );
+    case 'cell':
+      return (
+        <CellView
+          pos={at(part.pins.pos)}
+          neg={at(part.pins.neg)}
+          label={`${props.formatNumber(Math.round(part.props.charge * 100))}%`}
+          selected={selected}
+        />
+      );
+    case 'solar':
+      return (
+        <SolarView
+          pos={at(part.pins.pos)}
+          neg={at(part.pins.neg)}
+          light={part.props.light}
+          selected={selected}
+        />
+      );
+    case 'tp4056':
+      return (
+        <Tp4056View
+          first={at(part.pins.inp)}
+          last={at(part.pins.outn)}
+          state={reading?.activity ?? 0}
+          selected={selected}
+        />
+      );
+    case 'lm2596':
+      return (
+        <Lm2596View
+          first={at(part.pins.inp)}
+          last={at(part.pins.outp)}
+          label={`${props.formatNumber(part.props.volts)} V`}
+          lit={reading?.activity === 1}
           selected={selected}
         />
       );

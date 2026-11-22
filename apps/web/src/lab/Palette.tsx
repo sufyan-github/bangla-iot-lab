@@ -229,6 +229,34 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M8 20v2M11 20v2M14 20v2M17 20v2" {...stroke} strokeWidth={1.6} />
     </>
   ),
+  cell: (
+    <>
+      <rect x="3" y="8" width="16" height="8" rx="3" {...stroke} />
+      <path d="M19 10.5h2v3h-2M8 12h3M9.5 10.5v3" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  tp4056: (
+    <>
+      <rect x="2.5" y="6" width="19" height="12" rx="2" {...stroke} />
+      <path d="M13 7.5l-3 4.5h4l-3 4.5" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  lm2596: (
+    <>
+      <rect x="2.5" y="5" width="19" height="14" rx="2" {...stroke} />
+      <path d="M6 9h4M6 12h6M6 15h8M16 9v6M14 13l2 2 2-2" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  solar: (
+    <>
+      <rect x="4" y="9" width="16" height="11" rx="1" {...stroke} />
+      <path
+        d="M9.3 9v11M14.7 9v11M4 14.5h16M12 2.5v2.5M7 4l1.2 1.8M17 4l-1.2 1.8"
+        {...stroke}
+        strokeWidth={1.4}
+      />
+    </>
+  ),
   voltagesensor: (
     <>
       <path d="M12 3v4M12 17v4" {...stroke} />
@@ -291,6 +319,7 @@ const GROUPS: PaletteItem[][] = [
   ['logic'],
   ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
   ['voltagesensor', 'acs712', 'mq7', 'ph', 'tds', 'turbidity'],
+  ['cell', 'tp4056', 'lm2596', 'solar'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

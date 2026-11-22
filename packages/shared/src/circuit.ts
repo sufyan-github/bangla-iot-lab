@@ -27,7 +27,7 @@ import { isHole } from './breadboard';
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 14;
+export const CIRCUIT_SCHEMA_VERSION = 15;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -357,6 +357,51 @@ export const TurbiditySensorSchema = Type.Object({
 });
 
 /**
+ * 18650 lithium-ion cell in a holder. `charge` is how full it is, from 0
+ * (empty) to 1 (full); `capacity` is in milliampere-hours.
+ */
+export const CellSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('cell'),
+  pins: Type.Object({ pos: Hole, neg: Hole }),
+  props: Type.Object({
+    charge: Fraction,
+    capacity: Type.Number({ minimum: 500, maximum: 4000 }),
+  }),
+});
+
+/** TP4056 charger module with its protection: input, cell, and the protected output. */
+export const Tp4056Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('tp4056'),
+  pins: Type.Object({
+    inp: Hole,
+    inn: Hole,
+    bp: Hole,
+    bn: Hole,
+    outp: Hole,
+    outn: Hole,
+  }),
+  props: noProps,
+});
+
+/** LM2596 step-down regulator module. `volts` is the output its trimmer is set to. */
+export const Lm2596Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('lm2596'),
+  pins: Type.Object({ inp: Hole, inn: Hole, outn: Hole, outp: Hole }),
+  props: Type.Object({ volts: Type.Number({ minimum: 1.25, maximum: 35 }) }),
+});
+
+/** Small solar panel. `light` runs from 0 (dark) to 1 (full sun). */
+export const SolarPanelSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('solar'),
+  pins: Type.Object({ pos: Hole, neg: Hole }),
+  props: Type.Object({ light: Fraction }),
+});
+
+/**
  * HC-SR501 motion sensor. Its output goes HIGH when something moves in front of
  * it and stays HIGH for `hold` seconds after the movement stops.
  */
@@ -567,6 +612,10 @@ export const ComponentSchema = Type.Union([
   Acs712Schema,
   TdsSensorSchema,
   TurbiditySensorSchema,
+  CellSchema,
+  Tp4056Schema,
+  Lm2596Schema,
+  SolarPanelSchema,
   PirSchema,
   RgbLedSchema,
   OledSchema,

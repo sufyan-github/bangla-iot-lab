@@ -1,0 +1,239 @@
+{
+  "id": "solar-charging",
+  "order": 31,
+  "parts": ["solar-panel-5v", "tp4056", "li-ion-18650", "resistor", "led-5mm"],
+  "title": {
+    "bn": "সোলার প্যানেল দিয়ে সেল চার্জ",
+    "en": "Charging a cell from a solar panel"
+  },
+  "summary": {
+    "bn": "রোদ থেকে লিথিয়াম সেল চার্জ করো, আর অন্ধকারে সেই সেল থেকে বাতি জ্বালাও।",
+    "en": "Charge a lithium cell from sunlight, and light a lamp from it in the dark."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "steps": [
+    {
+      "text": {
+        "bn": "**সোলার প্যানেল** আর **TP4056 চার্জার** বসাও। প্যানেলের **+** যাবে চার্জারের **IN+**-এ, **−** যাবে **IN−**-এ।",
+        "en": "Place the **solar panel** and the **TP4056 charger**. The panel's **+** goes to the charger's **IN+**, and **−** to **IN−**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "solar"
+        },
+        {
+          "kind": "part",
+          "type": "tp4056"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "solar",
+            "pin": "pos"
+          },
+          "to": {
+            "part": "tp4056",
+            "pin": "inp"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "solar",
+            "pin": "neg"
+          },
+          "to": {
+            "part": "tp4056",
+            "pin": "inn"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **১৮৬৫০ সেল** বসাও। এর **+** যাবে চার্জারের **B+**-এ, **−** যাবে **B−**-এ। লিথিয়াম সেল কখনো সরাসরি প্যানেল বা ৫ V-এ লাগাবে না: চার্জারই একে ৪.২ V-এ থামায়।",
+        "en": "Place an **18650 cell**. Its **+** goes to the charger's **B+**, and **−** to **B−**. Never put a lithium cell straight on a panel or on 5 V: the charger is what stops it at 4.2 V."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "cell"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "cell",
+            "pin": "pos"
+          },
+          "to": {
+            "part": "tp4056",
+            "pin": "bp"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "cell",
+            "pin": "neg"
+          },
+          "to": {
+            "part": "tp4056",
+            "pin": "bn"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। পুরো রোদে চার্জারের **লাল বাতি** জ্বলবে, আর সেলে প্রায় ১ A যাবে। সেলে ট্যাপ করো: ল্যাব বলবে পুরো ভরতে কত ঘণ্টা লাগবে।",
+        "en": "Press **Run**. In full sun the charger's **red light** comes on and about 1 A goes into the cell. Tap the cell: the lab says how many hours it would take to fill."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "reading",
+          "part": "tp4056",
+          "path": "activity",
+          "equals": 1,
+          "label": {
+            "bn": "চার্জারের লাল বাতি জ্বলছে",
+            "en": "The charger's red light is on"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "cell",
+          "path": "current",
+          "above": 0.5
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "প্যানেলে ট্যাপ করে রোদ **৩০%**-এ নামাও। কারেন্ট কমে যাবে: চার্জার যতটা চায় প্যানেল ততটা দিতে পারে না, তাই যতটা পায় ততটাই দেয়।",
+        "en": "Tap the panel and bring the sun down to **30%**. The current falls: the panel cannot give what the charger asks for, so the charger passes on what it gets."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "solar",
+          "prop": "light",
+          "below": 0.35
+        },
+        {
+          "kind": "reading",
+          "part": "cell",
+          "path": "current",
+          "below": 0.4
+        },
+        {
+          "kind": "reading",
+          "part": "cell",
+          "path": "current",
+          "above": 0.1
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার একটা **রেজিস্টর** (২২০ Ω) আর **LED** লাগাও: **OUT+** থেকে রেজিস্টর হয়ে LED-র লম্বা পায়ে, আর LED-র ছোট পা **OUT−**-এ। তারপর রোদ **০**-তে নামাও, যেন রাত। LED জ্বলতেই থাকবে: আলো আসছে সেল থেকে।",
+        "en": "Now add a **resistor** (220 Ω) and an **LED**: from **OUT+** through the resistor to the LED's long leg, and the LED's short leg to **OUT−**. Then bring the sun down to **0**, as at night. The LED stays lit: the light now comes from the cell."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tp4056",
+            "pin": "outp"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "part": "tp4056",
+            "pin": "outn"
+          }
+        },
+        {
+          "kind": "prop",
+          "part": "solar",
+          "prop": "light",
+          "below": 0.01
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "reading",
+          "part": "cell",
+          "path": "current",
+          "below": 0
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "শেষে রোদ আবার পুরো করো, আর সেলে ট্যাপ করে চার্জ **১০০%** করো। সেল ভরা: চার্জারের **নীল বাতি** জ্বলবে, আর সেলে প্রায় কোনো কারেন্ট যাবে না।",
+        "en": "Last, bring the sun back to full, tap the cell and set it to **100%**. The cell is full: the charger's **blue light** comes on, and almost no current goes into the cell."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "solar",
+          "prop": "light",
+          "above": 0.9
+        },
+        {
+          "kind": "prop",
+          "part": "cell",
+          "prop": "charge",
+          "above": 0.99
+        },
+        {
+          "kind": "reading",
+          "part": "tp4056",
+          "path": "activity",
+          "equals": 2,
+          "label": {
+            "bn": "চার্জারের নীল বাতি জ্বলছে",
+            "en": "The charger's blue light is on"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "লিথিয়াম সেল চার্জ করতে চার্জার লাগে: এটা কারেন্ট সীমিত রাখে আর ৪.২ V-এ থামায়।",
+      "কম রোদে প্যানেল কম কারেন্ট দেয়, তাই চার্জ হতে বেশি সময় লাগে।",
+      "চার্জারের OUT থেকে লোড চালালে সুরক্ষা সেলকে বেশি খালি হতে দেয় না।"
+    ],
+    "en": [
+      "A lithium cell needs a charger: it limits the current and stops at 4.2 V.",
+      "In weak sun the panel gives less current, so charging takes longer.",
+      "Running the load from the charger's OUT lets the protection keep the cell from being emptied too far."
+    ]
+  },
+  "tryNext": {
+    "bn": "সেলটা চার্জার ছাড়া সরাসরি প্যানেলে লাগিয়ে দেখো ল্যাব কী সতর্ক করে। তারপর আবার চার্জার দিয়ে লাগাও।",
+    "en": "Connect the cell straight to the panel, without the charger, and see what the lab warns about. Then put the charger back."
+  }
+}

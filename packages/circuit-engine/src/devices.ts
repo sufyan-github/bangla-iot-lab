@@ -18,7 +18,13 @@ export const GMIN = 1e-12;
 export interface Device {
   readonly id: string;
   readonly kind:
-    'resistor' | 'voltage-source' | 'thevenin-source' | 'diode' | 'capacitor' | 'npn-transistor';
+    | 'resistor'
+    | 'voltage-source'
+    | 'thevenin-source'
+    | 'current-source'
+    | 'diode'
+    | 'capacitor'
+    | 'npn-transistor';
   /** Nodes this device connects, first terminal first. */
   readonly nodes: readonly number[];
   /** Extra MNA unknowns this device needs (voltage sources need one). */
@@ -160,6 +166,45 @@ export function theveninSource(
     },
     voltage: (s) => s.voltage(positive) - s.voltage(negative),
     current: (s) => (s.voltage(positive) - s.voltage(negative) - volts) * g,
+  };
+}
+
+export interface CurrentSource extends Device {
+  readonly kind: 'current-source';
+  readonly positive: number;
+  readonly negative: number;
+  readonly amps: number;
+}
+
+/**
+ * Ideal DC current source: drives `amps` out of its positive terminal into the
+ * circuit, whatever the voltage across it (a solar cell's light current, a
+ * charger holding its current). `current()` follows the voltage-source
+ * convention: negative while it delivers current out of its positive terminal.
+ */
+export function currentSource(
+  id: string,
+  positive: number,
+  negative: number,
+  amps: number,
+): CurrentSource {
+  if (!Number.isFinite(amps)) throw new RangeError(`Current source ${id}: current must be finite`);
+  return {
+    id,
+    kind: 'current-source',
+    nodes: [positive, negative],
+    positive,
+    negative,
+    amps,
+    branchCount: 0,
+    branch: -1,
+    reset() {},
+    stamp(system) {
+      system.stampCurrentSource(negative, positive, amps);
+      return false;
+    },
+    voltage: (s) => s.voltage(positive) - s.voltage(negative),
+    current: () => -amps,
   };
 }
 
