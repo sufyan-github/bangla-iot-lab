@@ -1,6 +1,7 @@
 import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
+  L298N_TERMINALS,
   allHoles,
   holeAt,
   holeCoordinates,
@@ -47,6 +48,35 @@ export const ESP32_BOX: Box = {
 /** Where each kind of board sits until it is moved. Socket positions are given for this place. */
 export const BOARD_HOME: Record<ProgrammableType, Box> = { uno: UNO_BOX, esp32: ESP32_BOX };
 const BATTERY_SIZE = { width: 104, height: 156 };
+/** The motor driver module starts beside the board, under the breadboard's right half. */
+export const DRIVER_BOX: Box = { x: 704, y: UNO_BOX.y, width: 236, height: 176 };
+/** How far each of the driver's terminals is from the module's top-left corner. */
+const DRIVER_TERMINAL_AT: Record<(typeof L298N_TERMINALS)[number], Point> = {
+  // Motor screws on the two sides.
+  out1: { x: 14, y: 54 },
+  out2: { x: 14, y: 84 },
+  out3: { x: 222, y: 54 },
+  out4: { x: 222, y: 84 },
+  // Power screws, then the six control pins, along the bottom.
+  vs: { x: 22, y: 154 },
+  gnd: { x: 48, y: 154 },
+  '5v': { x: 74, y: 154 },
+  ena: { x: 108, y: 154 },
+  in1: { x: 130, y: 154 },
+  in2: { x: 152, y: 154 },
+  in3: { x: 174, y: 154 },
+  in4: { x: 196, y: 154 },
+  enb: { x: 218, y: 154 },
+};
+export const DRIVER_TERMINALS = L298N_TERMINALS.map((terminal) => ({
+  terminal,
+  at: DRIVER_TERMINAL_AT[terminal],
+}));
+
+export function driverTerminalPoint(box: Box, terminal: string): Point | null {
+  const at = DRIVER_TERMINAL_AT[terminal as keyof typeof DRIVER_TERMINAL_AT];
+  return at ? { x: box.x + at.x, y: box.y + at.y } : null;
+}
 /** How far a battery's terminals stick out to its right. */
 const BATTERY_TERMINAL_REACH = 16;
 
@@ -54,17 +84,22 @@ const BATTERY_TERMINAL_REACH = 16;
 const SURFACE_BOTTOM = UNO_BOX.y + UNO_BOX.height + 28 + PITCH * 10;
 const MARGIN = 6;
 
-export type OffBoardPart = Extract<CircuitComponent, { type: 'battery' | ProgrammableType }>;
+export type OffBoardPart = Extract<
+  CircuitComponent,
+  { type: 'battery' | 'l298n' | ProgrammableType }
+>;
 
 export function offBoardParts(circuit: CircuitDocument): OffBoardPart[] {
-  return circuit.components.filter(
-    (c): c is OffBoardPart => c.type === 'battery' || c.type === 'uno' || c.type === 'esp32',
-  );
+  return circuit.components.filter((c): c is OffBoardPart => !('pins' in c));
 }
+
+/** The size of a part beside the board, and where it sits until it is moved (batteries are stacked). */
+const sizeOf = (type: OffBoardPart['type']) =>
+  type === 'battery' ? BATTERY_SIZE : type === 'l298n' ? DRIVER_BOX : BOARD_HOME[type];
 
 /** Where a battery or board is drawn: where the student put it, or its usual place. */
 export function partBox(circuit: CircuitDocument, part: OffBoardPart): Box {
-  const size = part.type === 'battery' ? BATTERY_SIZE : BOARD_HOME[part.type];
+  const size = sizeOf(part.type);
   if (part.at) {
     return {
       x: BOARD_X + part.at.x * PITCH,
@@ -73,6 +108,7 @@ export function partBox(circuit: CircuitDocument, part: OffBoardPart): Box {
       height: size.height,
     };
   }
+  if (part.type === 'l298n') return DRIVER_BOX;
   if (part.type !== 'battery') return BOARD_HOME[part.type];
   // Batteries start beside the board, stacked in the order they were added.
   const index = circuit.components.filter((c) => c.type === 'battery').indexOf(part);
@@ -82,6 +118,7 @@ export function partBox(circuit: CircuitDocument, part: OffBoardPart): Box {
 /** The room a part takes up, including what sticks out of its body. */
 function footprint(type: OffBoardPart['type'], box: Box): Box {
   // A board's USB socket overhangs its left edge.
+  if (type === 'l298n') return box;
   return type === 'battery'
     ? { ...box, width: box.width + BATTERY_TERMINAL_REACH + 9 }
     : { x: box.x - 12, y: box.y, width: box.width + 12, height: box.height };
@@ -229,7 +266,7 @@ const SOCKET_POINT: Record<ProgrammableType, Map<string, Point>> = {
 /** How far a moved board is from the place its socket positions are given for. */
 export function boardShift(circuit: CircuitDocument, board: OffBoardPart): Point {
   const box = partBox(circuit, board);
-  const home = board.type === 'battery' ? box : BOARD_HOME[board.type];
+  const home = board.type === 'battery' || board.type === 'l298n' ? box : BOARD_HOME[board.type];
   return { x: box.x - home.x, y: box.y - home.y };
 }
 
@@ -247,6 +284,7 @@ export function endpointPoint(circuit: CircuitDocument, endpoint: string): Point
   if (owner.type === 'battery') {
     return batteryTerminalPoint(partBox(circuit, owner), terminal.pin);
   }
+  if (owner.type === 'l298n') return driverTerminalPoint(partBox(circuit, owner), terminal.pin);
   const socket = SOCKET_POINT[owner.type].get(terminal.pin);
   if (!socket) return null;
   const shift = boardShift(circuit, owner);
@@ -262,6 +300,12 @@ export function endpointNear(circuit: CircuitDocument, point: Point): string | u
       for (const pin of ['pos', 'neg']) {
         if (within(batteryTerminalPoint(box, pin), PITCH * 0.8)) return `${part.id}.${pin}`;
       }
+    } else if (part.type === 'l298n') {
+      const box = partBox(circuit, part);
+      const found = DRIVER_TERMINALS.find(({ at }) =>
+        within({ x: box.x + at.x, y: box.y + at.y }, SOCKET_PITCH * 0.5),
+      );
+      if (found) return `${part.id}.${found.terminal}`;
     } else {
       const shift = boardShift(circuit, part);
       const socket = BOARD_SOCKETS[part.type].find((s) =>

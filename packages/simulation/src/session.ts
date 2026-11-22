@@ -10,13 +10,15 @@ import { BOARD_MODELS, type BoardModel } from './boards';
 import { Esp32SimBoard, esp32Emulator, parseEsp32Firmware } from './esp32-sim-board';
 import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
-import { buildNetlist, type CircuitState, type Netlist } from './netlist';
+import { buildNetlist, type CircuitState, type DriverState, type Netlist } from './netlist';
 import { Peripherals, type ScheduledInput } from './peripherals';
 import { PIR_IDLE, pirDeadline, stepPir, type PirState } from './pir';
 import {
   Observation,
+  driverStates,
   readSolution,
   relayStates,
+  sameDrivers,
   solveState,
   type SimulationResult,
   type StateSolution,
@@ -98,6 +100,7 @@ const EMPTY_SOLUTION: StateSolution = {
   relays: {},
   motion: {},
   channels: {},
+  drivers: {},
   iterations: 0,
 };
 
@@ -142,6 +145,8 @@ export class SimulationSession {
   /** Where each motion sensor is in its timing, and which have their output HIGH right now. */
   private readonly pirs = new Map<string, PirState>();
   private motion: Record<string, boolean> = {};
+  /** What each motor driver was last found to be doing: where the next solve starts from. */
+  private drivers: Record<string, DriverState> = {};
 
   /** Number of times the circuit was actually solved; exposed for tests and tuning. */
   solveCount = 0;
@@ -297,6 +302,7 @@ export class SimulationSession {
       relays: this.relays,
       echo: this.echo,
       motion: this.motion,
+      drivers: this.drivers,
     };
   }
 
@@ -319,7 +325,10 @@ export class SimulationSession {
       this.solutions.set(key, solution);
       this.solveCount++;
     }
-    if (solution) this.relays = solution.relays;
+    if (solution) {
+      this.relays = solution.relays;
+      this.drivers = solution.drivers;
+    }
     return solution;
   }
 
@@ -342,6 +351,13 @@ export class SimulationSession {
     // A contact that should move does so for the next step.
     this.latest.relays = this.relays;
     this.relays = relayStates(this.document, this.latest, this.relays);
+    // So does a motor driver that should switch: the circuit is rebuilt for the next step.
+    this.latest.drivers = this.drivers;
+    const drivers = driverStates(this.document, this.latest, this.drivers);
+    if (!sameDrivers(this.drivers, drivers)) {
+      this.drivers = drivers;
+      this.stepping = null;
+    }
     return this.latest;
   }
 
@@ -430,10 +446,12 @@ export class SimulationSession {
     if (terminal === null) return input.level;
     const echo = this.echo;
     const relays = this.relays;
+    const drivers = this.drivers;
     this.echo = { ...echo, [input.sensorId]: input.level };
     const volts = this.solveSteady()?.sockets[`${boardId}.${terminal}`]?.voltage;
     this.echo = echo;
     this.relays = relays;
+    this.drivers = drivers;
     if (volts === undefined) return input.level;
     if (volts > board.model.logicHigh) return true;
     if (volts < board.model.logicLow) return false;
@@ -465,10 +483,12 @@ export class SimulationSession {
     // Asked of the solver as a question; nothing about the running circuit may change.
     const before = board.drives[pin]!;
     const relays = this.relays;
+    const drivers = this.drivers;
     board.drives[pin] = 'pullup';
     const pulled = this.solveSteady();
     board.drives[pin] = before;
     this.relays = relays;
+    this.drivers = drivers;
     return (pulled?.sockets[socket]?.voltage ?? 0) > board.model.logicHigh;
   }
 

@@ -1,5 +1,10 @@
 import { solveDc, type Device, type NpnTransistor, type Solution } from '@banglalab/circuit-engine';
-import { boardTerminals, isProgrammable, type CircuitDocument } from '@banglalab/shared';
+import {
+  boardTerminals,
+  isProgrammable,
+  terminalsOf,
+  type CircuitDocument,
+} from '@banglalab/shared';
 import { BOARD_MODELS } from './boards';
 import {
   BUZZER_ON_VOLTAGE,
@@ -8,6 +13,11 @@ import {
   LED_MAX_CURRENT,
   LED_RATED_CURRENT,
   LED_VISIBLE_CURRENT,
+  L298N_INPUT_HIGH,
+  L298N_INPUT_LOW,
+  L298N_LOGIC_MIN,
+  L298N_LOGIC_VOLTS,
+  L298N_REGULATOR_DROPOUT,
   MIN_SUPPLY,
   MODULE_COMPARATOR_MIN_SUPPLY,
   MOTOR_RATED_VOLTAGE,
@@ -18,7 +28,15 @@ import {
   moduleTripped,
   type RgbChannel,
 } from './library';
-import { IDLE_STATE, buildNetlist, type CircuitState, type Netlist } from './netlist';
+import {
+  DRIVER_IDLE,
+  IDLE_STATE,
+  buildNetlist,
+  netName,
+  type CircuitState,
+  type DriverState,
+  type Netlist,
+} from './netlist';
 
 export type LedState = 'off' | 'on' | 'overcurrent' | 'burned' | 'reversed';
 
@@ -68,6 +86,7 @@ export type DiagnosticCode =
   | 'pin-overcurrent'
   | 'pin-overvoltage'
   | 'module-underpowered'
+  | 'supply-backfeed'
   | 'solver-failed';
 
 export interface Diagnostic {
@@ -80,6 +99,7 @@ export interface Diagnostic {
   /**
    * For `pin-overvoltage`: the highest voltage seen on the pin, and what the pin can stand.
    * For `module-underpowered`: the module's supply, and the least it works on.
+   * For `supply-backfeed`: the voltage a board's supply pin is being fed from outside.
    */
   volts?: number;
   limit?: number;
@@ -134,6 +154,8 @@ export interface StateSolution {
   motion: Record<string, boolean>;
   /** Each LED of an RGB LED module, keyed "RGB1.r". */
   channels: Record<string, Sample>;
+  /** What each motor driver is doing in this state. */
+  drivers: Record<string, DriverState>;
   iterations: number;
 }
 
@@ -166,6 +188,63 @@ export function relayStates(
 }
 
 /**
+ * What each motor driver does for the voltages just solved: how much its
+ * regulator can make from its supply, whether its logic has enough to work, and
+ * the level on each input. A voltage between LOW and HIGH leaves an input as it was.
+ */
+export function driverStates(
+  document: CircuitDocument,
+  solution: StateSolution,
+  current: Readonly<Record<string, DriverState>>,
+): Record<string, DriverState> {
+  const next: Record<string, DriverState> = {};
+  for (const component of document.components) {
+    if (component.type !== 'l298n') continue;
+    const before = current[component.id] ?? DRIVER_IDLE;
+    const ground = solution.nodes[netName(`${component.id}.gnd`)] ?? 0;
+    const volts = (terminal: string) =>
+      (solution.nodes[netName(`${component.id}.${terminal}`)] ?? ground) - ground;
+    const level = (terminal: keyof DriverState['inputs']) => {
+      const seen = volts(terminal);
+      if (seen > L298N_INPUT_HIGH) return true;
+      if (seen < L298N_INPUT_LOW) return false;
+      return before.inputs[terminal];
+    };
+    next[component.id] = {
+      rail: Math.min(L298N_LOGIC_VOLTS, Math.max(0, volts('vs') - L298N_REGULATOR_DROPOUT)),
+      awake: volts('5v') >= L298N_LOGIC_MIN,
+      inputs: {
+        in1: level('in1'),
+        in2: level('in2'),
+        in3: level('in3'),
+        in4: level('in4'),
+        ena: level('ena'),
+        enb: level('enb'),
+      },
+    };
+  }
+  return next;
+}
+
+/** True when two sets of driver states are the same to within a few millivolts. */
+export function sameDrivers(
+  a: Readonly<Record<string, DriverState>>,
+  b: Readonly<Record<string, DriverState>>,
+): boolean {
+  return Object.entries(b).every(([id, state]) => {
+    const other = a[id];
+    return (
+      other !== undefined &&
+      Math.abs(other.rail - state.rail) < 0.003 &&
+      other.awake === state.awake &&
+      Object.entries(state.inputs).every(
+        ([name, value]) => other.inputs[name as keyof DriverState['inputs']] === value,
+      )
+    );
+  });
+}
+
+/**
  * A motion sensor's output when nothing is keeping time: HIGH while something
  * moves in front of a powered sensor.
  */
@@ -191,20 +270,28 @@ const sameStates = (a: Readonly<Record<string, boolean>>, b: Readonly<Record<str
 export function solveState(document: CircuitDocument, state: CircuitState): StateSolution | null {
   let relays = state.relays ?? {};
   let motion = state.motion ?? {};
+  let drivers = state.drivers ?? {};
+  const hasDriver = document.components.some((c) => c.type === 'l298n');
   let solution: StateSolution | null = null;
-  for (let round = 0; round < 4; round++) {
-    const netlist = buildNetlist(document, { ...state, relays, motion });
+  // A motor driver needs a few more rounds: its regulator, then its logic, then its outputs.
+  for (let round = 0; round < (hasDriver ? 12 : 4); round++) {
+    const netlist = buildNetlist(document, { ...state, relays, motion, drivers });
     const dc = solveDc(netlist.circuit);
     if (!dc.ok) return null;
     solution = readSolution(document, netlist, dc.solution, dc.iterations);
     const next = relayStates(document, solution, relays);
     // Whether a motion sensor is powered is only known once the circuit is solved.
     const moving = state.motion ?? motionOutputs(document, solution);
+    const driving = hasDriver ? driverStates(document, solution, drivers) : drivers;
     solution.relays = next;
     solution.motion = moving;
-    if (sameStates(relays, next) && sameStates(motion, moving)) break;
+    solution.drivers = drivers;
+    if (sameStates(relays, next) && sameStates(motion, moving) && sameDrivers(drivers, driving)) {
+      break;
+    }
     relays = next;
     motion = moving;
+    drivers = driving;
   }
   return solution;
 }
@@ -233,6 +320,7 @@ export function readSolution(
     relays: {},
     motion: {},
     channels: {},
+    drivers: {},
     iterations,
   };
 
@@ -381,7 +469,12 @@ export function readSolution(
         (device) => device.id === id || device.id.startsWith(`${id}:`),
       );
       const counted = new Set<number>();
-      for (const [pin, hole] of Object.entries(component.pins)) {
+      // Legs in breadboard holes, or the terminals of a module that sits beside the board.
+      const legs: [string, string][] =
+        'pins' in component
+          ? Object.entries(component.pins)
+          : terminalsOf(component).map((terminal) => [terminal, `${id}.${terminal}`]);
+      for (const [pin, hole] of legs) {
         const node = netlist.nodeOf(hole);
         // Legs sharing a strip share a node; its current is reported once, on the first of them.
         const fresh = node >= 0 && !counted.has(node);
@@ -391,6 +484,12 @@ export function readSolution(
           : 0;
       }
     }
+  }
+  // A motor driver's current is everything it takes from its supply: its own, and its motors'.
+  for (const component of document.components) {
+    if (component.type !== 'l298n') continue;
+    const sample = result.parts[component.id];
+    if (sample) sample.current = result.legs[`${component.id}.vs`] ?? 0;
   }
   return result;
 }
@@ -478,6 +577,16 @@ export class Observation {
           socket: name,
         });
       }
+      // A supply pin that is being fed from outside, while the board has its own supply too.
+      if (model?.supplies.some((s) => s.terminal === name && s.behindDiode) && current < -0.001) {
+        result.diagnostics.push({
+          code: 'supply-backfeed',
+          severity: 'warning',
+          componentId,
+          socket: name,
+          volts: voltage,
+        });
+      }
       // A 5 V signal on a 3.3 V board's pin: the commonest way to destroy one.
       const highest = extreme((s) => s.sockets[socket]!.voltage, Math.max);
       if (model && !isSupply && !model.grounds.includes(name) && highest > model.maxPinVoltage) {
@@ -548,6 +657,9 @@ export class Observation {
       }
       if (component.type === 'relay') {
         reading.activity = average((s) => (s.relays[id] ? 1 : 0)) >= 0.5 ? 1 : 0;
+      } else if (component.type === 'l298n') {
+        // Its light: on while its logic has power.
+        reading.activity = average((s) => (s.drivers[id]?.awake ? 1 : 0)) >= 0.5 ? 1 : 0;
       } else if (component.type === 'pir') {
         reading.activity = average((s) => (s.motion[id] ? 1 : 0)) >= 0.5 ? 1 : 0;
       } else if (

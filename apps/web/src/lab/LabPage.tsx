@@ -163,6 +163,7 @@ const EDIT_MESSAGES: Partial<Record<string, MessageKey>> = {
   'same-point': 'edit.same-point',
   'battery-limit': 'edit.battery-limit',
   'board-limit': 'edit.board-limit',
+  'driver-limit': 'edit.driver-limit',
 };
 
 function Notice() {

@@ -33,6 +33,10 @@
       "sourceHash": "bcc62980ff2c10bc58145c8d68691f6529c12253bf42b293e51f7324a3504ceb",
       "bytes": 10591
     },
+    "motor": {
+      "sourceHash": "584af9fc14d224f2babe8de70df46338861a93e75391f6787166dc84cc08ab67",
+      "bytes": 11579
+    },
     "oled": {
       "sourceHash": "4609b64c3d1e7fd61e5905f399e1a102639e9624345726bac8a180c172e92f27",
       "bytes": 62098

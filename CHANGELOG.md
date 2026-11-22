@@ -8,6 +8,24 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The kit's L298N motor driver**, a module that sits beside the breadboard
+  with thirteen terminals (circuit format version 11).
+  - Its outputs lose voltage as the real chip's do (about 1.6 V with one of the
+    kit's motors), from the chip's datasheet; a motor on a 7.2 V pack gets
+    about 5.5 V. Direction from two inputs, stop with both the same, speed by
+    PWM on the enable pin once its jumper is taken off.
+  - Its 5 V terminal is made from the motor supply by a regulator, and what it
+    gives is taken from the battery. The module does nothing on a supply too
+    low for it, or without a ground wire to the board, as on a bench.
+  - With an enable jumper in place that pin carries 5 V, and the lab warns if
+    an ESP32 pin is wired to it.
+  - A ready-made program: motor forwards and back.
+- **The kit's 7.2 V battery pack**: a new choice of battery voltage, drawn as a
+  holder of six AA cells.
+- **The ESP32 board's VIN pin can be fed from outside**, as on a robot that
+  runs from its battery. The pin now sits behind a diode in the model, with
+  the board's own 80 mA or so on it. The lab warns when VIN is fed while the
+  board is also on USB, because many boards have no such diode.
 - **The kit's OLED display** (0.96 inch, 128 × 64, SSD1306), on the ESP32
   board with the lab's own model of that board. Circuit format version 10.
   - Sketches use Adafruit's real SSD1306 and GFX libraries (BSD), built
@@ -116,6 +134,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Fixed
 
+- The diagram view now draws the ESP32 board's supply and ground pins. Before,
+  only the UNO-compatible board's were drawn, so a wire to the ESP32's 3V3, VIN
+  or GND ended at nothing on the board's side.
 - A saved circuit that names a hole the breadboard does not have (a column past
   30, or a gap in a rail) is now refused when it is opened. Before, it was
   accepted and the leg was silently connected to nothing.

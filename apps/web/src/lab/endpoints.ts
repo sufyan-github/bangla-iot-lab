@@ -60,6 +60,23 @@ function esp32PinName(terminal: string): string {
   return gpio !== null && !/^D\d+$/.test(printed) ? `${printed} (GPIO${gpio})` : printed;
 }
 
+/** The motor driver's terminals, as printed on the module. */
+export const DRIVER_TERMINAL_NAMES: Record<string, string> = {
+  vs: '12V',
+  gnd: 'GND',
+  '5v': '5V',
+  ena: 'ENA',
+  in1: 'IN1',
+  in2: 'IN2',
+  in3: 'IN3',
+  in4: 'IN4',
+  enb: 'ENB',
+  out1: 'OUT1',
+  out2: 'OUT2',
+  out3: 'OUT3',
+  out4: 'OUT4',
+};
+
 function holeName(hole: string): string {
   if (hole.startsWith('tp') || hole.startsWith('bp')) return '+';
   if (hole.startsWith('tn') || hole.startsWith('bn')) return '−';
@@ -87,6 +104,13 @@ export function describeEndpoint(circuit: CircuitDocument, endpoint: string): En
   if (!terminal || !owner) return null;
   if (owner.type === 'battery') {
     return { name: legName(terminal.pin), lead: owner.id, used: wired };
+  }
+  if (owner.type === 'l298n') {
+    return {
+      name: DRIVER_TERMINAL_NAMES[terminal.pin] ?? terminal.pin,
+      lead: owner.id,
+      used: wired,
+    };
   }
   if (owner.type === 'uno') return { name: socketName(terminal.pin), used: wired };
   if (owner.type === 'esp32') return { name: esp32PinName(terminal.pin), used: wired };

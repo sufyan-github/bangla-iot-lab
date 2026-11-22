@@ -3,17 +3,20 @@ import { allHoles, holeAt, holeCoordinates, parseHole, stripOf } from './breadbo
 import {
   CIRCUIT_SCHEMA_VERSION,
   ESP32_TERMINALS,
+  L298N_TERMINALS,
   emptyCircuit,
   esp32GpioNumber,
   esp32TerminalOfGpio,
   isCircuitDocument,
   migrateCircuit,
+  terminalsOf,
   unoPinNumber,
   type CircuitDocument,
 } from './circuit';
 import {
   addBattery,
   addEsp32,
+  addMotorDriver,
   addUno,
   addWire,
   flipPart,
@@ -522,5 +525,36 @@ describe('editing rules', () => {
     removeItem(circuit, 'R1');
     updateProps(circuit, 'R1', { resistance: 1000 });
     expect(circuit).toEqual(snapshot);
+  });
+});
+
+describe('motor driver module', () => {
+  it('is added beside the board with both jumpers in place, and only once', () => {
+    const added = addMotorDriver(emptyCircuit());
+    if (!added.ok) throw new Error(added.error);
+    expect(added.circuit.components).toEqual([
+      { id: 'DRV1', type: 'l298n', props: { enaJumper: true, enbJumper: true } },
+    ]);
+    expect(addMotorDriver(added.circuit)).toEqual({ ok: false, error: 'driver-limit' });
+    expect(isCircuitDocument(added.circuit)).toBe(true);
+  });
+
+  it('takes wires at its thirteen terminals and nowhere else', () => {
+    const added = addMotorDriver(emptyCircuit());
+    if (!added.ok) throw new Error(added.error);
+    expect(L298N_TERMINALS).toHaveLength(13);
+    expect(terminalsOf(added.circuit.components[0]!)).toEqual(L298N_TERMINALS);
+    const wired = addWire(added.circuit, 'DRV1.out1', 'a1', '#000000');
+    expect(wired.ok).toBe(true);
+    expect(addWire(added.circuit, 'DRV1.out5', 'a1', '#000000')).toEqual({
+      ok: false,
+      error: 'unknown-endpoint',
+    });
+    // Taking a jumper off is a setting of the part; removing the part takes its wires with it.
+    if (!wired.ok) throw new Error(wired.error);
+    const open = updateProps(wired.circuit, 'DRV1', { enaJumper: false });
+    expect(open.ok && open.circuit.components[0]).toMatchObject({ props: { enaJumper: false } });
+    const removed = removeItem(wired.circuit, 'DRV1');
+    expect(removed.ok && removed.circuit.wires).toEqual([]);
   });
 });

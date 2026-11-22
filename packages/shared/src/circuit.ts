@@ -21,10 +21,11 @@ import { isHole } from './breadboard';
  * 9 — adds the LDR, rain and MQ-135 gas sensor modules, the motion sensor and
  *     the RGB LED module.
  * 10 — adds the OLED display.
+ * 11 — adds the L298N motor driver.
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 10;
+export const CIRCUIT_SCHEMA_VERSION = 11;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -347,6 +348,30 @@ export const Esp32Schema = Type.Object({
   at: Type.Optional(PositionSchema),
 });
 
+/**
+ * Terminals of the L298N motor driver module: the three power screws, the six
+ * control pins and the four motor screws, by the names printed beside them
+ * (the supply screw is marked 12V on the module).
+ */
+export const L298N_TERMINALS = [
+  ...['vs', 'gnd', '5v'],
+  ...['ena', 'in1', 'in2', 'in3', 'in4', 'enb'],
+  ...['out1', 'out2', 'out3', 'out4'],
+] as const;
+
+/**
+ * L298N dual motor driver module. Like a battery it sits beside the breadboard
+ * and takes wires at its terminals. `enaJumper` and `enbJumper` say whether the
+ * two small jumpers that keep each motor channel switched on are still in
+ * place, as the module is sold.
+ */
+export const L298nSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('l298n'),
+  props: Type.Object({ enaJumper: Type.Boolean(), enbJumper: Type.Boolean() }),
+  at: Type.Optional(PositionSchema),
+});
+
 export const ComponentSchema = Type.Union([
   BatterySchema,
   ResistorSchema,
@@ -376,6 +401,7 @@ export const ComponentSchema = Type.Union([
   OledSchema,
   UnoSchema,
   Esp32Schema,
+  L298nSchema,
 ]);
 
 export const MAX_WIRE_BENDS = 8;
@@ -518,6 +544,14 @@ export function boardSocketOfPin(type: ProgrammableType, pin: number): string | 
 /** Every socket of a board. */
 export function boardTerminals(type: ProgrammableType): readonly string[] {
   return type === 'uno' ? UNO_TERMINALS : ESP32_TERMINALS;
+}
+
+/** Terminals a wire can plug into on a part that sits beside the breadboard; none for other parts. */
+export function terminalsOf(component: CircuitComponent): readonly string[] {
+  if (component.type === 'battery') return BATTERY_TERMINALS;
+  if (component.type === 'l298n') return L298N_TERMINALS;
+  if (isProgrammable(component)) return boardTerminals(component.type);
+  return [];
 }
 
 export function terminalEndpoint(componentId: string, pin: string): string {

@@ -3,7 +3,7 @@
   "id": "tt-gear-motor",
   "simulates": "motor",
   "status": "generic",
-  "statusNote": "The generic DC motor stands in. Gear ratio, speed and stall current are not modelled.",
+  "statusNote": "The generic DC motor stands in: a 25 Ω resistance, about 220 mA from the motor driver on a 7.2 V pack. A real TT motor is reported to take about 150 mA running free and much more when held still; gear ratio, speed and load are not modelled.",
   "family": "actuator",
   "tier": 1,
   "name": {

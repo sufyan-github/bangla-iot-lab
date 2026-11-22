@@ -1,6 +1,7 @@
 import {
   addBattery,
   addEsp32,
+  addMotorDriver,
   addUno,
   isProgrammable,
   addWire,
@@ -96,6 +97,7 @@ interface LabState {
   addBattery(): void;
   addUno(): void;
   addEsp32(): void;
+  addMotorDriver(): void;
   removeSelected(): void;
   flipSelected(): void;
   /** Takes the bends out of the selected wire. */
@@ -284,6 +286,12 @@ export const useLab = create<LabState>((set, get) => {
       // A new board arrives with Blink already on it, as a real UNO does.
       set({ tool: 'select', selectedId: id, wireStart: null });
       get().uploadProgram(id, starterProgram('blink'));
+    },
+    addMotorDriver() {
+      const id = apply(addMotorDriver(get().circuit));
+      if (!id) return;
+      set({ circuit: settleOffBoardPart(get().circuit, id) });
+      set({ tool: 'select', selectedId: id, wireStart: null });
     },
     addEsp32() {
       const id = apply(addEsp32(get().circuit));

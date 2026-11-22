@@ -477,6 +477,8 @@ export const ESP32_USB_CURRENT = 0.5;
 export const ESP32_USB_DIODE_DROP = 0.35;
 /** Voltage on the VIN pin when the board is powered from USB: about 4.65 V. ESTIMATE. */
 export const ESP32_VIN_FROM_USB = ESP32_USB_VOLTAGE - ESP32_USB_DIODE_DROP;
+/** The current at which the diode's drop above is taken. ESTIMATE. */
+export const ESP32_USB_DIODE_CURRENT = 0.1;
 
 /**
  * Current the chip draws from 3.3 V, amperes. VERIFIED [DS] Table 4-2

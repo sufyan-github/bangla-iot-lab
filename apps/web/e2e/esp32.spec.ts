@@ -63,6 +63,7 @@ test('the code tab says the ESP32 is experimental and offers only ESP32 programs
     'motion',
     'rgb',
     'oled',
+    'motor',
     'custom',
   ]);
 });
@@ -483,4 +484,38 @@ test('an OLED display with SCL and SDA swapped shows nothing', async ({ page }) 
   await page.getByTestId('run').click();
   await page.waitForTimeout(2500);
   expect(await partAttribute(page, 'OLED1', 'data-oled')).toBe('dark');
+});
+
+// ---- the motor driver and the battery pack ----
+
+test('the motor program runs a motor both ways through the L298N driver', async ({ page }) => {
+  test.setTimeout(90_000);
+  await newEsp32Circuit(page);
+  await page.getByTestId('tool-battery').click();
+  // The kit's pack of six AA cells.
+  await page.getByRole('button', { name: /7[.,]2|৭[.,]২/ }).click();
+  await page.getByTestId('tool-l298n').click();
+  await expect(page.locator('[data-part="DRV1"]')).toBeVisible();
+  // Speed comes from the program, so the ENA jumper is taken off.
+  await page.getByTestId('jumper-enaJumper').getByRole('button').nth(1).click();
+  await place(page, 'motor', 'c10'); // legs: c10 and c13
+  await wire(page, [
+    ['BAT1.pos', 'DRV1.vs'],
+    ['BAT1.neg', 'DRV1.gnd'],
+    ['ESP1.gnd1', 'DRV1.gnd'],
+    ['ESP1.d25', 'DRV1.ena'],
+    ['ESP1.d26', 'DRV1.in1'],
+    ['ESP1.d27', 'DRV1.in2'],
+    ['DRV1.out1', 'a10'],
+    ['DRV1.out2', 'a13'],
+  ]);
+  await chooseStarter(page, 'motor');
+  await page.getByTestId('run').click();
+  await expect(page.locator('[data-part="DRV1"]')).toHaveAttribute('data-awake', 'true');
+  const speed = async () => Number(await partAttribute(page, 'M1', 'data-activity'));
+  // Forwards at nearly full speed, stopped, then backwards at about half.
+  await expect.poll(speed, SAMPLING).toBeGreaterThan(0.85);
+  await expect.poll(speed, SAMPLING).toBe(0);
+  await expect.poll(speed, SAMPLING).toBeLessThan(-0.35);
+  await expect(page.locator('[data-diag^="pin-over"], [data-diag^="module-"]')).toHaveCount(0);
 });

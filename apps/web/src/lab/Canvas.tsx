@@ -1,5 +1,6 @@
 import {
   MAX_WIRE_BENDS,
+  L298N_TERMINALS,
   attachError,
   hasFlexibleLeads,
   isHole,
@@ -1004,7 +1005,9 @@ const TapTargets = memo(function TapTargets(props: { circuit: CircuitDocument; w
         offBoardParts(circuit).flatMap((part) =>
           (part.type === 'battery'
             ? ['pos', 'neg']
-            : BOARD_SOCKETS[part.type].map((s) => s.terminal)
+            : part.type === 'l298n'
+              ? L298N_TERMINALS
+              : BOARD_SOCKETS[part.type].map((s) => s.terminal)
           ).map((pin) => {
             const endpoint = `${part.id}.${pin}`;
             const point = endpointPoint(circuit, endpoint);

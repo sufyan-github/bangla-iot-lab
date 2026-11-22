@@ -59,7 +59,8 @@ export const BATTERY_INTERNAL_RESISTANCE = 0.5;
 export const WIRE_RESISTANCE = 0.01;
 
 /** Choices offered in the editor. */
-export const BATTERY_VOLTAGES = [1.5, 3, 4.5, 6, 9, 12] as const;
+/** 7.2 V is the school kit's pack of six rechargeable AA cells. */
+export const BATTERY_VOLTAGES = [1.5, 3, 4.5, 6, 7.2, 9, 12] as const;
 export const RESISTOR_VALUES = [
   100, 150, 220, 330, 470, 680, 1_000, 2_200, 4_700, 10_000, 47_000, 100_000,
 ] as const;
@@ -210,6 +211,43 @@ export const OLED_PULLUP_RESISTANCE = 4700;
 export const OLED_SUPPLY_RESISTANCE = 330;
 
 /**
+ * L298N dual motor driver module. REPORTED, from the chip's datasheet
+ * (STMicroelectronics, "L298", electrical characteristics): what its outputs
+ * lose, typically 1.35 V on the supply side and 1.2 V on the ground side at
+ * 1 A, and 2.0 V and 1.7 V at 2 A; an input is HIGH above 2.3 V and LOW below
+ * 1.5 V. REPORTED, from sellers' descriptions of the module: a 78M05 regulator
+ * makes its 5 V from the motor supply, and both enable pins are jumpered to
+ * 5 V as sold. ESTIMATE: what the module draws at rest, and the 2 V the
+ * regulator needs above its output. Nothing measured (hardware test C17).
+ */
+/** Each output is modelled as a junction and a resistance, fitted to the two datasheet points. */
+export const L298N_JUNCTION: DiodeModel = {
+  // 0.7 V at 0.2 A.
+  saturationCurrent: 0.2 / Math.expm1(0.7 / (2 * THERMAL_VOLTAGE)),
+  emissionCoefficient: 2,
+};
+export const L298N_SOURCE_RESISTANCE = 0.65;
+export const L298N_SINK_RESISTANCE = 0.5;
+export const L298N_INPUT_HIGH = 2.3;
+export const L298N_INPUT_LOW = 1.5;
+/** What an input draws, as a resistance to ground; it also makes an unconnected input read LOW. */
+export const L298N_INPUT_RESISTANCE = 100_000;
+/**
+ * What the module takes at rest, about 43 mA in all: 13 mA straight from the
+ * motor supply and 30 mA of logic current from its 5 V (the datasheet's typical
+ * figures are 13 mA and 24 to 36 mA), each as a resistance.
+ */
+export const L298N_REST_RESISTANCE = 550;
+export const L298N_LOGIC_RESISTANCE = 167;
+/** The 5 V the module makes, and how far above it the motor supply must be. */
+export const L298N_LOGIC_VOLTS = 5;
+export const L298N_REGULATOR_DROPOUT = 2;
+/** The chip's logic works from 4.5 V. */
+export const L298N_LOGIC_MIN = 4.5;
+/** An enable jumper joins its pin to the module's 5 V. */
+export const L298N_JUMPER_RESISTANCE = 1;
+
+/**
  * Small 5 V relay: a 70 Ω coil (71 mA at 5 V, more than a board pin may supply).
  * The contact closes once the coil carries 50 mA and stays closed until the
  * current falls below 15 mA, as a real relay holds on with less than it needs to pull in.
@@ -234,6 +272,7 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   mq135: 4.5,
   pir: 4.5,
   oled: 3,
+  l298n: 6.5,
 };
 
 /**

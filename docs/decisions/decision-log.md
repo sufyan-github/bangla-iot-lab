@@ -582,3 +582,56 @@ sketch carried about 25 kB of the standard library's error printing.
 Not done: the display on the UNO-compatible board (it needs the same work on
 that board's I2C hardware and its compiler), and on the chip emulator, which
 has no `Wire` library yet.
+
+## D-055 — The motor driver is a module beside the breadboard, modelled by what its outputs lose
+
+The L298N module has screw terminals and a row of pins; it cannot be pushed
+into a breadboard. It is therefore a part that sits beside the breadboard and
+takes wires at its terminals, as the battery and the boards do. This is the
+first such part that is neither a supply nor a board.
+
+**What is modelled, and how it is known.**
+
+| What                                                                                                  | How it is known                                                             |
+| ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| An output loses 1.35 V on the supply side and 1.2 V on the ground side at 1 A; 2.0 V and 1.7 V at 2 A | REPORTED: typical figures in the chip's datasheet (STMicroelectronics L298) |
+| An input is HIGH above 2.3 V and LOW below 1.5 V, so a 3.3 V pin drives it                            | REPORTED: the same datasheet                                                |
+| A regulator makes 5 V from the motor supply; both enable pins are jumpered to 5 V as sold             | REPORTED by sellers' descriptions of the module                             |
+| The regulator needs the supply 2 V above its output; the module draws about 43 mA at rest             | ESTIMATE (the datasheet's typical supply currents; a typical regulator)     |
+| The motor: 25 Ω                                                                                       | The lab's generic motor. A TT motor is REPORTED to take about 150 mA free   |
+
+Each output is a junction and a small resistance, fitted to the two datasheet
+points, and can only give current (when HIGH) or only take it (when LOW). The
+loss in the driver is the thing students most often do not expect ("why does
+my 6 V motor run slowly on 7.2 V?"), so it is modelled and not idealised.
+
+**The 5 V terminal takes its current from the battery.** A fixed 5 V source
+would have been simpler and wrong: a board powered from that terminal would
+cost the battery nothing. The regulator is modelled as a pass transistor, so
+the battery's current includes what the 5 V terminal gives.
+
+**Feeding the ESP32 board's VIN.** A robot's board runs from the driver's 5 V
+terminal through VIN. In the lab the board is always on USB as well. Official
+boards have a diode between USB and VIN, which makes that harmless; many
+clones do not, and feeding VIN with USB plugged in can push current back into
+the computer. Following D-053 (model what is safe on every version), the lab
+models the diode, so the circuit works, and warns whenever VIN is fed from
+outside, telling the student to unplug USB on a real board.
+
+VIN used to be a fixed 4.65 V source. It is now USB's 5 V behind a diode with
+the board's own current (about 80 mA, from the chip's datasheet range plus an
+estimate for the rest of the board) on the pin's side, which gives the same
+4.65 V with nothing connected.
+
+**The battery pack** is the lab's battery at 7.2 V. It does not run down, and a
+freshly charged pack's 8.4 V is not shown; the part says so.
+
+Not modelled: heat and thermal shut-down, the spike when a motor is switched
+off, a motor's speed, load and stall current. Hardware tests C17 and C18
+measure the driver's loss and the pack under load.
+
+Sources read on 22 November 2026:
+[a copy of the L298 datasheet](https://www.ece.nus.edu.sg/ee3032/html/Common/L298datasheet.pdf),
+[SunFounder's L298N module page](https://docs.sunfounder.com/projects/sf-components/en/latest/component_l298n_module.html),
+[a TT motor page](https://docs.sunfounder.com/projects/3in1-kit-r4/en/latest/components/component_tt_motor.html),
+[a discussion of the DevKitC's diode](https://forum.micropython.org/viewtopic.php?p=51413).

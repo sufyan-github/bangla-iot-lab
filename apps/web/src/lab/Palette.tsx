@@ -11,7 +11,7 @@ const stroke = {
 } as const;
 const lead = <path d="M2 12h4M18 12h4" {...stroke} />;
 
-type PaletteItem = Tool | 'battery' | 'uno' | 'esp32';
+type PaletteItem = Tool | 'battery' | 'uno' | 'esp32' | 'l298n';
 
 const ICONS: Record<PaletteItem, ReactNode> = {
   select: <path d="M7 4l11 9-5 .8 3 6-2.4 1.2-3-6L7 18z" fill="currentColor" />,
@@ -50,6 +50,17 @@ const ICONS: Record<PaletteItem, ReactNode> = {
         {...stroke}
       />
       <rect x="11" y="8.5" width="8" height="7" fill="currentColor" />
+    </>
+  ),
+  l298n: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" {...stroke} />
+      <rect x="8" y="7" width="8" height="5" fill="currentColor" />
+      <path
+        d="M3 9H1M3 14H1M21 9h2M21 14h2M7 20v2M10.5 20v2M14 20v2M17.5 20v2"
+        {...stroke}
+        strokeWidth={1.6}
+      />
     </>
   ),
   resistor: (
@@ -217,7 +228,7 @@ const GROUPS: PaletteItem[][] = [
   ['select', 'wire', 'probe'],
   ['battery', 'uno', 'esp32'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
-  ['buzzer', 'motor', 'relay', 'servo', 'rgbled', 'lcd', 'oled'],
+  ['buzzer', 'motor', 'l298n', 'relay', 'servo', 'rgbled', 'lcd', 'oled'],
   ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
 ];
 
@@ -239,7 +250,7 @@ export function Palette() {
   const wireStart = useLab((s) => s.wireStart);
   const running = useLab((s) => s.running);
   const wireSelected = useLab((s) => s.circuit.wires.some((wire) => wire.id === s.selectedId));
-  const { setTool, addBattery, addUno, addEsp32 } = useLab.getState();
+  const { setTool, addBattery, addUno, addEsp32, addMotorDriver } = useLab.getState();
   const { t } = useT();
 
   const hint: MessageKey =
@@ -257,7 +268,9 @@ export function Palette() {
         ? addUno()
         : item === 'esp32'
           ? addEsp32()
-          : setTool(item);
+          : item === 'l298n'
+            ? addMotorDriver()
+            : setTool(item);
 
   return (
     <div className="border-b border-line bg-surface">

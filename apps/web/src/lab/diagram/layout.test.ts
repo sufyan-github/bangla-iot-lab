@@ -1,5 +1,7 @@
 import {
   addBattery,
+  addEsp32,
+  addMotorDriver,
   addWire,
   attachError,
   emptyCircuit,
@@ -483,6 +485,33 @@ describe('diagrams of busier board circuits', () => {
     // The display's six data lines run side by side from the board.
     const display = layout.parts.find((part) => part.id === 'LCD1')!;
     expect(display.pins.filter((pin) => pin.side === 'left')).toHaveLength(6);
+    expectSound(layout);
+  });
+});
+
+describe('diagram of a motor driver circuit', () => {
+  it('draws the driver as a box with the terminals in use, joined soundly to the rest', () => {
+    let circuit = ok(addMotorDriver(ok(addBattery(ok(addEsp32(emptyCircuit())), 7.2))));
+    circuit = ok(placePart(circuit, 'motor', 'c10')); // M1: c10 to c13
+    for (const [from, to] of [
+      ['BAT1.pos', 'DRV1.vs'],
+      ['BAT1.neg', 'DRV1.gnd'],
+      ['ESP1.gnd1', 'DRV1.gnd'],
+      ['ESP1.d26', 'DRV1.in1'],
+      ['ESP1.d27', 'DRV1.in2'],
+      ['DRV1.out1', 'a10'],
+      ['DRV1.out2', 'a13'],
+    ] as const) {
+      circuit = ok(addWire(circuit, from, to));
+    }
+    const layout = layoutDiagram(circuit);
+    const driver = layout.parts.find((part) => part.id === 'DRV1')!;
+    // Only the terminals with something on them are drawn, under the names printed on the module.
+    expect(driver.pins.map((pin) => pin.name).sort()).toEqual(
+      ['gnd', 'in1', 'in2', 'out1', 'out2', 'vs'].sort(),
+    );
+    expect(netWith(layout, 'DRV1.out1').legs).toContain('M1.a');
+    expect(netWith(layout, 'DRV1.in1').legs).toContain('ESP1.d26');
     expectSound(layout);
   });
 });

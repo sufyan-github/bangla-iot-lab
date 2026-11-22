@@ -1,5 +1,6 @@
 import {
   BATTERY_TERMINALS,
+  L298N_TERMINALS,
   PART_SHAPES,
   boardPinNumber,
   boardTerminals,
@@ -113,13 +114,15 @@ export const BOX_TYPES = new Set([
   'lcd',
   'uno',
   'esp32',
+  'l298n',
 ]);
 /** Boxes with so many legs that only the connected ones are drawn. */
-export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno', 'esp32']);
+export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno', 'esp32', 'l298n']);
 
 export function pinNames(component: CircuitComponent): readonly string[] {
   if (component.type === 'battery') return BATTERY_TERMINALS;
   if (isProgrammable(component)) return boardTerminals(component.type);
+  if (component.type === 'l298n') return L298N_TERMINALS;
   return PART_SHAPES[component.type].pins;
 }
 
@@ -142,6 +145,13 @@ const BOARD_SUPPLIES: Record<string, Record<string, string>> = {
   uno: { '5v': '5V' },
   esp32: { '3v3': '3V3', vin: 'VIN' },
 };
+/** A board's supply sockets, and the ground socket that stands for both of its ground sockets. */
+export function boardPowerPins(type: 'uno' | 'esp32'): { supplies: string[]; ground: string } {
+  return {
+    supplies: Object.keys(BOARD_SUPPLIES[type]!),
+    ground: boardTerminals(type).find((pin) => pin.startsWith('gnd'))!,
+  };
+}
 export const isSupplyLeg = (component: CircuitComponent, pin: string) =>
   (component.type === 'battery' && pin === 'pos') ||
   BOARD_SUPPLIES[component.type]?.[pin] !== undefined;

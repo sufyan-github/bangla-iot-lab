@@ -1,14 +1,13 @@
 import { partDefinition } from '@banglalab/parts';
 import { holeAt, holeCoordinates, holeDistance, isHole, type HoleId } from './breadboard';
 import {
-  BATTERY_TERMINALS,
   ComponentSchema,
   LCD_PINS,
-  boardTerminals,
   isProgrammable,
   WireSchema,
   componentHoles,
   parseTerminal,
+  terminalsOf,
   type BoardPart,
   type CircuitComponent,
   type CircuitDocument,
@@ -31,6 +30,7 @@ export type EditError =
   | 'unknown-item'
   | 'battery-limit'
   | 'board-limit'
+  | 'driver-limit'
   | 'invalid-value';
 
 export type EditResult =
@@ -126,6 +126,7 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
 
 export const MAX_BATTERIES = 2;
 export const MAX_BOARDS = 1;
+export const MAX_MOTOR_DRIVERS = 1;
 
 export const WIRE_COLORS = {
   red: '#d8342a',
@@ -146,13 +147,6 @@ function nextId(circuit: CircuitDocument, prefix: string): string {
 function findBoardPart(circuit: CircuitDocument, id: string): BoardPart | undefined {
   const component = circuit.components.find((c) => c.id === id);
   return component && 'pins' in component ? component : undefined;
-}
-
-/** Terminals a wire can plug into on a part that sits beside the board. */
-function terminalsOf(component: CircuitComponent): readonly string[] {
-  if (component.type === 'battery') return BATTERY_TERMINALS;
-  if (isProgrammable(component)) return boardTerminals(component.type);
-  return [];
 }
 
 function endpointExists(circuit: CircuitDocument, endpoint: string): boolean {
@@ -219,6 +213,16 @@ export function addUno(circuit: CircuitDocument): EditResult {
 export function addEsp32(circuit: CircuitDocument): EditResult {
   const board = { id: nextId(circuit, 'ESP'), type: 'esp32', props: {} } as const;
   return addBeside(circuit, board, MAX_BOARDS, 'board-limit');
+}
+
+/** Adds a motor driver module beside the board, with both of its jumpers in place, as sold. */
+export function addMotorDriver(circuit: CircuitDocument): EditResult {
+  const driver = {
+    id: nextId(circuit, 'DRV'),
+    type: 'l298n',
+    props: { enaJumper: true, enbJumper: true },
+  } as const;
+  return addBeside(circuit, driver, MAX_MOTOR_DRIVERS, 'driver-limit');
 }
 
 /**

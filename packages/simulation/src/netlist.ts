@@ -1,5 +1,6 @@
 import type { PinDrive } from '@banglalab/board-emulators';
 import {
+  THERMAL_VOLTAGE,
   capacitor,
   diode,
   npnTransistor,
@@ -9,6 +10,7 @@ import {
   type Device,
 } from '@banglalab/circuit-engine';
 import {
+  L298N_TERMINALS,
   boardPinNumber,
   boardTerminals,
   isHole,
@@ -23,6 +25,13 @@ import {
   CONTACT_RESISTANCE,
   DHT11_PULLUP_RESISTANCE,
   DHT11_SUPPLY_RESISTANCE,
+  L298N_INPUT_RESISTANCE,
+  L298N_JUMPER_RESISTANCE,
+  L298N_JUNCTION,
+  L298N_LOGIC_RESISTANCE,
+  L298N_REST_RESISTANCE,
+  L298N_SINK_RESISTANCE,
+  L298N_SOURCE_RESISTANCE,
   LDR_MODULE_RESISTANCE,
   MODULE_DO_LOW_RESISTANCE,
   MODULE_DO_PULLUP,
@@ -70,6 +79,51 @@ export interface CircuitState {
    * is absent the output simply follows the movement, on a powered sensor.
    */
   motion?: Readonly<Record<string, boolean>>;
+  /**
+   * What each motor driver is doing. It follows from the circuit's own voltages
+   * (the driver's supply and the levels on its inputs), so whoever solves the
+   * circuit works it out, starting from here.
+   */
+  drivers?: Readonly<Record<string, DriverState>>;
+}
+
+/** A motor driver module at one instant. */
+export interface DriverState {
+  /** The voltage its regulator is aiming its 5 V output at; less when the supply is too low. */
+  rail: number;
+  /** True when its logic has enough voltage to work at all. */
+  awake: boolean;
+  /** The levels it sees on IN1 to IN4 and on the two enable pins. */
+  inputs: Readonly<Record<'in1' | 'in2' | 'in3' | 'in4' | 'ena' | 'enb', boolean>>;
+}
+
+export const DRIVER_IDLE: DriverState = {
+  rail: 0,
+  awake: false,
+  inputs: { in1: false, in2: false, in3: false, in4: false, ena: false, enb: false },
+};
+
+/** How far the regulator's reference sits above its output: the pass transistor's base drop. */
+const REGULATOR_BASE_DROP = 0.745;
+
+/** A device that only reports a voltage and a current worked out from other devices. */
+function meter(
+  id: string,
+  positive: number,
+  negative: number,
+  current: (solution: Parameters<Device['current']>[0]) => number,
+): Device {
+  return {
+    id,
+    kind: 'resistor',
+    nodes: [positive, negative],
+    branchCount: 0,
+    branch: -1,
+    reset() {},
+    stamp: () => false,
+    voltage: (s) => s.voltage(positive) - s.voltage(negative),
+    current,
+  };
 }
 
 export const IDLE_STATE: CircuitState = { pressed: [], boards: {} };
@@ -306,6 +360,66 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         add(resistor(`${id}:pullup`, supply, node(component.pins.data), DHT11_PULLUP_RESISTANCE));
         break;
       }
+      case 'l298n': {
+        const driver = state.drivers?.[id] ?? DRIVER_IDLE;
+        const terminal = Object.fromEntries(
+          L298N_TERMINALS.map((name) => [name, node(`${id}.${name}`)]),
+        ) as Record<(typeof L298N_TERMINALS)[number], number>;
+        const { vs, gnd } = terminal;
+        const logic = terminal['5v'];
+        // What the module takes at rest. It is also the device its supply is read from.
+        partDevice.set(id, add(resistor(id, vs, gnd, L298N_REST_RESISTANCE)));
+        add(resistor(`${id}:logic`, logic, gnd, L298N_LOGIC_RESISTANCE));
+        // The regulator: a pass transistor from the motor supply, held to a reference,
+        // so that what the 5 V terminal gives is taken from the supply and not from nowhere.
+        if (driver.rail > 0) {
+          const reference = node(`${id}:reference`);
+          add(
+            theveninSource(
+              `${id}:reference`,
+              reference,
+              gnd,
+              driver.rail + REGULATOR_BASE_DROP,
+              10,
+            ),
+          );
+          add(npnTransistor(`${id}:regulator`, vs, reference, logic, NPN_TRANSISTOR));
+        }
+        const channels = [
+          { enable: 'ena', jumper: component.props.enaJumper, halves: ['1', '2'] },
+          { enable: 'enb', jumper: component.props.enbJumper, halves: ['3', '4'] },
+        ] as const;
+        for (const channel of channels) {
+          const enable = terminal[channel.enable];
+          // The jumper joins the enable pin to the module's 5 V; without it the pin is an input.
+          add(
+            channel.jumper
+              ? resistor(`${id}:${channel.enable}`, enable, logic, L298N_JUMPER_RESISTANCE)
+              : resistor(`${id}:${channel.enable}`, enable, gnd, L298N_INPUT_RESISTANCE),
+          );
+          const on = driver.awake && driver.inputs[channel.enable];
+          for (const half of channel.halves) {
+            const input = terminal[`in${half}`];
+            const output = terminal[`out${half}`];
+            add(resistor(`${id}:in${half}`, input, gnd, L298N_INPUT_RESISTANCE));
+            if (!on) {
+              // Switched off, an output is let go: only a trace of leakage holds it.
+              add(resistor(`${id}:out${half}`, output, gnd, 10_000_000));
+            } else if (driver.inputs[`in${half}`]) {
+              // Joined to the motor supply: it can give current, never take it.
+              const inner = node(`${id}:high${half}`);
+              add(diode(`${id}:out${half}`, vs, inner, L298N_JUNCTION));
+              add(resistor(`${id}:high${half}`, inner, output, L298N_SOURCE_RESISTANCE));
+            } else {
+              // Joined to ground: it can take current, never give it.
+              const inner = node(`${id}:low${half}`);
+              add(diode(`${id}:out${half}`, output, inner, L298N_JUNCTION));
+              add(resistor(`${id}:low${half}`, inner, gnd, L298N_SINK_RESISTANCE));
+            }
+          }
+        }
+        break;
+      }
       case 'oled': {
         // A supply load, and the module's pull-ups on the two bus lines. What travels on
         // the bus is handed to the display by the session, an exchange at a time.
@@ -411,6 +525,28 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           if (!wired.has(netName(socket)) || model.grounds.includes(terminal)) continue;
           const pinNode = node(socket);
           const supply = model.supplies.find((s) => s.terminal === terminal);
+          if (supply?.behindDiode) {
+            // The pin's source, a diode, and what the board itself takes from the pin's
+            // side of the diode. Fed from outside at a higher voltage, the diode shuts
+            // and the outside supply carries the board.
+            const { sourceVolts, drop, dropAt, ownLoad } = supply.behindDiode;
+            const source = node(`${socket}:source`);
+            add(theveninSource(`${socket}:source`, source, ground, sourceVolts, supply.resistance));
+            const emission = 1.05;
+            const pass = add(
+              diode(`${socket}:diode`, source, pinNode, {
+                saturationCurrent: dropAt / Math.expm1(drop / (emission * THERMAL_VOLTAGE)),
+                emissionCoefficient: emission,
+              }),
+            );
+            const own = add(resistor(`${socket}:own`, pinNode, ground, ownLoad));
+            // As for the other pin models: current into the board counts as positive.
+            socketDevice.set(
+              socket,
+              meter(socket, pinNode, ground, (s) => own.current(s) - pass.current(s)),
+            );
+            continue;
+          }
           if (supply) {
             socketDevice.set(
               socket,

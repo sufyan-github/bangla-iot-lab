@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "l298n",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "l298n",
+  "status": "simulated",
   "family": "actuator",
   "tier": 1,
   "name": {
@@ -11,18 +10,91 @@
     "en": "L298N dual motor driver"
   },
   "summary": {
-    "bn": "",
-    "en": "Drives two motors from logic signals."
+    "bn": "ব্যাটারির কারেন্ট দিয়ে দুটো মোটর চালায়; পিন শুধু দিক আর গতি বলে।",
+    "en": "Drives two motors from a battery; the pins only set direction and speed."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "What its outputs lose is fitted to two typical figures in the chip's datasheet. A real chip loses more as it heats up, and chips differ.",
+      "It does not heat up or shut itself off. A real one gets hot at an ampere or more and stops when too hot.",
+      "A motor here is a plain resistance, so there is no spike when it is switched off; the module's protection diodes are left out.",
+      "The 5 V regulator is always connected (its jumper is taken to be in place) and needs the supply 2 V above its output. That figure, and what the module draws at rest, are estimates.",
+      "An unconnected input reads LOW. On a real module it can read either way.",
+      "It is drawn with screw terminals a wire end can be put into; the six control pins are a row of pins on the real module."
+    ]
   },
   "validation": {
     "state": "not-checked",
     "tests": ["C17"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vs",
+      "label": "12V",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "5v",
+      "label": "5V",
+      "role": "power"
+    },
+    {
+      "id": "ena",
+      "label": "ENA",
+      "role": "input"
+    },
+    {
+      "id": "in1",
+      "label": "IN1",
+      "role": "input"
+    },
+    {
+      "id": "in2",
+      "label": "IN2",
+      "role": "input"
+    },
+    {
+      "id": "in3",
+      "label": "IN3",
+      "role": "input"
+    },
+    {
+      "id": "in4",
+      "label": "IN4",
+      "role": "input"
+    },
+    {
+      "id": "enb",
+      "label": "ENB",
+      "role": "input"
+    },
+    {
+      "id": "out1",
+      "label": "OUT1",
+      "role": "output"
+    },
+    {
+      "id": "out2",
+      "label": "OUT2",
+      "role": "output"
+    },
+    {
+      "id": "out3",
+      "label": "OUT3",
+      "role": "output"
+    },
+    {
+      "id": "out4",
+      "label": "OUT4",
+      "role": "output"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["l298n"]

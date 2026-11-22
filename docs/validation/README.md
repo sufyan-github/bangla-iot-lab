@@ -158,18 +158,20 @@ person measuring knows what to look for.
 | C19 | Board current           | Idle, Wi-Fi connected, Wi-Fi sending                  | Supply current; lowest supply voltage during a send                        |
 | C20 | RGB LED module          | Each colour at full, then mixed                       | Current per colour; which pin is common                                    |
 
-**What the simulator assumes today, to be checked by C6, C11, C12, C14, C15 and C20.**
-Every figure is reported by sellers or estimated (see decisions D-053 and D-054); none is
+**What the simulator assumes today, to be checked by C6, C11, C12, C14, C15, C17, C18 and C20.**
+Every figure is reported by sellers or estimated (see decisions D-053 to D-055); none is
 measured.
 
-| Test | The simulator assumes                                                                                                                                                                                            |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C11  | AO is the LDR against 10 kΩ: about 99 % of the supply in the dark, 9 % in bright light. DO is LOW when it is brighter than the trimmer's setting                                                                 |
-| C12  | AO is 98 % of the supply when dry and 30 % when the board is covered in water. DO is LOW when wet                                                                                                                |
-| C14  | Heater 33 Ω (about 150 mA at 5 V). AO from 10 % of the supply in clean air to 80 % in thick smoke, with no warm-up time                                                                                          |
-| C15  | Works from 4.5 V. Output 3.3 V through about 1 kΩ. Holds for the set time after the last movement (3 s at the least), then ignores movement for 2.5 s                                                            |
-| C6   | Address 0x3C. A full picture is 1025 bytes in nine exchanges at 400 kHz, about 26 ms. Pull-ups on SDA and SCL to VCC (4.7 kΩ assumed). About 10 mA whatever is shown. **Please note the order of the four legs** |
-| C20  | The negative leg is common. Red needs 1.8 V and green and blue 2.8 V at 20 mA. **No resistors on the module: please note whether the kit's module has them**                                                     |
+| Test | The simulator assumes                                                                                                                                                                                                                                                           |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C11  | AO is the LDR against 10 kΩ: about 99 % of the supply in the dark, 9 % in bright light. DO is LOW when it is brighter than the trimmer's setting                                                                                                                                |
+| C12  | AO is 98 % of the supply when dry and 30 % when the board is covered in water. DO is LOW when wet                                                                                                                                                                               |
+| C14  | Heater 33 Ω (about 150 mA at 5 V). AO from 10 % of the supply in clean air to 80 % in thick smoke, with no warm-up time                                                                                                                                                         |
+| C15  | Works from 4.5 V. Output 3.3 V through about 1 kΩ. Holds for the set time after the last movement (3 s at the least), then ignores movement for 2.5 s                                                                                                                           |
+| C6   | Address 0x3C. A full picture is 1025 bytes in nine exchanges at 400 kHz, about 26 ms. Pull-ups on SDA and SCL to VCC (4.7 kΩ assumed). About 10 mA whatever is shown. **Please note the order of the four legs**                                                                |
+| C17  | With one motor at about 0.2 A the driver loses about 1.6 V; a motor on a 7.2 V pack gets about 5.5 V. The module draws about 43 mA at rest. Its 5 V terminal gives 5 V while the supply is 7 V or more. **Please note whether the kit's board has a diode between USB and VIN** |
+| C18  | The pack is 7.2 V with 0.5 Ω inside it, whatever its charge                                                                                                                                                                                                                     |
+| C20  | The negative leg is common. Red needs 1.8 V and green and blue 2.8 V at 20 mA. **No resistors on the module: please note whether the kit's module has them**                                                                                                                    |
 
 ## Section D: systems (later)
 

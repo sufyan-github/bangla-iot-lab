@@ -188,6 +188,18 @@ export const bn = {
   'inspector.oled.dark': 'ডিসপ্লে এখন অন্ধকার।',
   'inspector.oled.picture': 'ডিসপ্লেতে এখন যা দেখা যাচ্ছে',
   'code.starter.esp32.oled': 'OLED-তে লেখা ও ছবি (D21, D22)',
+  'tool.l298n': 'মোটর ড্রাইভার',
+  'part.l298n': 'L298N মোটর ড্রাইভার',
+  'part.l298n.about':
+    'বোর্ডের পিন মোটর চালানোর মতো কারেন্ট দিতে পারে না। এই মডিউল ব্যাটারির কারেন্ট মোটরে পাঠায়, আর পিন শুধু বলে দেয় কোন দিকে। IN1 HIGH আর IN2 LOW হলে প্রথম মোটর এক দিকে ঘোরে, উল্টো করলে উল্টো দিকে, দুটো সমান হলে থামে; IN3 আর IN4 দ্বিতীয় মোটরের জন্য। ব্যাটারির + যাবে 12V-তে, − যাবে GND-তে, আর বোর্ডের GND-ও এই GND-তে লাগাতে হবে, না হলে কিছুই চলবে না। মডিউলের ভেতরে প্রায় 1.6 V খরচ হয়, তাই 7.2 V ব্যাটারি থেকে মোটর পায় প্রায় 5.5 V। গতি বদলাতে ENA-র জাম্পার খুলে ENA-তে PWM দাও। জাম্পার লাগানো অবস্থায় ENA-তে 5 V থাকে: তখন ESP32-র পিন লাগিও না। 5V স্ক্রু থেকে 5 V পাওয়া যায় (ব্যাটারি অন্তত 7 V হলে)।',
+  'inspector.jumper.ena': 'ENA জাম্পার (প্রথম মোটর)',
+  'inspector.jumper.enb': 'ENB জাম্পার (দ্বিতীয় মোটর)',
+  'inspector.jumper.on': 'লাগানো',
+  'inspector.jumper.off': 'খোলা',
+  'edit.driver-limit': 'একটাই মোটর ড্রাইভার রাখা যায়।',
+  'diag.supply-backfeed':
+    '{id}-র {socket} পিনে বাইরে থেকে {volts} আসছে, অথচ বোর্ড USB থেকেও চলছে। কিছু বোর্ডে একটা ডায়োড থাকে বলে এতে ক্ষতি হয় না, অনেক বোর্ডে থাকে না। আসল বোর্ড ব্যাটারি থেকে চালানোর সময় USB তার খুলে রাখো।',
+  'code.starter.esp32.motor': 'মোটর সামনে-পেছনে (D25, D26, D27)',
   'part.relay': 'রিলে',
   'part.relay.about':
     'রিলে হলো তড়িৎচুম্বক দিয়ে চালানো সুইচ। কয়েলে (বাঁ দিকের দুই পা) কারেন্ট গেলে ভেতরের কন্টাক্ট টেনে বন্ধ হয় আর ডান দিকের দুই পা জুড়ে যায়। কয়েল প্রায় 70 mA চায়, তাই বোর্ডের পিন থেকে সরাসরি নয়, ট্রানজিস্টর দিয়ে চালাও।',
@@ -335,6 +347,7 @@ export const bn = {
   'esp32.works.8': 'DHT11 তাপমাত্রা ও আর্দ্রতা সেন্সর (আসল DHT লাইব্রেরি দিয়ে)',
   'esp32.works.9': 'কিটের LDR, বৃষ্টি, গ্যাস আর গতি সেন্সর, এবং RGB LED',
   'esp32.works.10': 'I2C বাস (Wire) আর OLED ডিসপ্লে (আসল Adafruit লাইব্রেরি দিয়ে)',
+  'esp32.works.11': 'L298N মোটর ড্রাইভার, মোটর আর 7.2 V ব্যাটারি প্যাক',
   'esp32.missing.title': 'যা এখনো কাজ করে না',
   'esp32.missing.1': 'OLED ডিসপ্লে ছাড়া অন্য I2C যন্ত্রাংশ, আর SPI',
   'esp32.missing.2': 'সেটিংস জমিয়ে রাখা (Preferences), স্লিপ মোড',
@@ -582,6 +595,18 @@ export const en: Record<MessageKey, string> = {
   'inspector.oled.dark': 'The display is dark.',
   'inspector.oled.picture': 'What the display is showing now',
   'code.starter.esp32.oled': 'Text and shapes on the OLED (D21, D22)',
+  'tool.l298n': 'Motor driver',
+  'part.l298n': 'L298N motor driver',
+  'part.l298n.about':
+    'A board pin cannot give the current a motor needs. This module passes the battery’s current to the motor, and the pins only say which way. With IN1 HIGH and IN2 LOW the first motor turns one way, the other way round it turns back, and with both the same it stops; IN3 and IN4 do the same for the second motor. The battery’s + goes to 12V and its − to GND, and the board’s GND must be joined to this GND as well, or nothing moves. About 1.6 V is lost inside the module, so from a 7.2 V battery the motor gets about 5.5 V. To change the speed, take the jumper off ENA and put PWM on ENA. With the jumper on, ENA carries 5 V: do not connect an ESP32 pin to it then. The 5V screw gives 5 V (when the battery is at least 7 V).',
+  'inspector.jumper.ena': 'ENA jumper (first motor)',
+  'inspector.jumper.enb': 'ENB jumper (second motor)',
+  'inspector.jumper.on': 'In place',
+  'inspector.jumper.off': 'Taken off',
+  'edit.driver-limit': 'Only one motor driver can be used.',
+  'diag.supply-backfeed':
+    'Pin {socket} of {id} is being fed {volts} from outside while the board is also on USB. Some boards have a diode that makes this harmless; many do not. When a real board runs from a battery, unplug its USB cable.',
+  'code.starter.esp32.motor': 'Motor forwards and back (D25, D26, D27)',
   'part.relay': 'Relay',
   'part.relay.about':
     'A relay is a switch worked by an electromagnet. Current through the coil (the two left legs) pulls the contact shut and joins the two right legs. The coil needs about 70 mA, so drive it with a transistor, not straight from a board pin.',
@@ -729,6 +754,7 @@ export const en: Record<MessageKey, string> = {
   'esp32.works.8': 'The DHT11 temperature and humidity sensor (with the real DHT library)',
   'esp32.works.9': 'The kit’s LDR, rain, gas and motion sensors, and its RGB LED',
   'esp32.works.10': 'The I2C bus (Wire) and the OLED display (with the real Adafruit libraries)',
+  'esp32.works.11': 'The L298N motor driver, motors and the 7.2 V battery pack',
   'esp32.missing.title': 'What does not work yet',
   'esp32.missing.1': 'I2C parts other than the OLED display, and SPI',
   'esp32.missing.2': 'Saved settings (Preferences) and sleep',

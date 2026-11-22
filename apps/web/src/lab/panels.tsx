@@ -138,6 +138,33 @@ function PartSettings({ part }: { part: CircuitComponent }) {
     );
   }
   if (part.type === 'oled') return <OledPreview id={part.id} />;
+  if (part.type === 'l298n') {
+    // The two small jumpers that keep each motor channel switched on.
+    const jumpers = [
+      { key: 'enaJumper', label: 'inspector.jumper.ena' },
+      { key: 'enbJumper', label: 'inspector.jumper.enb' },
+    ] as const;
+    return (
+      <div className="space-y-2">
+        {jumpers.map((jumper) => (
+          <fieldset key={jumper.key}>
+            <legend className="mb-1.5 text-sm text-ink-soft">{t(jumper.label)}</legend>
+            <div className="flex flex-wrap gap-1.5" data-testid={`jumper-${jumper.key}`}>
+              {[true, false].map((option) => (
+                <Choice
+                  key={String(option)}
+                  selected={part.props[jumper.key] === option}
+                  onClick={() => setProps(part.id, { [jumper.key]: option })}
+                >
+                  {t(option ? 'inspector.jumper.on' : 'inspector.jumper.off')}
+                </Choice>
+              ))}
+            </div>
+          </fieldset>
+        ))}
+      </div>
+    );
+  }
   if (part.type === 'pir') {
     return (
       <div className="space-y-2">

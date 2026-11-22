@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "nimh-aa-pack-6",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "battery",
+  "status": "simulated",
   "family": "power",
   "tier": 1,
   "name": {
@@ -11,12 +10,15 @@
     "en": "6×AA NiMH battery pack"
   },
   "summary": {
-    "bn": "",
-    "en": "A 7.2 V pack for motors."
+    "bn": "ছয়টা রিচার্জেবল AA সেলের প্যাক: 7.2 V।",
+    "en": "A pack of six rechargeable AA cells: 7.2 V."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "electrical",
+    "simplified": [
+      "It is the lab's battery set to 7.2 V: always at that voltage, and it never runs down. A real pack is about 8.4 V when just charged and falls to 6 V as it empties.",
+      "Its inner resistance is fixed at 0.5 Ω, an estimate; a real pack's depends on the cells, their age and the holder's springs."
+    ]
   },
   "validation": {
     "state": "not-checked",

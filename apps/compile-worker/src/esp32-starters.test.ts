@@ -19,6 +19,7 @@ describe('shipped ESP32 starter programs', () => {
       'knob.ino',
       'light.ino',
       'motion.ino',
+      'motor.ino',
       'oled.ino',
       'rgb.ino',
       'servo.ino',

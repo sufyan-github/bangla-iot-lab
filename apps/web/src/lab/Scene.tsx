@@ -15,10 +15,12 @@ import {
   type SimulationResult,
 } from '@banglalab/simulation';
 import { memo } from 'react';
+import { DRIVER_TERMINAL_NAMES } from './endpoints';
 import {
   BOARD_X,
   BOARD_Y,
   CANVAS_WIDTH,
+  DRIVER_TERMINALS,
   HOLE_POINTS,
   PITCH,
   batteryTerminalPoint,
@@ -41,6 +43,7 @@ import {
   LcdView,
   LdrView,
   LedView,
+  MotorDriverView,
   MotorView,
   OledView,
   PirView,
@@ -540,8 +543,26 @@ export function Scene({
               <BatteryView
                 box={box}
                 label={batteryLabel(component.props.voltage)}
+                pack={component.props.voltage === 7.2}
                 positive={batteryTerminalPoint(box, 'pos')}
                 negative={batteryTerminalPoint(box, 'neg')}
+                selected={selected}
+              />
+            </g>
+          );
+        }
+        if (component.type === 'l298n') {
+          return (
+            <g key={component.id} data-part={component.id} data-awake={reading?.activity === 1}>
+              <MotorDriverView
+                box={partBox(circuit, component)}
+                terminals={DRIVER_TERMINALS.map(({ terminal, at }) => ({
+                  terminal,
+                  at,
+                  name: DRIVER_TERMINAL_NAMES[terminal] ?? terminal,
+                }))}
+                jumpers={{ ena: component.props.enaJumper, enb: component.props.enbJumper }}
+                awake={reading?.activity === 1}
                 selected={selected}
               />
             </g>

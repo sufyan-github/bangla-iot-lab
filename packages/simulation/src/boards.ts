@@ -8,6 +8,11 @@ import {
   ESP32_PIN_SINK_RESISTANCE,
   ESP32_PIN_SOURCE_RESISTANCE,
   ESP32_PULL_RESISTANCE,
+  ESP32_BOARD_OVERHEAD_CURRENT,
+  ESP32_SUPPLY_CURRENT,
+  ESP32_USB_DIODE_CURRENT,
+  ESP32_USB_DIODE_DROP,
+  ESP32_USB_VOLTAGE,
   ESP32_VDD,
   ESP32_VIN_FROM_USB,
 } from './esp32-pins';
@@ -23,6 +28,14 @@ import {
 } from './library';
 
 /**
+ * What the ESP32 board itself takes from its 5 V side with the radio off: the
+ * middle of the chip's range and the rest of the board. About 80 mA.
+ */
+const ESP32_OWN_CURRENT =
+  (ESP32_SUPPLY_CURRENT.wifiOff.min + ESP32_SUPPLY_CURRENT.wifiOff.max) / 2 +
+  ESP32_BOARD_OVERHEAD_CURRENT;
+
+/**
  * What the circuit needs to know about a board a program runs on: its supply
  * sockets, and how one of its pins behaves as an output and as an input.
  */
@@ -32,7 +45,19 @@ export interface BoardModel {
   /** Voltage of a HIGH output and of the pull-up resistor. */
   vcc: number;
   /** Sockets that give out a supply voltage. The first is the one the pins run from. */
-  supplies: readonly { terminal: string; volts: number; resistance: number; maxCurrent: number }[];
+  supplies: readonly {
+    terminal: string;
+    volts: number;
+    resistance: number;
+    maxCurrent: number;
+    /**
+     * For a supply pin that sits behind a diode: the voltage before the diode and
+     * what the board itself draws from the pin's side of it, as a resistance.
+     * Such a pin gives current but never takes it back into its source, so the
+     * pin may also be fed from outside.
+     */
+    behindDiode?: { sourceVolts: number; drop: number; dropAt: number; ownLoad: number };
+  }[];
   /** Ground sockets: all the same piece of copper, known to the netlist as "<id>.gnd". */
   grounds: readonly string[];
   /** Resistance of an output driving HIGH and driving LOW. */
@@ -92,6 +117,12 @@ export const BOARD_MODELS: Record<ProgrammableType, BoardModel> = {
         volts: ESP32_VIN_FROM_USB,
         resistance: SUPPLY_RESISTANCE,
         maxCurrent: SUPPLY_MAX_CURRENT,
+        behindDiode: {
+          sourceVolts: ESP32_USB_VOLTAGE,
+          drop: ESP32_USB_DIODE_DROP,
+          dropAt: ESP32_USB_DIODE_CURRENT,
+          ownLoad: ESP32_VIN_FROM_USB / ESP32_OWN_CURRENT,
+        },
       },
     ],
     grounds: ['gnd1', 'gnd2'],

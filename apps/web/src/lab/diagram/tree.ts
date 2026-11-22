@@ -10,6 +10,7 @@ import {
   isGroundLeg,
   isSupplyLeg,
   pinLabel,
+  boardPowerPins,
   pinNames,
   type Analysis,
   type DiagramLayout,
@@ -578,8 +579,12 @@ export function layoutTree(
     hubPins.push(pinAt(hub, pin, x, y, side));
     terminalBlock(net, side).emit(x, y);
   };
-  power('5v', MARGIN + HUB_WIDTH / 2, hubTop - BOX_LEG, 'up');
-  power('gnd', MARGIN + HUB_WIDTH / 2, hubBottom + BOX_LEG, 'down');
+  // The board's supply sockets along its top (one, or the ESP32's two) and its ground below.
+  const { supplies, ground } = boardPowerPins(hub.type === 'esp32' ? 'esp32' : 'uno');
+  supplies.forEach((pin, i) =>
+    power(pin, MARGIN + (HUB_WIDTH * (i + 1)) / (supplies.length + 1), hubTop - BOX_LEG, 'up'),
+  );
+  power(ground, MARGIN + HUB_WIDTH / 2, hubBottom + BOX_LEG, 'down');
   parts.unshift({
     id: hub.id,
     component: hub,

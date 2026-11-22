@@ -1,6 +1,6 @@
 import type { LedColor } from '@banglalab/shared';
 import type { LedState } from '@banglalab/simulation';
-import { PITCH, UNO_BOX, UNO_SOCKETS, type Point } from './geometry';
+import { PITCH, UNO_BOX, UNO_SOCKETS, type Box, type Point } from './geometry';
 import { resistorBands } from './resistor-bands';
 
 /** Drawings of the parts. Pure SVG: no state, no event handling. */
@@ -199,6 +199,8 @@ export function LedView(props: {
 export function BatteryView(props: {
   box: { x: number; y: number; width: number; height: number };
   label: string;
+  /** True for the kit's holder of six AA cells; otherwise a 9 V block is drawn. */
+  pack?: boolean;
   positive: Point;
   negative: Point;
   selected: boolean;
@@ -248,39 +250,63 @@ export function BatteryView(props: {
       {clip(props.positive, '#d8342a')}
       {clip(props.negative, '#23282b')}
       <rect x={x} y={y} width={width} height={height} rx={11} fill="#22292b" />
-      <rect x={x} y={y} width={width} height={34} rx={11} fill="#e8a21a" />
-      <rect x={x} y={y + 22} width={width} height={12} fill="#e8a21a" />
-      {/* The two snap terminals on top of a 9 V block: a small round one and a wide ribbed one. */}
-      <circle cx={x + width * 0.3} cy={y + 15} r={8} fill="url(#shade-metal)" stroke="#6d7578" />
-      <circle cx={x + width * 0.3} cy={y + 15} r={4.2} fill="#8b9498" />
-      <circle cx={x + width * 0.7} cy={y + 15} r={9.6} fill="url(#shade-metal)" stroke="#6d7578" />
-      <circle
-        cx={x + width * 0.7}
-        cy={y + 15}
-        r={6.6}
-        fill="none"
-        stroke="#6d7578"
-        strokeDasharray="2.6 2.2"
-        strokeWidth={2}
-      />
-      <rect
-        x={x + 10}
-        y={y + height - 30}
-        width={width - 20}
-        height={3}
-        rx={1.5}
-        fill="#e8a21a"
-        opacity={0.8}
-      />
-      <rect
-        x={x + 10}
-        y={y + height - 22}
-        width={width - 42}
-        height={3}
-        rx={1.5}
-        fill="#f4f7f5"
-        opacity={0.35}
-      />
+      {props.pack && (
+        <g>
+          {/* Six AA cells in their holder, three to a row, seen from above. */}
+          {[0, 1, 2, 3, 4, 5].map((cell) => {
+            const cx = x + 12 + (cell % 3) * 28;
+            const cy = y + (cell < 3 ? 10 : height - 48);
+            return (
+              <g key={cell}>
+                <rect x={cx} y={cy} width={24} height={38} rx={5} fill="#2f8f5b" />
+                <rect x={cx} y={cy} width={24} height={9} rx={4} fill="#d9dde0" />
+                <rect x={cx} y={cy} width={24} height={38} rx={5} fill="url(#shade-round)" />
+              </g>
+            );
+          })}
+        </g>
+      )}
+      <g display={props.pack ? 'none' : undefined}>
+        <rect x={x} y={y} width={width} height={34} rx={11} fill="#e8a21a" />
+        <rect x={x} y={y + 22} width={width} height={12} fill="#e8a21a" />
+        {/* The two snap terminals on top of a 9 V block: a small round one and a wide ribbed one. */}
+        <circle cx={x + width * 0.3} cy={y + 15} r={8} fill="url(#shade-metal)" stroke="#6d7578" />
+        <circle cx={x + width * 0.3} cy={y + 15} r={4.2} fill="#8b9498" />
+        <circle
+          cx={x + width * 0.7}
+          cy={y + 15}
+          r={9.6}
+          fill="url(#shade-metal)"
+          stroke="#6d7578"
+        />
+        <circle
+          cx={x + width * 0.7}
+          cy={y + 15}
+          r={6.6}
+          fill="none"
+          stroke="#6d7578"
+          strokeDasharray="2.6 2.2"
+          strokeWidth={2}
+        />
+        <rect
+          x={x + 10}
+          y={y + height - 30}
+          width={width - 20}
+          height={3}
+          rx={1.5}
+          fill="#e8a21a"
+          opacity={0.8}
+        />
+        <rect
+          x={x + 10}
+          y={y + height - 22}
+          width={width - 42}
+          height={3}
+          rx={1.5}
+          fill="#f4f7f5"
+          opacity={0.35}
+        />
+      </g>
       <rect x={x} y={y} width={width} height={height} rx={11} fill="url(#shade-side)" />
       <rect
         x={x}
@@ -295,7 +321,7 @@ export function BatteryView(props: {
         x={x + width / 2}
         y={y + 96}
         textAnchor="middle"
-        fontSize={30}
+        fontSize={props.pack ? 26 : 30}
         fontWeight={700}
         fill="#f4f7f5"
       >
@@ -1281,6 +1307,112 @@ export function OledView(props: {
         />
       )}
       <rect x={-68} y={-90} width={136} height={72} rx={2} fill="url(#shade-board)" opacity={0.5} />
+    </g>
+  );
+}
+
+/**
+ * L298N motor driver module: the chip on its heat sink, motor screws on the two
+ * sides, and along the bottom the power screws and the six control pins.
+ * `terminals` gives each terminal's place from the module's corner.
+ */
+export function MotorDriverView(props: {
+  box: Box;
+  terminals: readonly { terminal: string; name: string; at: Point }[];
+  /** Whether each enable jumper is in place. */
+  jumpers: { ena: boolean; enb: boolean };
+  /** True when its logic has power: its light is on. */
+  awake: boolean;
+  selected: boolean;
+}) {
+  const { width, height } = props.box;
+  const at = (name: string) => props.terminals.find((t) => t.terminal === name)!.at;
+  const screw = (point: Point) => (
+    <g key={`${point.x}-${point.y}`}>
+      <rect x={point.x - 12} y={point.y - 13} width={24} height={26} rx={3} fill="#2c63c9" />
+      <rect
+        x={point.x - 12}
+        y={point.y - 13}
+        width={24}
+        height={26}
+        rx={3}
+        fill="url(#shade-side)"
+      />
+      <circle cx={point.x} cy={point.y} r={7} fill="url(#shade-metal)" stroke="#59626a" />
+      <path
+        d={`M${point.x - 4.5} ${point.y}H${point.x + 4.5}`}
+        stroke="#4b545b"
+        strokeWidth={1.8}
+      />
+    </g>
+  );
+  const pin = (point: Point) => (
+    <g key={`${point.x}-${point.y}`}>
+      <rect x={point.x - 9} y={point.y - 9} width={18} height={18} rx={2} fill="#16191b" />
+      <circle cx={point.x} cy={point.y} r={4.2} fill="#e2b84a" stroke="#6f5a1c" />
+    </g>
+  );
+  const jumper = (name: 'ena' | 'enb') =>
+    props.jumpers[name] && (
+      <rect
+        x={at(name).x - 8}
+        y={at(name).y - 30}
+        width={16}
+        height={28}
+        rx={3}
+        fill="#f2c230"
+        stroke="#8a6a10"
+      />
+    );
+  return (
+    <g transform={`translate(${props.box.x} ${props.box.y})`}>
+      {props.selected && (
+        <rect
+          x={-6}
+          y={-6}
+          width={width + 12}
+          height={height + 12}
+          rx={14}
+          fill={SELECTION}
+          opacity={0.4}
+        />
+      )}
+      <rect x={3} y={6} width={width} height={height} rx={8} fill="#000" opacity={0.3} />
+      <rect width={width} height={height} rx={8} fill="#a8261f" />
+      <rect width={width} height={height} rx={8} fill="url(#shade-board)" />
+      <rect width={width} height={height} rx={8} fill="none" stroke="rgba(0,0,0,.5)" />
+      {/* The heat sink, with the chip in front of it. */}
+      <rect x={64} y={14} width={108} height={58} rx={3} fill="#1b1e21" />
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((fin) => (
+        <rect key={fin} x={70 + fin * 13} y={14} width={5} height={58} fill="#34393d" />
+      ))}
+      <rect x={84} y={66} width={68} height={24} rx={2} fill="#101214" />
+      <text x={118} y={82} textAnchor="middle" fontSize={11} fontWeight={700} fill="#aeb6ba">
+        L298N
+      </text>
+      {/* The regulator and the module's light. */}
+      <rect x={38} y={102} width={26} height={18} rx={2} fill="#101214" />
+      {props.awake && <circle cx={84} cy={111} r={8} fill="#ff5340" opacity={0.35} />}
+      <circle cx={84} cy={111} r={3.2} fill={props.awake ? '#ff5340' : '#5a1f1a'} />
+      {['out1', 'out2', 'out3', 'out4', 'vs', 'gnd', '5v'].map((name) => screw(at(name)))}
+      {['ena', 'in1', 'in2', 'in3', 'in4', 'enb'].map((name) => pin(at(name)))}
+      {jumper('ena')}
+      {jumper('enb')}
+      <g fontSize={8.5} fontWeight={700} fill="#ffe9e6" textAnchor="middle" pointerEvents="none">
+        {props.terminals.map(({ terminal, name, at: point }) => {
+          const side = terminal.startsWith('out');
+          const left = point.x < width / 2;
+          return (
+            <text
+              key={terminal}
+              x={side ? point.x + (left ? 28 : -28) : point.x}
+              y={side ? point.y + 3 : point.y + 20}
+            >
+              {name}
+            </text>
+          );
+        })}
+      </g>
     </g>
   );
 }

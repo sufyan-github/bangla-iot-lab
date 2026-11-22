@@ -1,5 +1,7 @@
 import {
+  L298N_TERMINALS,
   addBattery,
+  addMotorDriver,
   ledCircuitExample,
   unoCircuitExample,
   type CircuitDocument,
@@ -9,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { describeEndpoint, joinedHoles } from './endpoints';
 import {
   BREADBOARD_BOX,
+  DRIVER_BOX,
   UNO_BOX,
   canvasHeight,
   endpointNear,
@@ -105,5 +108,46 @@ describe('what the pointer is over', () => {
     expect(joinedHoles('h20')).toEqual(['f20', 'g20', 'h20', 'i20', 'j20']);
     expect(joinedHoles('tp1')).toHaveLength(25);
     expect(joinedHoles('BAT1.pos')).toEqual([]);
+  });
+});
+
+describe('the motor driver beside the board', () => {
+  const withDriver = () => ok(addMotorDriver(unoCircuitExample()));
+
+  it('starts beside the board, clear of it and of the breadboard', () => {
+    const circuit = withDriver();
+    const driver = partOf(circuit, 'DRV1');
+    expect(partBox(circuit, driver)).toEqual(DRIVER_BOX);
+    expect(fitsAt(circuit, driver, DRIVER_BOX)).toBe(true);
+  });
+
+  it('has a place for each of its thirteen terminals, all inside its body and apart', () => {
+    const circuit = withDriver();
+    const points = L298N_TERMINALS.map((terminal) => endpointPoint(circuit, `DRV1.${terminal}`)!);
+    expect(points.every(Boolean)).toBe(true);
+    for (const point of points) {
+      expect(point.x).toBeGreaterThan(DRIVER_BOX.x);
+      expect(point.x).toBeLessThan(DRIVER_BOX.x + DRIVER_BOX.width);
+      expect(point.y).toBeGreaterThan(DRIVER_BOX.y);
+      expect(point.y).toBeLessThan(DRIVER_BOX.y + DRIVER_BOX.height);
+    }
+    // Far enough apart for a finger: each is found at its own place and no other.
+    L298N_TERMINALS.forEach((terminal, i) => {
+      expect(endpointNear(circuit, points[i]!)).toBe(`DRV1.${terminal}`);
+    });
+    expect(endpointPoint(circuit, 'DRV1.out9')).toBeNull();
+  });
+
+  it('moves with its terminals, and names them as the module does', () => {
+    const circuit = withDriver();
+    const before = endpointPoint(circuit, 'DRV1.in1')!;
+    const moved = ok(
+      moveOffBoardTo(circuit, 'DRV1', { x: DRIVER_BOX.x - 10, y: DRIVER_BOX.y + 60 }),
+    );
+    const after = endpointPoint(moved, 'DRV1.in1')!;
+    expect(after.x - before.x).toBeCloseTo(-10, 1);
+    expect(after.y - before.y).toBeCloseTo(60, 1);
+    expect(describeEndpoint(moved, 'DRV1.vs')).toEqual({ name: '12V', lead: 'DRV1', used: false });
+    expect(describeEndpoint(moved, 'DRV1.in1')).toMatchObject({ name: 'IN1' });
   });
 });
