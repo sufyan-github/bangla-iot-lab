@@ -42,7 +42,7 @@ describe('part definitions', () => {
     );
     expect(
       definitionProblems({
-        ...partDefinition('bme280'),
+        ...partDefinition('lora-ra-02'),
         model: { level: 'timing', simplified: [] },
       }),
     ).toContain('a planned part has no model yet, so model.level must be "none"');
@@ -79,7 +79,7 @@ describe('recognising parts in a parts list', () => {
     const report = coverage([
       'HC-SR04 ultrasonic',
       'SG90 micro servo 180°',
-      'BME280 sensor',
+      'SX1278 Ra-02 LoRa module',
       'YL-69 soil moisture',
       'USB cable',
       'Unobtainium sensor',
