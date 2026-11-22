@@ -8,6 +8,11 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **ESP32 feasibility study finished on a laptop**, with a recommendation for
+  the owner to confirm (D-061): the lab's own board library runs ESP32
+  programs, the chip emulator stays beside it as an experiment, and the server
+  emulator is not taken up. A recount found 109 of the 113 one-file reference
+  sketches build with the lab's library. The phone measurement is still open.
 - **Digital logic, first step: 74HC gate chips on the breadboard** (circuit
   format version 13). The 74HC00 (NAND), 02 (NOR), 04 (NOT), 08 (AND), 32 (OR)
   and 86 (XOR), with their standard pinouts. A chip lands across the centre

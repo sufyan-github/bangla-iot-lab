@@ -778,3 +778,25 @@ orders; when the two differ the circuit remembers, and the table says so.
 1B, 1Y) rather than as gate symbols; flip-flop, counter and decoder chips; a
 chip cannot be turned round, so putting one in upside down (a real mistake)
 cannot be shown yet; and the symbol canvas.
+
+## D-061 — Recommended: ESP32 programs run on the lab's own board library, with the chip emulator kept beside it
+
+**Proposed on 22 November 2026; waits for the owner's confirmation.** Step 6 of
+the [ESP32 feasibility study](esp32-study.md) scored its three options on the
+same criteria. The recommendation:
+
+- **The lab's own board library (option C)** is how the lab runs ESP32
+  programs. On a laptop its worst case is over 50 times faster than a real
+  board; a program is tens of kilobytes; the ready-made programs and lessons run
+  with no network; and 109 of the 113 one-file reference sketches build with
+  it. Its cost is that the board is our model, labelled as such in the editor.
+- **The chip emulator (option A)** stays in the editor as an experiment, as a
+  check against the real board software. It is not the default: a third of the
+  reference sketches run five times slower than a real board even on a laptop,
+  every program needs the full toolchain on a server, and it adds 5.4 MB.
+- **QEMU on a server (option B)** is not taken up: it cannot run offline, and
+  as published it cannot show a pin without changes to a GPL program.
+
+**What could change it:** the speed of option C on a real low-cost phone, which
+has not been measured. If the worst-case test sketch runs slower than a real
+board there, the recommendation is to be revisited.

@@ -1,9 +1,10 @@
 # ESP32 feasibility study
 
-**Status: in progress. Steps 1 and 2 of 6 are done. Step 3 is done except for one
-measurement that needs a real phone. Steps 4 and 5 are measured on this laptop. Nothing is measured on a phone. The
-owner has since asked for both option A and option C to be offered in the
-editor, switchable, as experiments (22 November 2026), and both now are.**
+**Status: all six steps done on a laptop; a recommendation is written (step 6)
+and waits for the owner's confirmation. Nothing is measured on a phone, and the
+recommendation says what that measurement could change. The owner had already
+asked for options A and C to be offered in the editor, switchable, as
+experiments (22 November 2026), and both are.**
 
 ## The question
 
@@ -73,7 +74,7 @@ What this already tells us:
 | 3    | Option C prototype: the board library for levels 1 and 2, a sketch compiled to WebAssembly, pins connected to the existing circuit solver. Measure coverage and speed | **Done on a laptop:** built, run as WebAssembly in a browser, and connected to the circuit solver through a stand-in board. Still to do: the speed on a real phone |
 | 4    | Option A: find and assess existing browser emulators; run the level 1 to 3 sketches; measure coverage and speed                                                       | **Done natively:** esp32sim runs all 103 level 1 to 3 sketches. Its browser build and a phone are not measured                                                     |
 | 5    | Option B: run one sketch in QEMU; measure server cost per student and the delay to the browser                                                                        | **Done on a laptop:** memory and processor cost measured. The delay over the internet is not                                                                       |
-| 6    | Score the options against the criteria and write the decision                                                                                                         | Not started                                                                                                                                                        |
+| 6    | Score the options against the criteria and write the decision                                                                                                         | **Done:** recounted option C's coverage, scored all three, and wrote a recommendation for the owner to confirm. The phone measurement is still open                |
 
 Speed will be measured on a laptop first. The figure that counts is from a real
 low-cost phone, which needs the lab team; until then any speed result is marked
@@ -480,6 +481,82 @@ For the criteria, the facts are these. Option B needs a server and a connection
 for every student, at the cost above; with Espressif's QEMU as published it
 cannot show a pin, read a sensor or drive the kit's display without additions to
 a GPL program.
+
+## Step 6 recount: option C's coverage today
+
+Step 3 counted option C against levels 1 and 2 only, before the lab's board
+library gained the I2C display, the DHT sensor, the servo and saved settings.
+So before scoring, every reference sketch was built again on 22 November 2026
+through the lab's own compile path, the one the editor uses, with the real
+libraries the lab builds (Adafruit's display and DHT libraries). A sketch counts
+when it builds; whether it then behaves is a separate check (below).
+
+| Level | Sketches | One file | Build |
+| ----- | -------- | -------- | ----- |
+| 1     | 30       | 30       | 30    |
+| 2     | 44       | 44       | 44    |
+| 3     | 29       | 27       | 27    |
+| 4     | 19       | 10       | 8     |
+| 5     | 19       | 2        | 0     |
+
+- **The 28 sketches split over several files were not tried.** The editor takes
+  a program as one file, so these cannot be given to the lab as they are.
+- **Level 4:** the two that fail keep a value through deep sleep
+  (`RTC_DATA_ATTR`), which the library does not have yet.
+- **Level 5:** both need Wi-Fi, which the library does not have.
+- Module size, across the 109 that build: 39 kB at the median and 83 kB at most
+  (16 kB and 30 kB compressed). A build took about 0.8 s at the median on this
+  laptop.
+- **Building is not running.** Behaviour is checked for levels 1 and 2 (step 3)
+  and for the lab's own kit lessons, each walked through step by step against
+  the simulation. The level 3 reference sketches were built, not run.
+
+## Step 6: the options scored
+
+Scored on 22 November 2026 from the measurements above. Each cell says what it
+rests on: **measured** (on this laptop, by this study), **reported** (by a
+project's own documents) or **estimate**. Nothing in this table was measured on
+a phone.
+
+| Criterion        | A: chip emulator in the browser                                                                                                                                                                                                                       | B: QEMU on a server                                                                                                                                | C: the lab's board library                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coverage         | Every one of the 103 sketches tried (levels 1 to 3) builds, boots and runs 5 s without a crash; 41 of 54 scripted checks hold and the other 13 are explained, none of them a fault in the emulator (measured, native build). Levels 4 and 5 not tried | Boots real firmware; pins cannot be set or watched from outside without changing a GPL program (reported, step 5)                                  | Today 109 of the 113 one-file reference sketches build: all 101 at levels 1 to 3, 8 of 10 at level 4 (two keep values through deep sleep, which the library lacks) and none of the 2 at level 5 (no Wi-Fi) (measured, step 6 recount). Building is not running: behaviour is checked for levels 1 and 2 and for the lab's own kit lessons, not for the level 3 reference sketches |
+| Fidelity         | Best of the three: runs the real board software, and found four faults in C's model (measured)                                                                                                                                                        | The real board software too, but no pins, so no kit device can be connected (reported)                                                             | A model of ours. Its known limits are listed and shown to the student; the faults A found are fixed; more will exist until found (measured)                                                                                                                                                                                                                                       |
+| Speed on a phone | Not measured. On this laptop a third of the reference sketches (35 of 103) run five times **slower** than a real board, natively and as WebAssembly (measured). A phone is slower still                                                               | Runs at real time on the server; the delay to the student was not measured. One whole processor core per student whose loop never waits (measured) | Not measured. Worst case 52 to 56 times faster than a real board on this laptop (measured), 8 times with the processor slowed 6 times (estimate)                                                                                                                                                                                                                                  |
+| Offline          | Runs offline once a program is built and the 5.4 MB emulator is kept by the browser. Every new program needs the server and the full ESP32 toolchain (measured)                                                                                       | No: every run needs the server (by design)                                                                                                         | Runs offline once a program is built; the ready-made programs ship with the app and run with no network at all. A new program needs the compile server (measured)                                                                                                                                                                                                                 |
+| Download size    | 5.4 MB for the emulator and the chip's start-up code, fetched only when chosen; firmware of 260 kB or more per program (measured)                                                                                                                     | Nothing for the emulator; a live connection while it runs                                                                                          | Nothing until a program runs. A program is a module of 39 kB at the median and 83 kB at most (16 kB and 30 kB compressed), across the 109 reference sketches that build (measured). The ready-made programs ship with the app                                                                                                                                                     |
+| Licence          | MIT emulator, Apache-2.0 start-up code (reported). The firmware carries Espressif's LGPL Arduino core, so it is built on the server from published source and not shipped in the app (D-050)                                                          | QEMU is GPL; it can only ever run as a separate server program                                                                                     | Apache-2.0, the lab's own; the real libraries it builds (Adafruit's, DHT) are BSD or MIT (reported)                                                                                                                                                                                                                                                                               |
+| Upkeep           | Low for the board itself: a new emulator release is two lines (D-049). Each kit device must still be modelled                                                                                                                                         | High: a server per student, kept running and paid for                                                                                              | High: every board function a lesson uses is ours to write and keep correct                                                                                                                                                                                                                                                                                                        |
+| Honesty          | Easy to state: "the real program on an emulated chip", with its slow cases shown as slow motion                                                                                                                                                       | Easy to state, but nothing to show a student about the circuit                                                                                     | Must be labelled "API level, not cycle-accurate"; the limits are short and already shown in the editor                                                                                                                                                                                                                                                                            |
+
+### The recommended decision
+
+This is the study's recommendation. It becomes the decision when the owner
+confirms it.
+
+**Option C is the lab's way of running ESP32 programs. Option A stays in the
+editor, labelled experimental, as a check against the real board software.
+Option B is not taken up.**
+
+- **B** fails the two criteria that are not negotiable for a school lab with
+  weak internet: it cannot run offline, and as published it cannot show a pin.
+  Making it show pins means changing a GPL program, which can be done only on a
+  server, at the cost of a processor core and 172 MB per student.
+- **A** is the most faithful, and is what showed where C was wrong. It is not
+  the default because it is too slow for a third of the reference sketches on
+  a laptop, before a phone makes it slower; because every new program needs
+  the full toolchain on a server (about 4 s a build); and because it adds 5.4
+  MB before the first program runs.
+- **C** is the only option that is fast enough on a laptop with a wide margin,
+  small enough for paid mobile data, and runs the ready-made programs and
+  lessons with no network. Its cost is that its board is our model; that is
+  stated in the editor, and A is kept beside it to catch the model's faults.
+
+**What would change this decision.** The phone measurement. If option C runs
+the worst-case test sketch slower than a real board on the reference low-cost
+phone, the decision must be revisited. The laptop figures and the slowed
+estimates make that unlikely, but it has not been measured, and the decision
+is recorded as resting on it.
 
 ## What the study will not do
 
