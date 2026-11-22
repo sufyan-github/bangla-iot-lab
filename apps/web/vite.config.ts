@@ -30,6 +30,17 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: 'index.html',
+        // The ESP32 chip emulator is several megabytes and only some students
+        // use it: it is not fetched at install, but once fetched it is kept, so
+        // it works without a connection afterwards.
+        navigateFallbackDenylist: [/^\/esp32sim\//, /^\/licences\//],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/esp32sim/'),
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'esp32sim', expiration: { maxEntries: 8 } },
+          },
+        ],
       },
     }),
   ],

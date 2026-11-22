@@ -1,5 +1,12 @@
 import type { CircuitDocument } from '@banglalab/shared';
-import { SimulationSession, type Probe, type SimulationFrame } from '@banglalab/simulation';
+import {
+  SimulationSession,
+  esp32Emulator,
+  parseEsp32Firmware,
+  setEsp32Emulator,
+  type Probe,
+  type SimulationFrame,
+} from '@banglalab/simulation';
 import { expose } from 'comlink';
 
 /** Simulated time never runs ahead of real time by more than this per tick. */
@@ -13,14 +20,73 @@ let lastTick = 0;
 let tickCount = 0;
 let probes: Probe[] = [];
 
+/** Real milliseconds one tick may spend simulating, so the page still hears from us often. */
+const TICK_BUDGET_MS = 40;
+/** Real milliseconds it has lately cost to simulate one millisecond. */
+let costPerMs = 0;
+/** Simulated and real time since `speed` was last worked out. */
+let simulated = 0;
+let measuredFrom = 0;
+let speed = 1;
+
 function tick() {
   if (!session || !report) return;
   const now = performance.now();
-  session.advance(Math.min(now - lastTick, MAX_STEP_MS));
+  const wanted = Math.min(now - lastTick, MAX_STEP_MS);
+  // A board that cannot keep up with real time (a chip emulator running a busy
+  // program) is given less to do each tick: the circuit then runs in slow
+  // motion, and says so, instead of the page freezing.
+  const step = costPerMs > 0 ? Math.min(wanted, Math.max(1, TICK_BUDGET_MS / costPerMs)) : wanted;
+  session.advance(step);
+  const cost = performance.now() - now;
+  if (step > 0) costPerMs = costPerMs * 0.7 + (cost / step) * 0.3;
   lastTick = now;
+  simulated += step;
+  const after = performance.now();
+  if (after - measuredFrom >= 1000) {
+    speed = Math.min(1, simulated / (after - measuredFrom));
+    simulated = 0;
+    measuredFrom = after;
+  }
   // Report about 30 times a second; the processor still runs every tick.
-  if (++tickCount % 2 === 0) report(session.frame());
+  if (++tickCount % 2 === 0) report({ ...session.frame(), speed });
   timer = setTimeout(tick, TICK_MS);
+}
+
+/**
+ * Fetches the chip emulator the first time a program needs it: several
+ * megabytes that a student who never chooses that engine never downloads.
+ */
+let emulatorLoading: Promise<void> | undefined;
+function ensureEmulator(): Promise<void> {
+  if (esp32Emulator()) return Promise.resolve();
+  emulatorLoading ??= (async () => {
+    const [module, rom] = await Promise.all([
+      fetch('/esp32sim/esp32sim.wasm').then((response) => {
+        if (!response.ok) throw new Error('the chip emulator is not part of this build');
+        return response.arrayBuffer().then((bytes) => WebAssembly.compile(bytes));
+      }),
+      fetch('/esp32sim/esp32_rev300_rom.elf').then((response) => {
+        if (!response.ok) throw new Error('the chip emulator is not part of this build');
+        return response.arrayBuffer();
+      }),
+    ]);
+    setEsp32Emulator({ module, rom: new Uint8Array(rom) });
+  })();
+  emulatorLoading.catch(() => (emulatorLoading = undefined));
+  return emulatorLoading;
+}
+
+/** Loads a program onto a board, fetching the emulator first if the program is real firmware. */
+async function load(boardId: string, program: string): Promise<boolean> {
+  try {
+    if (parseEsp32Firmware(program)) await ensureEmulator();
+    if (!session) return false;
+    session.loadFirmware(boardId, program);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Starts or stops the real-time loop to match whether the circuit changes with time. */
@@ -42,24 +108,25 @@ function schedule() {
  * Returns the ids of boards whose firmware could not be loaded.
  */
 const api = {
-  start(
+  async start(
     document: CircuitDocument,
     pressed: string[],
     firmware: Record<string, string>,
     onFrame: (frame: SimulationFrame) => void,
-  ): string[] {
-    session = new SimulationSession(document, pressed);
+  ): Promise<string[]> {
+    const started = (session = new SimulationSession(document, pressed));
     session.setProbes(probes);
     report = onFrame;
+    costPerMs = 0;
+    simulated = 0;
+    measuredFrom = performance.now();
+    speed = 1;
     const failed: string[] = [];
-    for (const [boardId, hex] of Object.entries(firmware)) {
-      try {
-        session.loadFirmware(boardId, hex);
-      } catch {
-        failed.push(boardId);
-      }
+    for (const [boardId, program] of Object.entries(firmware)) {
+      if (!(await load(boardId, program))) failed.push(boardId);
     }
-    schedule();
+    // The circuit may have been stopped, or started again, while the emulator was fetched.
+    if (session === started) schedule();
     return failed;
   },
 
@@ -70,15 +137,14 @@ const api = {
   },
 
   /** Uploads new firmware to a board while the circuit keeps running. */
-  upload(boardId: string, hex: string): boolean {
+  async upload(boardId: string, program: string): Promise<boolean> {
     if (!session) return false;
-    try {
-      session.loadFirmware(boardId, hex);
-    } catch {
-      return false;
+    const loaded = await load(boardId, program);
+    if (loaded) {
+      costPerMs = 0;
+      schedule();
     }
-    schedule();
-    return true;
+    return loaded;
   },
 
   /** Chooses the signals recorded for the oscilloscope; remembered across runs. */

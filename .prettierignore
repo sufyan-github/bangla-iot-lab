@@ -16,3 +16,4 @@ private
 data/private
 apps/web/public/licences
 .claude/worktrees
+apps/web/public/esp32sim

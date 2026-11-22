@@ -65,6 +65,8 @@ interface LabState {
   result: SimulationResult | null;
   /** Latest status of each board with a running program. */
   boards: Record<string, BoardStatus>;
+  /** How fast the simulation is running against real time; 1 when it keeps up. */
+  speed: number;
   /** Counts uploads per board, so a running circuit knows when to restart a program. */
   uploads: Record<string, number>;
   /** Serial output received from each board since the circuit was started. */
@@ -109,6 +111,8 @@ interface LabState {
   setSource(boardId: string, source: string): void;
   /** Puts firmware on the board; a running circuit restarts that board's program. */
   uploadProgram(boardId: string, program: BoardProgram): void;
+  /** ESP32 only: chooses how the board's program is run. The program must then be uploaded again. */
+  setEngine(boardId: string, engine: 'library' | 'emulator'): void;
   setPressed(id: string, down: boolean): void;
   setProbes(probes: Probe[]): void;
   setNotice(notice: EditError | null): void;
@@ -118,7 +122,14 @@ interface LabState {
   setSaveState(saveState: SaveState): void;
 }
 
-const STOPPED = { running: false, result: null, boards: {}, serial: {}, pressed: [] as string[] };
+const STOPPED = {
+  running: false,
+  result: null,
+  boards: {},
+  serial: {},
+  pressed: [] as string[],
+  speed: 1,
+};
 
 export const useLab = create<LabState>((set, get) => {
   /** The setting changed by the last edit and when, for merging a slider's steps. */
@@ -333,6 +344,11 @@ export const useLab = create<LabState>((set, get) => {
         uploads: { ...uploads, [boardId]: (uploads[boardId] ?? 0) + 1 },
       });
     },
+    setEngine(boardId, engine) {
+      const program = get().programs[boardId];
+      if (!program || (program.engine ?? 'library') === engine) return;
+      set({ programs: { ...get().programs, [boardId]: { ...program, engine } } });
+    },
     setPressed(id, down) {
       const pressed = get().pressed.filter((other) => other !== id);
       if (down) pressed.push(id);
@@ -356,7 +372,7 @@ export const useLab = create<LabState>((set, get) => {
         };
       }
       signals.append(frame.trace, frame.timeMs);
-      set({ result: frame.result, boards: frame.boards, serial });
+      set({ result: frame.result, boards: frame.boards, serial, speed: frame.speed ?? 1 });
     },
     clearSerial: (boardId) => set({ serial: { ...get().serial, [boardId]: '' } }),
     setSaveState: (saveState) => set({ saveState }),

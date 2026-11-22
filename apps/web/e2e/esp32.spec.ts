@@ -166,3 +166,79 @@ test('the code tab links to a page that says what the ESP32 experiment is and is
   await page.getByTestId('language').click();
   await expect(measured).toContainText('Not measured yet');
 });
+
+/**
+ * The second way of running an ESP32 program: the board's real firmware, built
+ * by the compile server with Espressif's toolchain, in an emulator of the chip.
+ * The first build after the server starts compiles the Arduino core, so these
+ * tests wait longer than the others.
+ */
+async function uploadForEmulator(page: Page) {
+  await page.getByTestId('tab-code').click();
+  await page.getByTestId('engine-emulator').check();
+  await expect(page.getByTestId('esp32-note')).toContainText('esp32sim');
+  await expect(page.getByTestId('upload')).toBeEnabled();
+  await page.getByTestId('upload').click();
+  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible({
+    timeout: 120_000,
+  });
+}
+
+test('the ESP32 can run the board’s real software in an emulator of the chip', async ({ page }) => {
+  test.setTimeout(240_000);
+  await openEsp32Example(page);
+  await uploadForEmulator(page);
+  await page.getByTestId('tab-circuit').click();
+  await page.getByTestId('run').click();
+  const slow = { timeout: 60_000, intervals: [70, 110, 130] };
+  await expect.poll(() => ledState(page), slow).toBe('on');
+  const current = Number(await led(page).getAttribute('data-current-ma'));
+  expect(current).toBeGreaterThan(4);
+  expect(current).toBeLessThan(8);
+  await expect.poll(() => ledState(page), slow).toBe('off');
+  // Every real ESP32 prints this line of its start-up code when it is switched on.
+  await page.getByTestId('tab-code').click();
+  await expect(page.getByTestId('serial')).toContainText('ets Jul 29 2019');
+});
+
+test('the lab says so when the emulated chip cannot keep up with a real board', async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  await openEsp32Example(page);
+  await page.getByTestId('tab-code').click();
+  // A loop that never waits: the emulator has to run every one of its instructions.
+  await page
+    .getByTestId('code')
+    .fill(
+      'unsigned long next = 0;\nvoid setup() { pinMode(2, OUTPUT); }\nvoid loop() {\n  if (millis() >= next) { digitalWrite(2, !digitalRead(2)); next += 300; }\n}\n',
+    );
+  await expect(page.getByTestId('starter')).toHaveValue('custom');
+  await page.getByTestId('engine-emulator').check();
+  await page.getByTestId('upload').click();
+  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible({
+    timeout: 120_000,
+  });
+  await page.getByTestId('tab-circuit').click();
+  await page.getByTestId('run').click();
+  await expect(page.getByText(/আসল সময়ের চেয়ে ধীরে চলছে/)).toBeVisible({ timeout: 60_000 });
+  // It still runs, in slow motion: the LED does change.
+  await expect
+    .poll(() => ledState(page), { timeout: 90_000, intervals: [70, 110, 130] })
+    .toBe('on');
+});
+
+test('going back to the lab’s own model runs the ready-made program again, offline', async ({
+  page,
+}) => {
+  await openEsp32Example(page);
+  await page.getByTestId('tab-code').click();
+  await page.getByTestId('engine-emulator').check();
+  // The program on the board was built for the other engine: it has to be uploaded again.
+  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toHaveCount(0);
+  await page.getByTestId('engine-library').check();
+  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
+  await page.getByTestId('tab-circuit').click();
+  await page.getByTestId('run').click();
+  await expect.poll(() => ledState(page), SAMPLING).toBe('on');
+});

@@ -31,6 +31,22 @@ describe('POST /v1/compile', () => {
     );
   });
 
+  it('passes on which engine an ESP32 program is built for', async () => {
+    const fetch = vi.fn(async () => json({ ok: true, hex: '{}', cached: false }));
+    app = await build(fetch);
+    const payload = {
+      board: 'esp32',
+      language: 'arduino',
+      engine: 'emulator',
+      source: 'void setup(){}',
+    };
+    const response = await app.inject({ method: 'POST', url: '/v1/compile', payload });
+    expect(response.statusCode).toBe(200);
+    const sent = JSON.parse((fetch.mock.calls[0] as unknown as [string, { body: string }])[1].body);
+    // Dropping this field would build the other kind of program without anyone being told.
+    expect(sent).toEqual(payload);
+  });
+
   it('strips unknown properties before forwarding', async () => {
     const fetch = vi.fn(async () => json({ ok: true }));
     app = await build(fetch);
@@ -47,6 +63,8 @@ describe('POST /v1/compile', () => {
     for (const payload of [
       { ...body, board: 'pico' },
       { ...body, board: 'esp32', language: 'c' },
+      { ...body, engine: 'emulator' },
+      { board: 'esp32', language: 'arduino', engine: 'quantum', source: 'x' },
       { ...body, source: '' },
       { ...body, source: 'x'.repeat(70_000) },
       { board: 'uno' },

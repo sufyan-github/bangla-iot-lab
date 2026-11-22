@@ -3,7 +3,9 @@ export { BOARD_MODELS, type BoardModel } from './boards';
 export {
   ESP32_FIRMWARE_FORMAT,
   Esp32SimBoard,
+  esp32Emulator,
   parseEsp32Firmware,
+  setEsp32Emulator,
   type Esp32Emulator,
   type Esp32Firmware,
 } from './esp32-sim-board';

@@ -354,8 +354,10 @@ export function Messages() {
   const result = useLab((s) => s.result);
   const running = useLab((s) => s.running);
   const programRunning = useLab((s) => Object.keys(s.boards).length > 0);
+  // In steps of a tenth, so the message does not flicker with every frame.
+  const speedTenths = useLab((s) => Math.round(s.speed * 10));
   const { select } = useLab.getState();
-  const { t, quantity } = useT();
+  const { t, quantity, number } = useT();
 
   let items: { key: string; tone: keyof typeof TONE; text: string; partId?: string }[] = [];
   if (result) {
@@ -380,6 +382,14 @@ export function Messages() {
       // A blinking LED would make "the LED is lit" flash on and off; say the steady fact instead.
       if (!problem)
         items.unshift({ key: 'program-running', tone: 'ok', text: t('diag.program-running') });
+      // A board that cannot keep up with real time runs in slow motion, and says so.
+      if (speedTenths < 9) {
+        items.push({
+          key: 'running-slow',
+          tone: 'warning',
+          text: t('diag.running-slow', { percent: number(Math.max(1, speedTenths) * 10) }),
+        });
+      }
     } else if (readings.some((r) => r.led?.state === 'on')) {
       items.unshift({ key: 'led-on', tone: 'ok', text: t('diag.led-on') });
     } else if (items.length === 0 && !problem && readings.length > 0) {

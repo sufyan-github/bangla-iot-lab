@@ -48,6 +48,22 @@ export function parseEsp32Firmware(text: string): Esp32Firmware | null {
   }
 }
 
+let registered: Esp32Emulator | null = null;
+
+/**
+ * Makes the emulator available to every simulation session in this thread. It
+ * is several megabytes, so whoever runs the simulation fetches it only when a
+ * program needs it, and hands it over here.
+ */
+export function setEsp32Emulator(emulator: Esp32Emulator | null): void {
+  registered = emulator;
+}
+
+/** The emulator handed over with `setEsp32Emulator`, or null. */
+export function esp32Emulator(): Esp32Emulator | null {
+  return registered;
+}
+
 const PINS = 40;
 /** Fastest switching shown for a PWM output, hertz. */
 const PWM_SHOWN_HZ = 2000;

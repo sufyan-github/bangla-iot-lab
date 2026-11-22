@@ -47,10 +47,17 @@ the real toolchain:
 
 Nothing has been measured on a phone or compared with a real board.
 
-## Not done
+## In the lab
 
-- No firmware is built for it by the lab's compile server yet, and none is
-  shipped. Until then it cannot be chosen in the editor.
-- Firmware for it contains Espressif's Arduino core (LGPL-2.1). Shipping or
-  serving such firmware needs the same care the UNO's starter firmware got:
-  notices and the corresponding source.
+A student chooses this engine in the ESP32 board's Code tab. The compile server
+then builds the sketch into real firmware (see `third_party/arduino-esp32`), and
+the browser fetches the emulator the first time it is needed. `pnpm build` in
+`apps/web` includes the emulator when `.cache/esp32sim` holds it, and leaves the
+choice out of the editor when it does not.
+
+## Limits
+
+- Core only: firmware is not yet built with the Arduino core's libraries (Wi-Fi,
+  I2C and the rest), and no display or sensor is connected to the emulated chip.
+- A sketch whose loop never waits runs in slow motion; the editor says so.
+- Nothing has been measured on a phone or compared with a real board.

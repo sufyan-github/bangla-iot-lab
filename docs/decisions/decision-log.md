@@ -448,3 +448,25 @@ publish, which cannot be checked against a source.
 
 The built module is not committed either. It is 4.5 MB, and the app does not
 use it yet.
+
+## D-050 — The engine is chosen per program, and the chip emulator is fetched only when chosen
+
+A student chooses in the Code tab how an ESP32 program is run. The choice is
+kept with the program, and a built program says by its own form which engine it
+is for, so a program built for one engine is never handed to the other: after
+changing the engine the editor asks for an upload.
+
+The emulator and the chip's start-up code are 5.4 MB. They are not part of what
+the app stores at install; the simulation fetches them the first time a program
+needs them and the browser keeps them after that. A student who never chooses
+the emulator never downloads it. A build of the lab made without the emulator
+does not offer the choice at all.
+
+Ready-made programs are shipped built for the lab's own model only. Shipping
+them as real firmware as well would put Espressif's Arduino core, which is LGPL,
+into the app itself; for now such firmware comes only from the server, which
+builds it from the source in `third_party/arduino-esp32`.
+
+A program that the emulator cannot run in real time is not dropped or frozen:
+the simulation gives itself less to do each tick, the circuit runs in slow
+motion, and the editor says at what share of a real board's speed.

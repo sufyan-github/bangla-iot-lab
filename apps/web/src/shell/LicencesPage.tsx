@@ -53,6 +53,22 @@ const NOTICES = [
     source: 'https://github.com/llvm/llvm-project',
   },
   {
+    id: 'esp32-firmware',
+    name: 'ESP32 firmware built for the chip emulator (experimental)',
+    licence: 'LGPL-2.1-or-later',
+    text: 'When the chip emulator is chosen, the compile server builds your sketch together with Espressif’s Arduino core for the ESP32, release 3.3.12, and Espressif’s ESP-IDF libraries. The core’s complete source, and how to rebuild or relink the firmware, is in the repository.',
+    file: 'LGPL-2.1.txt',
+    source: `${REPOSITORY}/tree/main/third_party/arduino-esp32`,
+  },
+  {
+    id: 'esp32sim',
+    name: 'esp32sim, and the ESP32’s start-up code',
+    licence: 'MIT; Apache-2.0',
+    text: 'The emulator of the ESP32 chip, by its own authors, built from its source with one file added by this project. It boots Espressif’s mask ROM for the ESP32, which is Apache-2.0. Carried only by builds of the lab that include the chip emulator.',
+    file: 'NOTICE.txt',
+    source: `${REPOSITORY}/tree/main/third_party/esp32sim`,
+  },
+  {
     id: 'font',
     name: 'Anek Bangla',
     licence: 'SIL Open Font License 1.1',

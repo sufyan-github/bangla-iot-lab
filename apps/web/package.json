@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/copy-licences.mjs && vite build",
+    "build": "node scripts/copy-licences.mjs && node scripts/copy-esp32sim.mjs && vite build",
     "preview": "vite preview --port 4173 --strictPort",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "e2e": "playwright test"

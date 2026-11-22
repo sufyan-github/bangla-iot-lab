@@ -25,7 +25,13 @@ make no promise of compatibility, except that saved circuits are always migrated
   with Espressif's toolchain and the Arduino core kept in
   `third_party/arduino-esp32` (LGPL-2.1, unmodified, with how to rebuild and
   relink). Tests build firmware, boot it in the emulator and run it against the
-  example circuit. **Not in the editor yet.**
+  example circuit.
+- **A second way to run ESP32 programs, chosen in the Code tab (experimental):**
+  the board's real firmware in an emulator of the chip. The emulator (4.5 MB) is
+  fetched only when a student chooses it, then kept for offline use. Uploading
+  with it needs the server. The editor says when the circuit is running slower
+  than real time, which it does for any sketch whose loop never waits. A build
+  of the lab made without the emulator simply does not offer the choice.
 - The simulation tells a board when the circuit is not deciding a pin's level,
   so a pull-up the program enables reads HIGH in the same instant.
 - Circuit format version 7 (adds the ESP32 board). A circuit has one board, of

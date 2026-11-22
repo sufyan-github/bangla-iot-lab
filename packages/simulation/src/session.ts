@@ -7,6 +7,7 @@ import {
   type ProgrammableType,
 } from '@banglalab/shared';
 import { BOARD_MODELS, type BoardModel } from './boards';
+import { Esp32SimBoard, esp32Emulator, parseEsp32Firmware } from './esp32-sim-board';
 import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MODULE_MIN_SUPPLY } from './library';
 import { buildNetlist, type CircuitState, type Netlist } from './netlist';
@@ -57,6 +58,11 @@ export interface SignalTrace {
 export interface SimulationFrame {
   /** Simulated time since the session started, milliseconds. */
   timeMs: number;
+  /**
+   * How fast the simulation is running: simulated time over real time, 1 when
+   * it keeps up. Set by whoever paces the session, when it measures it.
+   */
+  speed?: number;
   result: SimulationResult;
   boards: Record<string, BoardStatus>;
   /** Present only while probes are set. */
@@ -164,6 +170,7 @@ export class SimulationSession {
     for (const id of this.boards.keys()) {
       const board = this.boards.get(id)!;
       if (!document.components.some((c) => c.id === id && c.type === board.type)) {
+        board.emulator.dispose?.();
         this.boards.delete(id);
       }
     }
@@ -204,6 +211,15 @@ export class SimulationSession {
   loadFirmware(boardId: string, program: string): void {
     const component = this.document.components.find((c) => c.id === boardId);
     if (component?.type === 'esp32') {
+      // Two kinds of ESP32 program: real firmware for the chip emulator, or a
+      // sketch built against the lab's own board library.
+      const firmware = parseEsp32Firmware(program);
+      if (firmware) {
+        const emulator = esp32Emulator();
+        if (!emulator) throw new Error('the chip emulator has not been loaded');
+        this.loadProgram(boardId, new Esp32SimBoard(emulator, firmware));
+        return;
+      }
       const bytes = Uint8Array.from(atob(program.trim()), (char) => char.charCodeAt(0));
       this.loadProgram(boardId, new Esp32SketchBoard(bytes));
     } else {
@@ -252,6 +268,7 @@ export class SimulationSession {
       }
     });
     emulator.onSerial((text) => (board.serial += text));
+    this.boards.get(boardId)?.emulator.dispose?.();
     this.boards.set(boardId, board);
     this.stepping = null;
     this.feedInputs();

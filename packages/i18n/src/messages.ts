@@ -312,9 +312,17 @@ export const bn = {
     'প্রথম তিনটা সংখ্যা গবেষণার নিজস্ব পরীক্ষা-ব্যবস্থায় মাপা, একই বোর্ড-মডেল দিয়ে, বোর্ডটা এডিটরে আসার আগে।',
   'esp32.other.title': 'অন্য উপায়: পুরো চিপের এমুলেটর',
   'esp32.other.body':
-    'আরেকটা উপায় হলো চিপের এমুলেটরে বোর্ডের আসল সফটওয়্যার চালানো। আমরা একটা (esp32sim, ওপেন সোর্স) চালিয়ে দেখেছি: আমাদের দেওয়া ১০৩টা প্রোগ্রামের সবগুলো সে চালিয়েছে, আর আমাদের নিজের মডেলের চারটা ভুল ধরিয়ে দিয়েছে, যার একটা ঠিক করা হয়েছে। কিন্তু ল্যাপটপে ওই প্রোগ্রামগুলোর এক-তৃতীয়াংশ আসল বোর্ডের চেয়ে প্রায় পাঁচ গুণ ধীরে চলেছে। এটা এখনো ল্যাবে নেই; পরিকল্পনা হলো এটাকে এই পদ্ধতির পাশে রাখা, যাতে দুটো তুলনা করা যায়।',
+    'আরেকটা উপায় হলো চিপের এমুলেটরে বোর্ডের আসল সফটওয়্যার চালানো। আমরা একটা (esp32sim, ওপেন সোর্স) চালিয়ে দেখেছি: আমাদের দেওয়া ১০৩টা প্রোগ্রামের সবগুলো সে চালিয়েছে, আর আমাদের নিজের মডেলের চারটা ভুল ধরিয়ে দিয়েছে, যার একটা ঠিক করা হয়েছে। কিন্তু ল্যাপটপে ওই প্রোগ্রামগুলোর এক-তৃতীয়াংশ আসল বোর্ডের চেয়ে প্রায় পাঁচ গুণ ধীরে চলেছে। ল্যাবের যে সংস্করণে এটা যুক্ত আছে, সেখানে কোড ট্যাবে এটাকে বেছে নেওয়া যায়, যাতে দুটো পদ্ধতি তুলনা করা যায়। এতে আপলোডের জন্য ইন্টারনেট লাগে, আর Wi-Fi, ডিসপ্লে বা সেন্সর এখনো যুক্ত নেই।',
   'esp32.full': 'পুরো গবেষণা পড়ো (ইংরেজিতে)',
   'code.esp32.more': 'কী কাজ করে আর কী মাপা হয়েছে',
+  'code.esp32.emulatorNote':
+    'পরীক্ষামূলক। এখানে ESP32-র আসল সফটওয়্যার চিপের একটা এমুলেটরে (esp32sim) চলছে। এটা আসল বোর্ডের চেয়ে ধীর: যে প্রোগ্রামের লুপ কখনো থামে না, ল্যাপটপে সেটা আসল গতির প্রায় পাঁচ ভাগের এক ভাগে চলে। Wi-Fi, ডিসপ্লে আর সেন্সর এতে যুক্ত নেই। আসল বোর্ডের সাথে এটা এখনো মিলিয়ে দেখা হয়নি।',
+  'code.engine': 'প্রোগ্রাম কীভাবে চলবে',
+  'code.engine.library': 'ল্যাবের নিজের বোর্ড-মডেল',
+  'code.engine.library.about': 'দ্রুত, ইন্টারনেট ছাড়াও চলে। বোর্ডের আচরণ আমাদের বানানো মডেল।',
+  'code.engine.emulator': 'আসল চিপের এমুলেটর',
+  'code.engine.emulator.about': 'বোর্ডের আসল সফটওয়্যার চলে। ধীর, আর আপলোডের জন্য ইন্টারনেট লাগে।',
+  'diag.running-slow': 'সার্কিট আসল সময়ের চেয়ে ধীরে চলছে: আসল বোর্ডের গতির প্রায় {percent}%।',
   'code.editor': 'প্রোগ্রাম',
   'code.upload': 'বোর্ডে আপলোড করো',
   'code.uploading': 'কম্পাইল হচ্ছে…',
@@ -649,9 +657,20 @@ export const en: Record<MessageKey, string> = {
     'The first three figures are from the study’s own test set-up, with the same model of the board, before the board was put in the editor.',
   'esp32.other.title': 'The other way: an emulator of the whole chip',
   'esp32.other.body':
-    'Another way is to run the board’s real software in an emulator of the chip. We tried one (esp32sim, open source): it ran all 103 programs we gave it, and showed four mistakes in our own model, one of which is fixed. But on a laptop a third of those programs ran about five times slower than a real board. It is not in the lab yet; the plan is to offer it beside this one, so the two can be compared.',
+    'Another way is to run the board’s real software in an emulator of the chip. We tried one (esp32sim, open source): it ran all 103 programs we gave it, and showed four mistakes in our own model, one of which is fixed. But on a laptop a third of those programs ran about five times slower than a real board. Where a build of the lab carries it, it can be chosen in the Code tab, so the two ways can be compared. Uploading with it needs the internet, and Wi-Fi, displays and sensors are not connected to it yet.',
   'esp32.full': 'Read the full study',
   'code.esp32.more': 'What works and what was measured',
+  'code.esp32.emulatorNote':
+    'Experimental. This runs the ESP32’s real software in an emulator of the chip (esp32sim). It is slower than a real board: a program whose loop never waits runs at about a fifth of real speed on a laptop. Wi-Fi, displays and sensors are not connected to it. It has not yet been checked against a real board.',
+  'code.engine': 'How the program is run',
+  'code.engine.library': 'The lab’s own model of the board',
+  'code.engine.library.about':
+    'Fast, and works without the internet. What the board does is our model of it.',
+  'code.engine.emulator': 'An emulator of the real chip',
+  'code.engine.emulator.about':
+    'Runs the board’s real software. Slow, and uploading needs the internet.',
+  'diag.running-slow':
+    'The circuit is running slower than real time: about {percent}% of a real board’s speed.',
   'code.editor': 'Program',
   'code.upload': 'Upload to the board',
   'code.uploading': 'Compiling…',

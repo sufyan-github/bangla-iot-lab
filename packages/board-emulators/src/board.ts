@@ -34,4 +34,6 @@ export interface ProgrammableBoard {
   onSerial(listener: (text: string) => void): () => void;
   /** Runs the program until its clock reaches `timeMs`. */
   runUntil(timeMs: number): void;
+  /** Optional. Frees what the board holds, when it is taken out of a circuit. */
+  dispose?(): void;
 }

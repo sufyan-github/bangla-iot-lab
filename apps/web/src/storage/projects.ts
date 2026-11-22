@@ -8,6 +8,12 @@ export interface BoardProgram {
   hex: string | null;
   /** The source `hex` was built from; differs from `source` when there are unuploaded edits. */
   hexSource: string | null;
+  /**
+   * ESP32 only: how the student wants the program run. Absent means the lab's
+   * own model of the board; `emulator` means the board's real firmware in an
+   * emulator of the chip.
+   */
+  engine?: 'library' | 'emulator';
 }
 
 /** A circuit saved on this device. */

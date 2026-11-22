@@ -1,8 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Suspense, lazy, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { isProgrammable, type ProgrammableType } from '@banglalab/shared';
-import { compileSketch } from '../api';
+import { compileSketch, hasChipEmulator } from '../api';
 import { useT } from '../i18n';
 import { useOnline } from '../shell/useOnline';
 import { matchingStarter, starterIds, starterLabel, starterProgram } from './starters';
@@ -19,20 +19,39 @@ export function CodePanel({ boardId }: { boardId: string }) {
     (s) => s.circuit.components.find((c) => c.id === boardId && isProgrammable(c))?.type,
   ) as ProgrammableType | undefined;
   const board: ProgrammableType = boardType ?? 'uno';
-  const { setSource, uploadProgram, clearSerial } = useLab.getState();
+  const { setSource, uploadProgram, setEngine, clearSerial } = useLab.getState();
   const { t, number } = useT();
   const online = useOnline();
   const source = program?.source ?? '';
 
+  // The ESP32 has two ways of running a program, when this build carries the chip emulator.
+  const emulatorBuilt = useQuery({
+    queryKey: ['chip-emulator'],
+    queryFn: hasChipEmulator,
+    enabled: board === 'esp32',
+    staleTime: Infinity,
+  }).data;
+  const engine = board === 'esp32' ? (program?.engine ?? 'library') : undefined;
+  /** What the program now on the board was built for: real firmware is stored as JSON. */
+  const builtFor = program?.hex?.trimStart().startsWith('{') ? 'emulator' : 'library';
+
   const build = useMutation({
-    mutationFn: (code: string) => compileSketch(code, board),
+    mutationFn: (code: string) => compileSketch(code, board, engine),
     onSuccess: (result, compiled) => {
       if (result.ok)
-        uploadProgram(boardId, { source: compiled, hex: result.hex, hexSource: compiled });
+        uploadProgram(boardId, {
+          source: compiled,
+          hex: result.hex,
+          hexSource: compiled,
+          ...(engine ? { engine } : {}),
+        });
     },
   });
   const result = build.data;
-  const upToDate = typeof program?.hex === 'string' && program.hexSource === source;
+  const upToDate =
+    typeof program?.hex === 'string' &&
+    program.hexSource === source &&
+    (engine === undefined || builtFor === engine);
 
   const serialBox = useRef<HTMLPreElement>(null);
   useEffect(() => {
@@ -42,7 +61,15 @@ export function CodePanel({ boardId }: { boardId: string }) {
   const chooseStarter = (id: string) => {
     if (id === 'custom') return;
     build.reset();
-    uploadProgram(boardId, starterProgram(id, board));
+    const starter = starterProgram(id, board);
+    // Ready-made programs ship built for the lab's own model of the board. For
+    // the chip emulator only the sketch is taken: it is built when uploaded.
+    if (engine === 'emulator') setSource(boardId, starter.source);
+    else uploadProgram(boardId, starter);
+  };
+  const chooseEngine = (next: 'library' | 'emulator') => {
+    build.reset();
+    setEngine(boardId, next);
   };
 
   return (
@@ -52,11 +79,41 @@ export function CodePanel({ boardId }: { boardId: string }) {
           className="rounded-lg border-l-4 border-amber bg-amber-soft px-3 py-2 text-sm"
           data-testid="esp32-note"
         >
-          {t('code.esp32.note')}{' '}
+          {t(engine === 'emulator' ? 'code.esp32.emulatorNote' : 'code.esp32.note')}{' '}
           <Link to="/esp32" className="font-medium text-mat underline" data-testid="esp32-more">
             {t('code.esp32.more')}
           </Link>
         </p>
+      )}
+      {board === 'esp32' && emulatorBuilt && (
+        <fieldset data-testid="engine">
+          <legend className="mb-1.5 text-sm text-ink-soft">{t('code.engine')}</legend>
+          <div className="grid gap-2">
+            {(['library', 'emulator'] as const).map((choice) => (
+              <label
+                key={choice}
+                className={`flex cursor-pointer gap-3 rounded-lg border-2 px-3 py-2 ${
+                  engine === choice ? 'border-mat bg-paper' : 'border-line bg-surface'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`engine-${boardId}`}
+                  data-testid={`engine-${choice}`}
+                  className="mt-1.5"
+                  checked={engine === choice}
+                  onChange={() => chooseEngine(choice)}
+                />
+                <span>
+                  <span className="block font-medium">{t(`code.engine.${choice}`)}</span>
+                  <span className="block text-sm text-ink-soft">
+                    {t(`code.engine.${choice}.about`)}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
       )}
       <label className="block">
         <span className="mb-1.5 block text-sm text-ink-soft">{t('code.starter')}</span>

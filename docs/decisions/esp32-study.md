@@ -3,7 +3,7 @@
 **Status: in progress. Steps 1 and 2 of 6 are done. Step 3 is done except for one
 measurement that needs a real phone. Steps 4 and 5 are measured on this laptop. Nothing is measured on a phone. The
 owner has since asked for both option A and option C to be offered in the
-editor, switchable, as experiments (22 November 2026).**
+editor, switchable, as experiments (22 November 2026), and both now are.**
 
 ## The question
 
