@@ -1,6 +1,7 @@
 import {
   BATTERY_TERMINALS,
   L298N_TERMINALS,
+  LOGIC_CHIP_GATES,
   PART_SHAPES,
   boardPinNumber,
   boardTerminals,
@@ -109,6 +110,7 @@ export const BOX_TYPES = new Set([
   'rgbled',
   'oled',
   'relaymodule',
+  'logic',
   'relay',
   'servo',
   'ultrasonic',
@@ -118,7 +120,7 @@ export const BOX_TYPES = new Set([
   'l298n',
 ]);
 /** Boxes with so many legs that only the connected ones are drawn. */
-export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno', 'esp32', 'l298n']);
+export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno', 'esp32', 'l298n', 'logic']);
 
 export function pinNames(component: CircuitComponent): readonly string[] {
   if (component.type === 'battery') return BATTERY_TERMINALS;
@@ -134,6 +136,18 @@ export function pinLabel(component: CircuitComponent, pin: string): string {
     const number = boardPinNumber('uno', pin);
     if (number === null) return pin.toUpperCase();
     return number >= 14 ? `A${number - 14}` : `D${number}`;
+  }
+  // A chip's pins are named as in its datasheet: 1A and 1B in, 1Y out, for its first gate.
+  if (component.type === 'logic') {
+    const n = Number(pin.slice(1));
+    if (n === 7) return 'GND';
+    if (n === 14) return 'VCC';
+    const gates = LOGIC_CHIP_GATES[component.props.chip].gates;
+    const index = gates.findIndex((gate) => gate.output === n || gate.inputs.includes(n));
+    const gate = gates[index]!;
+    const role =
+      gate.output === n ? 'Y' : gate.inputs.length === 1 ? 'A' : 'AB'[gate.inputs.indexOf(n)];
+    return `${index + 1}${role}`;
   }
   // The ESP32's pins are named as printed on the board.
   if (component.type === 'esp32') return pin.startsWith('gnd') ? 'GND' : pin.toUpperCase();

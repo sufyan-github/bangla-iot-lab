@@ -746,3 +746,35 @@ test C9 measures the kit's module.
 
 The lesson and the watering project switch only battery circuits, and say
 never to switch mains in a school lab.
+
+## D-060 — Digital logic starts with real chips on the breadboard
+
+The owner chose (22 November 2026) to build logic circuits with real chips
+first and a symbol canvas later, starting with the gate chips and a truth
+table. A school lab teaches logic with 74-series chips, LEDs and switches,
+and the lab already has those parts, the board and the instruments, so the
+chips go where students will meet them.
+
+**Model.** Each chip is solved with the rest of the circuit. Its inputs take
+almost nothing; its outputs are its own supply or ground through about 50 Ω,
+so what an output gives is taken from the chip's supply. REPORTED, from the
+74HC family's datasheets: a 2 V to 6 V supply, thresholds at 30 % and 70 % of
+it, about 4 mA within a few tenths of a volt of the rail, and 25 mA at most.
+ESTIMATE: the 50 Ω, which reproduces those figures. Between the thresholds an
+input keeps the level it had, which is what makes gates wired into a latch
+remember. Gates are re-solved until they settle; a circuit that never settles
+(a NOT gate on its own output) is reported rather than left to flicker. The
+gates answer at once: propagation delay is not modelled.
+
+**Mistakes the lab names:** an input of a gate in use connected to nothing
+(a real chip reads it unpredictably; the lab reads LOW and says so), a supply
+over 6 V, too little supply, and an output overloaded.
+
+**Truth table.** The table is made by the same simulation: each combination of
+the circuit's switches in turn, reading its LEDs. It is made twice, in both
+orders; when the two differ the circuit remembers, and the table says so.
+
+**Not yet:** the diagram shows a chip as a box with datasheet pin names (1A,
+1B, 1Y) rather than as gate symbols; flip-flop, counter and decoder chips; a
+chip cannot be turned round, so putting one in upside down (a real mistake)
+cannot be shown yet; and the symbol canvas.

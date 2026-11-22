@@ -52,12 +52,13 @@ export type BoardPartType = BoardPart['type'];
 function shapeOf(definitionId: string): PartShape {
   const definition = partDefinition(definitionId);
   if (!definition.placement) throw new Error(`Part ${definitionId} has no placement.`);
-  const { idPrefix, offsets, maxSpan } = definition.placement;
+  const { idPrefix, offsets, maxSpan, rows } = definition.placement;
   return {
     idPrefix,
     pins: definition.pins.map((pin) => pin.id),
     offsets,
     ...(maxSpan === undefined ? {} : { maxSpan }),
+    ...(rows === undefined ? {} : { rows }),
   };
 }
 
@@ -66,6 +67,8 @@ export interface PartShape {
   pins: readonly string[];
   offsets: readonly number[];
   maxSpan?: number;
+  /** For a chip across the centre gap: the row each pin must be in. */
+  rows?: readonly ('e' | 'f')[];
 }
 
 export const PART_SHAPES: Record<BoardPartType, PartShape> = {
@@ -94,6 +97,7 @@ export const PART_SHAPES: Record<BoardPartType, PartShape> = {
   rgbled: shapeOf('rgb-led-module'),
   oled: shapeOf('oled-ssd1306-096'),
   relaymodule: shapeOf('relay-module-1ch'),
+  logic: shapeOf('74hc08'),
   lcd: { idPrefix: 'LCD', pins: LCD_PINS, offsets: LCD_PINS.map((_, i) => i) },
 };
 
@@ -122,6 +126,7 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
   rgbled: {},
   oled: {},
   relaymodule: { trigger: 'high' },
+  logic: { chip: '74HC08' },
   ultrasonic: { distance: 50 },
   lcd: {},
 };
@@ -238,8 +243,13 @@ export function placePart(circuit: CircuitDocument, type: BoardPartType, hole: H
 
   const shape = PART_SHAPES[type];
   const { x, y } = holeCoordinates(hole);
-  for (const direction of [1, -1]) {
-    const holes = shape.offsets.map((offset) => holeAt(x + direction * offset, y));
+  // A chip across the gap goes where it must, at the tapped column; others start in the tapped row.
+  const holeFor = (offset: number, i: number, direction: number) =>
+    shape.rows
+      ? holeAt(x + offset, holeCoordinates(`${shape.rows[i]}1`).y)
+      : holeAt(x + direction * offset, y);
+  for (const direction of shape.rows ? [1] : [1, -1]) {
+    const holes = shape.offsets.map((offset, i) => holeFor(offset, i, direction));
     if (holes.some((h) => h === undefined || taken.has(h))) continue;
     const pins = Object.fromEntries(shape.pins.map((pin, i) => [pin, holes[i]]));
     const component = {
@@ -273,6 +283,8 @@ function withPins(
   const holes = shape.pins.map((pin) => pins[pin]!);
   if (holes.some((h) => !isHole(h))) return fail('no-room');
   if (new Set(holes).size !== holes.length) return fail('same-point');
+  // A chip only fits across the gap: each pin in its own row.
+  if (shape.rows && holes.some((h, i) => h[0] !== shape.rows![i])) return fail('no-room');
   const taken = occupied(circuit, part.id);
   if (holes.some((h) => taken.has(h))) return fail('hole-occupied');
   if (shape.maxSpan !== undefined && holeDistance(holes[0]!, holes.at(-1)!) > shape.maxSpan) {
@@ -335,6 +347,8 @@ export function moveOffBoardPart(
 export function flipPart(circuit: CircuitDocument, componentId: string): EditResult {
   const part = findBoardPart(circuit, componentId);
   if (!part) return fail('unknown-item');
+  // A chip cannot be turned round on its own rows.
+  if (PART_SHAPES[part.type].rows) return fail('no-room');
   const names = PART_SHAPES[part.type].pins;
   const holes = names.map((pin) => (part.pins as Record<string, HoleId>)[pin]!).reverse();
   return withPins(circuit, part, Object.fromEntries(names.map((pin, i) => [pin, holes[i]!])));

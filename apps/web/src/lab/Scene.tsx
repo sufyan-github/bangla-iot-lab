@@ -38,6 +38,7 @@ import {
   BuzzerView,
   ButtonView,
   CapacitorView,
+  ChipView,
   DiodeView,
   LED_PAINT,
   LcdView,
@@ -402,6 +403,16 @@ export function BoardPartDrawing(props: {
           first={at(part.pins.vss)}
           last={at(part.pins.k)}
           lines={reading?.lcd?.lines}
+          selected={selected}
+        />
+      );
+    case 'logic':
+      return (
+        <ChipView
+          p1={at(part.pins.p1!)}
+          p7={at(part.pins.p7!)}
+          p14={at(part.pins.p14!)}
+          name={part.props.chip}
           selected={selected}
         />
       );

@@ -1,5 +1,4 @@
-# Written in Phase 0 but not yet run on a hosted runner. Known risk: hosted
-# Ubuntu runners may restrict the unprivileged user namespaces bubblewrap needs.
+# Runs on GitHub's hosted Ubuntu runners for every pull request and every push to main.
 name: CI
 on:
   push:

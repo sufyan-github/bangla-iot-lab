@@ -1,6 +1,8 @@
 import { solveDc, type Device, type NpnTransistor, type Solution } from '@banglalab/circuit-engine';
 import {
+  LOGIC_CHIP_GATES,
   boardTerminals,
+  gateOutput,
   isProgrammable,
   terminalsOf,
   type CircuitDocument,
@@ -13,6 +15,10 @@ import {
   LED_MAX_CURRENT,
   LED_RATED_CURRENT,
   LED_VISIBLE_CURRENT,
+  LOGIC_HIGH_FRACTION,
+  LOGIC_LOW_FRACTION,
+  LOGIC_MAX_OUTPUT_CURRENT,
+  LOGIC_MAX_SUPPLY,
   L298N_INPUT_HIGH,
   L298N_INPUT_LOW,
   L298N_LOGIC_MIN,
@@ -32,10 +38,12 @@ import {
   type RgbChannel,
 } from './library';
 import {
+  CHIP_IDLE,
   DRIVER_IDLE,
   IDLE_STATE,
   buildNetlist,
   netName,
+  type ChipState,
   type CircuitState,
   type DriverState,
   type Netlist,
@@ -91,6 +99,10 @@ export type DiagnosticCode =
   | 'module-underpowered'
   | 'supply-backfeed'
   | 'relay-low-trigger'
+  | 'chip-overvoltage'
+  | 'chip-output-overcurrent'
+  | 'logic-input-floating'
+  | 'logic-oscillates'
   | 'solver-failed';
 
 export interface Diagnostic {
@@ -160,6 +172,12 @@ export interface StateSolution {
   channels: Record<string, Sample>;
   /** What each motor driver is doing in this state. */
   drivers: Record<string, DriverState>;
+  /** What each logic chip is doing in this state. */
+  chips: Record<string, ChipState>;
+  /** Logic chip inputs joined to nothing at all, as "U1.p2". */
+  floating: string[];
+  /** True when the logic chips never settled: a circuit that keeps changing by itself. */
+  unsettled: boolean;
   iterations: number;
 }
 
@@ -239,6 +257,60 @@ export function driverStates(
   return next;
 }
 
+/**
+ * What each logic chip does for the voltages just solved: whether it has power,
+ * the level it reads on each input (between the two thresholds an input keeps
+ * the level it had), and what each gate's output is then.
+ */
+export function chipStates(
+  document: CircuitDocument,
+  solution: StateSolution,
+  current: Readonly<Record<string, ChipState>>,
+): Record<string, ChipState> {
+  const next: Record<string, ChipState> = {};
+  for (const component of document.components) {
+    if (component.type !== 'logic') continue;
+    const before = current[component.id] ?? CHIP_IDLE;
+    const at = (n: number) => solution.nodes[netName(component.pins[`p${n}`]!)] ?? 0;
+    const ground = at(7);
+    const supply = at(14) - ground;
+    const powered = supply >= MIN_SUPPLY.logic!;
+    const inputs: Record<number, boolean> = {};
+    const outputs: Record<number, boolean> = {};
+    const { kind, gates } = LOGIC_CHIP_GATES[component.props.chip];
+    for (const gate of gates) {
+      for (const input of gate.inputs) {
+        const volts = at(input) - ground;
+        inputs[input] =
+          volts > LOGIC_HIGH_FRACTION * supply
+            ? true
+            : volts < LOGIC_LOW_FRACTION * supply
+              ? false
+              : (before.inputs[input] ?? false);
+      }
+      outputs[gate.output] = gateOutput(
+        kind,
+        gate.inputs.map((input) => inputs[input]!),
+      );
+    }
+    next[component.id] = { powered, inputs, outputs };
+  }
+  return next;
+}
+
+export function sameChips(
+  a: Readonly<Record<string, ChipState>>,
+  b: Readonly<Record<string, ChipState>>,
+): boolean {
+  return Object.entries(b).every(([id, state]) => {
+    const other = a[id];
+    if (!other || other.powered !== state.powered) return false;
+    return Object.entries(state.outputs).every(
+      ([pin, level]) => other.outputs[Number(pin)] === level,
+    );
+  });
+}
+
 /** True when two sets of driver states are the same to within a few millivolts. */
 export function sameDrivers(
   a: Readonly<Record<string, DriverState>>,
@@ -284,11 +356,16 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
   let relays = state.relays ?? {};
   let motion = state.motion ?? {};
   let drivers = state.drivers ?? {};
+  let chips = state.chips ?? {};
   const hasDriver = document.components.some((c) => c.type === 'l298n');
+  const hasChip = document.components.some((c) => c.type === 'logic');
   let solution: StateSolution | null = null;
   // A motor driver needs a few more rounds: its regulator, then its logic, then its outputs.
-  for (let round = 0; round < (hasDriver ? 12 : 4); round++) {
-    const netlist = buildNetlist(document, { ...state, relays, motion, drivers });
+  // Logic chips need one round for each gate a signal passes through.
+  const rounds = hasChip ? 24 : hasDriver ? 12 : 4;
+  let settled = false;
+  for (let round = 0; round < rounds; round++) {
+    const netlist = buildNetlist(document, { ...state, relays, motion, drivers, chips });
     const dc = solveDc(netlist.circuit);
     if (!dc.ok) return null;
     solution = readSolution(document, netlist, dc.solution, dc.iterations);
@@ -296,16 +373,27 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     // Whether a motion sensor is powered is only known once the circuit is solved.
     const moving = state.motion ?? motionOutputs(document, solution);
     const driving = hasDriver ? driverStates(document, solution, drivers) : drivers;
+    const logic = hasChip ? chipStates(document, solution, chips) : chips;
     solution.relays = next;
     solution.motion = moving;
     solution.drivers = drivers;
-    if (sameStates(relays, next) && sameStates(motion, moving) && sameDrivers(drivers, driving)) {
+    solution.chips = chips;
+    if (
+      sameStates(relays, next) &&
+      sameStates(motion, moving) &&
+      sameDrivers(drivers, driving) &&
+      sameChips(chips, logic)
+    ) {
+      settled = true;
       break;
     }
     relays = next;
     motion = moving;
     drivers = driving;
+    chips = logic;
   }
+  // Gates that keep changing each other (a NOT gate fed its own output) never settle.
+  if (solution && hasChip && !settled) solution.unsettled = true;
   return solution;
 }
 
@@ -334,6 +422,9 @@ export function readSolution(
     motion: {},
     channels: {},
     drivers: {},
+    chips: {},
+    floating: [],
+    unsettled: false,
     iterations,
   };
 
@@ -515,6 +606,36 @@ export function readSolution(
         result.legs[`${id}.${pin}`] = fresh
           ? own.reduce((sum, device) => sum + entering(device, node), 0)
           : 0;
+      }
+    }
+  }
+  // A logic chip's reading is its supply and what it takes from it; each output's current is kept,
+  // and an input joined to nothing at all is noted.
+  for (const component of document.components) {
+    if (component.type !== 'logic') continue;
+    const { id } = component;
+    const pin = (n: number) => component.pins[`p${n}`]!;
+    result.parts[id] = {
+      voltage: volts(pin(14)) - volts(pin(7)),
+      current: result.legs[`${id}.p14`] ?? 0,
+    };
+    for (const gate of LOGIC_CHIP_GATES[component.props.chip].gates) {
+      const output = netlist.circuit.devices.find((d) => d.id === `${id}:p${gate.output}`);
+      result.channels[`${id}.p${gate.output}`] = {
+        voltage: volts(pin(gate.output)) - volts(pin(7)),
+        current: output?.current(solution) ?? 0,
+      };
+      const touches = (n: number) => {
+        const node = netlist.nodeOf(pin(n));
+        return netlist.circuit.devices.filter(
+          (d) => d.id !== `${id}:p${n}` && d.nodes.includes(node),
+        ).length;
+      };
+      // Only for a gate that is in use: one of its pins is joined to something.
+      const used = [...gate.inputs, gate.output].some((n) => touches(n) > 0);
+      if (!used) continue;
+      for (const input of gate.inputs) {
+        if (touches(input) === 0) result.floating.push(`${id}.p${input}`);
       }
     }
   }
@@ -724,6 +845,41 @@ export class Observation {
           ? Math.max(-1, Math.min(1, reading.voltage / MOTOR_RATED_VOLTAGE))
           : 0;
       }
+      if (component.type === 'logic') {
+        // A 74HC chip on more than 6 V, or an output asked for more than 25 mA, is being damaged.
+        const supply = extreme((s) => s.parts[id]!.voltage, Math.max);
+        if (supply > LOGIC_MAX_SUPPLY) {
+          result.diagnostics.push({
+            code: 'chip-overvoltage',
+            severity: 'error',
+            componentId: id,
+            volts: supply,
+            limit: LOGIC_MAX_SUPPLY,
+          });
+        }
+        for (const gate of LOGIC_CHIP_GATES[component.props.chip].gates) {
+          const key = `${id}.p${gate.output}`;
+          const peak = extreme((s) => Math.abs(s.channels[key]?.current ?? 0), Math.max);
+          if (peak > LOGIC_MAX_OUTPUT_CURRENT) {
+            result.diagnostics.push({
+              code: 'chip-output-overcurrent',
+              severity: 'error',
+              componentId: id,
+              socket: `p${gate.output}`,
+            });
+          }
+        }
+        const floating = new Set(states.flatMap(([s]) => s.floating));
+        for (const leg of floating) {
+          if (!leg.startsWith(`${id}.`)) continue;
+          result.diagnostics.push({
+            code: 'logic-input-floating',
+            severity: 'warning',
+            componentId: id,
+            socket: leg.slice(id.length + 1),
+          });
+        }
+      }
       // A module wired to a supply that is too low for it: it looks connected and does nothing.
       const least = MIN_SUPPLY[component.type];
       if (least !== undefined) {
@@ -741,6 +897,14 @@ export class Observation {
       result.readings[id] = reading;
     }
 
+    if (states.some(([s]) => s.unsettled)) {
+      const chip = document.components.find((c) => c.type === 'logic');
+      result.diagnostics.push({
+        code: 'logic-oscillates',
+        severity: 'warning',
+        componentId: chip?.id,
+      });
+    }
     for (const wire of document.wires) {
       result.wireCurrents[wire.id] = average((s) => s.wires[wire.id] ?? 0);
     }

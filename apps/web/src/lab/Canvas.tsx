@@ -95,6 +95,8 @@ const BODY_HEIGHT: Partial<Record<string, number>> = {
   rgbled: 38,
   oled: 86,
   relaymodule: 58,
+  // A chip's body runs from its row f legs up to its row e legs.
+  logic: 76,
   relay: 26,
   servo: 36,
   ultrasonic: 38,
@@ -632,7 +634,8 @@ export function Canvas() {
                 }
                 const leads = Object.values(component.pins).map(holePoint);
                 const first = leads[0]!;
-                const second = leads.at(-1)!;
+                // A chip is held along its row of pins 1 to 7.
+                const second = (component.type === 'logic' ? leads[6] : leads.at(-1))!;
                 // Modules stand taller than their legs; the whole body is touchable.
                 const bodyHeight = BODY_HEIGHT[component.type] ?? 0;
                 const length = Math.hypot(second.x - first.x, second.y - first.y);
@@ -914,7 +917,7 @@ export function Canvas() {
         {selecting && (selectedPart || selectedWire) && !lift && !floating && (
           <div className="quick-actions pointer-events-auto flex items-center gap-1 rounded-xl border border-line bg-surface p-1 shadow-md">
             <span className="px-2 text-sm font-semibold text-ink">{selectedId}</span>
-            {selectedPart && 'pins' in selectedPart && (
+            {selectedPart && 'pins' in selectedPart && selectedPart.type !== 'logic' && (
               <button
                 type="button"
                 data-testid="quick-flip"

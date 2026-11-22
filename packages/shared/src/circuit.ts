@@ -23,10 +23,11 @@ import { isHole } from './breadboard';
  * 10 — adds the OLED display.
  * 11 — adds the L298N motor driver.
  * 12 — adds the relay module.
+ * 13 — adds the 74HC logic chips.
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 12;
+export const CIRCUIT_SCHEMA_VERSION = 13;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -343,6 +344,98 @@ export const RelayModuleSchema = Type.Object({
   props: Type.Object({ trigger: Type.Union([Type.Literal('high'), Type.Literal('low')]) }),
 });
 
+/** The 74HC logic chips the lab has, each with fourteen pins. */
+export const LOGIC_CHIPS = ['74HC00', '74HC02', '74HC04', '74HC08', '74HC32', '74HC86'] as const;
+export type LogicChip = (typeof LOGIC_CHIPS)[number];
+export type GateKind = 'NAND' | 'NOR' | 'NOT' | 'AND' | 'OR' | 'XOR';
+
+/** One gate of a chip: its input pins and its output pin, by pin number. */
+export interface Gate {
+  inputs: readonly number[];
+  output: number;
+}
+
+const QUAD: readonly Gate[] = [
+  { inputs: [1, 2], output: 3 },
+  { inputs: [4, 5], output: 6 },
+  { inputs: [9, 10], output: 8 },
+  { inputs: [12, 13], output: 11 },
+];
+
+/**
+ * What is inside each chip, from the standard 74xx pinouts. Pin 7 is ground
+ * and pin 14 the supply on all of them. The 74HC02 is the odd one: its outputs
+ * come first in each gate.
+ */
+export const LOGIC_CHIP_GATES: Record<LogicChip, { kind: GateKind; gates: readonly Gate[] }> = {
+  '74HC00': { kind: 'NAND', gates: QUAD },
+  '74HC08': { kind: 'AND', gates: QUAD },
+  '74HC32': { kind: 'OR', gates: QUAD },
+  '74HC86': { kind: 'XOR', gates: QUAD },
+  '74HC02': {
+    kind: 'NOR',
+    gates: [
+      { inputs: [2, 3], output: 1 },
+      { inputs: [5, 6], output: 4 },
+      { inputs: [8, 9], output: 10 },
+      { inputs: [11, 12], output: 13 },
+    ],
+  },
+  '74HC04': {
+    kind: 'NOT',
+    gates: [
+      { inputs: [1], output: 2 },
+      { inputs: [3], output: 4 },
+      { inputs: [5], output: 6 },
+      { inputs: [9], output: 8 },
+      { inputs: [11], output: 10 },
+      { inputs: [13], output: 12 },
+    ],
+  },
+};
+
+/** What a gate of each kind gives for its inputs. */
+export function gateOutput(kind: GateKind, inputs: readonly boolean[]): boolean {
+  switch (kind) {
+    case 'NOT':
+      return !inputs[0];
+    case 'AND':
+      return inputs.every(Boolean);
+    case 'NAND':
+      return !inputs.every(Boolean);
+    case 'OR':
+      return inputs.some(Boolean);
+    case 'NOR':
+      return !inputs.some(Boolean);
+    case 'XOR':
+      return inputs.filter(Boolean).length % 2 === 1;
+  }
+}
+
+const DIP14_PINS = Array.from({ length: 14 }, (_, i) => `p${i + 1}`);
+
+/**
+ * A 74HC logic chip in a 14-pin package, across the centre gap of the
+ * breadboard: pins 1 to 7 along row f from the left, 8 to 14 back along row e.
+ */
+export const LogicSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('logic'),
+  pins: Type.Object(
+    Object.fromEntries(DIP14_PINS.map((pin) => [pin, Hole])) as Record<string, typeof Hole>,
+  ),
+  props: Type.Object({
+    chip: Type.Union([
+      Type.Literal('74HC00'),
+      Type.Literal('74HC02'),
+      Type.Literal('74HC04'),
+      Type.Literal('74HC08'),
+      Type.Literal('74HC32'),
+      Type.Literal('74HC86'),
+    ]),
+  }),
+});
+
 /** Arduino UNO-compatible board. It sits beside the breadboard; wires plug into its sockets. */
 export const UnoSchema = Type.Object({
   id: Id,
@@ -414,6 +507,7 @@ export const ComponentSchema = Type.Union([
   RgbLedSchema,
   OledSchema,
   RelayModuleSchema,
+  LogicSchema,
   UnoSchema,
   Esp32Schema,
   L298nSchema,

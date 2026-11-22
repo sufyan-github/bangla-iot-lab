@@ -1,5 +1,11 @@
 import type { MessageKey } from '@banglalab/i18n';
-import { LED_COLORS, type CircuitComponent, type LedColor } from '@banglalab/shared';
+import {
+  LED_COLORS,
+  LOGIC_CHIPS,
+  LOGIC_CHIP_GATES,
+  type CircuitComponent,
+  type LedColor,
+} from '@banglalab/shared';
 import {
   BATTERY_VOLTAGES,
   CAPACITOR_VALUES,
@@ -8,12 +14,13 @@ import {
   type Diagnostic,
   type Reading,
 } from '@banglalab/simulation';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { oledImage } from './oled-image';
 import { parseSettings } from './settings';
 import { LED_PAINT } from './parts';
 import { useLab } from './store';
+import { tableParts, truthTable, type TruthTable } from './truth-table';
 
 function Panel(props: { title: string; children: ReactNode; testId?: string }) {
   return (
@@ -182,6 +189,26 @@ function PartSettings({ part }: { part: CircuitComponent }) {
     );
   }
   if (part.type === 'oled') return <OledPreview id={part.id} />;
+  if (part.type === 'logic') {
+    // The six chips share a shape, so one can be swapped for another where it sits.
+    return (
+      <label className="block">
+        <span className="mb-1.5 block text-sm text-ink-soft">{t('inspector.chip')}</span>
+        <select
+          data-testid="logic-chip"
+          value={part.props.chip}
+          onChange={(event) => setProps(part.id, { chip: event.target.value })}
+          className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-3"
+        >
+          {LOGIC_CHIPS.map((chip) => (
+            <option key={chip} value={chip}>
+              {chip} · {t(`gate.${LOGIC_CHIP_GATES[chip].kind}` as MessageKey)}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
   if (part.type === 'relaymodule') {
     return (
       <fieldset>
@@ -445,6 +472,90 @@ function PartSettings({ part }: { part: CircuitComponent }) {
 }
 
 /** Settings and explanation for whatever the student has selected. */
+/**
+ * The truth table of the circuit on the board: its switches as inputs and its
+ * LEDs as outputs. Made on request, and put away when the circuit changes.
+ */
+export function TruthTablePanel() {
+  const circuit = useLab((s) => s.circuit);
+  const { t } = useT();
+  const [table, setTable] = useState<{ of: typeof circuit; table: TruthTable } | null>(null);
+  if (!tableParts(circuit)) return null;
+  const shown = table?.of === circuit ? table.table : null;
+  const bit = (on: boolean) => (on ? '1' : '0');
+  return (
+    <Panel title={t('table.title')} testId="truth-table">
+      <p className="mb-2 text-sm text-ink-soft">{t('table.about')}</p>
+      <button
+        type="button"
+        data-testid="make-table"
+        onClick={() => {
+          const made = truthTable(circuit);
+          if (made) setTable({ of: circuit, table: made });
+        }}
+        className="min-h-11 rounded-lg border-2 border-line px-3 text-sm font-medium hover:border-ink-soft"
+      >
+        {t('table.make')}
+      </button>
+      {shown && (
+        <>
+          <table
+            className="mt-3 w-full border-collapse text-center font-mono text-sm"
+            data-testid="table-rows"
+          >
+            <thead>
+              <tr>
+                {shown.inputs.map((id) => (
+                  <th key={id} className="border-b-2 border-line px-1 py-1">
+                    {id}
+                  </th>
+                ))}
+                {shown.outputs.map((id) => (
+                  <th key={id} className="border-b-2 border-l-2 border-line px-1 py-1">
+                    {id}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {shown.rows.map((row, i) => (
+                <tr
+                  key={i}
+                  data-testid="table-row"
+                  data-row={[...row.inputs, ...row.outputs].map(bit).join('')}
+                >
+                  {row.inputs.map((on, j) => (
+                    <td key={j} className="px-1 py-0.5">
+                      {bit(on)}
+                    </td>
+                  ))}
+                  {row.outputs.map((on, j) => (
+                    <td
+                      key={j}
+                      className={`border-l-2 border-line px-1 py-0.5 font-bold ${on ? 'text-mat' : ''}`}
+                    >
+                      {bit(on)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-ink-soft">{t('table.key')}</p>
+          {shown.remembers && (
+            <p
+              role="status"
+              className="mt-2 rounded-lg border-l-4 border-amber bg-amber-soft px-3 py-2 text-sm"
+            >
+              {t('table.remembers')}
+            </p>
+          )}
+        </>
+      )}
+    </Panel>
+  );
+}
+
 export function Inspector() {
   const circuit = useLab((s) => s.circuit);
   const selectedId = useLab((s) => s.selectedId);
@@ -471,7 +582,7 @@ export function Inspector() {
       {part && <PartSettings part={part} />}
       <p className="mt-3 text-sm text-ink-soft">{t(`part.${type}.about`)}</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {part && 'pins' in part && (
+        {part && 'pins' in part && part.type !== 'logic' && (
           <button
             type="button"
             data-testid="flip"

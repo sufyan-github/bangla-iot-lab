@@ -248,6 +248,23 @@ export const L298N_LOGIC_MIN = 4.5;
 export const L298N_JUMPER_RESISTANCE = 1;
 
 /**
+ * 74HC logic chips. REPORTED, from the family's datasheets (for example Texas
+ * Instruments' and Nexperia's 74HC00): a supply of 2 V to 6 V (7 V absolute
+ * maximum); an input is HIGH above 70 % and LOW below 30 % of the supply; an
+ * output gives about 4 mA while staying within a few tenths of a volt of the
+ * rail, and may carry 25 mA at most. ESTIMATE: the 50 Ω output resistance that
+ * reproduces that, and the leakage that stands for an input.
+ */
+export const LOGIC_MAX_SUPPLY = 6;
+export const LOGIC_HIGH_FRACTION = 0.7;
+export const LOGIC_LOW_FRACTION = 0.3;
+export const LOGIC_OUTPUT_RESISTANCE = 50;
+export const LOGIC_MAX_OUTPUT_CURRENT = 0.025;
+export const LOGIC_INPUT_RESISTANCE = 1_000_000_000;
+/** What the chip itself draws at rest: microamperes, here as a large resistance. */
+export const LOGIC_QUIESCENT_RESISTANCE = 10_000_000;
+
+/**
  * One-channel 5 V relay module. REPORTED, by the relay maker for a 5 V relay of
  * this kind: a 70 Ω coil that must pull in at 75 % of 5 V (3.75 V). REPORTED by
  * sellers: an optocoupler drives the module's transistor, and a jumper chooses
@@ -293,6 +310,7 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   oled: 3,
   l298n: 6.5,
   relaymodule: 3.75,
+  logic: 2,
 };
 
 /**

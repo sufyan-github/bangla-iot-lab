@@ -10,7 +10,7 @@ import { Canvas } from './Canvas';
 import { Diagram } from './diagram/Diagram';
 import { CodePanel } from './CodePanel';
 import { Palette } from './Palette';
-import { Inspector, Messages, Meter } from './panels';
+import { Inspector, Messages, Meter, TruthTablePanel } from './panels';
 import { SignalsPanel } from './SignalsPanel';
 import { checkStep } from '@banglalab/lessons';
 import { LessonPanel } from '../lessons/LessonPanel';
@@ -424,6 +424,7 @@ export function LabPage() {
             <Messages />
             <Meter />
             <Inspector />
+            <TruthTablePanel />
           </>
         )}
       </aside>

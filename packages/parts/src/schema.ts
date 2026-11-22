@@ -55,6 +55,7 @@ export const PartDefinitionSchema = Type.Object({
     Type.Literal('communication'),
     Type.Literal('power'),
     Type.Literal('accessory'),
+    Type.Literal('logic'),
   ]),
   /** 1: the school kit and first lessons. 2: another shortlisted project. 3: everything else. */
   tier: Type.Union([Type.Literal(1), Type.Literal(2), Type.Literal(3)]),
@@ -87,6 +88,11 @@ export const PartDefinitionSchema = Type.Object({
       offsets: Type.Array(Type.Integer({ minimum: 0 })),
       /** How far flexible legs can be bent apart, in hole pitches. Absent for rigid parts. */
       maxSpan: Type.Optional(Type.Integer({ minimum: 1 })),
+      /**
+       * For a chip that sits across the centre gap: the row each leg must be in,
+       * whichever hole was tapped. Such a part can only be slid along the gap.
+       */
+      rows: Type.Optional(Type.Array(Type.Union([Type.Literal('e'), Type.Literal('f')]))),
     }),
   ),
   /** Property values a newly placed part starts with. */

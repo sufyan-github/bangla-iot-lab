@@ -292,6 +292,32 @@ export const bn = {
     '{id}-র জাম্পার L-এ, আর IN পাচ্ছে মাত্র 3.3 V-এর HIGH। অনেক মডিউল 3.3 V-এ ঠিকমতো বন্ধ হয় না; ল্যাবের মডেলে হয়, কিন্তু আসল মডিউলে নাও হতে পারে। জাম্পারটা H-এ সরাও।',
   'code.starter.esp32.relay': 'রিলে দিয়ে বাতি (D26)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
+  'tool.logic': 'লজিক চিপ',
+  'part.logic': 'লজিক চিপ (74HC)',
+  'part.logic.about':
+    'এক চিপে কয়েকটা লজিক গেট। চিপটা বোর্ডের মাঝের খাঁজের ওপর বসে: খাঁজের নিচে ১ থেকে ৭ নম্বর পা, ওপরে ১৪ থেকে ৮। ১৪ নম্বর পা VCC (২ থেকে ৬ V), ৭ নম্বর GND। চিপের যে মাথায় খাঁজ (নচ) আছে, ১ নম্বর পা সেই দিকে। ব্যবহার করা গেটের কোনো ইনপুট খালি রেখো না: ঠিক করে HIGH বা LOW-তে লাগাও।',
+  'inspector.chip': 'কোন চিপ',
+  'gate.NAND': 'NAND',
+  'gate.NOR': 'NOR',
+  'gate.NOT': 'NOT',
+  'gate.AND': 'AND',
+  'gate.OR': 'OR',
+  'gate.XOR': 'XOR',
+  'diag.chip-overvoltage':
+    '{id} পাচ্ছে {volts}; 74HC চিপ সর্বোচ্চ {limit} সইতে পারে। আসল চিপ এতে নষ্ট হয়ে যেতে পারে: ৫ V বা কম দাও।',
+  'diag.chip-output-overcurrent':
+    '{id}-র {socket} পিন থেকে বেশি কারেন্ট যাচ্ছে: একটা আউটপুট সর্বোচ্চ ২৫ mA দিতে পারে। LED হলে সাথে রেজিস্টর দাও, আর আউটপুট সরাসরি VCC বা GND-তে লাগিও না।',
+  'diag.logic-input-floating':
+    '{id}-র {socket} পিন কোথাও লাগানো নেই। খালি ইনপুট আসল চিপে কখনো HIGH, কখনো LOW পড়ে; ল্যাব একে LOW ধরছে। পিনটা VCC বা GND-তে, বা রেজিস্টর হয়ে সুইচে লাগাও।',
+  'diag.logic-oscillates':
+    'গেটগুলো স্থির হচ্ছে না: একটা গেটের আউটপুট ঘুরে আবার তাকেই বদলে দিচ্ছে (যেমন NOT গেটের আউটপুট তার নিজের ইনপুটে)। আসল সার্কিটে এটা খুব দ্রুত দুলতে থাকে।',
+  'table.title': 'সত্যক সারণি',
+  'table.about':
+    'সার্কিটের সুইচগুলো ইনপুট, LED-গুলো আউটপুট। ল্যাব প্রতিটা সুইচ চালু-বন্ধ করে দেখে কোন LED জ্বলে।',
+  'table.make': 'সারণি বানাও',
+  'table.key': '১ মানে সুইচ চালু বা LED জ্বলছে, ০ মানে বন্ধ বা নিভে আছে।',
+  'table.remembers':
+    'এই সার্কিট আগের অবস্থা মনে রাখে (যেমন ল্যাচ): উল্টো ক্রমে সুইচ বদলালে আউটপুট আলাদা হয়। তাই এর সারণি নির্ভর করে আগে কী হয়েছিল তার ওপর।',
   'part.relay': 'রিলে',
   'part.relay.about':
     'রিলে হলো তড়িৎচুম্বক দিয়ে চালানো সুইচ। কয়েলে (বাঁ দিকের দুই পা) কারেন্ট গেলে ভেতরের কন্টাক্ট টেনে বন্ধ হয় আর ডান দিকের দুই পা জুড়ে যায়। কয়েল প্রায় 70 mA চায়, তাই বোর্ডের পিন থেকে সরাসরি নয়, ট্রানজিস্টর দিয়ে চালাও।',
@@ -792,6 +818,32 @@ export const en: Record<MessageKey, string> = {
     "{id}'s jumper is on L, and IN gets only a 3.3 V HIGH. Many modules do not switch off reliably from 3.3 V; the lab's model does, but a real module may not. Move the jumper to H.",
   'code.starter.esp32.relay': 'Lamp through a relay (D26)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
+  'tool.logic': 'Logic chip',
+  'part.logic': 'Logic chip (74HC)',
+  'part.logic.about':
+    'Several logic gates in one chip. It sits across the centre gap: pins 1 to 7 below the gap, 14 to 8 above it. Pin 14 is VCC (2 to 6 V), pin 7 is GND. Pin 1 is at the notched end. Leave no input of a gate in use unconnected: tie it HIGH or LOW.',
+  'inspector.chip': 'Which chip',
+  'gate.NAND': 'NAND',
+  'gate.NOR': 'NOR',
+  'gate.NOT': 'NOT',
+  'gate.AND': 'AND',
+  'gate.OR': 'OR',
+  'gate.XOR': 'XOR',
+  'diag.chip-overvoltage':
+    '{id} is getting {volts}; a 74HC chip can stand {limit} at most. A real chip may be destroyed: use 5 V or less.',
+  'diag.chip-output-overcurrent':
+    'Too much current from pin {socket} of {id}: one output can give 25 mA at most. Put a resistor with an LED, and never join an output straight to VCC or GND.',
+  'diag.logic-input-floating':
+    'Pin {socket} of {id} is connected to nothing. A real chip reads an unconnected input as HIGH one moment and LOW the next; the lab takes it as LOW. Tie the pin to VCC or GND, or to a switch with a resistor.',
+  'diag.logic-oscillates':
+    "The gates never settle: a gate's output comes round and changes it again (such as a NOT gate's output on its own input). In a real circuit this flips back and forth very fast.",
+  'table.title': 'Truth table',
+  'table.about':
+    "The circuit's switches are the inputs and its LEDs the outputs. The lab turns each switch on and off and sees which LEDs light.",
+  'table.make': 'Make the table',
+  'table.key': '1 means the switch is on or the LED is lit; 0 means off or dark.',
+  'table.remembers':
+    'This circuit remembers (like a latch): going through the switches in the other order gives different outputs, so its table depends on what came before.',
   'part.relay': 'Relay',
   'part.relay.about':
     'A relay is a switch worked by an electromagnet. Current through the coil (the two left legs) pulls the contact shut and joins the two right legs. The coil needs about 70 mA, so drive it with a transistor, not straight from a board pin.',

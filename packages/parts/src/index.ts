@@ -30,6 +30,9 @@ export function definitionProblems(value: unknown): string[] {
   if (value.placement && value.placement.offsets.length !== value.pins.length) {
     problems.push('placement.offsets must have one entry per pin');
   }
+  if (value.placement?.rows && value.placement.rows.length !== value.pins.length) {
+    problems.push('placement.rows must have one entry per pin');
+  }
   if (new Set(value.pins.map((pin) => pin.id)).size !== value.pins.length) {
     problems.push('two pins have the same id');
   }

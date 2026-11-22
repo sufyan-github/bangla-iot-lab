@@ -8,6 +8,18 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Digital logic, first step: 74HC gate chips on the breadboard** (circuit
+  format version 13). The 74HC00 (NAND), 02 (NOR), 04 (NOT), 08 (AND), 32 (OR)
+  and 86 (XOR), with their standard pinouts. A chip lands across the centre
+  gap wherever it is tapped, slides along it, and can be swapped for another
+  in the inspector. An input is HIGH above 70 % of the chip's supply and LOW
+  below 30 %, keeping its level in between; outputs drive LEDs from the
+  chip's own supply. Gates wired into a latch remember.
+- Warnings for a floating input of a gate in use, gates that never settle, a
+  supply over 6 V, too little supply, and an output asked for more than 25 mA.
+- **Truth table**: with switches and LEDs in the circuit, the lab writes the
+  table of every switch combination, and says when the circuit remembers so
+  that the table depends on order.
 - **The kit's relay module** (circuit format version 12): VCC, GND and IN, a
   COM/NO/NC contact, and the H/L jumper that sets whether IN must be HIGH or
   LOW to switch it on. The board pin only drives the optocoupler (about 2 mA);

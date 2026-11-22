@@ -354,7 +354,10 @@ describe('part shapes and part definitions', () => {
           // A stand-in definition describes the generic part it borrows, not its own legs.
           (definition.status === 'generic' && definition.model.level !== 'none')),
     );
-    expect(modelled.length).toBe(Object.keys(PART_SHAPES).length);
+    // Several chips share one part type and one shape.
+    expect(new Set(modelled.map((definition) => definition.simulates)).size).toBe(
+      Object.keys(PART_SHAPES).length,
+    );
     for (const definition of modelled) {
       const shape = PART_SHAPES[definition.simulates as BoardPartType];
       expect(shape, definition.id).toBeDefined();
@@ -364,6 +367,7 @@ describe('part shapes and part definitions', () => {
           pins: definition.pins.map((pin) => pin.id),
           offsets: definition.placement!.offsets,
           maxSpan: definition.placement!.maxSpan,
+          rows: definition.placement!.rows,
         },
         definition.id,
       ).toEqual({
@@ -371,6 +375,7 @@ describe('part shapes and part definitions', () => {
         pins: [...shape.pins],
         offsets: [...shape.offsets],
         maxSpan: shape.maxSpan,
+        rows: shape.rows && [...shape.rows],
       });
     }
   });

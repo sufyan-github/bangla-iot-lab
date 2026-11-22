@@ -208,6 +208,13 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M5.5 13h13M8 13v8M10.7 13v6M13.3 13v8M16 13v6" {...stroke} strokeWidth={1.6} />
     </>
   ),
+  logic: (
+    <>
+      <rect x="5" y="5" width="14" height="14" rx="1.5" {...stroke} />
+      <path d="M2 8h3M2 12h3M2 16h3M19 8h3M19 12h3M19 16h3" {...stroke} strokeWidth={1.6} />
+      <path d="M12 5a2 2 0 0 0 0 4" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
   relaymodule: (
     <>
       <rect x="2.5" y="5" width="19" height="14" rx="2" {...stroke} />
@@ -236,6 +243,7 @@ const GROUPS: PaletteItem[][] = [
   ['battery', 'uno', 'esp32'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
   ['buzzer', 'motor', 'l298n', 'relay', 'relaymodule', 'servo', 'rgbled', 'lcd', 'oled'],
+  ['logic'],
   ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
 ];
 

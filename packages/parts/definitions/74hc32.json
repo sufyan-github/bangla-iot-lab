@@ -1,0 +1,110 @@
+{
+  "formatVersion": 1,
+  "id": "74hc32",
+  "simulates": "logic",
+  "status": "simulated",
+  "family": "logic",
+  "tier": 2,
+  "name": {
+    "bn": "74HC32 (OR)",
+    "en": "74HC32 OR gates"
+  },
+  "summary": {
+    "bn": "চারটা OR গেট",
+    "en": "Four OR gates"
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": [
+      "Each gate answers at once: the few nanoseconds a real one takes are left out.",
+      "An input is HIGH above 70 % of the supply and LOW below 30 %; in between it keeps its last level. An output is the supply or ground through about 50 Ω. These are typical datasheet figures, not measured.",
+      "The chip's own current is left out, and it does not heat up.",
+      "It is placed across the centre gap with pin 1 at the bottom left, and cannot be turned round."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "p1",
+      "label": "1",
+      "role": "input"
+    },
+    {
+      "id": "p2",
+      "label": "2",
+      "role": "input"
+    },
+    {
+      "id": "p3",
+      "label": "3",
+      "role": "output"
+    },
+    {
+      "id": "p4",
+      "label": "4",
+      "role": "input"
+    },
+    {
+      "id": "p5",
+      "label": "5",
+      "role": "input"
+    },
+    {
+      "id": "p6",
+      "label": "6",
+      "role": "output"
+    },
+    {
+      "id": "p7",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "p8",
+      "label": "8",
+      "role": "output"
+    },
+    {
+      "id": "p9",
+      "label": "9",
+      "role": "input"
+    },
+    {
+      "id": "p10",
+      "label": "10",
+      "role": "input"
+    },
+    {
+      "id": "p11",
+      "label": "11",
+      "role": "output"
+    },
+    {
+      "id": "p12",
+      "label": "12",
+      "role": "input"
+    },
+    {
+      "id": "p13",
+      "label": "13",
+      "role": "input"
+    },
+    {
+      "id": "p14",
+      "label": "VCC",
+      "role": "power"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["74hc32"]
+  },
+  "placement": {
+    "idPrefix": "U",
+    "offsets": [0, 1, 2, 3, 4, 5, 6, 6, 5, 4, 3, 2, 1, 0],
+    "rows": ["f", "f", "f", "f", "f", "f", "f", "e", "e", "e", "e", "e", "e", "e"]
+  }
+}

@@ -918,6 +918,80 @@ export function MotorView(props: { a: Point; b: Point; speed: number; selected: 
   );
 }
 
+/**
+ * A 14-pin logic chip across the centre gap, seen from above: a black body with
+ * the notch at pin 1's end, the chip's name, and its fourteen legs.
+ */
+export function ChipView(props: {
+  /** Pin 1 (row f, left), pin 7 (row f, right) and pin 14 (row e, left). */
+  p1: Point;
+  p7: Point;
+  p14: Point;
+  name: string;
+  selected: boolean;
+}) {
+  const { p1, p7, p14 } = props;
+  const left = p1.x - 9;
+  const width = p7.x - p1.x + 18;
+  const top = p14.y + 5;
+  const height = p1.y - p14.y - 10;
+  const legs = [0, 1, 2, 3, 4, 5, 6].map((i) => p1.x + ((p7.x - p1.x) * i) / 6);
+  return (
+    <g>
+      {props.selected && (
+        <rect
+          x={left - 8}
+          y={p14.y - 10}
+          width={width + 16}
+          height={p1.y - p14.y + 20}
+          rx={10}
+          fill={SELECTION}
+          opacity={0.4}
+        />
+      )}
+      {legs.map((x) => (
+        <g key={x}>
+          <rect x={x - 2.5} y={p14.y - 2} width={5} height={9} rx={1} fill="url(#shade-metal)" />
+          <rect x={x - 2.5} y={p1.y - 7} width={5} height={9} rx={1} fill="url(#shade-metal)" />
+        </g>
+      ))}
+      <rect
+        x={left + 2}
+        y={top + 4}
+        width={width}
+        height={height}
+        rx={3}
+        fill="#000"
+        opacity={0.3}
+      />
+      <rect x={left} y={top} width={width} height={height} rx={3} fill="#1b1d1f" />
+      <rect
+        x={left}
+        y={top}
+        width={width}
+        height={height}
+        rx={3}
+        fill="url(#shade-board)"
+        opacity={0.6}
+      />
+      {/* The notch at pin 1's end, and the dot beside pin 1. */}
+      <path d={`M${left} ${top + height / 2 - 7}a7 7 0 0 1 0 14`} fill="#0b0c0d" />
+      <circle cx={p1.x} cy={top + height - 8} r={2.6} fill="#3a3e41" />
+      <text
+        x={left + width / 2 + 6}
+        y={top + height / 2 + 4.5}
+        textAnchor="middle"
+        fontSize={12.5}
+        fontWeight={700}
+        fill="#c9cfd2"
+        pointerEvents="none"
+      >
+        {props.name}
+      </text>
+    </g>
+  );
+}
+
 /** NPN transistor (TO-92 package) seen from above, flat face towards the viewer. */
 export function TransistorView(props: { collector: Point; emitter: Point; selected: boolean }) {
   const { length, transform } = between(props.collector, props.emitter);

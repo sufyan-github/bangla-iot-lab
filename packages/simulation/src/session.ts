@@ -10,14 +10,22 @@ import { BOARD_MODELS, type BoardModel } from './boards';
 import { Esp32SimBoard, esp32Emulator, parseEsp32Firmware } from './esp32-sim-board';
 import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
-import { buildNetlist, type CircuitState, type DriverState, type Netlist } from './netlist';
+import {
+  buildNetlist,
+  type ChipState,
+  type CircuitState,
+  type DriverState,
+  type Netlist,
+} from './netlist';
 import { Peripherals, type ScheduledInput } from './peripherals';
 import { PIR_IDLE, pirDeadline, stepPir, type PirState } from './pir';
 import {
   Observation,
+  chipStates,
   driverStates,
   readSolution,
   relayStates,
+  sameChips,
   sameDrivers,
   solveState,
   type SimulationResult,
@@ -103,6 +111,9 @@ const EMPTY_SOLUTION: StateSolution = {
   motion: {},
   channels: {},
   drivers: {},
+  chips: {},
+  floating: [],
+  unsettled: false,
   iterations: 0,
 };
 
@@ -155,6 +166,8 @@ export class SimulationSession {
   private readonly settingsChanged = new Set<string>();
   /** What each motor driver was last found to be doing: where the next solve starts from. */
   private drivers: Record<string, DriverState> = {};
+  /** What each logic chip was last found to be doing. */
+  private chips: Record<string, ChipState> = {};
 
   /** Number of times the circuit was actually solved; exposed for tests and tuning. */
   solveCount = 0;
@@ -325,6 +338,7 @@ export class SimulationSession {
       echo: this.echo,
       motion: this.motion,
       drivers: this.drivers,
+      chips: this.chips,
     };
   }
 
@@ -334,6 +348,10 @@ export class SimulationSession {
     for (const [id, closed] of Object.entries(this.relays)) if (closed) key += `${id};`;
     for (const [id, high] of Object.entries(this.echo)) if (high) key += `${id}^;`;
     for (const [id, high] of Object.entries(this.motion)) if (high) key += `${id}~;`;
+    // A latch made of gates remembers: the same pin levels can leave it either way.
+    for (const [id, chip] of Object.entries(this.chips)) {
+      key += `${id}#${Object.values(chip.outputs).map(Number).join('')};`;
+    }
     return key;
   }
 
@@ -350,6 +368,7 @@ export class SimulationSession {
     if (solution) {
       this.relays = solution.relays;
       this.drivers = solution.drivers;
+      this.chips = solution.chips;
     }
     return solution;
   }
@@ -378,6 +397,12 @@ export class SimulationSession {
     const drivers = driverStates(this.document, this.latest, this.drivers);
     if (!sameDrivers(this.drivers, drivers)) {
       this.drivers = drivers;
+      this.stepping = null;
+    }
+    this.latest.chips = this.chips;
+    const chips = chipStates(this.document, this.latest, this.chips);
+    if (!sameChips(this.chips, chips)) {
+      this.chips = chips;
       this.stepping = null;
     }
     return this.latest;
@@ -469,11 +494,13 @@ export class SimulationSession {
     const echo = this.echo;
     const relays = this.relays;
     const drivers = this.drivers;
+    const chips = this.chips;
     this.echo = { ...echo, [input.sensorId]: input.level };
     const volts = this.solveSteady()?.sockets[`${boardId}.${terminal}`]?.voltage;
     this.echo = echo;
     this.relays = relays;
     this.drivers = drivers;
+    this.chips = chips;
     if (volts === undefined) return input.level;
     if (volts > board.model.logicHigh) return true;
     if (volts < board.model.logicLow) return false;
@@ -506,11 +533,13 @@ export class SimulationSession {
     const before = board.drives[pin]!;
     const relays = this.relays;
     const drivers = this.drivers;
+    const chips = this.chips;
     board.drives[pin] = 'pullup';
     const pulled = this.solveSteady();
     board.drives[pin] = before;
     this.relays = relays;
     this.drivers = drivers;
+    this.chips = chips;
     return (pulled?.sockets[socket]?.voltage ?? 0) > board.model.logicHigh;
   }
 

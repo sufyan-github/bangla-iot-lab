@@ -11,6 +11,7 @@ import {
 } from '@banglalab/circuit-engine';
 import {
   L298N_TERMINALS,
+  LOGIC_CHIP_GATES,
   boardPinNumber,
   boardTerminals,
   isHole,
@@ -32,6 +33,9 @@ import {
   L298N_REST_RESISTANCE,
   L298N_SINK_RESISTANCE,
   L298N_SOURCE_RESISTANCE,
+  LOGIC_INPUT_RESISTANCE,
+  LOGIC_OUTPUT_RESISTANCE,
+  LOGIC_QUIESCENT_RESISTANCE,
   LDR_MODULE_RESISTANCE,
   MODULE_DO_LOW_RESISTANCE,
   MODULE_DO_PULLUP,
@@ -89,7 +93,20 @@ export interface CircuitState {
    * circuit works it out, starting from here.
    */
   drivers?: Readonly<Record<string, DriverState>>;
+  /** What each logic chip is doing: like a driver, worked out from the circuit's own voltages. */
+  chips?: Readonly<Record<string, ChipState>>;
 }
+
+/** A logic chip at one instant: whether it has power, and the level of each pin it reads or drives. */
+export interface ChipState {
+  powered: boolean;
+  /** The level last read on each input pin, by pin number. */
+  inputs: Readonly<Record<number, boolean>>;
+  /** The level each output pin drives, by pin number. */
+  outputs: Readonly<Record<number, boolean>>;
+}
+
+export const CHIP_IDLE: ChipState = { powered: false, inputs: {}, outputs: {} };
 
 /** A motor driver module at one instant. */
 export interface DriverState {
@@ -420,6 +437,35 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
               add(diode(`${id}:out${half}`, output, inner, L298N_JUNCTION));
               add(resistor(`${id}:low${half}`, inner, gnd, L298N_SINK_RESISTANCE));
             }
+          }
+        }
+        break;
+      }
+      case 'logic': {
+        // Inputs take almost nothing; a powered chip's outputs are its supply or its
+        // ground through a small resistance, so what they give is taken from its supply.
+        const chip = state.chips?.[id] ?? CHIP_IDLE;
+        const pin = (n: number) => node(component.pins[`p${n}`]!);
+        const supply = pin(14);
+        const ground = pin(7);
+        partDevice.set(id, add(resistor(id, supply, ground, LOGIC_QUIESCENT_RESISTANCE)));
+        for (const gate of LOGIC_CHIP_GATES[component.props.chip].gates) {
+          for (const input of gate.inputs) {
+            add(resistor(`${id}:p${input}`, pin(input), ground, LOGIC_INPUT_RESISTANCE));
+          }
+          const out = gate.output;
+          if (chip.powered && out in chip.outputs) {
+            add(
+              resistor(
+                `${id}:p${out}`,
+                pin(out),
+                chip.outputs[out] ? supply : ground,
+                LOGIC_OUTPUT_RESISTANCE,
+              ),
+            );
+          } else {
+            // An unpowered chip's outputs are let go.
+            add(resistor(`${id}:p${out}`, pin(out), ground, LOGIC_INPUT_RESISTANCE));
           }
         }
         break;
