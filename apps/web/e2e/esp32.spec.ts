@@ -223,9 +223,11 @@ test('the ESP32 can run the board’s real software in an emulator of the chip',
   await page.getByTestId('run').click();
   const slow = { timeout: 60_000, intervals: [70, 110, 130] };
   await expect.poll(() => ledState(page), slow).toBe('on');
-  const current = Number(await led(page).getAttribute('data-current-ma'));
-  expect(current).toBeGreaterThan(4);
-  expect(current).toBeLessThan(8);
+  // The first frame lit can be only partly on when the emulated chip runs slower than
+  // a real board, so wait for the current to settle rather than reading it once.
+  const current = () => led(page).getAttribute('data-current-ma').then(Number);
+  await expect.poll(current, slow).toBeGreaterThan(4);
+  expect(await current()).toBeLessThan(8);
   await expect.poll(() => ledState(page), slow).toBe('off');
   // Every real ESP32 prints this line of its start-up code when it is switched on.
   await page.getByTestId('tab-code').click();
