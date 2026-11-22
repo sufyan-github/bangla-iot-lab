@@ -32,6 +32,25 @@ const THIRD_PARTY = fileURLToPath(new URL('../../../third_party/', import.meta.u
 export const ESP32_EXTRA_LIBRARIES = [
   // Adafruit's DHT sensor library 1.4.7 (MIT): DHT11 and DHT22.
   { dir: path.join(THIRD_PARTY, 'adafruit-dht'), sources: ['DHT.cpp'], headers: ['DHT.h'] },
+  // Adafruit's GFX graphics library 1.13.0 (BSD): drawing and text for displays.
+  // Its extra fonts are not included: some come from GPL font files.
+  {
+    dir: path.join(THIRD_PARTY, 'adafruit-gfx'),
+    sources: ['Adafruit_GFX.cpp'],
+    headers: ['Adafruit_GFX.h', 'gfxfont.h', 'glcdfont.c'],
+  },
+  // Adafruit's SSD1306 library 2.5.17 (BSD): the kit's OLED display.
+  {
+    dir: path.join(THIRD_PARTY, 'adafruit-ssd1306'),
+    sources: ['Adafruit_SSD1306.cpp'],
+    headers: ['Adafruit_SSD1306.h', 'splash.h'],
+  },
+  // Two headers of Adafruit's BusIO 1.17.4 (MIT), which the graphics library's header names.
+  {
+    dir: path.join(THIRD_PARTY, 'adafruit-busio'),
+    sources: [],
+    headers: ['Adafruit_I2CDevice.h', 'Adafruit_SPIDevice.h'],
+  },
 ] as const;
 /** Every file the built library depends on, for telling when it has changed. */
 function libraryFiles(): string[] {
@@ -137,8 +156,15 @@ const compileFlags = (toolchain: Esp32Toolchain) => [
   // Plain char is unsigned on the ESP32's compiler.
   '-funsigned-char',
   '-fno-exceptions',
+  // As the ESP32's own build. Type information for classes with virtual functions would
+  // also bring the standard library's error printing into every sketch.
+  '-fno-rtti',
   '-fno-diagnostics-color',
   '-fno-caret-diagnostics',
+  // What the ESP32's own build defines; libraries choose their ESP32 code by these.
+  '-DARDUINO=10812',
+  '-DESP32',
+  '-DARDUINO_ARCH_ESP32',
   '-nostdinc++',
   '-isystem',
   toolchain.cxxInclude,

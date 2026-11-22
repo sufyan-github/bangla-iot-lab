@@ -1,4 +1,9 @@
-import type { PinDrive, PinListener, ProgrammableBoard } from '@banglalab/board-emulators';
+import type {
+  I2cHandler,
+  PinDrive,
+  PinListener,
+  ProgrammableBoard,
+} from '@banglalab/board-emulators';
 import {
   ESP32_ADC_ATTENUATIONS,
   ESP32_DEVKIT_PINS,
@@ -106,6 +111,7 @@ export class Esp32SketchBoard implements ProgrammableBoard {
 
   private readonly pinListeners = new Set<PinListener>();
   private readonly serialListeners = new Set<(text: string) => void>();
+  private i2c: I2cHandler | null = null;
   private readonly decoder = new TextDecoder();
   private readonly exports: Exports;
   private readonly pauseData: number;
@@ -138,6 +144,24 @@ export class Esp32SketchBoard implements ProgrammableBoard {
         const bytes = new Uint8Array(this.exports.memory.buffer, pointer, length >>> 0).slice();
         const text = this.decoder.decode(bytes, { stream: true });
         if (text) for (const listener of this.serialListeners) listener(text);
+      },
+      host_i2c_transfer: (
+        sda: number,
+        scl: number,
+        address: number,
+        writePointer: number,
+        writeLength: number,
+        readPointer: number,
+        readLength: number,
+      ) => {
+        if (!this.i2c) return 2; // nothing is listening on any bus
+        const memory = () => new Uint8Array(this.exports.memory.buffer);
+        const write = memory().slice(writePointer, writePointer + (writeLength >>> 0));
+        const result = this.i2c({ sda, scl, address, write, readLength: readLength >>> 0 });
+        if (result.status === 0 && result.read && readLength > 0) {
+          memory().set(result.read.subarray(0, readLength >>> 0), readPointer);
+        }
+        return result.status;
       },
       host_serial_available: () => this.typed.length,
       host_serial_read: () => (this.typed.length ? this.typed.shift()! : -1),
@@ -210,6 +234,10 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   onPinChange(listener: PinListener): () => void {
     this.pinListeners.add(listener);
     return () => this.pinListeners.delete(listener);
+  }
+
+  onI2c(handler: I2cHandler): void {
+    this.i2c = handler;
   }
 
   onSerial(listener: (text: string) => void): () => void {

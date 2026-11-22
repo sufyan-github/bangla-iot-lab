@@ -285,6 +285,10 @@ describe('the rest of the parts library', () => {
       pins: { vcc: 'c10', out: 'c11', gnd: 'c12' },
       props: { motion: false, hold: 3 },
     });
+    expect(placed('oled')).toMatchObject({
+      id: 'OLED1',
+      pins: { gnd: 'c10', vcc: 'c11', scl: 'c12', sda: 'c13' },
+    });
     expect(placed('rgbled')).toMatchObject({
       id: 'RGB1',
       pins: { r: 'c10', g: 'c11', b: 'c12', gnd: 'c13' },

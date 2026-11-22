@@ -1,5 +1,6 @@
 // The board library's implementation: every function is answered through host.h.
 #include "Arduino.h"
+#include "Wire.h"
 
 #include <cctype>
 
@@ -280,57 +281,55 @@ String operator+(const String& a, unsigned long b) { return String(a) += b; }
 String operator+(const String& a, float b) { return String(a) += b; }
 String operator+(const String& a, double b) { return String(a) += b; }
 
-// -------------------------------------------------------------------- Serial
-size_t HardwareSerial::write(uint8_t c) {
-  host_serial_write((const char*)&c, 1);
-  return 1;
+// --------------------------------------------------------------------- Print
+size_t Print::write(const uint8_t* buffer, size_t size) {
+  size_t written = 0;
+  for (size_t i = 0; i < size; i++) written += write(buffer[i]);
+  return written;
 }
-size_t HardwareSerial::write(const char* text) {
-  size_t length = text ? strlen(text) : 0;
-  if (length) host_serial_write(text, length);
-  return length;
-}
-size_t HardwareSerial::write(const uint8_t* buffer, size_t size) {
-  host_serial_write((const char*)buffer, size);
-  return size;
-}
-size_t HardwareSerial::print(const String& text) { return write(text.c_str()); }
-size_t HardwareSerial::print(const char* text) { return write(text); }
-size_t HardwareSerial::print(char c) { return write((uint8_t)c); }
-size_t HardwareSerial::print(int n, int base) { return write(whole(n, (unsigned char)base, true).c_str()); }
-size_t HardwareSerial::print(unsigned int n, int base) {
+size_t Print::print(const String& text) { return write(text.c_str()); }
+size_t Print::print(const char* text) { return write(text); }
+size_t Print::print(char c) { return write((uint8_t)c); }
+size_t Print::print(int n, int base) { return write(whole(n, (unsigned char)base, true).c_str()); }
+size_t Print::print(unsigned int n, int base) {
   return write(number(n, false, (unsigned char)base, true).c_str());
 }
-size_t HardwareSerial::print(long n, int base) { return write(whole(n, (unsigned char)base, true).c_str()); }
-size_t HardwareSerial::print(unsigned long n, int base) {
+size_t Print::print(long n, int base) { return write(whole(n, (unsigned char)base, true).c_str()); }
+size_t Print::print(unsigned long n, int base) {
   return write(number(n, false, (unsigned char)base, true).c_str());
 }
-size_t HardwareSerial::print(long long n, int base) {
+size_t Print::print(long long n, int base) {
   if (n >= 0 || base == 10) return write(whole(n, (unsigned char)base, true).c_str());
   return write(number((unsigned long long)n, false, (unsigned char)base, true).c_str());
 }
-size_t HardwareSerial::print(unsigned long long n, int base) {
+size_t Print::print(unsigned long long n, int base) {
   return write(number(n, false, (unsigned char)base, true).c_str());
 }
-size_t HardwareSerial::print(double n, int decimals) { return print(String(n, (unsigned int)decimals)); }
-size_t HardwareSerial::println() { return write("\r\n"); }
-size_t HardwareSerial::printf(const char* format, ...) {
+size_t Print::print(double n, int decimals) { return print(String(n, (unsigned int)decimals)); }
+size_t Print::println() { return write("\r\n"); }
+size_t Print::printf(const char* format, ...) {
   char stack[256];
   va_list args;
   va_start(args, format);
   int length = vsnprintf(stack, sizeof stack, format, args);
   va_end(args);
   if (length < 0) return 0;
-  if ((size_t)length < sizeof stack) {
-    host_serial_write(stack, (size_t)length);
-    return (size_t)length;
-  }
+  if ((size_t)length < sizeof stack) return write((const uint8_t*)stack, (size_t)length);
   std::string big((size_t)length + 1, '\0');
   va_start(args, format);
   vsnprintf(&big[0], big.size(), format, args);
   va_end(args);
-  host_serial_write(big.data(), (size_t)length);
-  return (size_t)length;
+  return write((const uint8_t*)big.data(), (size_t)length);
+}
+
+// -------------------------------------------------------------------- Serial
+size_t HardwareSerial::write(uint8_t c) {
+  host_serial_write((const char*)&c, 1);
+  return 1;
+}
+size_t HardwareSerial::write(const uint8_t* buffer, size_t size) {
+  if (size) host_serial_write((const char*)buffer, size);
+  return size;
 }
 int HardwareSerial::available() {
   host_tick();
@@ -421,3 +420,98 @@ bool Servo::attached() { return pin_ >= 0; }
 void Servo::setPeriodHertz(int hertz) { hertz_ = constrain(hertz, 1, 400); }
 void Servo::setTimerWidth(int bits) { bits_ = constrain(bits, 10, 16); }
 int Servo::readTimerWidth() { return bits_; }
+
+// ---------------------------------------------------------------------- Wire
+// The I2C bus, at the level of whole exchanges: the world is told what the
+// master writes to an address and says what came back. The bits on the two
+// wires are not produced; the time they would take is charged here.
+TwoWire Wire(0);
+TwoWire Wire1(1);
+
+bool TwoWire::begin(int sda, int scl, uint32_t frequency) {
+  // The first bus has pins of its own; the second must be given them.
+  if (sda < 0) sda = sda_ >= 0 ? sda_ : (bus_ == 0 ? SDA : -1);
+  if (scl < 0) scl = scl_ >= 0 ? scl_ : (bus_ == 0 ? SCL : -1);
+  if (sda < 0 || scl < 0 || sda == scl) return false;
+  sda_ = sda;
+  scl_ = scl;
+  if (frequency) frequency_ = frequency;
+  // The chip's own weak pull-ups are switched on, as its driver does.
+  host_pin_mode(sda_, INPUT_PULLUP);
+  host_pin_mode(scl_, INPUT_PULLUP);
+  begun_ = true;
+  host_tick();
+  return true;
+}
+bool TwoWire::end() {
+  begun_ = false;
+  transmitting_ = false;
+  pending_ = false;
+  rx_length_ = rx_index_ = 0;
+  return true;
+}
+bool TwoWire::setPins(int sda, int scl) {
+  if (begun_) return false; // as on the chip: only before begin()
+  sda_ = sda;
+  scl_ = scl;
+  return true;
+}
+bool TwoWire::setClock(uint32_t frequency) {
+  if (frequency == 0) return false;
+  frequency_ = frequency;
+  return true;
+}
+void TwoWire::beginTransmission(uint8_t address) {
+  tx_address_ = address;
+  tx_length_ = 0;
+  transmitting_ = true;
+  pending_ = false;
+}
+size_t TwoWire::write(uint8_t data) {
+  if (!transmitting_ || tx_length_ >= I2C_BUFFER_LENGTH) return 0;
+  tx_[tx_length_++] = data;
+  return 1;
+}
+size_t TwoWire::write(const uint8_t* data, size_t size) {
+  size_t written = 0;
+  while (written < size && write(data[written])) written++;
+  return written;
+}
+/** Start, address and stop, and nine clock pulses for every byte. */
+void TwoWire::charge(size_t bytes) {
+  uint64_t bits = 2 + 9 * (uint64_t)bytes;
+  host_delay_micros(bits * 1000000ULL / (frequency_ ? frequency_ : 100000));
+}
+uint8_t TwoWire::endTransmission(bool sendStop) {
+  if (!begun_) return 4;
+  if (!transmitting_) return 4;
+  if (!sendStop) {
+    // Nothing is sent yet: it goes out joined to the read that follows.
+    pending_ = true;
+    transmitting_ = false;
+    return 0;
+  }
+  transmitting_ = false;
+  int result = host_i2c_transfer(sda_, scl_, tx_address_, tx_, tx_length_, nullptr, 0);
+  // When nothing answers, only the address byte was clocked out.
+  charge(result == 2 ? 1 : 1 + tx_length_);
+  tx_length_ = 0;
+  return (uint8_t)result;
+}
+size_t TwoWire::requestFrom(uint8_t address, size_t size, bool sendStop) {
+  (void)sendStop;
+  rx_length_ = rx_index_ = 0;
+  if (!begun_) return 0;
+  if (size > I2C_BUFFER_LENGTH) size = I2C_BUFFER_LENGTH;
+  size_t written = pending_ && tx_address_ == address ? tx_length_ : 0;
+  int result = host_i2c_transfer(sda_, scl_, address, tx_, written, rx_, size);
+  pending_ = false;
+  tx_length_ = 0;
+  charge(result == 0 ? 2 + written + size : 1);
+  if (result != 0) return 0;
+  rx_length_ = size;
+  return size;
+}
+int TwoWire::available() { return (int)(rx_length_ - rx_index_); }
+int TwoWire::read() { return rx_index_ < rx_length_ ? rx_[rx_index_++] : -1; }
+int TwoWire::peek() { return rx_index_ < rx_length_ ? rx_[rx_index_] : -1; }

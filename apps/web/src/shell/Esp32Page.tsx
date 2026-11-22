@@ -45,7 +45,7 @@ export function Esp32Page() {
       <div className="grid gap-x-6 sm:grid-cols-2">
         <section className={section}>
           <h2 className={heading}>{t('esp32.works.title')}</h2>
-          <List items={keys('esp32.works', 9)} mark="✓" />
+          <List items={keys('esp32.works', 10)} mark="✓" />
         </section>
         <section className={section}>
           <h2 className={heading}>{t('esp32.missing.title')}</h2>

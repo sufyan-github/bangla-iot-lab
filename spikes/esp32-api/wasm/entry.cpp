@@ -19,3 +19,7 @@ extern "C" __attribute__((export_name("run"))) void run() {
 // cannot grow, for instance). Raising one stops the sketch.
 extern "C" void* __cxa_allocate_exception(size_t) { abort(); }
 extern "C" void __cxa_throw(void*, void*, void (*)(void*)) { abort(); }
+// Likewise the function called when a class's missing function is reached (Print's
+// write, before a display or port supplies it). The standard library's own version
+// prints a message, which would bring its whole formatted-output code into every sketch.
+extern "C" void __cxa_pure_virtual() { abort(); }

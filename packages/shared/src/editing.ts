@@ -92,6 +92,7 @@ export const PART_SHAPES: Record<BoardPartType, PartShape> = {
   mq135: shapeOf('mq-135'),
   pir: shapeOf('pir-hc-sr501'),
   rgbled: shapeOf('rgb-led-module'),
+  oled: shapeOf('oled-ssd1306-096'),
   lcd: { idPrefix: 'LCD', pins: LCD_PINS, offsets: LCD_PINS.map((_, i) => i) },
 };
 
@@ -118,6 +119,7 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
   mq135: { gas: 0.1, threshold: 0.5 },
   pir: { motion: false, hold: 3 },
   rgbled: {},
+  oled: {},
   ultrasonic: { distance: 50 },
   lcd: {},
 };

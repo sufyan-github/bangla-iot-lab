@@ -280,6 +280,7 @@ export class SimulationSession {
       }
     });
     emulator.onSerial((text) => (board.serial += text));
+    emulator.onI2c?.((transfer) => this.peripherals.i2c(boardId, transfer));
     this.boards.get(boardId)?.emulator.dispose?.();
     this.boards.set(boardId, board);
     this.stepping = null;

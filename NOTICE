@@ -44,7 +44,16 @@ under other licences. Each is kept apart from the Apache-2.0 code.
      License 2.0 with LLVM Exceptions (LICENSES/LLVM.txt);
    - Adafruit's DHT sensor library 1.4.7, Copyright 2020 Adafruit Industries,
      MIT licence. Its source, unmodified, and its licence text are in
-     third_party/adafruit-dht/.
+     third_party/adafruit-dht/;
+   - in programs that use a display: Adafruit's GFX graphics library 1.13.0
+     (Copyright 2012 Adafruit Industries, BSD 2-clause licence) and Adafruit's
+     SSD1306 library 2.5.17 (Copyright 2012 Adafruit Industries, BSD 3-clause
+     licence, which also covers the start-up picture the library draws). Their
+     sources, unmodified, and licence texts are in third_party/adafruit-gfx/
+     and third_party/adafruit-ssd1306/. The graphics library's extra fonts are
+     not included. Two header files of Adafruit's BusIO 1.17.4 (Copyright 2017
+     Adafruit Industries, MIT licence) are in third_party/adafruit-busio/ and
+     are read when such a program is compiled; none of BusIO's code is in it.
 
 3. ESP32 firmware for the chip emulator (experimental; LGPL-2.1-or-later)
 

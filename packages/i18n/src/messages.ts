@@ -181,6 +181,13 @@ export const bn = {
   'code.starter.esp32.light': 'অন্ধকারে বাতি (D34, D27, D2)',
   'code.starter.esp32.motion': 'নড়াচড়া ধরো (D27, D2)',
   'code.starter.esp32.rgb': 'রং মেশাও (D25, D26, D27)',
+  'tool.oled': 'OLED ডিসপ্লে',
+  'part.oled': 'OLED ডিসপ্লে (০.৯৬ ইঞ্চি)',
+  'part.oled.about':
+    'ছোট এই ডিসপ্লেতে ১২৮ × ৬৪টা বিন্দু আছে; প্রতিটা নিজে জ্বলে, তাই লেখা আর ছবি দুটোই আঁকা যায়। এটা I2C নামের দুই তারের পথে চলে: SCL আর SDA। ESP32 বোর্ডে VCC দাও 3V3-তে, GND দাও GND-তে, SCL দাও D22-এ আর SDA দাও D21-এ। প্রোগ্রামে Adafruit_SSD1306 লাইব্রেরি ব্যবহার করো; ডিসপ্লের ঠিকানা 0x3C। আঁকার পর display.display() না ডাকলে কিছুই দেখা যায় না। এই লাইব্রেরির অক্ষরে ইংরেজি আর সংখ্যা দেখানো যায়, বাংলা নয়। কিছু মডিউলে VCC আর GND উল্টো জায়গায় থাকে: তোমারটার গায়ের লেখা দেখে নাও। এখন শুধু ESP32 বোর্ডে চলে।',
+  'inspector.oled.dark': 'ডিসপ্লে এখন অন্ধকার।',
+  'inspector.oled.picture': 'ডিসপ্লেতে এখন যা দেখা যাচ্ছে',
+  'code.starter.esp32.oled': 'OLED-তে লেখা ও ছবি (D21, D22)',
   'part.relay': 'রিলে',
   'part.relay.about':
     'রিলে হলো তড়িৎচুম্বক দিয়ে চালানো সুইচ। কয়েলে (বাঁ দিকের দুই পা) কারেন্ট গেলে ভেতরের কন্টাক্ট টেনে বন্ধ হয় আর ডান দিকের দুই পা জুড়ে যায়। কয়েল প্রায় 70 mA চায়, তাই বোর্ডের পিন থেকে সরাসরি নয়, ট্রানজিস্টর দিয়ে চালাও।',
@@ -309,7 +316,7 @@ export const bn = {
   'code.starter.esp32.distance': 'দূরত্ব মাপো (D5, D18)',
   'code.starter.esp32.dht': 'তাপমাত্রা ও আর্দ্রতা (D4)',
   'code.esp32.note':
-    'পরীক্ষামূলক। এই ESP32 তোমার প্রোগ্রাম চালায় ল্যাবের নিজের বানানো বোর্ড-মডেল দিয়ে, বোর্ডের আসল সফটওয়্যার দিয়ে নয়। পিন, সময়, সিরিয়াল লেখা, অ্যানালগ ইনপুট, PWM, ইন্টারাপ্ট, সার্ভো, আলট্রাসনিক আর DHT11 সেন্সর কাজ করে। ডিসপ্লে আর Wi-Fi এখনো কাজ করে না। আসল বোর্ডের সাথে এটা এখনো মিলিয়ে দেখা হয়নি।',
+    'পরীক্ষামূলক। এই ESP32 তোমার প্রোগ্রাম চালায় ল্যাবের নিজের বানানো বোর্ড-মডেল দিয়ে, বোর্ডের আসল সফটওয়্যার দিয়ে নয়। পিন, সময়, সিরিয়াল লেখা, অ্যানালগ ইনপুট, PWM, ইন্টারাপ্ট, সার্ভো, আলট্রাসনিক আর DHT11 সেন্সর, আর OLED ডিসপ্লে কাজ করে। Wi-Fi এখনো কাজ করে না। আসল বোর্ডের সাথে এটা এখনো মিলিয়ে দেখা হয়নি।',
   'esp32.title': 'এই ল্যাবের ESP32',
   'esp32.intro':
     'এই ল্যাবের ESP32 বোর্ড এখনো পরীক্ষামূলক। এটা তোমার প্রোগ্রাম কীভাবে চালায়, কী কী মেপে দেখা হয়েছে আর কী হয়নি, তা এই পাতায় লেখা আছে।',
@@ -327,8 +334,9 @@ export const bn = {
   'esp32.works.7': 'সার্ভো (ESP32Servo লাইব্রেরি), আলট্রাসনিক সেন্সর',
   'esp32.works.8': 'DHT11 তাপমাত্রা ও আর্দ্রতা সেন্সর (আসল DHT লাইব্রেরি দিয়ে)',
   'esp32.works.9': 'কিটের LDR, বৃষ্টি, গ্যাস আর গতি সেন্সর, এবং RGB LED',
+  'esp32.works.10': 'I2C বাস (Wire) আর OLED ডিসপ্লে (আসল Adafruit লাইব্রেরি দিয়ে)',
   'esp32.missing.title': 'যা এখনো কাজ করে না',
-  'esp32.missing.1': 'OLED ডিসপ্লে ও অন্যান্য I2C যন্ত্রাংশ',
+  'esp32.missing.1': 'OLED ডিসপ্লে ছাড়া অন্য I2C যন্ত্রাংশ, আর SPI',
   'esp32.missing.2': 'সেটিংস জমিয়ে রাখা (Preferences), স্লিপ মোড',
   'esp32.missing.3': 'Wi-Fi ও ব্লুটুথ',
   'esp32.missing.note': 'এগুলোর কোনোটা লাগে এমন প্রোগ্রাম কম্পাইল হবে না; বার্তায় বলা থাকবে কী নেই।',
@@ -567,6 +575,13 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.light': 'Light in the dark (D34, D27, D2)',
   'code.starter.esp32.motion': 'Detect movement (D27, D2)',
   'code.starter.esp32.rgb': 'Mix colours (D25, D26, D27)',
+  'tool.oled': 'OLED display',
+  'part.oled': 'OLED display (0.96 inch)',
+  'part.oled.about':
+    'This small display has 128 × 64 dots, each of which lights by itself, so it can show text and pictures. It works over I2C, a path of two wires: SCL and SDA. On an ESP32 board connect VCC to 3V3, GND to GND, SCL to D22 and SDA to D21. Use the Adafruit_SSD1306 library in your program; the display’s address is 0x3C. Nothing appears until you call display.display() after drawing. The library’s letters cover English and digits, not Bangla. On some modules VCC and GND are the other way round: read the labels on yours. For now it works with the ESP32 board only.',
+  'inspector.oled.dark': 'The display is dark.',
+  'inspector.oled.picture': 'What the display is showing now',
+  'code.starter.esp32.oled': 'Text and shapes on the OLED (D21, D22)',
   'part.relay': 'Relay',
   'part.relay.about':
     'A relay is a switch worked by an electromagnet. Current through the coil (the two left legs) pulls the contact shut and joins the two right legs. The coil needs about 70 mA, so drive it with a transistor, not straight from a board pin.',
@@ -695,7 +710,7 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.distance': 'Measure distance (D5, D18)',
   'code.starter.esp32.dht': 'Temperature and humidity (D4)',
   'code.esp32.note':
-    'Experimental. This ESP32 runs your program with the lab’s own model of the board, not the board’s real software. Pins, timing, serial text, analog input, PWM, interrupts, the servo, the ultrasonic sensor and the DHT11 sensor work. Displays and Wi-Fi do not work yet. It has not yet been checked against a real board.',
+    'Experimental. This ESP32 runs your program with the lab’s own model of the board, not the board’s real software. Pins, timing, serial text, analog input, PWM, interrupts, the servo, the ultrasonic sensor, the DHT11 sensor and the OLED display work. Wi-Fi does not work yet. It has not yet been checked against a real board.',
   'esp32.title': 'The ESP32 in this lab',
   'esp32.intro':
     'The ESP32 board in this lab is an experiment. This page says how it runs your program, what has been measured, and what has not.',
@@ -713,8 +728,9 @@ export const en: Record<MessageKey, string> = {
   'esp32.works.7': 'The servo (ESP32Servo library) and the ultrasonic sensor',
   'esp32.works.8': 'The DHT11 temperature and humidity sensor (with the real DHT library)',
   'esp32.works.9': 'The kit’s LDR, rain, gas and motion sensors, and its RGB LED',
+  'esp32.works.10': 'The I2C bus (Wire) and the OLED display (with the real Adafruit libraries)',
   'esp32.missing.title': 'What does not work yet',
-  'esp32.missing.1': 'The OLED display and other I2C parts',
+  'esp32.missing.1': 'I2C parts other than the OLED display, and SPI',
   'esp32.missing.2': 'Saved settings (Preferences) and sleep',
   'esp32.missing.3': 'Wi-Fi and Bluetooth',
   'esp32.missing.note':

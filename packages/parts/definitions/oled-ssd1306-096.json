@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "oled-ssd1306-096",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "oled",
+  "status": "simulated",
   "family": "display",
   "tier": 1,
   "name": {
@@ -11,12 +10,20 @@
     "en": "0.96\" OLED display (SSD1306, I2C)"
   },
   "summary": {
-    "bn": "",
-    "en": "A small graphic display on two wires."
+    "bn": "দুই তারে চলা ছোট ডিসপ্লে: লেখা আর ছবি দেখায়।",
+    "en": "A small display on two wires, for text and pictures."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "It works with the ESP32 board and the lab's own model of that board only. Programs for the UNO-compatible board and for the chip emulator cannot use it yet.",
+      "The program and the display exchange whole messages; the bits on the SDA and SCL wires are not produced, so the oscilloscope and logic analyser show both lines resting HIGH.",
+      "It is drawn with its pins at the bottom and the picture upright. On the real module the pins are along the top edge.",
+      "Its legs are in the order GND, VCC, SCL, SDA. Some modules have VCC and GND the other way round: read the labels on yours.",
+      "Scrolling by the display itself is left out, and a picture changes at once: there is no flicker or slow update.",
+      "The current it draws is fixed; a real display draws more the more pixels are lit.",
+      "The pull-up resistors on its bus lines are an estimate."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -47,5 +54,9 @@
   "variants": [],
   "catalog": {
     "keywords": ["0.96\" oled", "0.96 oled"]
+  },
+  "placement": {
+    "idPrefix": "OLED",
+    "offsets": [0, 1, 2, 3]
   }
 }

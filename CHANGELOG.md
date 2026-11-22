@@ -8,6 +8,24 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The kit's OLED display** (0.96 inch, 128 × 64, SSD1306), on the ESP32
+  board with the lab's own model of that board. Circuit format version 10.
+  - Sketches use Adafruit's real SSD1306 and GFX libraries (BSD), built
+    unmodified into the sketch; what they send is received by a model of the
+    display's controller. The picture is drawn pixel for pixel on the part, and
+    twice the size beside it when the part is selected.
+  - The display stays dark with SCL and SDA swapped or without power, forgets
+    its picture when power is lost, and on 5 V its pull-up resistors put 5 V
+    on the bus pins, which the lab warns about.
+  - A ready-made program: text and shapes on the OLED.
+  - Not included: the graphics library's extra fonts (some come from GPL font
+    files), and the display on the UNO-compatible board or the chip emulator.
+- **The I2C bus (`Wire`) in the lab's ESP32 board library**, with the board as
+  master. An exchange takes the time it takes on a real bus, and an I2C
+  scanner sketch works. The bits on the two wires are not produced, so the
+  oscilloscope shows both lines resting HIGH.
+- `Print` is now a class of its own in the board library, as on the board, so
+  that libraries which print to a display compile.
 - **Five more parts of the school kit** (circuit format version 9), each with a
   ready-made ESP32 program where a program is needed:
   - **LDR light sensor module** and **rain sensor module**: a voltage on AO that

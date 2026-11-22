@@ -42,6 +42,7 @@ import {
   LdrView,
   LedView,
   MotorView,
+  OledView,
   PirView,
   PotentiometerView,
   RelayView,
@@ -56,6 +57,7 @@ import {
   WireView,
 } from './parts';
 import { Esp32BoardView } from './esp32/Esp32BoardView';
+import { oledImage } from './oled-image';
 import { ShadingDefs } from './shading';
 
 const rowY = (row: string) => BOARD_Y + holeCoordinates(`${row}1`).y * PITCH;
@@ -438,6 +440,17 @@ export function BoardPartDrawing(props: {
         />
       );
     }
+    case 'oled': {
+      const shown = reading?.oled;
+      return (
+        <OledView
+          first={at(part.pins.gnd)}
+          last={at(part.pins.sda)}
+          image={shown?.pixels ? oledImage(shown.pixels, shown.brightness).url : undefined}
+          selected={selected}
+        />
+      );
+    }
     case 'pir':
       return (
         <PirView
@@ -582,6 +595,12 @@ export function Scene({
               component.type === 'led' || component.type === 'rgbled'
                 ? (reading?.led?.state ?? 'idle')
                 : undefined
+            }
+            data-oled={
+              reading?.oled &&
+              (reading.oled.pixels
+                ? oledImage(reading.oled.pixels, reading.oled.brightness).litPixels
+                : 'dark')
             }
             data-colours={
               reading?.rgb &&

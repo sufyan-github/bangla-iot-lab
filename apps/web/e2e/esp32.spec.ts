@@ -62,6 +62,7 @@ test('the code tab says the ESP32 is experimental and offers only ESP32 programs
     'light',
     'motion',
     'rgb',
+    'oled',
     'custom',
   ]);
 });
@@ -443,4 +444,43 @@ test('the RGB LED shows the colours the program mixes', async ({ page }) => {
     await expect.poll(colours, SAMPLING).toBe(mix);
   }
   await expect(page.locator('[data-diag^="led-"]')).toHaveCount(0);
+});
+
+test('the OLED display shows what the program draws, and stays dark with its wires swapped', async ({
+  page,
+}) => {
+  await newEsp32Circuit(page);
+  await place(page, 'oled', 'c10'); // legs: c10 GND, c11 VCC, c12 SCL, c13 SDA
+  await wire(page, [
+    ['ESP1.gnd1', 'a10'],
+    ['ESP1.3v3', 'a11'],
+    ['ESP1.d22', 'a12'],
+    ['ESP1.d21', 'a13'],
+  ]);
+  await chooseStarter(page, 'oled');
+  await page.getByTestId('run').click();
+  const lit = async () => Number(await partAttribute(page, 'OLED1', 'data-oled'));
+  // The title, a line, a large digit and a square: several hundred lit pixels.
+  await expect.poll(lit, SAMPLING).toBeGreaterThan(300);
+  // The square is filled on even counts and empty on odd ones, so the picture changes.
+  const first = await lit();
+  await expect.poll(lit, SAMPLING).not.toBe(first);
+  await page.locator('[data-hit="OLED1"]').click();
+  await expect(page.getByTestId('oled-preview')).toHaveAttribute('data-lit', 'true');
+  await expect(page.locator('[data-diag^="pin-over"], [data-diag^="module-"]')).toHaveCount(0);
+});
+
+test('an OLED display with SCL and SDA swapped shows nothing', async ({ page }) => {
+  await newEsp32Circuit(page);
+  await place(page, 'oled', 'c10');
+  await wire(page, [
+    ['ESP1.gnd1', 'a10'],
+    ['ESP1.3v3', 'a11'],
+    ['ESP1.d21', 'a12'],
+    ['ESP1.d22', 'a13'],
+  ]);
+  await chooseStarter(page, 'oled');
+  await page.getByTestId('run').click();
+  await page.waitForTimeout(2500);
+  expect(await partAttribute(page, 'OLED1', 'data-oled')).toBe('dark');
 });

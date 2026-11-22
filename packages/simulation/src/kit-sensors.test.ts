@@ -505,3 +505,116 @@ describe('a module on too little voltage', () => {
     expect(warnings({ ...document, wires: [] })).toEqual([]);
   });
 });
+
+describe('OLED display', () => {
+  const oled: CircuitComponent = {
+    id: 'OLED1',
+    type: 'oled',
+    pins: { gnd: 'c10', vcc: 'c11', scl: 'c12', sda: 'c13' },
+    props: {},
+  };
+  const wired = (supply = 'ESP1.3v3', scl = 'ESP1.d22', sda = 'ESP1.d21') =>
+    circuit(
+      [esp32, oled],
+      [
+        ['ESP1.gnd1', 'a10'],
+        [supply, 'a11'],
+        [scl, 'a12'],
+        [sda, 'a13'],
+      ],
+    );
+  /** Runs the ready-made program for a while and returns what the display shows. */
+  const shown = (document: CircuitDocument, milliseconds = 600) => {
+    const session = new SimulationSession(document);
+    session.loadFirmware('ESP1', starter('oled'));
+    let frame = session.frame();
+    for (let done = 0; done < milliseconds; done += 50) {
+      session.advance(Math.min(50, milliseconds - done));
+      frame = session.frame();
+    }
+    const { oled: display } = frame.result.readings.OLED1!;
+    const bytes = display?.pixels
+      ? Uint8Array.from(atob(display.pixels), (c) => c.charCodeAt(0))
+      : new Uint8Array(1024);
+    const pixel = (x: number, y: number) =>
+      ((bytes[y * 16 + (x >> 3)]! >> (7 - (x & 7))) & 1) === 1;
+    return { display, pixel, frame, session };
+  };
+
+  it('holds both bus lines HIGH through its own pull-ups, and draws about 10 mA', () => {
+    const result = simulate(wired());
+    expect(result.sockets['ESP1.d21']!.voltage).toBeGreaterThan(3.2);
+    expect(result.sockets['ESP1.d22']!.voltage).toBeGreaterThan(3.2);
+    expect(result.readings.OLED1!.current).toBeCloseTo(0.01, 3);
+    expect(result.diagnostics.filter((d) => d.severity !== 'info')).toEqual([]);
+  });
+
+  it('shows what the ready-made program draws with the real display library', () => {
+    const { display, pixel, frame } = shown(wired());
+    expect(display).toMatchObject({ lit: true });
+    // The library sets a contrast of 0xCF for a display on its own charge pump.
+    expect(display!.brightness).toBeCloseTo(0.45 + (0.55 * 0xcf) / 255, 6);
+    // "B", the first letter, in the library's 5 × 7 letters: a full upright, three bars.
+    for (let y = 0; y < 7; y++) expect(pixel(0, y), `(0, ${y})`).toBe(true);
+    expect(pixel(0, 7)).toBe(false);
+    expect([0, 1, 2, 3, 4, 5, 6].filter((y) => pixel(1, y))).toEqual([0, 3, 6]);
+    // The line under the title, from edge to edge.
+    for (const x of [0, 64, 127]) expect(pixel(x, 12), `(${x}, 12)`).toBe(true);
+    expect(pixel(64, 11)).toBe(false);
+    expect(pixel(64, 13)).toBe(false);
+    // The square: its outline, and its filling on the even counts (the first is 0).
+    expect(pixel(100, 24) && pixel(123, 24) && pixel(100, 47) && pixel(123, 47)).toBe(true);
+    expect(pixel(102, 26)).toBe(false);
+    expect(pixel(104, 28) && pixel(119, 43)).toBe(true);
+    // The count, three times the size: "0" is 15 wide and 21 high from (0, 24).
+    expect(pixel(3, 24)).toBe(true); // top bar of the nought
+    expect(pixel(0, 24)).toBe(false); // its rounded corner
+    expect(frame.result.diagnostics.filter((d) => d.severity !== 'info')).toEqual([]);
+  });
+
+  it('redraws each second: the count goes up and the square empties', () => {
+    const { pixel } = shown(wired(), 1600);
+    expect(pixel(104, 28)).toBe(false); // the count is now 1, an odd number
+    expect(pixel(100, 24)).toBe(true);
+  });
+
+  it('takes the time a real bus takes: the picture arrives from the top over about 26 ms', () => {
+    // 1025 bytes at 400 kHz, in nine exchanges of about 3 ms each.
+    const early = shown(wired(), 12);
+    expect(early.display).toMatchObject({ lit: true });
+    expect(early.pixel(0, 0)).toBe(true); // the title's first letter is there
+    expect(early.pixel(100, 47)).toBe(false); // the bottom of the square is still to come
+    expect(shown(wired(), 40).pixel(100, 47)).toBe(true);
+  });
+
+  it('stays dark with the two bus wires swapped, or with no power', () => {
+    expect(shown(wired('ESP1.3v3', 'ESP1.d21', 'ESP1.d22')).display).toMatchObject({ lit: false });
+    const unpowered = circuit(
+      [esp32, oled],
+      [
+        ['ESP1.gnd1', 'a10'],
+        ['ESP1.d22', 'a12'],
+        ['ESP1.d21', 'a13'],
+      ],
+    );
+    expect(shown(unpowered).display).toMatchObject({ lit: false });
+  });
+
+  it('forgets its picture when its supply wire is pulled out, until the program draws again', () => {
+    const { session } = shown(wired());
+    const document = wired();
+    session.update({ ...document, wires: document.wires.filter((wire) => wire.to !== 'a11') });
+    session.advance(50);
+    expect(session.frame().result.readings.OLED1!.oled).toMatchObject({ lit: false });
+    // Power back: the panel was never switched on again, so it stays dark though the
+    // program keeps sending pictures. A real display behaves the same.
+    session.update(document);
+    session.advance(1500);
+    expect(session.frame().result.readings.OLED1!.oled).toMatchObject({ lit: false });
+  });
+
+  it('on 5 V its pull-ups put 5 V on the bus pins, and the lab warns', () => {
+    const codes = simulate(wired('ESP1.vin')).diagnostics.map((d) => `${d.code} ${d.socket}`);
+    expect(codes).toEqual(['pin-overvoltage d22', 'pin-overvoltage d21']);
+  });
+});

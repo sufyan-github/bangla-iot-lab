@@ -46,6 +46,12 @@ export interface Reading {
   angle?: number;
   /** What a character LCD is showing: its two lines of sixteen characters. */
   lcd?: { lines: [string, string] };
+  /**
+   * What an OLED display is showing. `pixels` is the picture, 128 × 64, one bit
+   * a pixel, row by row from the top with the leftmost pixel in the highest
+   * bit, as base64; absent while the panel is dark. `brightness` is 0 to 1.
+   */
+  oled?: { lit: boolean; brightness: number; pixels?: string };
 }
 
 export type DiagnosticCode =

@@ -10,6 +10,7 @@ import {
 } from '@banglalab/simulation';
 import type { ReactNode } from 'react';
 import { useT } from '../i18n';
+import { oledImage } from './oled-image';
 import { LED_PAINT } from './parts';
 import { useLab } from './store';
 
@@ -43,6 +44,31 @@ function Choice(props: {
     >
       {props.children}
     </button>
+  );
+}
+
+/** An OLED display's picture at twice its size, where a phone can read it. */
+function OledPreview({ id }: { id: string }) {
+  const shown = useLab((s) => s.result?.readings[id]?.oled);
+  const { t } = useT();
+  if (!shown?.pixels) {
+    return (
+      <p className="text-sm text-ink-soft" data-testid="oled-preview" data-lit="false">
+        {t('inspector.oled.dark')}
+      </p>
+    );
+  }
+  return (
+    <img
+      data-testid="oled-preview"
+      data-lit="true"
+      src={oledImage(shown.pixels, shown.brightness).url}
+      alt={t('inspector.oled.picture')}
+      width={256}
+      height={128}
+      className="block max-w-full rounded border-4 border-[#0b0e12]"
+      style={{ imageRendering: 'pixelated' }}
+    />
   );
 }
 
@@ -111,6 +137,7 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
+  if (part.type === 'oled') return <OledPreview id={part.id} />;
   if (part.type === 'pir') {
     return (
       <div className="space-y-2">

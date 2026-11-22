@@ -106,6 +106,7 @@ export const BOX_TYPES = new Set([
   'mq135',
   'pir',
   'rgbled',
+  'oled',
   'relay',
   'servo',
   'ultrasonic',

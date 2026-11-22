@@ -37,6 +37,20 @@ int host_serial_available(void);
 int host_serial_read(void);
 int host_serial_peek(void);
 
+/**
+ * One exchange on an I2C bus whose data and clock lines are the pins `sda` and
+ * `scl`, with the board as master: a start, `write_length` bytes written to the
+ * device at `address`, then, when `read_length` is not zero, `read_length`
+ * bytes read back from it, and a stop. Both lengths zero asks only whether a
+ * device is there.
+ *
+ * Returns 0 when it went through, 2 when no device answered the address, 3 when
+ * the device refused a byte, 4 when the bus cannot work. No time passes here:
+ * the library charges what the exchange would take.
+ */
+int host_i2c_transfer(int sda, int scl, int address, const uint8_t* write, size_t write_length,
+                      uint8_t* read, size_t read_length);
+
 uint64_t host_micros(void);
 /** Lets time pass. This is where the world moves on and scripted inputs arrive. */
 void host_delay_micros(uint64_t microseconds);

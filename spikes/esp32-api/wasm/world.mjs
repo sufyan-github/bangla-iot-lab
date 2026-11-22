@@ -172,6 +172,8 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}, circuit = n
     host_serial_available: () => typed.length,
     host_serial_read: () => (typed.length ? typed.shift() : -1),
     host_serial_peek: () => (typed.length ? typed[0] : -1),
+    // No I2C device is on this world's bus.
+    host_i2c_transfer: () => 2,
     host_micros: () => BigInt(now),
     host_delay_micros: (microseconds) => advance(Number(microseconds)),
     host_tick: () => advance(CALL_COST_US),

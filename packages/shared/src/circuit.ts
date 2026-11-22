@@ -20,10 +20,11 @@ import { isHole } from './breadboard';
  * 8 — adds the DHT11 temperature and humidity sensor.
  * 9 — adds the LDR, rain and MQ-135 gas sensor modules, the motion sensor and
  *     the RGB LED module.
+ * 10 — adds the OLED display.
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 9;
+export const CIRCUIT_SCHEMA_VERSION = 10;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -316,6 +317,17 @@ export const RgbLedSchema = Type.Object({
   props: noProps,
 });
 
+/**
+ * 0.96 inch OLED display, 128 × 64 pixels (SSD1306), on the two-wire I2C bus at
+ * address 0x3C. Its legs are in the order printed on the common module.
+ */
+export const OledSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('oled'),
+  pins: Type.Object({ gnd: Hole, vcc: Hole, scl: Hole, sda: Hole }),
+  props: noProps,
+});
+
 /** Arduino UNO-compatible board. It sits beside the breadboard; wires plug into its sockets. */
 export const UnoSchema = Type.Object({
   id: Id,
@@ -361,6 +373,7 @@ export const ComponentSchema = Type.Union([
   Mq135Schema,
   PirSchema,
   RgbLedSchema,
+  OledSchema,
   UnoSchema,
   Esp32Schema,
 ]);

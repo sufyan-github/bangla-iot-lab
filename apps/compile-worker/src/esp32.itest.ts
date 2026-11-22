@@ -133,9 +133,69 @@ int twice(int n) { return n * 2; }
     expect(second.hex).toBe(first.hex);
   }, 60_000);
 
+  it('gives a sketch the I2C bus: a scanner finds nothing on an empty bus, in real time', async () => {
+    const { serial, board } = await run(
+      `#include <Wire.h>
+void setup() {
+  Serial.begin(115200);
+  Wire.begin();
+  int found = 0;
+  unsigned long before = micros();
+  for (int address = 1; address < 127; address++) {
+    Wire.beginTransmission(address);
+    if (Wire.endTransmission() == 0) found++;
+  }
+  Serial.printf("found %d in %lu us\\n", found, micros() - before);
+  Wire.beginTransmission(0x3C);
+  Wire.write(0x00);
+  Serial.printf("no answer gives %d\\n", Wire.endTransmission());
+  Serial.printf("read gives %d\\n", (int)Wire.requestFrom(0x3C, 1));
+}
+void loop() { delay(100); }
+`,
+      100,
+    );
+    expect(board.stopped).toBeNull();
+    expect(serial).toContain('no answer gives 2');
+    expect(serial).toContain('read gives 0');
+    // 126 addresses, each a start, an address byte and a stop at 100 kHz: 110 µs,
+    // and a few microseconds for the calls.
+    const [, found, micros] = /found (\d+) in (\d+) us/.exec(serial)!;
+    expect(found).toBe('0');
+    expect(Number(micros)).toBeGreaterThanOrEqual(126 * 110);
+    expect(Number(micros)).toBeLessThan(126 * 130);
+  }, 60_000);
+
+  it('builds a display sketch with the real libraries, and refuses their missing fonts', async () => {
+    const drawing = (
+      await compile(
+        `#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
+void setup() {
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+  display.drawCircle(64, 32, 20, SSD1306_WHITE);
+  display.display();
+}
+void loop() {}
+`,
+      )
+    ).json();
+    expect(drawing.ok, JSON.stringify(drawing.diagnostics)).toBe(true);
+    const fonts = (
+      await compile(
+        '#include <Adafruit_GFX.h>\n#include <Fonts/FreeSans9pt7b.h>\nvoid setup() {}\nvoid loop() {}\n',
+      )
+    ).json();
+    expect(fonts.ok).toBe(false);
+    expect(fonts.reason).toBe('compile-error');
+  }, 120_000);
+
   it('every shipped starter still builds and runs', async () => {
     const sketches = (await readdir(startersDir)).filter((file) => file.endsWith('.ino'));
-    expect(sketches.length).toBe(10);
+    expect(sketches.length).toBe(11);
     for (const sketch of sketches) {
       const { board } = await run(await readFile(new URL(sketch, startersDir), 'utf8'), 200);
       expect(board.stopped, sketch).toBeNull();

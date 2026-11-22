@@ -32,6 +32,8 @@ import esp32MotionSource from '@banglalab/board-emulators/fixtures/esp32-starter
 import esp32MotionModule from '@banglalab/board-emulators/fixtures/esp32-starters/motion.wasm.base64?raw';
 import esp32RgbSource from '@banglalab/board-emulators/fixtures/esp32-starters/rgb.ino?raw';
 import esp32RgbModule from '@banglalab/board-emulators/fixtures/esp32-starters/rgb.wasm.base64?raw';
+import esp32OledSource from '@banglalab/board-emulators/fixtures/esp32-starters/oled.ino?raw';
+import esp32OledModule from '@banglalab/board-emulators/fixtures/esp32-starters/oled.wasm.base64?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -65,6 +67,7 @@ export const ESP32_STARTERS = {
   light: { source: esp32LightSource, hex: esp32LightModule },
   motion: { source: esp32MotionSource, hex: esp32MotionModule },
   rgb: { source: esp32RgbSource, hex: esp32RgbModule },
+  oled: { source: esp32OledSource, hex: esp32OledModule },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

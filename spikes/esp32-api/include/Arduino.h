@@ -24,6 +24,17 @@
 
 #include "host.h"
 
+// What the ESP32's own build defines, so that libraries choose their ESP32 code.
+#ifndef ARDUINO
+#define ARDUINO 10812
+#endif
+#ifndef ESP32
+#define ESP32 1
+#endif
+#ifndef ARDUINO_ARCH_ESP32
+#define ARDUINO_ARCH_ESP32 1
+#endif
+
 // --- constants, with the values the ESP32 core uses ---
 #define LOW 0x0
 #define HIGH 0x1
@@ -48,6 +59,8 @@
 #define DEG_TO_RAD 0.017453292519943295769236907684886
 #define RAD_TO_DEG 57.295779513082320876798154814105
 #define LED_BUILTIN 2
+#define LSBFIRST 0
+#define MSBFIRST 1
 
 // Pin names of the ESP32 Dev Module.
 static const uint8_t A0 = 36, A3 = 39, A4 = 32, A5 = 33, A6 = 34, A7 = 35, A10 = 4, A11 = 0, A12 = 2,
@@ -66,6 +79,15 @@ typedef enum { ADC_0db, ADC_2_5db, ADC_6db, ADC_11db, ADC_12db = ADC_11db } adc_
 #define F(text) (text)
 #define pgm_read_byte(address) (*(const uint8_t*)(address))
 #define pgm_read_word(address) (*(const uint16_t*)(address))
+#define pgm_read_dword(address) (*(const uint32_t*)(address))
+#define pgm_read_float(address) (*(const float*)(address))
+#define pgm_read_ptr(address) (*(const void* const*)(address))
+#define memcpy_P memcpy
+#define strlen_P strlen
+#define strcpy_P strcpy
+#define strcmp_P strcmp
+/** The type of F("text") on the chip. Here F() gives plain text; libraries only need the name. */
+class __FlashStringHelper;
 
 typedef uint8_t byte;
 typedef bool boolean;
@@ -221,18 +243,18 @@ String operator+(const String& a, unsigned long b);
 String operator+(const String& a, float b);
 String operator+(const String& a, double b);
 
-/** The serial port to the computer: what the serial monitor shows and sends. */
-class HardwareSerial {
+/**
+ * Anything text can be printed to: the serial port, and displays. A class gives
+ * the one function that takes a byte, and gets print() and println() from here.
+ */
+class Print {
  public:
-  void begin(unsigned long baud, uint32_t config = 0, int8_t rx = -1, int8_t tx = -1) { (void)baud, (void)config, (void)rx, (void)tx; }
-  void end() {}
-  void flush() {}
-  void setTimeout(unsigned long milliseconds) { timeout_ = milliseconds; }
-  operator bool() const { return true; }
+  virtual ~Print() {}
+  virtual size_t write(uint8_t c) = 0;
+  virtual size_t write(const uint8_t* buffer, size_t size);
+  size_t write(const char* text) { return text ? write((const uint8_t*)text, strlen(text)) : 0; }
+  size_t write(const char* buffer, size_t size) { return write((const uint8_t*)buffer, size); }
 
-  size_t write(uint8_t c);
-  size_t write(const char* text);
-  size_t write(const uint8_t* buffer, size_t size);
   size_t print(const String& text);
   size_t print(const char* text);
   size_t print(char c);
@@ -253,6 +275,20 @@ class HardwareSerial {
     return print(value, format) + println();
   }
   size_t printf(const char* format, ...) __attribute__((format(printf, 2, 3)));
+  virtual void flush() {}
+};
+
+/** The serial port to the computer: what the serial monitor shows and sends. */
+class HardwareSerial : public Print {
+ public:
+  void begin(unsigned long baud, uint32_t config = 0, int8_t rx = -1, int8_t tx = -1) { (void)baud, (void)config, (void)rx, (void)tx; }
+  void end() {}
+  void setTimeout(unsigned long milliseconds) { timeout_ = milliseconds; }
+  operator bool() const { return true; }
+
+  using Print::write;
+  size_t write(uint8_t c) override;
+  size_t write(const uint8_t* buffer, size_t size) override;
 
   int available();
   int read();

@@ -5,10 +5,11 @@ import {
   type CircuitDocument,
 } from '@banglalab/shared';
 import { Hd44780 } from './hd44780';
-import type { PinDrive } from '@banglalab/board-emulators';
+import type { I2cResult, I2cTransfer, PinDrive } from '@banglalab/board-emulators';
 import {
   DHT11_START_MS,
   DHT11_TIMING_US,
+  OLED_ADDRESS,
   SERVO_MAX_PULSE_US,
   SERVO_MIN_PULSE_US,
   ULTRASONIC_ECHO_DELAY_MS,
@@ -16,6 +17,14 @@ import {
   ULTRASONIC_MS_PER_CM,
 } from './library';
 import { netName } from './netlist';
+import { Ssd1306 } from './ssd1306';
+
+/** Turns bytes into base64 text, in a browser, a worker or Node. */
+function base64(bytes: Uint8Array): string {
+  let text = '';
+  for (const byte of bytes) text += String.fromCharCode(byte);
+  return btoa(text);
+}
 
 /** A board pin, as "<boardId>:<pin number>". */
 type PinKey = string;
@@ -97,6 +106,10 @@ export class Peripherals {
   private ultrasonics: { id: string; trig?: PinKey; echo?: PinKey; distance: number }[] = [];
   private lcds: { id: string; rs?: PinKey; e?: PinKey; data: (PinKey | undefined)[] }[] = [];
   private dhts: { id: string; data?: PinKey; celsius: number; humidity: number }[] = [];
+  private oleds: { id: string; sda?: PinKey; scl?: PinKey }[] = [];
+  private readonly panels = new Map<string, Ssd1306>();
+  /** Each panel's picture as text, with the version of the picture it was made from. */
+  private readonly pictures = new Map<string, { version: number; pixels: string }>();
   /** When each board pin started driving LOW: a DHT11 is asked by holding its line LOW. */
   private readonly wentLowAt = new Map<PinKey, number>();
   /** Until when each DHT11 is still sending its answer. */
@@ -121,6 +134,7 @@ export class Peripherals {
     this.ultrasonics = [];
     this.lcds = [];
     this.dhts = [];
+    this.oleds = [];
     this.sensorInputs.clear();
     for (const component of document.components) {
       if (component.type === 'servo') {
@@ -140,6 +154,13 @@ export class Peripherals {
         // Its data line rests HIGH, held there by the module's pull-up.
         if (data) this.sensorInputs.set(data, true);
         this.dhts.push({ id: component.id, data, ...component.props });
+      } else if (component.type === 'oled') {
+        if (!this.panels.has(component.id)) this.panels.set(component.id, new Ssd1306());
+        this.oleds.push({
+          id: component.id,
+          sda: pinOf.direct(component.pins.sda),
+          scl: pinOf.direct(component.pins.scl),
+        });
       } else if (component.type === 'lcd') {
         if (!this.displays.has(component.id)) this.displays.set(component.id, new Hd44780());
         const { pins } = component;
@@ -152,7 +173,14 @@ export class Peripherals {
       }
     }
     const present = new Set(document.components.map((c) => c.id));
-    for (const map of [this.angles, this.displays, this.echoBusyUntil, this.dhtBusyUntil]) {
+    for (const map of [
+      this.angles,
+      this.displays,
+      this.echoBusyUntil,
+      this.dhtBusyUntil,
+      this.panels,
+      this.pictures,
+    ]) {
       for (const id of map.keys()) if (!present.has(id)) map.delete(id);
     }
   }
@@ -165,6 +193,26 @@ export class Peripherals {
   /** Tells the parts which of them currently have a working supply. */
   setPowered(powered: (id: string) => boolean): void {
     this.powered = powered;
+    // A display that loses its supply forgets its picture and its settings.
+    for (const [id, panel] of this.panels) if (!powered(id)) panel.reset();
+  }
+
+  /**
+   * One exchange on a board's I2C bus. A device takes part when its data and
+   * clock legs are wired to the pins the program uses for them, it has power,
+   * and the address is its own.
+   */
+  i2c(boardId: string, transfer: I2cTransfer): I2cResult {
+    const sda = pinKey(boardId, transfer.sda);
+    const scl = pinKey(boardId, transfer.scl);
+    for (const oled of this.oleds) {
+      if (oled.sda !== sda || oled.scl !== scl || transfer.address !== OLED_ADDRESS) continue;
+      if (!this.powered(oled.id)) continue;
+      const panel = this.panels.get(oled.id)!;
+      panel.write(transfer.write);
+      return { status: 0, read: panel.read(transfer.readLength) };
+    }
+    return { status: 2 };
   }
 
   /**
@@ -283,11 +331,32 @@ export class Peripherals {
   }
 
   /** What each powered part is showing, to be merged into its reading. */
-  status(): Record<string, { angle?: number; lcd?: { lines: [string, string] } }> {
+  status(): Record<
+    string,
+    {
+      angle?: number;
+      lcd?: { lines: [string, string] };
+      oled?: { lit: boolean; brightness: number; pixels?: string };
+    }
+  > {
     const status: ReturnType<Peripherals['status']> = {};
     for (const [id, angle] of this.angles) if (this.powered(id)) status[id] = { angle };
     for (const [id, display] of this.displays) {
       if (this.powered(id) && display.displayOn) status[id] = { lcd: { lines: display.lines() } };
+    }
+    for (const [id, panel] of this.panels) {
+      if (!this.powered(id) || !panel.lit) {
+        status[id] = { oled: { lit: false, brightness: 0 } };
+        continue;
+      }
+      let picture = this.pictures.get(id);
+      if (picture?.version !== panel.version) {
+        picture = { version: panel.version, pixels: base64(panel.image()) };
+        this.pictures.set(id, picture);
+      }
+      // Contrast changes how bright a lit pixel is, but even at zero it is plainly visible.
+      const brightness = 0.45 + (0.55 * panel.contrast) / 255;
+      status[id] = { oled: { lit: true, brightness, pixels: picture.pixels } };
     }
     return status;
   }

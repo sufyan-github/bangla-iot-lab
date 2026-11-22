@@ -199,6 +199,17 @@ export const PIR_SUPPLY_RESISTANCE = 100_000;
 export const PIR_BLOCK_MS = 2500;
 
 /**
+ * 0.96 inch OLED display module (SSD1306, I2C). REPORTED by sellers: it works
+ * from 3.3 V to 5 V, answers at address 0x3C, and carries pull-up resistors on
+ * both bus lines. ESTIMATE: the value of those resistors, and its current,
+ * which on a real module rises with the number of lit pixels.
+ */
+export const OLED_ADDRESS = 0x3c;
+export const OLED_PULLUP_RESISTANCE = 4700;
+/** About 10 mA at 3.3 V. */
+export const OLED_SUPPLY_RESISTANCE = 330;
+
+/**
  * Small 5 V relay: a 70 Ω coil (71 mA at 5 V, more than a board pin may supply).
  * The contact closes once the coil carries 50 mA and stays closed until the
  * current falls below 15 mA, as a real relay holds on with less than it needs to pull in.
@@ -222,6 +233,7 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   dht11: 3,
   mq135: 4.5,
   pir: 4.5,
+  oled: 3,
 };
 
 /**

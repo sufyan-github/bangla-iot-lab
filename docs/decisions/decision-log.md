@@ -541,3 +541,44 @@ Sources read on 22 November 2026:
 [a rain sensor guide](https://randomnerdtutorials.com/?p=22600),
 [an LDR module description](https://openhw-studio.fossee.in/docs/components/openhw-ldr-module.html),
 [Joy-IT's KY-016 page](https://sensorkit.joy-it.net/en/sensors/ky-016).
+
+## D-054 — I2C is modelled as whole exchanges, and the display is driven by the real libraries
+
+The kit's OLED display talks over I2C. Two choices were made.
+
+**The bus carries whole exchanges, not bits.** The board library's `Wire`
+hands the simulation one message at a time: the address, the bytes written and
+how many to read back. The simulation finds the part whose SDA and SCL legs are
+wired to the pins the sketch uses, checks it has power, and gives it the bytes.
+Wiring mistakes behave as on a bench (swapped wires, no power, wrong pins: no
+answer), an exchange takes the time its bits would take at the bus speed, and a
+scanner sketch works.
+
+The alternative was to produce every clock and data edge on the two pins. A
+full picture is about nine thousand clock pulses, which the simulation would
+replay against the circuit one edge at a time. That cost buys one thing, the
+waveform on the logic analyser, and it can be added later behind the same
+interface without changing a part's model. Until then the instruments show
+both lines resting HIGH, and the part says so.
+
+**The display is driven by Adafruit's own libraries**, following D-051:
+Adafruit_SSD1306 and Adafruit_GFX are BSD-licensed and are built unmodified
+into the sketch, so the lab models the chip (SSD1306: its picture memory,
+address windows and switching on) and not a drawing library. What a sketch
+draws in the lab is what the same sketch draws on the bench, including the
+library's start-up picture.
+
+Left out on purpose: the GFX library's `Fonts` folder. Several of those fonts
+are made from GNU FreeFont, which is GPL, and the project ships no GPL
+material. A sketch that includes one of them does not compile, and the error
+says which file is missing.
+
+To make these libraries compile, the board library gained a `Print` class,
+`Wire.h`, an `SPI.h` that is declared and does nothing (the lab has no SPI
+parts), and the three macros the ESP32's own build defines. Sketches are now
+built without run-time type information, as on the board; with it, every
+sketch carried about 25 kB of the standard library's error printing.
+
+Not done: the display on the UNO-compatible board (it needs the same work on
+that board's I2C hardware and its compiler), and on the chip emulator, which
+has no `Wire` library yet.

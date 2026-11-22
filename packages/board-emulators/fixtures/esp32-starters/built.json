@@ -2,44 +2,48 @@
   "toolchain": "clang 21.1.8 wasm-opt 120",
   "starters": {
     "blink": {
-      "sourceHash": "2e5a6fe68b861eba0a34165a7f2bc965c2e0ea5b73ae1dc9fa20c38066e02cec",
-      "bytes": 7112
+      "sourceHash": "d23d01ad31931bdcd3687084151b1444ca058f51b4e8ac376f126ebba83794f6",
+      "bytes": 9242
     },
     "button": {
-      "sourceHash": "fbcad4e930926b92109feffe302fd243500da1af62e3e319e171bbbf331040d5",
-      "bytes": 7363
+      "sourceHash": "a1be83ea3bf6405efbb170e6d90ceb533daec590e8af55854ec06ff90a96fdaa",
+      "bytes": 9493
     },
     "dht": {
-      "sourceHash": "6a8c9aeb27686cf3b948765aaa7eb41b137791199dcf9513003c2b0e4c4df9fb",
-      "bytes": 39381
+      "sourceHash": "d23b317bd60d43d005049fb83a1cc7d357f329ad7a4b097892352ce870b6e9f6",
+      "bytes": 40611
     },
     "distance": {
-      "sourceHash": "890bbbb10488ee96353fbfc578f33bb465349d037314a0db4c330262cdaec4fc",
-      "bytes": 38801
+      "sourceHash": "e3175fcaf615ffc41fca38ce351ab093b4fe67aab8ee0de174e10c7a382f7563",
+      "bytes": 39773
     },
     "fade": {
-      "sourceHash": "2ed55f14ae6a5dae1a21234381dbb1d4d3b16db27192ae77d36dedaf96d5c868",
-      "bytes": 7797
+      "sourceHash": "97709a275276f885445332b13ac7ef8d434b59939920d5ffa32f6a595b79be2b",
+      "bytes": 9921
     },
     "knob": {
-      "sourceHash": "6e0607bc599d746f83968e4be4bcf0416d3f32a35648ae9dd823d9ff016f7a32",
-      "bytes": 39162
+      "sourceHash": "099fda2ac5c93e9b10e8ac0ef56fa360cde738a8a7287507c5bce04610cb2ddc",
+      "bytes": 40138
     },
     "light": {
-      "sourceHash": "67b2f0c16f2ff1552f789cf7167c657cbe55757398144c0661de535d4027e579",
-      "bytes": 38881
+      "sourceHash": "3c798083c43629caa46b02bb5b31f95949f3e9ca0191cdbc2cf4c96d8dcabde4",
+      "bytes": 40080
     },
     "motion": {
-      "sourceHash": "c816ac460ee9176d7b4dee94769ed3dbf54608132eae4f7cbcadf7cc6927eebb",
-      "bytes": 7838
+      "sourceHash": "bcc62980ff2c10bc58145c8d68691f6529c12253bf42b293e51f7324a3504ceb",
+      "bytes": 10591
+    },
+    "oled": {
+      "sourceHash": "4609b64c3d1e7fd61e5905f399e1a102639e9624345726bac8a180c172e92f27",
+      "bytes": 62098
     },
     "rgb": {
-      "sourceHash": "d351d4ed7e988dd1b050d718cc4a109d20c858c706def181574a7f85244c4203",
-      "bytes": 8462
+      "sourceHash": "a397d607f2e3d6cac139f1e34bab70242b3aa5ada2db314fdc3d94aafffc35fc",
+      "bytes": 10586
     },
     "servo": {
-      "sourceHash": "d5460d5e35b8185151dbbe87a09306ec0c4877048dbbf4de5775c5773142b68f",
-      "bytes": 9468
+      "sourceHash": "953263000919dfb6a7800be83c5a1c5d4b7895f567378aff3d6fac4e8e95b566",
+      "bytes": 11586
     }
   }
 }

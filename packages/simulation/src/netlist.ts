@@ -35,6 +35,8 @@ import {
   RGB_FORWARD_VOLTAGE,
   NPN_TRANSISTOR,
   MODULE_SUPPLY_RESISTANCE,
+  OLED_PULLUP_RESISTANCE,
+  OLED_SUPPLY_RESISTANCE,
   RELAY_COIL_RESISTANCE,
   SENSOR_RESISTANCE,
   SILICON_DIODE,
@@ -302,6 +304,18 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           add(resistor(id, supply, node(component.pins.gnd), DHT11_SUPPLY_RESISTANCE)),
         );
         add(resistor(`${id}:pullup`, supply, node(component.pins.data), DHT11_PULLUP_RESISTANCE));
+        break;
+      }
+      case 'oled': {
+        // A supply load, and the module's pull-ups on the two bus lines. What travels on
+        // the bus is handed to the display by the session, an exchange at a time.
+        const supply = node(component.pins.vcc);
+        partDevice.set(
+          id,
+          add(resistor(id, supply, node(component.pins.gnd), OLED_SUPPLY_RESISTANCE)),
+        );
+        add(resistor(`${id}:scl`, supply, node(component.pins.scl), OLED_PULLUP_RESISTANCE));
+        add(resistor(`${id}:sda`, supply, node(component.pins.sda), OLED_PULLUP_RESISTANCE));
         break;
       }
       case 'ldrmodule':

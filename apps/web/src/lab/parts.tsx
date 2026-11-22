@@ -1238,6 +1238,53 @@ export function RgbLedView(props: {
   );
 }
 
+/**
+ * 0.96 inch OLED display. `image` is its picture as an address a browser can
+ * draw, or undefined while the panel is dark. The screen is drawn at one screen
+ * unit for each of its 128 × 64 pixels.
+ */
+export function OledView(props: {
+  first: Point;
+  last: Point;
+  image: string | undefined;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const pins = [-length / 2, -length / 6, length / 6, length / 2];
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-74} y={-98} width={148} height={102} color="#1c4f8f" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {pins.map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      <g fontSize={7.5} fontWeight={700} fill="#dfe9f5" textAnchor="middle" pointerEvents="none">
+        {['GND', 'VCC', 'SCL', 'SDA'].map((name, i) => (
+          <text key={name} x={pins[i]} y={-9.5}>
+            {name}
+          </text>
+        ))}
+      </g>
+      {/* The glass, a little larger than the part of it that lights. */}
+      <rect x={-68} y={-90} width={136} height={72} rx={2} fill="#0b0e12" />
+      <rect x={-64} y={-86} width={128} height={64} fill="#05070a" />
+      {props.image && (
+        <image
+          href={props.image}
+          x={-64}
+          y={-86}
+          width={128}
+          height={64}
+          preserveAspectRatio="none"
+          style={{ imageRendering: 'pixelated' }}
+        />
+      )}
+      <rect x={-68} y={-90} width={136} height={72} rx={2} fill="url(#shade-board)" opacity={0.5} />
+    </g>
+  );
+}
+
 /** Relay: coil legs on the left, contact legs on the right. The bar closes when the coil is energised. */
 export function RelayView(props: {
   first: Point;

@@ -65,6 +65,7 @@ const compileFlags = (optimise) => [
   ...FLAGS.filter((flag) => flag !== '-O1'),
   optimise,
   '-fno-exceptions',
+  '-fno-rtti',
   '-nostdinc++',
   '-isystem',
   TOOLS.cxxInclude,
