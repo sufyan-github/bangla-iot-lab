@@ -42,7 +42,7 @@ describe('part definitions', () => {
     );
     expect(
       definitionProblems({
-        ...partDefinition('dht11'),
+        ...partDefinition('mq-135'),
         model: { level: 'timing', simplified: [] },
       }),
     ).toContain('a planned part has no model yet, so model.level must be "none"');
@@ -79,7 +79,7 @@ describe('recognising parts in a parts list', () => {
     const report = coverage([
       'HC-SR04 ultrasonic',
       'SG90 micro servo 180°',
-      'DHT11 temp/humidity',
+      'MQ-135',
       'YL-69 soil moisture',
       'USB cable',
       'Unobtainium sensor',

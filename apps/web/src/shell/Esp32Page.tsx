@@ -45,11 +45,11 @@ export function Esp32Page() {
       <div className="grid gap-x-6 sm:grid-cols-2">
         <section className={section}>
           <h2 className={heading}>{t('esp32.works.title')}</h2>
-          <List items={keys('esp32.works', 6)} mark="✓" />
+          <List items={keys('esp32.works', 8)} mark="✓" />
         </section>
         <section className={section}>
           <h2 className={heading}>{t('esp32.missing.title')}</h2>
-          <List items={keys('esp32.missing', 4)} mark="–" />
+          <List items={keys('esp32.missing', 3)} mark="–" />
           <p className="mt-3 text-sm text-ink-soft">{t('esp32.missing.note')}</p>
         </section>
       </div>

@@ -405,6 +405,16 @@ export function BoardPartDrawing(props: {
           selected={selected}
         />
       );
+    case 'dht11':
+      return (
+        <SensorView
+          kind="dht11"
+          vcc={at(part.pins.vcc)}
+          gnd={at(part.pins.gnd)}
+          label={`${props.formatNumber(part.props.celsius)}° ${props.formatNumber(part.props.humidity)}%`}
+          selected={selected}
+        />
+      );
     case 'temperature':
       return (
         <SensorView

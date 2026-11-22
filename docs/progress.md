@@ -10,16 +10,16 @@ The project is in **Phase 0** of its current plan: putting the foundations in
 place before the next large piece of work. Some later pieces were built earlier
 and are already working.
 
-| Phase                    | What it covers                                                                     | State                                                                                                               |
-| ------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 0                        | Repository, licences, CI, catalogue importer, part format, ESP32 feasibility study | **In progress**                                                                                                     |
-| 1                        | Editor: canvas, wiring, both views, saving, undo, offline                          | Mostly built and tested; not yet measured at 200 parts on a phone                                                   |
-| ESP32 and the school kit | ESP32 board, the kit's sensors and display, the kit's lessons                      | **Started:** the board is in the editor and runs programs, as an experiment. No kit sensors, display or lessons yet |
-| Digital logic            | Gates, flip-flops, real logic chips, logic analyser                                | Not started                                                                                                         |
-| 4                        | Analog solver and basic parts                                                      | Built and tested on 18 reference circuits; the target is 30 or more                                                 |
-| 5                        | Instruments and visual explanations                                                | Partly built                                                                                                        |
-| 6                        | Programmable boards                                                                | UNO-compatible board built and tested; ESP32 board experimental, with two ways of running a program                 |
-| Later                    | Systems of several boards, radio, energy; lessons and classes; enclosures          | Not started                                                                                                         |
+| Phase                    | What it covers                                                                     | State                                                                                                                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0                        | Repository, licences, CI, catalogue importer, part format, ESP32 feasibility study | **In progress**                                                                                                                                                        |
+| 1                        | Editor: canvas, wiring, both views, saving, undo, offline                          | Mostly built and tested; not yet measured at 200 parts on a phone                                                                                                      |
+| ESP32 and the school kit | ESP32 board, the kit's sensors and display, the kit's lessons                      | **Started:** the board runs programs two ways, as an experiment. From the kit: DHT11, servo and ultrasonic sensor work on it. No display, other sensors or lessons yet |
+| Digital logic            | Gates, flip-flops, real logic chips, logic analyser                                | Not started                                                                                                                                                            |
+| 4                        | Analog solver and basic parts                                                      | Built and tested on 18 reference circuits; the target is 30 or more                                                                                                    |
+| 5                        | Instruments and visual explanations                                                | Partly built                                                                                                                                                           |
+| 6                        | Programmable boards                                                                | UNO-compatible board built and tested; ESP32 board experimental, with two ways of running a program                                                                    |
+| Later                    | Systems of several boards, radio, energy; lessons and classes; enclosures          | Not started                                                                                                                                                            |
 
 The order differs from the numbering on purpose: the ESP32 and the school kit
 come before digital logic, because most of the planned projects and the school
@@ -40,19 +40,23 @@ curriculum depend on that board.
 
 ## Test results
 
-| Suite                                                                                                                               | Result on 21 November 2026                                                                                                                  |
-| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lint, formatting, types, licence check                                                                                              | Clean                                                                                                                                       |
-| Unit tests                                                                                                                          | 347 passed                                                                                                                                  |
-| Integration tests (database, compiler sandbox, emulators, firmware source, ESP32 board library, ESP32 compile paths, chip emulator) | 85 passed                                                                                                                                   |
-| Browser tests, desktop and phone sizes                                                                                              | 88 tests. Last full local run: 87 passed; the one that failed was a fault in the test, since fixed and rerun on its own; see the note below |
-| Hardware tests                                                                                                                      | None run                                                                                                                                    |
+| Suite                                                                                                                               | Result on 21 November 2026                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Lint, formatting, types, licence check                                                                                              | Clean                                                        |
+| Unit tests                                                                                                                          | 365 passed                                                   |
+| Integration tests (database, compiler sandbox, emulators, firmware source, ESP32 board library, ESP32 compile paths, chip emulator) | 85 passed                                                    |
+| Browser tests, desktop and phone sizes                                                                                              | 94 tests. Last full local run: 94 passed; see the note below |
+| Hardware tests                                                                                                                      | None run                                                     |
 
 **Known issue with the browser tests.** A few tests wait a fixed number of
 seconds for something the simulation does in real time (a servo sweep, a compile,
 a blink). On a computer that is busy with other work the simulation slows down
 and one of them can time out. Each passes when rerun on its own. They need limits
-tied to simulated time, not wall-clock time. The servo test failed this way once on GitHub's
+tied to simulated time, not wall-clock time. Two more causes were found
+and removed on 22 November 2026: on the phone-sized layout the code editor now
+and then kept the old program when a test typed a new one (the tests now check
+what they typed), and the API's limit of 20 compiles a minute, which a full run
+came close to (the tests' own API now allows more). The servo test failed this way once on GitHub's
 runner (22 November 2026) and now waits up to 30 s for each end of the sweep; the
 others are unchanged.
 

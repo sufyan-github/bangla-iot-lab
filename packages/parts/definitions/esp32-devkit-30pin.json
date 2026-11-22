@@ -3,7 +3,7 @@
   "id": "esp32-devkit-30pin",
   "simulates": "esp32",
   "status": "simulated",
-  "statusNote": "Experimental. Programs run on the lab's own model of the board, not on the board's real software. No display, DHT sensor, servo or Wi-Fi yet. Nothing has been checked against a real board.",
+  "statusNote": "Experimental. Programs run on the lab's own model of the board, or in an emulator of the chip. No display or Wi-Fi yet. Nothing has been checked against a real board.",
   "family": "board",
   "tier": 1,
   "name": {

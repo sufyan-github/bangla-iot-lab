@@ -83,6 +83,7 @@ export const bn = {
   'tool.motor': 'মোটর',
   'tool.transistor': 'ট্রানজিস্টর',
   'tool.temperature': 'তাপমাত্রা',
+  'tool.dht11': 'DHT11',
   'tool.soil': 'মাটির সেন্সর',
   'tool.ir': 'IR সেন্সর',
   'hint.place': 'বসাতে বোর্ডের একটা ছিদ্রে ট্যাপ করো।',
@@ -125,6 +126,7 @@ export const bn = {
   'part.motor': 'ডিসি মোটর',
   'part.transistor': 'NPN ট্রানজিস্টর',
   'part.temperature': 'তাপমাত্রা সেন্সর',
+  'part.dht11': 'DHT11 তাপমাত্রা ও আর্দ্রতা সেন্সর',
   'part.soil': 'মাটির আর্দ্রতা সেন্সর',
   'part.ir': 'IR বাধা সেন্সর',
   'part.switch.about':
@@ -139,6 +141,8 @@ export const bn = {
     'ভোল্টেজ বাড়ালে মোটর জোরে ঘোরে, আর তার উল্টে দিলে উল্টো দিকে ঘোরে। বোর্ডের পিন যতটা কারেন্ট দিতে পারে মোটর তার চেয়ে অনেক বেশি চায়, তাই ট্রানজিস্টর দিয়ে চালাতে হয়।',
   'part.transistor.about':
     'ট্রানজিস্টর একটা ইলেকট্রনিক সুইচ। বেসে (মাঝের পা, রেজিস্টরের ভেতর দিয়ে) অল্প কারেন্ট দিলে কালেক্টর থেকে এমিটারে অনেক কারেন্ট যেতে পারে। বাঁ দিক থেকে পা: কালেক্টর, বেস, এমিটার।',
+  'part.dht11.about':
+    'DHT11 বাতাসের তাপমাত্রা (০ থেকে ৫০ °C) আর আর্দ্রতা (২০ থেকে ৯০%) মাপে, আর একটা তারেই দুটো মান পাঠায়। পা: VCC (3.3 V বা 5 V), DATA, GND। প্রোগ্রামে DHT লাইব্রেরি দিয়ে পড়ো, আর দুই বার পড়ার মাঝে অন্তত ২ সেকেন্ড অপেক্ষা করো।',
   'part.temperature.about':
     'এই সেন্সর প্রতি ডিগ্রি সেলসিয়াসে 10 mV দেয়, তাই 25 °C-এ 0.25 V। পা: 5 V, আউটপুট, GND। আউটপুট analogRead দিয়ে পড়ো।',
   'part.soil.about':
@@ -177,6 +181,7 @@ export const bn = {
   'inspector.capacitance': 'ধারকত্ব',
   'inspector.light': 'আলো',
   'inspector.temperature': 'তাপমাত্রা',
+  'inspector.humidity': 'বাতাসের আর্দ্রতা',
   'inspector.moisture': 'মাটি কতটা ভেজা',
   'inspector.on': 'চালু',
   'inspector.off': 'বন্ধ',
@@ -227,6 +232,8 @@ export const bn = {
     'শর্ট সার্কিট! {id}-র 5V আর GND প্রায় সরাসরি জুড়ে গেছে। আসল বোর্ডে এতে USB পোর্ট বন্ধ হয়ে যেতে পারে। যে তারটা সরাসরি জুড়ছে সেটা সরাও।',
   'diag.pin-overcurrent':
     '{id}-র {socket} পিন দিয়ে বেশি কারেন্ট যাচ্ছে ({current})। একটা পিন সর্বোচ্চ ৪০ mA সইতে পারে। পিন আর যন্ত্রাংশের মাঝে রেজিস্টর লাগাও।',
+  'diag.pin-overvoltage':
+    '{id}-র {socket} পিনে {volts} যাচ্ছে। এই বোর্ডের পিন সর্বোচ্চ {limit} সইতে পারে; আসল বোর্ডে এতে পিন নষ্ট হয়ে যেতে পারে। দুটো রেজিস্টর (যেমন 1 kΩ আর 2 kΩ) দিয়ে ভোল্টেজ ভাগ করে কমিয়ে নাও।',
   'diag.solver-failed': 'এই সার্কিটটা হিসাব করা যায়নি। সংযোগগুলো আবার দেখো।',
 
   'edit.hole-occupied': 'এই ছিদ্রে আগে থেকেই কিছু বসানো আছে।',
@@ -266,8 +273,11 @@ export const bn = {
   'code.starter.esp32.button': 'বোতাম চাপলে LED (D4, D2)',
   'code.starter.esp32.fade': 'ধীরে উজ্জ্বল-ম্লান (D2)',
   'code.starter.esp32.knob': 'নব ঘুরিয়ে উজ্জ্বলতা (D34, D2)',
+  'code.starter.esp32.servo': 'সার্ভো এদিক-ওদিক (D13)',
+  'code.starter.esp32.distance': 'দূরত্ব মাপো (D5, D18)',
+  'code.starter.esp32.dht': 'তাপমাত্রা ও আর্দ্রতা (D4)',
   'code.esp32.note':
-    'পরীক্ষামূলক। এই ESP32 তোমার প্রোগ্রাম চালায় ল্যাবের নিজের বানানো বোর্ড-মডেল দিয়ে, বোর্ডের আসল সফটওয়্যার দিয়ে নয়। পিন, সময়, সিরিয়াল লেখা, অ্যানালগ ইনপুট, PWM আর ইন্টারাপ্ট কাজ করে। ডিসপ্লে, DHT সেন্সর, সার্ভো আর Wi-Fi এখনো কাজ করে না। আসল বোর্ডের সাথে এটা এখনো মিলিয়ে দেখা হয়নি।',
+    'পরীক্ষামূলক। এই ESP32 তোমার প্রোগ্রাম চালায় ল্যাবের নিজের বানানো বোর্ড-মডেল দিয়ে, বোর্ডের আসল সফটওয়্যার দিয়ে নয়। পিন, সময়, সিরিয়াল লেখা, অ্যানালগ ইনপুট, PWM, ইন্টারাপ্ট, সার্ভো, আলট্রাসনিক আর DHT11 সেন্সর কাজ করে। ডিসপ্লে আর Wi-Fi এখনো কাজ করে না। আসল বোর্ডের সাথে এটা এখনো মিলিয়ে দেখা হয়নি।',
   'esp32.title': 'এই ল্যাবের ESP32',
   'esp32.intro':
     'এই ল্যাবের ESP32 বোর্ড এখনো পরীক্ষামূলক। এটা তোমার প্রোগ্রাম কীভাবে চালায়, কী কী মেপে দেখা হয়েছে আর কী হয়নি, তা এই পাতায় লেখা আছে।',
@@ -282,11 +292,12 @@ export const bn = {
   'esp32.works.4': 'অ্যানালগ ইনপুট, চিপ যেভাবে পড়ে সেভাবে',
   'esp32.works.5': 'PWM: analogWrite আর ledc ফাংশনগুলো',
   'esp32.works.6': 'ইন্টারাপ্ট আর pulseIn',
+  'esp32.works.7': 'সার্ভো (ESP32Servo লাইব্রেরি), আলট্রাসনিক সেন্সর',
+  'esp32.works.8': 'DHT11 তাপমাত্রা ও আর্দ্রতা সেন্সর (আসল DHT লাইব্রেরি দিয়ে)',
   'esp32.missing.title': 'যা এখনো কাজ করে না',
   'esp32.missing.1': 'OLED ডিসপ্লে ও অন্যান্য I2C যন্ত্রাংশ',
-  'esp32.missing.2': 'DHT তাপমাত্রা ও আর্দ্রতা সেন্সর',
-  'esp32.missing.3': 'সার্ভো',
-  'esp32.missing.4': 'সেটিংস জমিয়ে রাখা, স্লিপ মোড, Wi-Fi ও ব্লুটুথ',
+  'esp32.missing.2': 'সেটিংস জমিয়ে রাখা (Preferences), স্লিপ মোড',
+  'esp32.missing.3': 'Wi-Fi ও ব্লুটুথ',
   'esp32.missing.note': 'এগুলোর কোনোটা লাগে এমন প্রোগ্রাম কম্পাইল হবে না; বার্তায় বলা থাকবে কী নেই।',
   'esp32.differs.title': 'আসল বোর্ডের সাথে যেখানে তফাত',
   'esp32.differs.1':
@@ -421,6 +432,7 @@ export const en: Record<MessageKey, string> = {
   'tool.motor': 'Motor',
   'tool.transistor': 'Transistor',
   'tool.temperature': 'Temperature',
+  'tool.dht11': 'DHT11',
   'tool.soil': 'Soil sensor',
   'tool.ir': 'IR sensor',
   'hint.place': 'Tap a hole on the board to place it.',
@@ -467,6 +479,7 @@ export const en: Record<MessageKey, string> = {
   'part.motor': 'DC motor',
   'part.transistor': 'NPN transistor',
   'part.temperature': 'Temperature sensor',
+  'part.dht11': 'DHT11 temperature and humidity sensor',
   'part.soil': 'Soil-moisture sensor',
   'part.ir': 'IR obstacle sensor',
   'part.switch.about':
@@ -481,6 +494,8 @@ export const en: Record<MessageKey, string> = {
     'A motor turns faster with more voltage and the other way round if you swap its wires. It needs far more current than a board pin can give, so switch it with a transistor.',
   'part.transistor.about':
     'A transistor is an electronic switch. A small current into the base (middle leg, through a resistor) lets a large current flow from collector to emitter. Legs from the left: collector, base, emitter.',
+  'part.dht11.about':
+    'The DHT11 measures the air’s temperature (0 to 50 °C) and humidity (20 to 90%), and sends both on one wire. Legs: VCC (3.3 V or 5 V), DATA, GND. Read it in a program with the DHT library, and wait at least 2 seconds between readings.',
   'part.temperature.about':
     'This sensor puts out 10 mV for every degree Celsius, so 25 °C gives 0.25 V. Legs: 5 V, output, GND. Read the output with analogRead.',
   'part.soil.about':
@@ -519,6 +534,7 @@ export const en: Record<MessageKey, string> = {
   'inspector.capacitance': 'Capacitance',
   'inspector.light': 'Light',
   'inspector.temperature': 'Temperature',
+  'inspector.humidity': 'Humidity of the air',
   'inspector.moisture': 'Soil wetness',
   'inspector.on': 'On',
   'inspector.off': 'Off',
@@ -569,6 +585,8 @@ export const en: Record<MessageKey, string> = {
     'Short circuit! 5V and GND of {id} are joined almost directly. On a real board this can shut down the USB port. Remove the wire that joins them.',
   'diag.pin-overcurrent':
     'Too much current through pin {socket} of {id} ({current}). One pin can stand 40 mA at most. Put a resistor between the pin and the part.',
+  'diag.pin-overvoltage':
+    'Pin {socket} of {id} is getting {volts}. This board’s pins can stand {limit} at most; on a real board this can destroy the pin. Bring the voltage down with two resistors as a divider (for example 1 kΩ and 2 kΩ).',
   'diag.solver-failed': 'This circuit could not be calculated. Check the connections again.',
 
   'edit.hole-occupied': 'Something is already in this hole.',
@@ -608,8 +626,11 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.button': 'Button lights the LED (D4, D2)',
   'code.starter.esp32.fade': 'Fade in and out (D2)',
   'code.starter.esp32.knob': 'Knob sets the brightness (D34, D2)',
+  'code.starter.esp32.servo': 'Servo sweep (D13)',
+  'code.starter.esp32.distance': 'Measure distance (D5, D18)',
+  'code.starter.esp32.dht': 'Temperature and humidity (D4)',
   'code.esp32.note':
-    'Experimental. This ESP32 runs your program with the lab’s own model of the board, not the board’s real software. Pins, timing, serial text, analog input, PWM and interrupts work. Displays, DHT sensors, servos and Wi-Fi do not work yet. It has not yet been checked against a real board.',
+    'Experimental. This ESP32 runs your program with the lab’s own model of the board, not the board’s real software. Pins, timing, serial text, analog input, PWM, interrupts, the servo, the ultrasonic sensor and the DHT11 sensor work. Displays and Wi-Fi do not work yet. It has not yet been checked against a real board.',
   'esp32.title': 'The ESP32 in this lab',
   'esp32.intro':
     'The ESP32 board in this lab is an experiment. This page says how it runs your program, what has been measured, and what has not.',
@@ -624,11 +645,12 @@ export const en: Record<MessageKey, string> = {
   'esp32.works.4': 'Analog input, read the way the chip reads it',
   'esp32.works.5': 'PWM: analogWrite and the ledc functions',
   'esp32.works.6': 'Interrupts and pulseIn',
+  'esp32.works.7': 'The servo (ESP32Servo library) and the ultrasonic sensor',
+  'esp32.works.8': 'The DHT11 temperature and humidity sensor (with the real DHT library)',
   'esp32.missing.title': 'What does not work yet',
   'esp32.missing.1': 'The OLED display and other I2C parts',
-  'esp32.missing.2': 'The DHT temperature and humidity sensor',
-  'esp32.missing.3': 'Servos',
-  'esp32.missing.4': 'Saved settings, sleep, Wi-Fi and Bluetooth',
+  'esp32.missing.2': 'Saved settings (Preferences) and sleep',
+  'esp32.missing.3': 'Wi-Fi and Bluetooth',
   'esp32.missing.note':
     'A program that needs one of these will not compile; the message names what is missing.',
   'esp32.differs.title': 'Where it differs from a real board',

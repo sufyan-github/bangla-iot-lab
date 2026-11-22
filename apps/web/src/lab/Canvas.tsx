@@ -84,6 +84,7 @@ interface Press {
 /** How far each module's body rises above its row of legs, in canvas units. */
 const BODY_HEIGHT: Partial<Record<string, number>> = {
   temperature: 24,
+  dht11: 24,
   soil: 24,
   ir: 24,
   relay: 26,

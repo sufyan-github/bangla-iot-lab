@@ -31,7 +31,7 @@ export const compileRoutes =
       '/v1/compile',
       {
         schema: { body: CompileBody },
-        config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
+        config: { rateLimit: { max: deps.config.compilesPerMinute, timeWindow: '1 minute' } },
       },
       async (request, reply) => {
         const { board, language, engine } = request.body;

@@ -5,7 +5,10 @@ import {
   type CircuitDocument,
 } from '@banglalab/shared';
 import { Hd44780 } from './hd44780';
+import type { PinDrive } from '@banglalab/board-emulators';
 import {
+  DHT11_START_MS,
+  DHT11_TIMING_US,
   SERVO_MAX_PULSE_US,
   SERVO_MIN_PULSE_US,
   ULTRASONIC_ECHO_DELAY_MS,
@@ -26,13 +29,24 @@ export interface ScheduledInput {
   level: boolean;
   /** The sensor producing it. */
   sensorId: string;
+  /**
+   * True for a level the board is given as it is. Otherwise the session asks
+   * the circuit what the pin sees, which matters when a divider is in the way.
+   */
+  asIs?: boolean;
 }
 
-/**
- * Finds which board pin each endpoint is wired to, following wires and
- * breadboard strips only (not through other parts).
- */
-function boardPinFinder(document: CircuitDocument): (endpoint: string) => PinKey | undefined {
+interface PinFinder {
+  /** The board pin an endpoint is wired to, following wires and breadboard strips only. */
+  direct(endpoint: string): PinKey | undefined;
+  /**
+   * The same, or failing that the board pin reached through one resistor: a
+   * sensor's 5 V output brought down to a 3.3 V pin by a voltage divider.
+   */
+  throughResistor(endpoint: string): PinKey | undefined;
+}
+
+function boardPinFinder(document: CircuitDocument): PinFinder {
   const parent = new Map<string, string>();
   const find = (net: string): string => {
     let root = net;
@@ -53,7 +67,23 @@ function boardPinFinder(document: CircuitDocument): (endpoint: string) => PinKey
         pinOfNet.set(find(netName(`${component.id}.${terminal}`)), pinKey(component.id, pin));
     }
   }
-  return (endpoint) => pinOfNet.get(find(netName(endpoint)));
+  const direct = (endpoint: string) => pinOfNet.get(find(netName(endpoint)));
+  return {
+    direct,
+    throughResistor(endpoint) {
+      const wired = direct(endpoint);
+      if (wired) return wired;
+      const net = find(netName(endpoint));
+      for (const component of document.components) {
+        if (component.type !== 'resistor') continue;
+        const [a, b] = [component.pins.a, component.pins.b].map((hole) => find(netName(hole)));
+        const far = a === net ? b : b === net ? a : undefined;
+        const pin = far === undefined ? undefined : pinOfNet.get(far);
+        if (pin) return pin;
+      }
+      return undefined;
+    },
+  };
 }
 
 /**
@@ -66,6 +96,11 @@ export class Peripherals {
   private servos: { id: string; signal?: PinKey }[] = [];
   private ultrasonics: { id: string; trig?: PinKey; echo?: PinKey; distance: number }[] = [];
   private lcds: { id: string; rs?: PinKey; e?: PinKey; data: (PinKey | undefined)[] }[] = [];
+  private dhts: { id: string; data?: PinKey; celsius: number; humidity: number }[] = [];
+  /** When each board pin started driving LOW: a DHT11 is asked by holding its line LOW. */
+  private readonly wentLowAt = new Map<PinKey, number>();
+  /** Until when each DHT11 is still sending its answer. */
+  private readonly dhtBusyUntil = new Map<string, number>();
 
   private readonly angles = new Map<string, number>();
   private readonly displays = new Map<string, Hd44780>();
@@ -73,8 +108,11 @@ export class Peripherals {
   private readonly echoBusyUntil = new Map<string, number>();
   private powered: (id: string) => boolean = () => false;
 
-  /** Board inputs driven by a sensor's timed pulses, which the circuit's voltages must not overwrite. */
-  readonly sensorInputs = new Set<PinKey>();
+  /**
+   * Board inputs driven by a sensor's timed pulses, which the circuit's voltages
+   * must not overwrite, with the level each rests at between pulses.
+   */
+  readonly sensorInputs = new Map<PinKey, boolean>();
 
   /** Re-reads the wiring after an edit. What each part was doing is kept. */
   rewire(document: CircuitDocument): void {
@@ -82,32 +120,39 @@ export class Peripherals {
     this.servos = [];
     this.ultrasonics = [];
     this.lcds = [];
+    this.dhts = [];
     this.sensorInputs.clear();
     for (const component of document.components) {
       if (component.type === 'servo') {
-        this.servos.push({ id: component.id, signal: pinOf(component.pins.signal) });
+        this.servos.push({ id: component.id, signal: pinOf.direct(component.pins.signal) });
       } else if (component.type === 'ultrasonic') {
-        const echo = pinOf(component.pins.echo);
-        if (echo) this.sensorInputs.add(echo);
+        // A 5 V echo may reach a 3.3 V board's pin through a divider.
+        const echo = pinOf.throughResistor(component.pins.echo);
+        if (echo) this.sensorInputs.set(echo, false);
         this.ultrasonics.push({
           id: component.id,
-          trig: pinOf(component.pins.trig),
+          trig: pinOf.direct(component.pins.trig),
           echo,
           distance: component.props.distance,
         });
+      } else if (component.type === 'dht11') {
+        const data = pinOf.direct(component.pins.data);
+        // Its data line rests HIGH, held there by the module's pull-up.
+        if (data) this.sensorInputs.set(data, true);
+        this.dhts.push({ id: component.id, data, ...component.props });
       } else if (component.type === 'lcd') {
         if (!this.displays.has(component.id)) this.displays.set(component.id, new Hd44780());
         const { pins } = component;
         this.lcds.push({
           id: component.id,
-          rs: pinOf(pins.rs),
-          e: pinOf(pins.e),
-          data: [pins.d4, pins.d5, pins.d6, pins.d7].map(pinOf),
+          rs: pinOf.direct(pins.rs),
+          e: pinOf.direct(pins.e),
+          data: [pins.d4, pins.d5, pins.d6, pins.d7].map(pinOf.direct),
         });
       }
     }
     const present = new Set(document.components.map((c) => c.id));
-    for (const map of [this.angles, this.displays, this.echoBusyUntil]) {
+    for (const map of [this.angles, this.displays, this.echoBusyUntil, this.dhtBusyUntil]) {
       for (const id of map.keys()) if (!present.has(id)) map.delete(id);
     }
   }
@@ -130,11 +175,14 @@ export class Peripherals {
   pinChanged(
     boardId: string,
     pin: number,
-    high: boolean,
+    drive: PinDrive,
     timeMs: number,
     isHigh: (pin: number) => boolean,
   ): ScheduledInput[] {
     const key = pinKey(boardId, pin);
+    const asked = this.dhtAsked(boardId, pin, key, drive, timeMs);
+    if (asked.length > 0) return asked;
+    const high = drive === 'high';
     const since = this.wentHighAt.get(key);
     if (high) {
       if (since === undefined) this.wentHighAt.set(key, timeMs);
@@ -181,6 +229,55 @@ export class Peripherals {
         0,
       );
       this.displays.get(lcd.id)!.clock(read(lcd.rs), nibble);
+    }
+    return scheduled;
+  }
+
+  /**
+   * A DHT11 is asked for a reading by holding its data line LOW for at least
+   * 18 ms and letting go. It answers with a LOW and a HIGH of 80 µs each, then
+   * 40 bits: humidity, a zero, temperature, a zero, and their sum. Each bit is
+   * 50 µs LOW and then HIGH for 27 µs (a nought) or 70 µs (a one).
+   */
+  private dhtAsked(
+    boardId: string,
+    pin: number,
+    key: PinKey,
+    drive: PinDrive,
+    timeMs: number,
+  ): ScheduledInput[] {
+    if (drive === 'low') {
+      if (!this.wentLowAt.has(key)) this.wentLowAt.set(key, timeMs);
+      return [];
+    }
+    const since = this.wentLowAt.get(key);
+    this.wentLowAt.delete(key);
+    if (since === undefined || timeMs - since < DHT11_START_MS) return [];
+    const scheduled: ScheduledInput[] = [];
+    for (const sensor of this.dhts) {
+      if (sensor.data !== key || !this.powered(sensor.id)) continue;
+      if (timeMs < (this.dhtBusyUntil.get(sensor.id) ?? 0)) continue; // still answering
+      const humidity = Math.round(sensor.humidity);
+      const celsius = Math.round(sensor.celsius);
+      const bytes = [humidity, 0, celsius, 0, (humidity + celsius) & 0xff];
+      const input = { boardId, pin, sensorId: sensor.id, asIs: true };
+      let at = timeMs * 1000 + DHT11_TIMING_US.pause;
+      const edge = (level: boolean, lastsUs: number) => {
+        scheduled.push({ ...input, timeMs: at / 1000, level });
+        at += lastsUs;
+      };
+      edge(false, DHT11_TIMING_US.low);
+      edge(true, DHT11_TIMING_US.high);
+      for (const byte of bytes) {
+        for (let bit = 7; bit >= 0; bit--) {
+          edge(false, DHT11_TIMING_US.bitLow);
+          edge(true, (byte >> bit) & 1 ? DHT11_TIMING_US.one : DHT11_TIMING_US.zero);
+        }
+      }
+      edge(false, DHT11_TIMING_US.bitLow);
+      // The sensor lets go and the pull-up takes the line HIGH again.
+      scheduled.push({ ...input, timeMs: at / 1000, level: true });
+      this.dhtBusyUntil.set(sensor.id, at / 1000);
     }
     return scheduled;
   }

@@ -41,7 +41,10 @@ under other licences. Each is kept apart from the Apache-2.0 code.
      listed in LICENSES/wasi-libc.txt (MIT, BSD, ISC, Apache-2.0, CC0 and
      public domain);
    - libc++, libc++abi and compiler-rt from the LLVM project, under the Apache
-     License 2.0 with LLVM Exceptions (LICENSES/LLVM.txt).
+     License 2.0 with LLVM Exceptions (LICENSES/LLVM.txt);
+   - Adafruit's DHT sensor library 1.4.7, Copyright 2020 Adafruit Industries,
+     MIT licence. Its source, unmodified, and its licence text are in
+     third_party/adafruit-dht/.
 
 3. ESP32 firmware for the chip emulator (experimental; LGPL-2.1-or-later)
 

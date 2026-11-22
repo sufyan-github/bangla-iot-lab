@@ -21,6 +21,8 @@ import {
   BATTERY_INTERNAL_RESISTANCE,
   BUZZER_RESISTANCE,
   CONTACT_RESISTANCE,
+  DHT11_PULLUP_RESISTANCE,
+  DHT11_SUPPLY_RESISTANCE,
   MOTOR_RESISTANCE,
   NPN_TRANSISTOR,
   MODULE_SUPPLY_RESISTANCE,
@@ -273,6 +275,17 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           );
         }
         break;
+      case 'dht11': {
+        // A supply load, and the module's pull-up on the data line. What the sensor
+        // sends on that line is timed pulses, delivered to the board by the session.
+        const supply = node(component.pins.vcc);
+        partDevice.set(
+          id,
+          add(resistor(id, supply, node(component.pins.gnd), DHT11_SUPPLY_RESISTANCE)),
+        );
+        add(resistor(`${id}:pullup`, supply, node(component.pins.data), DHT11_PULLUP_RESISTANCE));
+        break;
+      }
       case 'temperature':
       case 'soil':
       case 'ir': {

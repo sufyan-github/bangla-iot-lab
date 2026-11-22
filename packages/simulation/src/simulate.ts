@@ -52,6 +52,7 @@ export type DiagnosticCode =
   | 'led-low-voltage'
   | 'legs-in-same-strip'
   | 'pin-overcurrent'
+  | 'pin-overvoltage'
   | 'solver-failed';
 
 export interface Diagnostic {
@@ -59,8 +60,11 @@ export interface Diagnostic {
   severity: 'info' | 'warning' | 'error';
   /** The part the message is about, when there is one. */
   componentId?: string;
-  /** For `pin-overcurrent`: the board socket, e.g. "d13". */
+  /** For `pin-overcurrent` and `pin-overvoltage`: the board socket, e.g. "d13". */
   socket?: string;
+  /** For `pin-overvoltage`: the highest voltage seen on the pin, and what the pin can stand. */
+  volts?: number;
+  limit?: number;
 }
 
 export interface SimulationResult {
@@ -236,6 +240,13 @@ export function readSolution(
           current: device?.current(solution) ?? 0,
         };
         break;
+      case 'dht11':
+        // A digital sensor: what is shown is its supply, which decides whether it works.
+        result.parts[id] = {
+          voltage: volts(component.pins.vcc) - volts(component.pins.gnd),
+          current: device?.current(solution) ?? 0,
+        };
+        break;
       case 'temperature':
       case 'soil':
       case 'ir':
@@ -392,6 +403,18 @@ export class Observation {
           severity: 'error',
           componentId,
           socket: name,
+        });
+      }
+      // A 5 V signal on a 3.3 V board's pin: the commonest way to destroy one.
+      const highest = extreme((s) => s.sockets[socket]!.voltage, Math.max);
+      if (model && !isSupply && !model.grounds.includes(name) && highest > model.maxPinVoltage) {
+        result.diagnostics.push({
+          code: 'pin-overvoltage',
+          severity: 'error',
+          componentId,
+          socket: name,
+          volts: highest,
+          limit: model.maxPinVoltage,
         });
       }
     }

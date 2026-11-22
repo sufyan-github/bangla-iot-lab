@@ -130,6 +130,28 @@ export const MODULE_SUPPLY_RESISTANCE = { servo: 500, ultrasonic: 330, lcd: 2500
 /** A module counts as powered above this supply voltage. */
 export const MODULE_MIN_SUPPLY = 4;
 
+/**
+ * DHT11 temperature and humidity sensor. Timing and supply from its datasheet
+ * (Aosong, "DHT11 Humidity & Temperature Sensor"); none of it measured here.
+ */
+/** Works from 3 V, so also from the ESP32's 3.3 V pin. */
+export const DHT11_MIN_SUPPLY = 3;
+/** About 1 mA while measuring at 3.3 V. */
+export const DHT11_SUPPLY_RESISTANCE = 3300;
+/** The pull-up resistor on the three-pin module's data line. ESTIMATE: modules carry 4.7 kΩ to 10 kΩ. */
+export const DHT11_PULLUP_RESISTANCE = 5100;
+/** How long the program must hold the data line LOW to ask for a reading, milliseconds. */
+export const DHT11_START_MS = 18;
+/** The answer, in microseconds: a pause, LOW, HIGH, then for each of 40 bits a LOW and a HIGH. */
+export const DHT11_TIMING_US = {
+  pause: 30,
+  low: 80,
+  high: 80,
+  bitLow: 50,
+  zero: 27,
+  one: 70,
+} as const;
+
 /** Arduino's Servo library: 544 µs is 0° and 2400 µs is 180°. */
 export const SERVO_MIN_PULSE_US = 544;
 export const SERVO_MAX_PULSE_US = 2400;

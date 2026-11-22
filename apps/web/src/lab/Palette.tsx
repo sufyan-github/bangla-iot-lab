@@ -124,6 +124,12 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <circle cx="12" cy="18" r="1.8" fill="currentColor" />
     </>
   ),
+  dht11: (
+    <>
+      <rect x="5" y="3" width="14" height="13" rx="2" {...stroke} />
+      <path d="M9 6.5v6M12 6.5v6M15 6.5v6M8 16v5M12 16v5M16 16v5" {...stroke} />
+    </>
+  ),
   soil: (
     <>
       <path d="M12 3c3.5 4.5 5 7 5 9.5a5 5 0 0 1-10 0C7 10 8.5 7.5 12 3z" {...stroke} />
@@ -170,7 +176,7 @@ const GROUPS: PaletteItem[][] = [
   ['battery', 'uno', 'esp32'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
   ['buzzer', 'motor', 'relay', 'servo', 'lcd'],
-  ['ldr', 'temperature', 'soil', 'ir', 'ultrasonic'],
+  ['ldr', 'temperature', 'dht11', 'soil', 'ir', 'ultrasonic'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

@@ -37,7 +37,13 @@ export default defineConfig({
       command: 'pnpm --filter @banglalab/api start',
       url: 'http://127.0.0.1:4000/health',
       reuseExistingServer: !process.env.CI,
-      env: { LOG_LEVEL: 'warn', WEB_ORIGIN: `http://localhost:${WEB_PORT}` },
+      // Every test comes from this one machine, and many of them compile: far more in a
+      // minute than one student would.
+      env: {
+        LOG_LEVEL: 'warn',
+        WEB_ORIGIN: `http://localhost:${WEB_PORT}`,
+        COMPILES_PER_MINUTE: '600',
+      },
     },
   ],
 });

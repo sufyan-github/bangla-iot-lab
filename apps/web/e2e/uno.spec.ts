@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { writeProgram } from './editor';
 
 /**
  * Phase 1: an Arduino UNO in the circuit. Programs are compiled by the real
@@ -94,11 +95,10 @@ test('write a program, upload it, and watch it read the potentiometer', async ({
   await openUnoExample(page);
   await page.getByTestId('run').click();
   await page.getByTestId('tab-code').click();
-  await page
-    .getByTestId('code')
-    .fill(
-      'void setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  Serial.println(analogRead(A0) / 100);\n  delay(100);\n}\n',
-    );
+  await writeProgram(
+    page,
+    'void setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  Serial.println(analogRead(A0) / 100);\n  delay(100);\n}\n',
+  );
   await expect(page.getByTestId('starter')).toHaveValue('custom');
   await page.getByTestId('upload').click();
   // A compile on a busy machine can take many seconds; this is not a test of its speed.
@@ -122,9 +122,10 @@ test('compile errors point at the line, and the old program keeps running', asyn
   await openUnoExample(page);
   await page.getByTestId('run').click();
   await page.getByTestId('tab-code').click();
-  await page
-    .getByTestId('code')
-    .fill('void setup() {\n  pinMode(13, OUTPUT);\n  digitalWrit(13, HIGH);\n}\nvoid loop() {}\n');
+  await writeProgram(
+    page,
+    'void setup() {\n  pinMode(13, OUTPUT);\n  digitalWrit(13, HIGH);\n}\nvoid loop() {}\n',
+  );
   await page.getByTestId('upload').click();
   const status = page.getByTestId('upload-status');
   await expect(status).toContainText('digitalWrit', { timeout: 30_000 });
@@ -145,7 +146,7 @@ test('uploading is clearly unavailable offline, and ready-made programs still wo
   await page.getByTestId('tab-code').click();
   await expect(page.getByTestId('code')).toBeVisible(); // editor chunk loaded while online
   await context.setOffline(true);
-  await page.getByTestId('code').fill('void setup() {}\nvoid loop() {}\n');
+  await writeProgram(page, 'void setup() {}\nvoid loop() {}\n');
   await expect(page.getByTestId('upload')).toBeDisabled();
   await expect(page.getByTestId('upload-status')).toContainText('ইন্টারনেট');
   await page.getByTestId('starter').selectOption('blink');

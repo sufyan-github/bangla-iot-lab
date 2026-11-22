@@ -16,10 +16,11 @@ import { Value } from 'typebox/value';
  * 5 — batteries and the board may carry `at`, where the student moved them to.
  * 6 — a wire may carry `bends`, the points the student routed it through.
  * 7 — adds the ESP32 development board.
+ * 8 — adds the DHT11 temperature and humidity sensor.
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 7;
+export const CIRCUIT_SCHEMA_VERSION = 8;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -234,6 +235,21 @@ export const LcdSchema = Type.Object({
   props: noProps,
 });
 
+/**
+ * DHT11 temperature and humidity sensor, as the three-pin module with its
+ * pull-up resistor. It sends whole degrees (0 to 50 °C) and whole percent
+ * (20 to 90 %) over its one data wire when a program asks.
+ */
+export const Dht11Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('dht11'),
+  pins: Type.Object({ vcc: Hole, data: Hole, gnd: Hole }),
+  props: Type.Object({
+    celsius: Type.Number({ minimum: 0, maximum: 50 }),
+    humidity: Type.Number({ minimum: 20, maximum: 90 }),
+  }),
+});
+
 /** Arduino UNO-compatible board. It sits beside the breadboard; wires plug into its sockets. */
 export const UnoSchema = Type.Object({
   id: Id,
@@ -273,6 +289,7 @@ export const ComponentSchema = Type.Union([
   ServoSchema,
   UltrasonicSchema,
   LcdSchema,
+  Dht11Schema,
   UnoSchema,
   Esp32Schema,
 ]);

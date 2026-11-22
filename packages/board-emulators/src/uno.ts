@@ -144,10 +144,16 @@ export class UnoBoard implements ProgrammableBoard {
 
   /** Runs the processor until its clock reaches `timeMs`. Never drifts, however it is sliced. */
   runUntil(timeMs: number): void {
-    const target = (timeMs / 1000) * CLOCK_HZ;
-    while (this.cpu.cycles < target) {
+    this.target = (timeMs / 1000) * CLOCK_HZ;
+    while (this.cpu.cycles < this.target) {
       avrInstruction(this.cpu);
       this.cpu.tick();
     }
+  }
+  private target = 0;
+
+  /** Stops the run in progress early. Called from a pin listener. */
+  stopAt(timeMs: number): void {
+    this.target = Math.min(this.target, (timeMs / 1000) * CLOCK_HZ);
   }
 }

@@ -4,6 +4,7 @@ import {
   esp32CircuitExample,
   esp32GpioNumber,
   isCircuitDocument,
+  unoCircuitExample,
 } from '@banglalab/shared';
 import { describe, expect, it } from 'vitest';
 import { BOARD_MODELS } from './boards';
@@ -113,6 +114,45 @@ describe('ESP32 pins as outputs', () => {
     expect(up.sockets['ESP1.d4']!.voltage).toBeGreaterThan(3.2);
     const down = solveState(esp32CircuitExample(), drives({ 4: 'pulldown' }))!;
     expect(down.sockets['ESP1.d4']!.voltage).toBeLessThan(0.1);
+  });
+});
+
+describe('too much voltage on a pin', () => {
+  /** The example, with GPIO34 moved from the potentiometer to another point. */
+  const wiredTo = (hole: string) => {
+    const circuit = esp32CircuitExample();
+    return {
+      ...circuit,
+      wires: circuit.wires.map((w) => (w.id === 'W8' ? { ...w, to: hole } : w)),
+    };
+  };
+
+  it('says so when a 3.3 V pin is wired to the board’s own 5 V pin', () => {
+    // The top rail carries VIN instead of 3V3, and GPIO34 is wired straight to it.
+    const circuit = wiredTo('tp5');
+    const fiveVolts = {
+      ...circuit,
+      wires: circuit.wires.map((w) => (w.id === 'W2' ? { ...w, from: 'ESP1.vin' } : w)),
+    };
+    const overvoltage = simulate(fiveVolts).diagnostics.filter((d) => d.code === 'pin-overvoltage');
+    expect(overvoltage).toHaveLength(1);
+    expect(overvoltage[0]).toMatchObject({ componentId: 'ESP1', socket: 'd34', severity: 'error' });
+    expect(overvoltage[0]!.volts).toBeGreaterThan(4.5);
+    expect(overvoltage[0]!.limit).toBeCloseTo(3.6, 5);
+  });
+
+  it('says nothing at 3.3 V, nor about the supply pins themselves', () => {
+    expect(
+      simulate(wiredTo('tp5')).diagnostics.filter((d) => d.code === 'pin-overvoltage'),
+    ).toEqual([]);
+    expect(
+      simulate(esp32CircuitExample()).diagnostics.filter((d) => d.code === 'pin-overvoltage'),
+    ).toEqual([]);
+  });
+
+  it('says nothing about 5 V on a 5 V board', () => {
+    const result = simulate(unoCircuitExample());
+    expect(result.diagnostics.filter((d) => d.code === 'pin-overvoltage')).toEqual([]);
   });
 });
 

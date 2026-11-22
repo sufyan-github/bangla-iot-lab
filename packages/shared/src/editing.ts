@@ -86,6 +86,7 @@ export const PART_SHAPES: Record<BoardPartType, PartShape> = {
   relay: { idPrefix: 'K', pins: ['coil1', 'coil2', 'com', 'no'], offsets: [0, 1, 3, 4] },
   servo: { idPrefix: 'SRV', pins: ['gnd', 'vcc', 'signal'], offsets: [0, 1, 2] },
   ultrasonic: shapeOf('hc-sr04'),
+  dht11: shapeOf('dht11'),
   lcd: { idPrefix: 'LCD', pins: LCD_PINS, offsets: LCD_PINS.map((_, i) => i) },
 };
 
@@ -106,6 +107,7 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
   ir: { detected: false },
   relay: {},
   servo: {},
+  dht11: { celsius: 28, humidity: 70 },
   ultrasonic: { distance: 50 },
   lcd: {},
 };

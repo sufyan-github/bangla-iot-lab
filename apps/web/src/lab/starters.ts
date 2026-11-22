@@ -20,6 +20,12 @@ import esp32FadeSource from '@banglalab/board-emulators/fixtures/esp32-starters/
 import esp32FadeModule from '@banglalab/board-emulators/fixtures/esp32-starters/fade.wasm.base64?raw';
 import esp32KnobSource from '@banglalab/board-emulators/fixtures/esp32-starters/knob.ino?raw';
 import esp32KnobModule from '@banglalab/board-emulators/fixtures/esp32-starters/knob.wasm.base64?raw';
+import esp32ServoSource from '@banglalab/board-emulators/fixtures/esp32-starters/servo.ino?raw';
+import esp32ServoModule from '@banglalab/board-emulators/fixtures/esp32-starters/servo.wasm.base64?raw';
+import esp32DistanceSource from '@banglalab/board-emulators/fixtures/esp32-starters/distance.ino?raw';
+import esp32DistanceModule from '@banglalab/board-emulators/fixtures/esp32-starters/distance.wasm.base64?raw';
+import esp32DhtSource from '@banglalab/board-emulators/fixtures/esp32-starters/dht.ino?raw';
+import esp32DhtModule from '@banglalab/board-emulators/fixtures/esp32-starters/dht.wasm.base64?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -47,6 +53,9 @@ export const ESP32_STARTERS = {
   button: { source: esp32ButtonSource, hex: esp32ButtonModule },
   fade: { source: esp32FadeSource, hex: esp32FadeModule },
   knob: { source: esp32KnobSource, hex: esp32KnobModule },
+  servo: { source: esp32ServoSource, hex: esp32ServoModule },
+  distance: { source: esp32DistanceSource, hex: esp32DistanceModule },
+  dht: { source: esp32DhtSource, hex: esp32DhtModule },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

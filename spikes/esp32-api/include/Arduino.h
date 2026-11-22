@@ -123,6 +123,13 @@ void detachInterrupt(uint8_t pin);
 void interrupts(void);
 void noInterrupts(void);
 
+// The processor's clock, as libraries that time things by counting ask for it.
+#define F_CPU 240000000L
+uint32_t getCpuFrequencyMhz(void);
+#define clockCyclesPerMicrosecond() ((long int)getCpuFrequencyMhz())
+#define clockCyclesToMicroseconds(a) ((a) / clockCyclesPerMicrosecond())
+#define microsecondsToClockCycles(a) ((a) * clockCyclesPerMicrosecond())
+
 // --- time ---
 unsigned long millis(void);
 unsigned long micros(void);

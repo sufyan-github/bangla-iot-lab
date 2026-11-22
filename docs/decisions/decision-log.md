@@ -470,3 +470,31 @@ builds it from the source in `third_party/arduino-esp32`.
 A program that the emulator cannot run in real time is not dropped or frozen:
 the simulation gives itself less to do each tick, the circuit runs in slow
 motion, and the editor says at what share of a real board's speed.
+
+## D-051 — Where a real library is permissively licensed, the lab builds that library, not its own copy of it
+
+The DHT11 is read with Adafruit's DHT library, which is MIT. The lab keeps that
+library, unmodified, in `third_party/adafruit-dht` and builds it into every
+ESP32 sketch made for its own model of the board. The sensor is simulated at
+the level the library works at: the pulses on its data wire.
+
+The alternative was to write a `DHT.h` of our own that asks the simulated
+sensor for its values directly. That is less work and hides the protocol, but
+it is one more piece of the lab's own model that can be wrong in ways nobody
+notices; the ESP32 study found four such faults in the board library by running
+real firmware. With the real library, what a student's sketch does between
+`dht.readTemperature()` and the wire is the code they will run on the board.
+
+The ESP32Servo library is LGPL, so for the servo the lab has its own version of
+that library's interface, written from its documented behaviour.
+
+## D-052 — A sensor's signal reaches a board pin through the circuit, not past it
+
+A 5 V sensor on a 3.3 V board needs a voltage divider, and the kit has the
+resistors for it. The ultrasonic sensor's echo is therefore found through a
+resistor as well as through a wire, and the level the pin sees is taken from the
+solved circuit at the instant the echo changes. A correct divider works, a
+divider that takes the signal down too far gives no reading, and the sensor
+wired straight to the pin still works but raises a warning that the pin is
+getting 5 V. The earlier model handed the level to the pin directly, which made
+the wrong circuit the only one that worked.

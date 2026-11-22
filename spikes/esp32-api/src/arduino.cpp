@@ -166,6 +166,7 @@ void attachInterrupt(uint8_t pin, void (*handler)(void), int mode) {
 void detachInterrupt(uint8_t pin) { host_detach_interrupt(pin); }
 void interrupts(void) {}
 void noInterrupts(void) {}
+uint32_t getCpuFrequencyMhz(void) { return 240; }
 
 // ---------------------------------------------------------------------- time
 unsigned long millis(void) {
@@ -374,3 +375,49 @@ float HardwareSerial::parseFloat() {
   for (; c >= 0 && (c == '-' || c == '.' || isdigit(c)); c = timedRead()) text += (char)c;
   return text.toFloat();
 }
+
+// -------------------------------------------------------------------- ESP32Servo
+#include "ESP32Servo.h"
+
+// GPIO 34 to 39 are inputs only, and 6 to 11 belong to the flash chip.
+static bool can_drive_servo(int pin) { return pin >= 0 && pin < 34 && !(pin >= 6 && pin <= 11); }
+static int next_servo_channel = 1;
+
+double Servo::tickUs() const { return (1000000.0 / hertz_) / (double)(1 << bits_); }
+int Servo::attach(int pin) { return attach(pin, DEFAULT_uS_LOW, DEFAULT_uS_HIGH); }
+int Servo::attach(int pin, int minUs, int maxUs) {
+  if (!can_drive_servo(pin)) return 0;
+  pin_ = pin;
+  min_ = minUs < MIN_PULSE_WIDTH ? MIN_PULSE_WIDTH : minUs;
+  max_ = maxUs > MAX_PULSE_WIDTH ? MAX_PULSE_WIDTH : maxUs;
+  // The signal starts when the sketch first writes a position, as with the library.
+  host_tick();
+  host_pwm(pin_, 0, 1u << bits_, hertz_);
+  return next_servo_channel++;
+}
+void Servo::detach() {
+  if (pin_ < 0) return;
+  host_tick();
+  host_pwm(pin_, 0, 1u << bits_, hertz_);
+  pin_ = -1;
+}
+void Servo::write(int value) {
+  if (value < MIN_PULSE_WIDTH) {
+    value = constrain(value, 0, 180);
+    value = map(value, 0, 180, min_, max_);
+  }
+  writeMicroseconds(value);
+}
+void Servo::writeMicroseconds(int us) {
+  if (pin_ < 0) return;
+  us = constrain(us, min_, max_);
+  ticks_ = (int)(us / tickUs());
+  host_tick();
+  host_pwm(pin_, (uint32_t)ticks_, 1u << bits_, hertz_);
+}
+int Servo::readMicroseconds() { return pin_ < 0 ? 0 : (int)(ticks_ * tickUs()); }
+int Servo::read() { return (int)map(readMicroseconds(), min_, max_, 0, 180); }
+bool Servo::attached() { return pin_ >= 0; }
+void Servo::setPeriodHertz(int hertz) { hertz_ = constrain(hertz, 1, 400); }
+void Servo::setTimerWidth(int bits) { bits_ = constrain(bits, 10, 16); }
+int Servo::readTimerWidth() { return bits_; }

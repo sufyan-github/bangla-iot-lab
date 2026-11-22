@@ -1,5 +1,6 @@
 import type { ProgrammableType } from '@banglalab/shared';
 import {
+  ESP32_INPUT_MAX_VOLTAGE,
   ESP32_INPUT_RESISTANCE,
   ESP32_LOGIC_HIGH,
   ESP32_LOGIC_LOW,
@@ -45,6 +46,8 @@ export interface BoardModel {
   logicLow: number;
   /** Absolute maximum current for one pin. */
   maxPinCurrent: number;
+  /** Highest voltage a pin may be given. More can destroy the pin of a real board. */
+  maxPinVoltage: number;
   /** False for a pin that has no output driver and no pull resistors. */
   canDrive(pin: number): boolean;
 }
@@ -65,6 +68,8 @@ export const BOARD_MODELS: Record<ProgrammableType, BoardModel> = {
     logicHigh: LOGIC_HIGH,
     logicLow: LOGIC_LOW,
     maxPinCurrent: PIN_MAX_CURRENT,
+    // ATmega328P absolute maximum: the supply plus half a volt.
+    maxPinVoltage: 5.5,
     canDrive: () => true,
   },
   /**
@@ -97,6 +102,8 @@ export const BOARD_MODELS: Record<ProgrammableType, BoardModel> = {
     logicHigh: ESP32_LOGIC_HIGH,
     logicLow: ESP32_LOGIC_LOW,
     maxPinCurrent: ESP32_PIN_MAX_CURRENT,
+    // Not 5 V tolerant: 3.6 V at most.
+    maxPinVoltage: ESP32_INPUT_MAX_VOLTAGE,
     // GPIO 34 to 39 are inputs only.
     canDrive: (pin) => pin < 34,
   },

@@ -8,6 +8,22 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **First parts of the school kit on the ESP32** (with the lab's own model of
+  the board):
+  - **DHT11** temperature and humidity sensor: a new part with two sliders, its
+    one-wire protocol simulated bit by bit, read by Adafruit's real DHT library
+    (MIT), which is built unmodified into every sketch. Circuit format version 8.
+  - **Servo**, through the lab's own version of the ESP32Servo interface. The
+    kit's servo needs 5 V, so it moves when powered from VIN and not from 3V3.
+  - **Ultrasonic sensor**: its 5 V echo now reaches a 3.3 V pin through a
+    voltage divider, and the pin's level is taken from the solved circuit, so a
+    divider that takes the signal down too far gives no reading.
+  - Ready-made programs for all three.
+- **A warning when a pin is given more voltage than it can stand**, for example
+  a 5 V signal wired straight into an ESP32 pin. It says which pin, how much,
+  the limit, and to use a divider.
+- A board can be stopped at the instant a sensor's reply is due, so sensors that
+  answer within microseconds are timed exactly.
 - **ESP32 development board in the editor (experimental).** The 30-pin board can
   be added, moved, wired and probed, and is drawn in the diagram view; its pins
   work at 3.3 V with pull-ups, pull-downs and input-only pins, from the pin model.

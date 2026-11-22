@@ -253,6 +253,11 @@ export class Esp32SketchBoard implements ProgrammableBoard {
     }
   }
 
+  /** Stops the run in progress early. Called from a pin listener, while the sketch runs. */
+  stopAt(timeMs: number): void {
+    this.target = Math.min(this.target, Math.max(this.now, timeMs * 1000));
+  }
+
   // ------------------------------------------------------------------ time
 
   /**

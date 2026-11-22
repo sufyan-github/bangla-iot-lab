@@ -9,7 +9,7 @@ import {
 import { BOARD_MODELS, type BoardModel } from './boards';
 import { Esp32SimBoard, esp32Emulator, parseEsp32Firmware } from './esp32-sim-board';
 import { Esp32SketchBoard } from './esp32-sketch-board';
-import { MODULE_MIN_SUPPLY } from './library';
+import { DHT11_MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
 import { buildNetlist, type CircuitState, type Netlist } from './netlist';
 import { Peripherals, type ScheduledInput } from './peripherals';
 import {
@@ -258,13 +258,15 @@ export class SimulationSession {
       const replies = this.peripherals.pinChanged(
         boardId,
         pin,
-        drive === 'high',
+        drive,
         at,
         (other) => emulator.pinDrive(other) === 'high',
       );
       if (replies.length > 0) {
         this.scheduled.push(...replies);
         this.scheduled.sort((a, b) => a.timeMs - b.timeMs);
+        // The first of them may be due before this run was going to end.
+        emulator.stopAt?.(replies[0]!.timeMs - board.startedAt);
       }
     });
     emulator.onSerial((text) => (board.serial += text));
@@ -358,15 +360,26 @@ export class SimulationSession {
   private feedInputs(): void {
     if (this.boards.size === 0) return;
     const solution = this.hasCapacitors ? this.latest : this.solveSteady();
-    this.peripherals.setPowered((id) => (solution?.parts[id]?.voltage ?? 0) >= MODULE_MIN_SUPPLY);
+    const minSupply = new Map(
+      this.document.components.map((c) => [
+        c.id,
+        c.type === 'dht11' ? DHT11_MIN_SUPPLY : MODULE_MIN_SUPPLY,
+      ]),
+    );
+    this.peripherals.setPowered(
+      (id) => (solution?.parts[id]?.voltage ?? 0) >= (minSupply.get(id) ?? MODULE_MIN_SUPPLY),
+    );
     for (const [id, board] of this.boards) {
       const { model } = board;
       for (let pin = 0; pin < model.pinCount; pin++) {
-        if (this.peripherals.sensorInputs.has(`${id}:${pin}`)) {
-          // This input is driven by a sensor's timed pulses; it idles LOW.
+        const resting = this.peripherals.sensorInputs.get(`${id}:${pin}`);
+        if (resting !== undefined) {
+          // This input is driven by a sensor's timed pulses; between them it rests
+          // at the sensor's idle level.
           if (board.inputLevel[pin] === undefined) {
-            board.inputLevel[pin] = false;
-            board.emulator.setDigitalInput(pin, false);
+            board.inputLevel[pin] = resting;
+            board.inputReleased[pin] = false;
+            board.emulator.setDigitalInput(pin, resting);
           }
           continue;
         }
@@ -392,6 +405,28 @@ export class SimulationSession {
         board.emulator.setPinVoltage(pin, voltage);
       }
     }
+  }
+
+  /**
+   * The level a board pin sees when a sensor's output changes. Usually the
+   * sensor's own level; but what is between the two matters (a divider that
+   * brings 5 V down, or one that brings it down too far), so the circuit is
+   * asked, with the sensor's output as it is about to be.
+   */
+  private levelFromSensor(boardId: string, board: RunningBoard, input: ScheduledInput): boolean {
+    if (this.hasCapacitors || input.asIs) return input.level;
+    const terminal = boardSocketOfPin(board.type, input.pin);
+    if (terminal === null) return input.level;
+    const echo = this.echo;
+    const relays = this.relays;
+    this.echo = { ...echo, [input.sensorId]: input.level };
+    const volts = this.solveSteady()?.sockets[`${boardId}.${terminal}`]?.voltage;
+    this.echo = echo;
+    this.relays = relays;
+    if (volts === undefined) return input.level;
+    if (volts > board.model.logicHigh) return true;
+    if (volts < board.model.logicLow) return false;
+    return board.inputLevel[input.pin] ?? false;
   }
 
   /**
@@ -441,20 +476,38 @@ export class SimulationSession {
       /** Everything that changes the circuit during this slice, to be replayed in order. */
       const changes: { timeMs: number; apply(): void }[] = [];
       for (const [boardId, board] of this.boards) {
-        // Run up to each promised sensor pulse, deliver it, and carry on.
+        // Run up to each promised sensor pulse, deliver it, and carry on. A pulse may be
+        // promised while the board is running (a sensor answering what the program just
+        // did): the board is then stopped at that instant, where it can be.
         for (;;) {
-          const input = this.scheduled.find((s) => s.boardId === boardId);
-          if (!input || input.timeMs > sliceEnd) break;
-          this.scheduled.splice(this.scheduled.indexOf(input), 1);
-          board.emulator.runUntil(input.timeMs - board.startedAt);
-          board.emulator.setDigitalInput(input.pin, input.level);
-          board.inputLevel[input.pin] = input.level;
-          changes.push({
-            timeMs: input.timeMs,
-            apply: () => (this.echo = { ...this.echo, [input.sensorId]: input.level }),
-          });
+          const next = this.scheduled.find((s) => s.boardId === boardId);
+          const until = next && next.timeMs < sliceEnd ? next.timeMs : sliceEnd;
+          const before = board.startedAt + board.emulator.timeMs;
+          board.emulator.runUntil(until - board.startedAt);
+          const reached = board.startedAt + board.emulator.timeMs + 1e-9;
+          let delivered = false;
+          for (;;) {
+            const input = this.scheduled.find((s) => s.boardId === boardId);
+            if (!input || input.timeMs > reached) break;
+            this.scheduled.splice(this.scheduled.indexOf(input), 1);
+            delivered = true;
+            const level = this.levelFromSensor(boardId, board, input);
+            board.emulator.setDigitalInput(input.pin, level);
+            board.inputLevel[input.pin] = level;
+            board.inputReleased[input.pin] = false;
+            // An ultrasonic sensor's echo is also a voltage in the circuit; a DHT11's
+            // data pulses are not modelled as one.
+            if (!input.asIs) {
+              changes.push({
+                timeMs: input.timeMs,
+                apply: () => (this.echo = { ...this.echo, [input.sensorId]: input.level }),
+              });
+            }
+          }
+          if (reached >= sliceEnd - 1e-9) break;
+          // A board that has stopped for good no longer moves its clock: do not wait for it.
+          if (!delivered && reached <= before + 1e-9) break;
         }
-        board.emulator.runUntil(sliceEnd - board.startedAt);
         for (const event of board.events) {
           changes.push({
             timeMs: event.timeMs,

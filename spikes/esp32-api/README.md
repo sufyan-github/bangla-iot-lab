@@ -36,9 +36,10 @@ sketch against our own implementation of the board's functions.
 
 ## What it covers
 
-Levels 1 and 2 of the study: pins, time, serial text, analog input, PWM, pulse
-timing, interrupts and touch. Not yet: the I2C display, the DHT sensor, the
-servo, saved settings, sleep, Wi-Fi.
+Pins, time, serial text, analog input, PWM, pulse timing, interrupts and touch;
+the servo (`ESP32Servo.h`, the lab's own version of that interface); and, built
+in from `third_party`, Adafruit's DHT library. Not yet: the I2C display, saved
+settings, sleep, Wi-Fi.
 
 ## What it does not get right
 

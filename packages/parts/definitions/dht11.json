@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "dht11",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "dht11",
+  "status": "simulated",
   "family": "sensor",
   "tier": 1,
   "name": {
@@ -11,12 +10,17 @@
     "en": "DHT11 temperature and humidity sensor"
   },
   "summary": {
-    "bn": "",
+    "bn": "এক তারে তাপমাত্রা আর আর্দ্রতা পাঠায়।",
     "en": "Sends temperature and humidity on one wire."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "timing",
+    "simplified": [
+      "The sensor answers with the temperature and humidity set on its sliders, at once: it has no warm-up and no slow response to a change.",
+      "Readings are whole degrees and whole percent, as the sensor gives them, with no error or drift.",
+      "The module is drawn and modelled with its pull-up resistor on the data line, as the three-pin module has.",
+      "The voltage shown on the data line does not move while the sensor is sending."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -42,5 +46,9 @@
   "variants": [],
   "catalog": {
     "keywords": ["dht11"]
+  },
+  "placement": {
+    "idPrefix": "DHT",
+    "offsets": [0, 1, 2]
   }
 }

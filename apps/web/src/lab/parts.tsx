@@ -922,7 +922,12 @@ export function TransistorView(props: { collector: Point; emitter: Point; select
   );
 }
 
-const SENSOR_BOARD = { temperature: '#7b3fa0', soil: '#2f6b4a', ir: '#1f5fa8' } as const;
+const SENSOR_BOARD = {
+  temperature: '#7b3fa0',
+  soil: '#2f6b4a',
+  ir: '#1f5fa8',
+  dht11: '#1d3f66',
+} as const;
 
 /** Three-pin sensor module: a small board standing behind its supply, output and ground legs. */
 export function SensorView(props: {
@@ -955,6 +960,16 @@ export function SensorView(props: {
       {props.kind === 'temperature' && (
         <path d="M-7 -28.5H7V-31A7 5 0 0 0 -7 -31Z" transform="translate(0 4)" fill="#17191b" />
       )}
+      {/* The DHT11's pale blue case, with the slots the air reaches the sensor through. */}
+      {props.kind === 'dht11' && (
+        <>
+          <rect x={-13} y={-33} width={26} height={13} rx={1.5} fill="#7ec3ea" />
+          <rect x={-13} y={-33} width={26} height={13} rx={1.5} fill="url(#shade-board)" />
+          {[-8, -4, 0, 4, 8].map((x) => (
+            <rect key={x} x={x - 1} y={-30.5} width={2} height={8} rx={1} fill="#2a6f9c" />
+          ))}
+        </>
+      )}
       {props.kind === 'soil' &&
         [-9, 9].map((x) => (
           <rect key={x} x={x - 3} y={-33} width={6} height={9} rx={1.5} fill="#d9b65c" />
@@ -968,9 +983,9 @@ export function SensorView(props: {
         </>
       )}
       <text
-        y={-11.5}
+        y={props.kind === 'dht11' ? -9 : -11.5}
         textAnchor="middle"
-        fontSize={12}
+        fontSize={props.kind === 'dht11' ? 9.5 : 12}
         fontWeight={700}
         fill="#fff"
         pointerEvents="none"

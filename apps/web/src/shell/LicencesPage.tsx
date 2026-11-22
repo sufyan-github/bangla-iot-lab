@@ -53,6 +53,14 @@ const NOTICES = [
     source: 'https://github.com/llvm/llvm-project',
   },
   {
+    id: 'adafruit-dht',
+    name: 'Adafruit DHT sensor library',
+    licence: 'MIT',
+    text: 'Copyright 2020 Adafruit Industries. The library that reads the DHT11 sensor, built unmodified into every ESP32 program made for the lab’s own model of the board.',
+    file: 'adafruit-dht.txt',
+    source: 'https://github.com/adafruit/DHT-sensor-library',
+  },
+  {
     id: 'esp32-firmware',
     name: 'ESP32 firmware built for the chip emulator (experimental)',
     licence: 'LGPL-2.1-or-later',

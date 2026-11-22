@@ -98,6 +98,7 @@ export interface DiagramLayout {
 /** Parts drawn as a labelled box with named legs. */
 export const BOX_TYPES = new Set([
   'temperature',
+  'dht11',
   'soil',
   'ir',
   'relay',

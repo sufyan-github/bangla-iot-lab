@@ -21,6 +21,29 @@ export const ESP32_LIBRARY_DIR = fileURLToPath(
   new URL('../../../spikes/esp32-api/', import.meta.url),
 );
 const LIBRARY_SOURCES = ['src/arduino.cpp', 'wasm/entry.cpp'];
+
+/**
+ * Libraries by other people that sketches for the kit use, built into every
+ * sketch module as they are. Each is under a permissive licence and is kept,
+ * unmodified, in third_party with its licence text. A student's sketch then
+ * runs the same library code it would run on the board.
+ */
+const THIRD_PARTY = fileURLToPath(new URL('../../../third_party/', import.meta.url));
+export const ESP32_EXTRA_LIBRARIES = [
+  // Adafruit's DHT sensor library 1.4.7 (MIT): DHT11 and DHT22.
+  { dir: path.join(THIRD_PARTY, 'adafruit-dht'), sources: ['DHT.cpp'], headers: ['DHT.h'] },
+] as const;
+/** Every file the built library depends on, for telling when it has changed. */
+function libraryFiles(): string[] {
+  const headers = readdirSync(path.join(ESP32_LIBRARY_DIR, 'include')).sort();
+  return [
+    ...LIBRARY_SOURCES.map((file) => path.join(ESP32_LIBRARY_DIR, file)),
+    ...headers.map((name) => path.join(ESP32_LIBRARY_DIR, 'include', name)),
+    ...ESP32_EXTRA_LIBRARIES.flatMap((library) =>
+      [...library.sources, ...library.headers].map((file) => path.join(library.dir, file)),
+    ),
+  ];
+}
 /** Bump when the build recipe changes in a way the flags and sources do not capture. */
 const RECIPE_VERSION = 1;
 
@@ -101,9 +124,8 @@ export function findEsp32Toolchain(
  */
 export function esp32SourceHash(sketch: string): string {
   const hash = createHash('sha256').update(String(RECIPE_VERSION)).update(sketch);
-  const headers = readdirSync(path.join(ESP32_LIBRARY_DIR, 'include')).sort();
-  for (const file of [...LIBRARY_SOURCES, ...headers.map((name) => `include/${name}`)]) {
-    hash.update(file).update(readFileSync(path.join(ESP32_LIBRARY_DIR, file)));
+  for (const file of libraryFiles()) {
+    hash.update(path.basename(file)).update(readFileSync(file));
   }
   return hash.digest('hex');
 }
@@ -123,6 +145,7 @@ const compileFlags = (toolchain: Esp32Toolchain) => [
   '-isystem',
   toolchain.cInclude,
   `-I${path.join(ESP32_LIBRARY_DIR, 'include')}`,
+  ...ESP32_EXTRA_LIBRARIES.map((library) => `-I${library.dir}`),
 ];
 
 export interface Esp32Library {
@@ -144,17 +167,29 @@ export async function ensureEsp32Library(
   const hash = createHash('sha256').update(
     JSON.stringify([RECIPE_VERSION, toolchain.version, compileFlags(toolchain)]),
   );
-  const headers = readdirSync(path.join(ESP32_LIBRARY_DIR, 'include')).sort();
-  for (const file of [...LIBRARY_SOURCES, ...headers.map((name) => `include/${name}`)]) {
-    hash.update(file).update(readFileSync(path.join(ESP32_LIBRARY_DIR, file)));
-  }
+  for (const file of libraryFiles()) hash.update(path.basename(file)).update(readFileSync(file));
   const key = hash.digest('hex').slice(0, 16);
   const dir = path.join(cacheDir, 'esp32-library', key);
-  const objects = LIBRARY_SOURCES.map((file) => path.join(dir, `${path.basename(file)}.o`));
+  /** Each source with the warnings it is held to: the lab's own code to all of them. */
+  const sources = [
+    ...LIBRARY_SOURCES.map((file) => ({
+      file: path.join(ESP32_LIBRARY_DIR, file),
+      strict: true,
+    })),
+    ...ESP32_EXTRA_LIBRARIES.flatMap((extra) =>
+      extra.sources.map((file) => ({ file: path.join(extra.dir, file), strict: false })),
+    ),
+  ];
+  const objects = sources.map(({ file }) => path.join(dir, `${path.basename(file)}.o`));
   const library: Esp32Library = {
     objects,
     key,
-    readOnlyPaths: [ESP32_LIBRARY_DIR, dir, ...toolchain.readOnlyPaths],
+    readOnlyPaths: [
+      ESP32_LIBRARY_DIR,
+      ...ESP32_EXTRA_LIBRARIES.map((extra) => extra.dir),
+      dir,
+      ...toolchain.readOnlyPaths,
+    ],
   };
   const built = await Promise.all(
     objects.map((file) =>
@@ -169,18 +204,16 @@ export async function ensureEsp32Library(
   const buildDir = `${dir}.build-${process.pid}`;
   await rm(buildDir, { recursive: true, force: true });
   await mkdir(buildDir, { recursive: true });
-  for (const file of LIBRARY_SOURCES) {
+  for (const { file, strict } of sources) {
     const result = await runTool(
       'none',
       buildDir,
       toolchain.compiler,
       [
         ...compileFlags(toolchain),
-        '-Wall',
-        '-Wextra',
-        '-Werror',
+        ...(strict ? ['-Wall', '-Wextra', '-Werror'] : ['-w']),
         '-c',
-        path.join(ESP32_LIBRARY_DIR, file),
+        file,
         '-o',
         `${path.basename(file)}.o`,
       ],

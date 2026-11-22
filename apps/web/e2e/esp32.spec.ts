@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { writeProgram } from './editor';
 
 /**
  * The ESP32 board (experimental): ready-made programs run from the lab's own
@@ -50,7 +51,16 @@ test('the code tab says the ESP32 is experimental and offers only ESP32 programs
     .getByTestId('starter')
     .locator('option')
     .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
-  expect(offered).toEqual(['blink', 'button', 'fade', 'knob', 'custom']);
+  expect(offered).toEqual([
+    'blink',
+    'button',
+    'fade',
+    'knob',
+    'servo',
+    'distance',
+    'dht',
+    'custom',
+  ]);
 });
 
 test('the button program lights the LED while the button is held', async ({ page }) => {
@@ -107,11 +117,10 @@ test('write an ESP32 program, upload it, and watch it read the potentiometer', a
   await openEsp32Example(page);
   await page.getByTestId('run').click();
   await page.getByTestId('tab-code').click();
-  await page
-    .getByTestId('code')
-    .fill(
-      'void setup() {\n  Serial.begin(115200);\n  pinMode(2, OUTPUT);\n}\n\nvoid loop() {\n  int tenths = analogReadMilliVolts(34) / 100;\n  digitalWrite(2, tenths > 10);\n  Serial.println(tenths);\n  delay(100);\n}\n',
-    );
+  await writeProgram(
+    page,
+    'void setup() {\n  Serial.begin(115200);\n  pinMode(2, OUTPUT);\n}\n\nvoid loop() {\n  int tenths = analogReadMilliVolts(34) / 100;\n  digitalWrite(2, tenths > 10);\n  Serial.println(tenths);\n  delay(100);\n}\n',
+  );
   await expect(page.getByTestId('starter')).toHaveValue('custom');
   await page.getByTestId('upload').click();
   await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible({
@@ -136,9 +145,10 @@ test('an ESP32 compile error points at the line, and the old program keeps runni
   await openEsp32Example(page);
   await page.getByTestId('run').click();
   await page.getByTestId('tab-code').click();
-  await page
-    .getByTestId('code')
-    .fill('void setup() {\n  pinMode(2, OUTPUT);\n  digitalWrit(2, HIGH);\n}\nvoid loop() {}\n');
+  await writeProgram(
+    page,
+    'void setup() {\n  pinMode(2, OUTPUT);\n  digitalWrit(2, HIGH);\n}\nvoid loop() {}\n',
+  );
   await page.getByTestId('upload').click();
   const status = page.getByTestId('upload-status');
   await expect(status).toContainText('digitalWrit', { timeout: 30_000 });
@@ -208,11 +218,10 @@ test('the lab says so when the emulated chip cannot keep up with a real board', 
   await openEsp32Example(page);
   await page.getByTestId('tab-code').click();
   // A loop that never waits: the emulator has to run every one of its instructions.
-  await page
-    .getByTestId('code')
-    .fill(
-      'unsigned long next = 0;\nvoid setup() { pinMode(2, OUTPUT); }\nvoid loop() {\n  if (millis() >= next) { digitalWrite(2, !digitalRead(2)); next += 300; }\n}\n',
-    );
+  await writeProgram(
+    page,
+    'unsigned long next = 0;\nvoid setup() { pinMode(2, OUTPUT); }\nvoid loop() {\n  if (millis() >= next) { digitalWrite(2, !digitalRead(2)); next += 300; }\n}\n',
+  );
   await expect(page.getByTestId('starter')).toHaveValue('custom');
   await page.getByTestId('engine-emulator').check();
   await page.getByTestId('upload').click();
@@ -241,4 +250,84 @@ test('going back to the lab’s own model runs the ready-made program again, off
   await page.getByTestId('tab-circuit').click();
   await page.getByTestId('run').click();
   await expect.poll(() => ledState(page), SAMPLING).toBe('on');
+});
+
+// ---- parts of the school kit on the ESP32 ----
+
+const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
+async function place(page: Page, tool: string, hole: string) {
+  await page.getByTestId(`tool-${tool}`).click();
+  await tap(page, hole);
+}
+async function wire(page: Page, pairs: [string, string][]) {
+  await page.getByTestId('tool-wire').click();
+  for (const [from, to] of pairs) {
+    await tap(page, from);
+    await tap(page, to);
+  }
+  await page.getByTestId('tool-select').click();
+}
+async function newEsp32Circuit(page: Page) {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await expect(page).toHaveURL(/\/lab\//);
+  await page.getByTestId('tool-esp32').click();
+  await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
+}
+
+test('a DHT11 on the ESP32 is read by the program and follows its sliders', async ({ page }) => {
+  await newEsp32Circuit(page);
+  await place(page, 'dht11', 'c10'); // legs: c10 supply, c11 data, c12 ground
+  await wire(page, [
+    ['ESP1.3v3', 'a10'],
+    ['ESP1.d4', 'a11'],
+    ['ESP1.gnd1', 'a12'],
+  ]);
+  await chooseStarter(page, 'dht');
+  await page.getByTestId('run').click();
+  await page.getByTestId('tab-code').click();
+  const serial = page.getByTestId('serial');
+  // The part arrives set to 28 °C and 70 %; the program asks every two seconds.
+  await expect(serial).toContainText('তাপমাত্রা 28 °C, আর্দ্রতা 70 %', { timeout: 20_000 });
+
+  await page.getByTestId('tab-circuit').click();
+  await page.locator('[data-hit="DHT1"]').click();
+  await page.getByTestId('slider-celsius').fill('35');
+  await page.getByTestId('slider-humidity').fill('82');
+  await page.getByTestId('tab-code').click();
+  await expect(serial).toContainText('তাপমাত্রা 35 °C, আর্দ্রতা 82 %', { timeout: 20_000 });
+});
+
+test('a servo on the ESP32 sweeps when it is powered from VIN', async ({ page }) => {
+  test.setTimeout(90_000);
+  await newEsp32Circuit(page);
+  await place(page, 'servo', 'c10'); // legs: c10 ground, c11 supply, c12 signal
+  await wire(page, [
+    ['ESP1.gnd1', 'a10'],
+    ['ESP1.vin', 'a11'],
+    ['ESP1.d13', 'a12'],
+  ]);
+  await chooseStarter(page, 'servo');
+  await page.getByTestId('run').click();
+  const angle = async () =>
+    Number(await page.locator('[data-part="SRV1"]').getAttribute('data-angle'));
+  await expect.poll(angle, { timeout: 30_000, intervals: [70, 110, 130] }).toBeGreaterThan(150);
+  await expect.poll(angle, { timeout: 30_000, intervals: [70, 110, 130] }).toBeLessThan(30);
+});
+
+test('the lab warns when the ultrasonic sensor’s 5 V echo goes straight into an ESP32 pin', async ({
+  page,
+}) => {
+  await newEsp32Circuit(page);
+  await place(page, 'ultrasonic', 'c10'); // legs: c10 supply, c11 trig, c12 echo, c13 ground
+  await wire(page, [
+    ['ESP1.vin', 'a10'],
+    ['ESP1.d5', 'a11'],
+    ['ESP1.d18', 'a12'],
+    ['ESP1.gnd1', 'a13'],
+  ]);
+  await chooseStarter(page, 'distance');
+  await page.getByTestId('run').click();
+  await expect(page.locator('[data-diag^="pin-overvoltage"]')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-diag^="pin-overvoltage"]')).toContainText('D18');
 });

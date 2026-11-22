@@ -2,20 +2,32 @@
   "toolchain": "clang 21.1.8 wasm-opt 120",
   "starters": {
     "blink": {
-      "sourceHash": "0f2a35581a3947d9d742600573d5aadbd7e29214956e5aadd079ad06e14d9159",
+      "sourceHash": "2e5a6fe68b861eba0a34165a7f2bc965c2e0ea5b73ae1dc9fa20c38066e02cec",
       "bytes": 7112
     },
     "button": {
-      "sourceHash": "bac1f4942f87ad5519d59b60b3201ec32fedc257189bf4a3ee295bb23442a5fb",
+      "sourceHash": "fbcad4e930926b92109feffe302fd243500da1af62e3e319e171bbbf331040d5",
       "bytes": 7363
     },
+    "dht": {
+      "sourceHash": "6a8c9aeb27686cf3b948765aaa7eb41b137791199dcf9513003c2b0e4c4df9fb",
+      "bytes": 39381
+    },
+    "distance": {
+      "sourceHash": "890bbbb10488ee96353fbfc578f33bb465349d037314a0db4c330262cdaec4fc",
+      "bytes": 38801
+    },
     "fade": {
-      "sourceHash": "b8ff6801c008243a54f44c492fc3bf6bbc483699083c99ec8ca18e61ffb957a7",
+      "sourceHash": "2ed55f14ae6a5dae1a21234381dbb1d4d3b16db27192ae77d36dedaf96d5c868",
       "bytes": 7797
     },
     "knob": {
-      "sourceHash": "21dd298bfed5cf1b017dfbe2ad9976809c635040ebceb5f9810b9ae516ecc48b",
+      "sourceHash": "6e0607bc599d746f83968e4be4bcf0416d3f32a35648ae9dd823d9ff016f7a32",
       "bytes": 39162
+    },
+    "servo": {
+      "sourceHash": "d5460d5e35b8185151dbbe87a09306ec0c4877048dbbf4de5775c5773142b68f",
+      "bytes": 9468
     }
   }
 }

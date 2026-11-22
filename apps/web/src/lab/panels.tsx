@@ -111,6 +111,38 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
+  if (part.type === 'dht11') {
+    // Two things to set: what the air is like where the sensor sits.
+    const sliders = [
+      { key: 'celsius', label: 'inspector.temperature', min: 0, max: 50, unit: '°C' },
+      { key: 'humidity', label: 'inspector.humidity', min: 20, max: 90, unit: '%' },
+    ] as const;
+    return (
+      <div className="space-y-2">
+        {sliders.map((slider) => (
+          <label key={slider.key} className="block">
+            <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+              {t(slider.label)}
+              <span className="font-medium text-ink tabular-nums">
+                {number(part.props[slider.key])}
+                {slider.unit}
+              </span>
+            </span>
+            <input
+              type="range"
+              data-testid={`slider-${slider.key}`}
+              min={slider.min}
+              max={slider.max}
+              step={1}
+              value={part.props[slider.key]}
+              onChange={(event) => setProps(part.id, { [slider.key]: Number(event.target.value) })}
+              className="h-11 w-full accent-amber"
+            />
+          </label>
+        ))}
+      </div>
+    );
+  }
   if (
     part.type === 'ldr' ||
     part.type === 'soil' ||
@@ -368,6 +400,8 @@ export function Messages() {
       text: t(`diag.${diagnostic.code}` as MessageKey, {
         id: diagnostic.componentId ?? '',
         socket: diagnostic.socket?.toUpperCase() ?? '',
+        volts: quantity(diagnostic.volts ?? 0, 'V'),
+        limit: quantity(diagnostic.limit ?? 0, 'V'),
         current: quantity(
           diagnostic.socket
             ? (result.sockets[`${diagnostic.componentId}.${diagnostic.socket}`]?.current ?? 0)

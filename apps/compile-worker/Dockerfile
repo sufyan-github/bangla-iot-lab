@@ -31,6 +31,8 @@ COPY apps/compile-worker apps/compile-worker
 COPY spikes/esp32-api/include spikes/esp32-api/include
 COPY spikes/esp32-api/src spikes/esp32-api/src
 COPY spikes/esp32-api/wasm/entry.cpp spikes/esp32-api/wasm/entry.cpp
+# Other people's libraries built into ESP32 sketches (permissive licences).
+COPY third_party/adafruit-dht third_party/adafruit-dht
 # Pinned Arduino core; the script verifies the commit it fetched.
 RUN bash apps/compile-worker/scripts/fetch-arduino-core.sh
 

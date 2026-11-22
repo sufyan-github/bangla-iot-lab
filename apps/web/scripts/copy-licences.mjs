@@ -14,6 +14,7 @@ for (const [from, to] of [
   ['LICENSES/avr-libc.txt', 'avr-libc.txt'],
   ['LICENSES/wasi-libc.txt', 'wasi-libc.txt'],
   ['LICENSES/LLVM.txt', 'LLVM.txt'],
+  ['third_party/adafruit-dht/license.txt', 'adafruit-dht.txt'],
   ['LICENSES/OFL-1.1-AnekBangla.txt', 'OFL-1.1-AnekBangla.txt'],
 ]) {
   cpSync(path.join(root, from), path.join(target, to));

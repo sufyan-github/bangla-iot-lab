@@ -4,6 +4,8 @@ export interface ApiConfig {
   databaseUrl: string;
   webOrigin: string;
   compileWorkerUrl: string;
+  /** How many compiles one address may ask for in a minute. */
+  compilesPerMinute: number;
   logLevel: string;
 }
 
@@ -19,6 +21,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     databaseUrl: env.DATABASE_URL ?? DEV_DATABASE_URL,
     webOrigin: env.WEB_ORIGIN ?? 'http://localhost:5173',
     compileWorkerUrl: env.COMPILE_WORKER_URL ?? 'http://127.0.0.1:4100',
+    compilesPerMinute: Number(env.COMPILES_PER_MINUTE ?? 20),
     logLevel: env.LOG_LEVEL ?? 'info',
   };
 }
