@@ -1,30 +1,59 @@
 {
   "formatVersion": 1,
   "id": "pms5003",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "pms5003",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "PMS5003 particle sensor",
+    "bn": "PMS5003 ধূলিকণা সেন্সর",
     "en": "PMS5003 particle sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "বাতাসে ভাসমান ধূলিকণা (PM1.0, PM2.5, PM10) গোনে, প্রতি সেকেন্ডের মতো সিরিয়ালে (৯৬০০ বড) পাঠায়।",
+    "en": "Counts dust in the air (PM1.0, PM2.5, PM10), and sends it over serial (9600 baud) about once a second."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "It sends 32-byte frames in the format the PMS library reads (Plantower's protocol), and obeys its commands: passive or active mode, a reading on request, sleep and wake.",
+      "PM2.5 is set in the inspector; PM1.0 and PM10, and the particle counts, are taken in proportion to it (estimates). Its fan, warm-up and the effect of humidity are not modelled.",
+      "In active mode it sends a frame about once a second (an estimate: Plantower gives 200 ms to 2.3 s).",
+      "It needs 5 V (Plantower: 4.5 V to 5.5 V) and about 100 mA; its TX is a 3.3 V signal. Its SET and RESET pins are not modelled: left unconnected, as here, it works normally."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E18"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "rx",
+      "label": "RX",
+      "role": "input"
+    },
+    {
+      "id": "tx",
+      "label": "TX",
+      "role": "output"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["pms5003"]
+  },
+  "placement": {
+    "idPrefix": "PM",
+    "offsets": [0, 1, 2, 3]
   }
 }

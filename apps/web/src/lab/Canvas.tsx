@@ -107,6 +107,8 @@ const BODY_HEIGHT: Partial<Record<string, number>> = {
   jsnsr04t: 38,
   linesensor: 36,
   siren: 46,
+  gps: 62,
+  pms5003: 58,
   pir: 42,
   rgbled: 38,
   oled: 86,

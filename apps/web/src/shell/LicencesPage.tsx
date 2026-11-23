@@ -125,6 +125,14 @@ const NOTICES = [
     source: 'https://github.com/milesburton/Arduino-Temperature-Control-Library',
   },
   {
+    id: 'pms',
+    name: 'PMS (Plantower particle sensors)',
+    licence: 'MIT',
+    text: 'Copyright 2017 Mariusz Kacki. The library for the PMS5003 particle sensor, built unmodified into ESP32 programs that use it.',
+    file: 'pms.txt',
+    source: 'https://github.com/fu-hsi/PMS',
+  },
+  {
     id: 'esp32-firmware',
     name: 'ESP32 firmware built for the chip emulator (experimental)',
     licence: 'LGPL-2.1-or-later',

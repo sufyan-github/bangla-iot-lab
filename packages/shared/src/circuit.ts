@@ -27,7 +27,7 @@ import { isHole } from './breadboard';
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 17;
+export const CIRCUIT_SCHEMA_VERSION = 18;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -467,6 +467,27 @@ export const SirenSchema = Type.Object({
   props: noProps,
 });
 
+/** NEO-6M GPS receiver on a UART. Where it is, and whether it has a fix, are set by hand. */
+export const GpsSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('gps'),
+  pins: Type.Object({ vcc: Hole, rx: Hole, tx: Hole, gnd: Hole }),
+  props: Type.Object({
+    fix: Type.Boolean(),
+    lat: Type.Number({ minimum: -90, maximum: 90 }),
+    lng: Type.Number({ minimum: -180, maximum: 180 }),
+    satellites: Type.Integer({ minimum: 0, maximum: 12 }),
+  }),
+});
+
+/** PMS5003 particle sensor on a UART. `pm25` is the dust it counts, in µg/m³. */
+export const Pms5003Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('pms5003'),
+  pins: Type.Object({ vcc: Hole, gnd: Hole, rx: Hole, tx: Hole }),
+  props: Type.Object({ pm25: Type.Number({ minimum: 0, maximum: 500 }) }),
+});
+
 /**
  * HC-SR501 motion sensor. Its output goes HIGH when something moves in front of
  * it and stays HIGH for `hold` seconds after the movement stops.
@@ -688,6 +709,8 @@ export const ComponentSchema = Type.Union([
   JsnSr04tSchema,
   LineSensorSchema,
   SirenSchema,
+  GpsSchema,
+  Pms5003Schema,
   PirSchema,
   RgbLedSchema,
   OledSchema,

@@ -8,6 +8,19 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Serial modules on the ESP32** (circuit format version 18). Programs can use
+  `Serial1`, `Serial2` and their own `HardwareSerial` ports on any pins. Modules
+  send and receive bytes at their baud rate; a line wired TX to TX carries
+  nothing, and a wrong baud rate gives nonsense.
+- **NEO-6M GPS**, with its position, fix and satellites set in the inspector.
+  Programs read it with the lab's own TinyGPSPlus, which has TinyGPSPlus's
+  functions (that library is LGPL, so it is not used).
+- **PMS5003 particle sensor**, read through the PMS library 1.1.0 (MIT), built
+  unmodified. Its licence is shown in the application.
+- Ready-made programs `gps` and `air`, and two lessons, each checked step by
+  step by the lab: **GPS location** (crossed serial wiring, losing the fix) and
+  **dust sensor** (PM2.5 and a warning light).
+- Hardware tests E17 and E18.
 - **DS18B20 temperature probe over 1-Wire** (circuit format version 17).
   Programs read it through the DallasTemperature library 4.0.6 (MIT), built
   unmodified, over the board library's own `OneWire`, which has the OneWire

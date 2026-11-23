@@ -1,0 +1,152 @@
+{
+  "id": "gps-location",
+  "order": 36,
+  "parts": ["neo-6m"],
+  "title": {
+    "bn": "আমি কোথায়? GPS আর সিরিয়াল",
+    "en": "Where am I? GPS and serial"
+  },
+  "summary": {
+    "bn": "GPS মডিউল থেকে সিরিয়ালে আসা বাক্য পড়ে নিজের অক্ষাংশ আর দ্রাঘিমাংশ বের করো।",
+    "en": "Read the sentences a GPS module sends over serial, and find your own latitude and longitude."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "gps",
+  "steps": [
+    {
+      "text": {
+        "bn": "**NEO-6M GPS** বসাও। **VCC** যাবে **3V3**-এ, **GND** যাবে **GND**-তে।",
+        "en": "Place the **NEO-6M GPS**. **VCC** goes to **3V3**, **GND** to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "gps"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "gps",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "gps",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সিরিয়ালে একজনের মুখ (TX, পাঠায়) অন্যজনের কানে (RX, শোনে) যায়। তাই তার **আড়াআড়ি**: GPS-এর **TX** যাবে বোর্ডের **RX2**-তে (GPIO16), GPS-এর **RX** যাবে বোর্ডের **TX2**-তে (GPIO17)।",
+        "en": "On a serial line one side's mouth (TX, sends) goes to the other's ear (RX, listens). So the wires **cross**: the GPS's **TX** goes to the board's **RX2** (GPIO16), the GPS's **RX** to the board's **TX2** (GPIO17)."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "gps",
+            "pin": "tx"
+          },
+          "to": {
+            "board": "rx2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "gps",
+            "pin": "rx"
+          },
+          "to": {
+            "board": "tx2"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। এটা দ্বিতীয় সিরিয়াল পোর্ট ৯৬০০ বডে চালু করে, আসা প্রতিটা অক্ষর `gps.encode()`-কে দেয়, আর নতুন অবস্থান এলে ছাপে।",
+        "en": "**Put this lesson's program on the board.** It starts the second serial port at 9600 baud, hands every character that arrives to `gps.encode()`, and prints the position when a new one comes."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "gps"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। GPS প্রতি সেকেন্ডে কয়েকটা বাক্য পাঠায় (যেমন `$GPRMC…`)। প্রোগ্রাম সেগুলো থেকে অক্ষাংশ, দ্রাঘিমাংশ আর স্যাটেলাইটের সংখ্যা বের করে দেখায়।",
+        "en": "Press **Run**. The GPS sends a few sentences every second (such as `$GPRMC…`). The program takes the latitude, longitude and number of satellites out of them."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "অক্ষাংশ: -?\\d+\\.\\d+, দ্রাঘিমাংশ: -?\\d+\\.\\d+",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে অক্ষাংশ আর দ্রাঘিমাংশ",
+            "en": "The serial monitor shows the latitude and longitude"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "GPS-এ ট্যাপ করে **আকাশ দেখা যাচ্ছে না** করো, যেন মডিউলটা ঘরের ভেতরে। বাক্য আসতেই থাকে, কিন্তু অবস্থান ছাড়া: প্রোগ্রাম অপেক্ষা করে।",
+        "en": "Tap the GPS and set it to **cannot see the sky**, as if the module were indoors. Sentences keep coming, but without a position: the program waits."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "gps",
+          "prop": "fix",
+          "equals": false
+        },
+        {
+          "kind": "serial",
+          "matches": "অবস্থান এখনো জানা নেই",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"অবস্থান এখনো জানা নেই\"",
+            "en": "The serial monitor says the position is not known yet"
+          }
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "সিরিয়ালে তার আড়াআড়ি লাগে: একজনের TX অন্যজনের RX-এ।",
+      "দুই পাশের বড রেট (গতি) এক হতে হয়, নইলে অক্ষরগুলো ভুলভাল আসে।",
+      "GPS-এর অবস্থান পেতে আকাশ দেখা লাগে: ঘরের ভেতরে প্রায়ই পায় না।"
+    ],
+    "en": [
+      "A serial line is wired crossed: one side's TX to the other's RX.",
+      "Both sides must use the same baud rate (speed), or the characters arrive garbled.",
+      "A GPS needs to see the sky for a position: indoors it often finds none."
+    ]
+  },
+  "tryNext": {
+    "bn": "TX আর RX উল্টে লাগিয়ে দেখো প্রোগ্রাম কী বলে। তারপর অক্ষাংশ-দ্রাঘিমাংশ বদলে তোমার স্কুলের অবস্থান দাও।",
+    "en": "Swap TX and RX and see what the program says. Then change the latitude and longitude to your school's."
+  }
+}

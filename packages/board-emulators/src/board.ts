@@ -46,6 +46,23 @@ export interface OneWireStep {
 }
 export type OneWireHandler = (step: OneWireStep) => 0 | 1;
 
+/** A board's UART as its program set it up, at a moment of the board's own clock. */
+export interface UartPort {
+  /** 1 or 2: Serial1, Serial2. */
+  port: number;
+  baud: number;
+  rx: number;
+  tx: number;
+  timeMs: number;
+}
+/** Whoever answers for the modules wired to a board's UARTs. */
+export interface UartHandler {
+  /** Bytes the program sent out on the port's TX pin. */
+  write(port: UartPort, bytes: Uint8Array): void;
+  /** Bytes that have reached the port's RX pin since the last call, up to `port.timeMs`. */
+  receive(port: UartPort): number[];
+}
+
 /**
  * A board that runs a program, as the circuit simulation sees it: something
  * that can be run up to a moment in time, says what each pin drives, and is
@@ -86,6 +103,8 @@ export interface ProgrammableBoard {
   onI2c?(handler: I2cHandler): void;
   /** Optional. Gives the board whoever answers for the devices on its 1-Wire buses. */
   onOneWire?(handler: OneWireHandler): void;
+  /** Optional. Gives the board whoever answers for the modules on its UARTs. */
+  onUart?(handler: UartHandler): void;
   /**
    * Optional. Called with all of the board's saved settings, as text, each time
    * the program changes them (the ESP32's Preferences). A board that offers

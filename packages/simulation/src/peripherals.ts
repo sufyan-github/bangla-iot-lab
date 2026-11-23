@@ -5,7 +5,13 @@ import {
   type CircuitDocument,
 } from '@banglalab/shared';
 import { Hd44780 } from './hd44780';
-import type { I2cResult, I2cTransfer, OneWireStep, PinDrive } from '@banglalab/board-emulators';
+import type {
+  I2cResult,
+  I2cTransfer,
+  OneWireStep,
+  PinDrive,
+  UartPort,
+} from '@banglalab/board-emulators';
 import {
   DHT11_START_MS,
   DHT11_TIMING_US,
@@ -22,6 +28,7 @@ import {
 import { netName } from './netlist';
 import { Bme280, Ina219, type I2cDevice, type Ina219Inputs } from './i2c-sensors';
 import { Ds18b20 } from './onewire-sensors';
+import { Neo6m, Pms5003, garbled, type UartDevice } from './uart-devices';
 import { Ssd1306 } from './ssd1306';
 
 /** Turns bytes into base64 text, in a browser, a worker or Node. */
@@ -115,6 +122,9 @@ export class Peripherals {
   /** Sensors on an I2C bus, each answering at its own address. */
   private i2cSensors: { id: string; sda?: PinKey; scl?: PinKey; address: number }[] = [];
   private readonly sensorChips = new Map<string, I2cDevice>();
+  /** Modules on serial lines: the board pin their RX leg hears, and the one their TX leg drives. */
+  private serialModules: { id: string; rx?: PinKey; tx?: PinKey }[] = [];
+  private readonly serialChips = new Map<string, UartDevice>();
   /** Thermometers on 1-Wire buses, by the board pin their DQ line is on. */
   private oneWires: { id: string; dq?: PinKey }[] = [];
   private readonly thermometers = new Map<string, Ds18b20>();
@@ -152,6 +162,7 @@ export class Peripherals {
     this.oleds = [];
     this.i2cSensors = [];
     this.oneWires = [];
+    this.serialModules = [];
     this.sensorInputs.clear();
     for (const component of document.components) {
       if (component.type === 'servo') {
@@ -202,6 +213,22 @@ export class Peripherals {
           scl: pinOf.direct(component.pins.scl),
           address: component.type === 'bme280' ? component.props.address : INA219_ADDRESS,
         });
+      } else if (component.type === 'gps' || component.type === 'pms5003') {
+        const chip = this.serialChips.get(component.id);
+        if (component.type === 'gps') {
+          const sky = { ...component.props };
+          if (chip instanceof Neo6m) chip.setSky(sky);
+          else this.serialChips.set(component.id, new Neo6m(sky));
+        } else if (chip instanceof Pms5003) {
+          chip.setPm25(component.props.pm25);
+        } else {
+          this.serialChips.set(component.id, new Pms5003(component.props.pm25));
+        }
+        this.serialModules.push({
+          id: component.id,
+          rx: pinOf.direct(component.pins.rx),
+          tx: pinOf.direct(component.pins.tx),
+        });
       } else if (component.type === 'ds18b20') {
         const chip = this.thermometers.get(component.id);
         if (chip) chip.setCelsius(component.props.celsius);
@@ -229,6 +256,7 @@ export class Peripherals {
       this.pictures,
       this.sensorChips,
       this.thermometers,
+      this.serialChips,
     ]) {
       for (const id of map.keys()) if (!present.has(id)) map.delete(id);
     }
@@ -247,6 +275,29 @@ export class Peripherals {
     // So does a sensor: its settings go back to how the chip starts.
     for (const [id, chip] of this.sensorChips) if (!powered(id)) chip.reset();
     for (const [id, chip] of this.thermometers) if (!powered(id)) chip.powerOn();
+    for (const [id, chip] of this.serialChips) if (!powered(id)) chip.reset();
+  }
+
+  /** Bytes a board sends on a UART: every powered module whose RX leg is on its TX pin hears them. */
+  uartWrite(boardId: string, port: UartPort, bytes: Uint8Array): void {
+    const key = pinKey(boardId, port.tx);
+    for (const module of this.serialModules) {
+      if (module.rx !== key || !this.powered(module.id)) continue;
+      this.serialChips.get(module.id)!.receive(bytes, port.baud, port.timeMs);
+    }
+  }
+
+  /**
+   * Bytes that have reached a board's UART: from the powered module whose TX leg
+   * is on the port's RX pin. At a different baud rate they arrive garbled.
+   */
+  uartReceive(boardId: string, port: UartPort): number[] {
+    const key = pinKey(boardId, port.rx);
+    const module = this.serialModules.find((m) => m.tx === key && this.powered(m.id));
+    if (!module) return [];
+    const chip = this.serialChips.get(module.id)!;
+    const bytes = chip.transmit(port.timeMs);
+    return chip.baud === port.baud ? bytes : garbled(bytes);
   }
 
   /** Tells each thermometer whether its line has a pull-up, as the circuit is now solved. */

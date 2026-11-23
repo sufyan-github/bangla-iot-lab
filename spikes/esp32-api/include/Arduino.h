@@ -290,9 +290,24 @@ class Stream : public Print {
 };
 
 /** The serial port to the computer: what the serial monitor shows and sends. */
+/** Serial frame settings, as Espressif's core names them; the lab models 8N1 only. */
+#define SERIAL_8N1 0x800001c
+
+/** A 16-bit word from its high and low bytes. */
+inline uint16_t makeWord(uint8_t high, uint8_t low) { return (uint16_t)((high << 8) | low); }
+
+/**
+ * A serial port. Port 0 (`Serial`) is the USB link to the computer: the serial
+ * monitor. Ports 1 and 2 (`Serial1`, `Serial2`, or `HardwareSerial name(2)`)
+ * are UARTs on two pins, which talk to modules wired to them (see host_uart_*).
+ * Their default pins are those of Espressif's core 3.3.12 for the ESP32:
+ * RX 26 and TX 27 for port 1, RX 4 and TX 25 for port 2.
+ */
 class HardwareSerial : public Stream {
  public:
-  void begin(unsigned long baud, uint32_t config = 0, int8_t rx = -1, int8_t tx = -1) { (void)baud, (void)config, (void)rx, (void)tx; }
+  explicit HardwareSerial(int port = 0) : port_(port) {}
+  void begin(unsigned long baud, uint32_t config = SERIAL_8N1, int8_t rx = -1, int8_t tx = -1,
+             bool invert = false, unsigned long timeout_ms = 20000, uint8_t rx_threshold = 112);
   void end() {}
   void setTimeout(unsigned long milliseconds) { timeout_ = milliseconds; }
   operator bool() const { return true; }
@@ -310,11 +325,14 @@ class HardwareSerial : public Stream {
   float parseFloat();
 
  private:
+  int port_;
   unsigned long timeout_ = 1000;
   /** Waits for a byte to arrive, up to the timeout. */
   int timedRead();
 };
 extern HardwareSerial Serial;
+extern HardwareSerial Serial1;
+extern HardwareSerial Serial2;
 
 /** Facts about the chip. Fixed values of a typical board: nothing is measured. */
 class EspClass {

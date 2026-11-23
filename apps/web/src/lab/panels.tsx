@@ -348,6 +348,82 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
+  if (part.type === 'gps') {
+    // Whether it sees the sky, where it is, and how many satellites it hears.
+    const place = (key: 'lat' | 'lng', label: MessageKey, min: number, max: number) => (
+      <label className="block">
+        <span className="mb-1.5 block text-sm text-ink-soft">{t(label)}</span>
+        <input
+          type="number"
+          data-testid={`gps-${key}`}
+          min={min}
+          max={max}
+          step={0.0001}
+          value={part.props[key]}
+          onChange={(event) => {
+            const value = Number(event.target.value);
+            if (Number.isFinite(value) && value >= min && value <= max) {
+              setProps(part.id, { [key]: value });
+            }
+          }}
+          className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-3 tabular-nums"
+        />
+      </label>
+    );
+    return (
+      <div className="space-y-2">
+        <div className="flex gap-1.5">
+          <Choice
+            testId="gps-fix"
+            selected={part.props.fix}
+            onClick={() => setProps(part.id, { fix: !part.props.fix })}
+          >
+            {t(part.props.fix ? 'inspector.gpsFix' : 'inspector.gpsNoFix')}
+          </Choice>
+        </div>
+        {place('lat', 'inspector.latitude', -90, 90)}
+        {place('lng', 'inspector.longitude', -180, 180)}
+        <label className="block">
+          <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+            {t('inspector.satellites')}
+            <span className="font-medium text-ink tabular-nums">
+              {number(part.props.satellites)}
+            </span>
+          </span>
+          <input
+            type="range"
+            data-testid="slider-satellites"
+            min={0}
+            max={12}
+            step={1}
+            value={part.props.satellites}
+            onChange={(event) => setProps(part.id, { satellites: Number(event.target.value) })}
+            className="h-11 w-full accent-amber"
+          />
+        </label>
+      </div>
+    );
+  }
+  if (part.type === 'pms5003') {
+    return (
+      <label className="block">
+        <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+          {t('inspector.pm25')}
+          <span className="font-medium text-ink tabular-nums">{number(part.props.pm25)} µg/m³</span>
+        </span>
+        <input
+          type="range"
+          data-testid="slider-pm25"
+          min={0}
+          max={500}
+          step={1}
+          value={part.props.pm25}
+          onChange={(event) => setProps(part.id, { pm25: Number(event.target.value) })}
+          className="h-11 w-full accent-amber"
+        />
+      </label>
+    );
+  }
   if (part.type === 'linesensor') {
     // Which of the five sensors are over the black line.
     return (

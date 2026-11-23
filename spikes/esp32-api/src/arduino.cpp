@@ -323,24 +323,33 @@ size_t Print::printf(const char* format, ...) {
 }
 
 // -------------------------------------------------------------------- Serial
+void HardwareSerial::begin(unsigned long baud, uint32_t config, int8_t rx, int8_t tx, bool invert,
+                           unsigned long timeout_ms, uint8_t rx_threshold) {
+  (void)config, (void)invert, (void)timeout_ms, (void)rx_threshold;
+  if (port_ == 0) return;  // the USB link: no pins, any speed
+  if (rx < 0) rx = port_ == 1 ? 26 : 4;
+  if (tx < 0) tx = port_ == 1 ? 27 : 25;
+  host_uart_begin(port_, (uint32_t)baud, rx, tx);
+}
 size_t HardwareSerial::write(uint8_t c) {
-  host_serial_write((const char*)&c, 1);
-  return 1;
+  return write(&c, 1);
 }
 size_t HardwareSerial::write(const uint8_t* buffer, size_t size) {
-  if (size) host_serial_write((const char*)buffer, size);
+  if (!size) return 0;
+  if (port_ == 0) host_serial_write((const char*)buffer, size);
+  else host_uart_write(port_, buffer, size);
   return size;
 }
 int HardwareSerial::available() {
   host_tick();
-  return host_serial_available();
+  return port_ == 0 ? host_serial_available() : host_uart_available(port_);
 }
-int HardwareSerial::read() { return host_serial_read(); }
-int HardwareSerial::peek() { return host_serial_peek(); }
+int HardwareSerial::read() { return port_ == 0 ? host_serial_read() : host_uart_read(port_); }
+int HardwareSerial::peek() { return port_ == 0 ? host_serial_peek() : host_uart_peek(port_); }
 int HardwareSerial::timedRead() {
   uint64_t give_up = host_micros() + (uint64_t)timeout_ * 1000;
   while (host_micros() < give_up) {
-    int c = host_serial_read();
+    int c = read();
     if (c >= 0) return c;
     host_delay_micros(1000);
   }
@@ -362,8 +371,8 @@ long HardwareSerial::parseInt() {
   if (c < 0) return 0;
   bool negative = c == '-';
   long value = negative ? 0 : c - '0';
-  for (c = host_serial_peek(); c >= 0 && isdigit(c); c = host_serial_peek()) {
-    value = value * 10 + (host_serial_read() - '0');
+  for (c = peek(); c >= 0 && isdigit(c); c = peek()) {
+    value = value * 10 + (read() - '0');
   }
   return negative ? -value : value;
 }

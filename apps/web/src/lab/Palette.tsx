@@ -243,6 +243,19 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       </text>
     </>
   ),
+  gps: (
+    <>
+      <path d="M12 21s-6-6.2-6-11a6 6 0 0 1 12 0c0 4.8-6 11-6 11z" {...stroke} />
+      <circle cx="12" cy="10" r="2.2" {...stroke} />
+    </>
+  ),
+  pms5003: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" {...stroke} />
+      <circle cx="9" cy="12" r="3.5" {...stroke} />
+      <path d="M15 9h3M15 12h3M15 15h3" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
   ds18b20: (
     <>
       <path d="M10 3h4v10l1.5 2v3a3.5 3.5 0 0 1-7 0v-3L10 13z" {...stroke} />
@@ -364,6 +377,7 @@ const GROUPS: PaletteItem[][] = [
   ['voltagesensor', 'acs712', 'mq7', 'ph', 'tds', 'turbidity'],
   ['cell', 'tp4056', 'lm2596', 'solar'],
   ['bme280', 'ina219', 'ds18b20', 'jsnsr04t', 'linesensor', 'siren'],
+  ['gps', 'pms5003'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

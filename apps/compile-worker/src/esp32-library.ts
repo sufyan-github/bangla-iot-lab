@@ -24,6 +24,8 @@ const LIBRARY_SOURCES = [
   'src/arduino.cpp',
   'src/preferences.cpp',
   'src/onewire.cpp',
+  'src/tinygps.cpp',
+  'src/serial-ports.cpp',
   'wasm/entry.cpp',
 ];
 
@@ -85,6 +87,8 @@ export const ESP32_EXTRA_LIBRARIES = [
     sources: ['DallasTemperature.cpp'],
     headers: ['DallasTemperature.h'],
   },
+  // The PMS library 1.1.0 (MIT): Plantower particle sensors, the PMS5003 among them.
+  { dir: path.join(THIRD_PARTY, 'pms'), sources: ['PMS.cpp'], headers: ['PMS.h'] },
   // Adafruit's INA219 library 1.2.3 (BSD): current and voltage monitor.
   {
     dir: path.join(THIRD_PARTY, 'adafruit-ina219'),

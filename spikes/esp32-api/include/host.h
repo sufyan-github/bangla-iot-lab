@@ -38,6 +38,20 @@ int host_serial_read(void);
 int host_serial_peek(void);
 
 /**
+ * A UART (port 1 or 2) on the pins `rx` and `tx`, at `baud` bits a second,
+ * eight data bits, no parity, one stop bit. Bytes written go out on `tx` to
+ * whatever is wired there; bytes come in on `rx` as fast as the baud rate
+ * lets them, and wait in the port's receive buffer.
+ */
+void host_uart_begin(int port, uint32_t baud, int rx, int tx);
+void host_uart_write(int port, const uint8_t* data, size_t length);
+/** Bytes that have arrived and wait to be read. */
+int host_uart_available(int port);
+/** The next byte that has arrived, or -1. */
+int host_uart_read(int port);
+int host_uart_peek(int port);
+
+/**
  * One exchange on an I2C bus whose data and clock lines are the pins `sda` and
  * `scl`, with the board as master: a start, `write_length` bytes written to the
  * device at `address`, then, when `read_length` is not zero, `read_length`

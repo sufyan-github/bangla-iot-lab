@@ -189,6 +189,11 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}, circuit = n
     // No I2C device is on this world's bus.
     host_i2c_transfer: () => 2,
     host_onewire: (pin, op) => (op === 2 ? 1 : 0),
+    host_uart_begin: () => {},
+    host_uart_write: () => {},
+    host_uart_available: () => 0,
+    host_uart_read: () => -1,
+    host_uart_peek: () => -1,
     host_micros: () => BigInt(now),
     host_delay_micros: (microseconds) => advance(Number(microseconds)),
     host_tick: () => advance(CALL_COST_US),

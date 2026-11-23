@@ -995,3 +995,56 @@ the other way round). The siren is a 40 Ω load that sounds from about 6 V the
 right way round: estimates.
 
 Hardware tests E13 to E16 are written; none is run.
+
+## D-066 — Serial modules exchange bytes at their baud rate; the GPS library is the lab's own
+
+Stage 5 needs the ESP32's second and third UARTs. The board library now has
+`Serial1` and `Serial2` (and `HardwareSerial` objects of a program's own), with
+`begin(baud, config, rx, tx)` as in Espressif's core. When a program leaves the
+pins out, the defaults are those of core 3.3.12 for the classic ESP32: Serial1
+RX 26 / TX 27, Serial2 RX 4 / TX 25 (VERIFIED, read from the core's source).
+The ready-made programs name GPIO16 and GPIO17, the pins printed RX2 and TX2 on
+the board, as most tutorials do. Each port keeps a 256-byte receive buffer, the
+core's default (VERIFIED); bytes beyond it are lost, as on the chip.
+
+**Bytes, not messages.** A module sends bytes one at a time, each taking ten
+bit-times at its baud rate (a start bit, eight data bits, a stop bit). The
+board receives them when its clock reaches the time each would arrive, and
+writes go to whatever module listens on the port's TX pin. The line must be
+crossed (the module's TX to the board's RX): wired TX to TX, nothing arrives,
+and the GPS program says so. When the board's baud rate differs from the
+module's, other bytes arrive than were sent. That is not modelled bit by bit:
+each byte becomes some other byte, which is enough for a program to see
+nonsense. The serial code made every ESP32 program about 570 to 780 bytes
+larger, including those that do not use it.
+
+**The NEO-6M GPS** sends RMC, VTG, GGA, GSA and GLL once a second at 9600 baud,
+as u-blox reports for the NEO-6's defaults (REPORTED). The position, the fix and
+the number of satellites are set in the inspector; without a fix the position
+fields are empty and at most three satellites are reported. The date starts at
+23 November 2026, 06:00 UTC, because the lab has no clock of its own: an
+example, not a real time. Configuration messages (UBX) are ignored.
+
+**The GPS library is the lab's own.** TinyGPSPlus, which most GPS tutorials
+use, is LGPL 2.1, and the client takes no LGPL code. So the board library has
+its own `TinyGPSPlus` with the same functions (location, date, time, speed,
+course, altitude, satellites, HDOP, `encode`, `distanceBetween`, `courseTo`,
+`cardinal`, the counters), written for the lab from the NMEA sentence format,
+not from TinyGPSPlus's code. It reads RMC and GGA from any talker and checks
+each sentence's checksum. Like TinyGPSPlus, a position stays valid once it
+has been seen; the ready-made program also checks its age, so it notices when
+the fix is lost.
+
+**The PMS5003** sends 32-byte frames: 42h 4Dh, a length of 28, thirteen words
+and their sum, at 9600 baud (REPORTED by the PMS library, which follows
+Plantower's protocol). Programs read it with the PMS library (release 1.1.0,
+MIT, by Mariusz Kacki), built unmodified. Its commands for passive mode, a
+single reading and sleep are answered. ESTIMATE: a frame every second in active
+mode (Plantower gives 200 ms to 2.3 s); PM1.0 at 0.7 and PM10 at 1.3 times
+PM2.5, and particle counts in proportion.
+
+**Supply.** Both modules' TX lines are 3.3 V signals (REPORTED by u-blox and
+Plantower), so they connect straight to the ESP32. ESTIMATE: the GPS draws
+about 30 mA at 3.3 V and the particle sensor about 100 mA with its fan running.
+
+Hardware tests E17 and E18 are written; none is run.

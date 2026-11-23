@@ -5,6 +5,8 @@ export type {
   I2cTransfer,
   OneWireHandler,
   OneWireStep,
+  UartHandler,
+  UartPort,
   PinDrive,
   PinListener,
   ProgrammableBoard,

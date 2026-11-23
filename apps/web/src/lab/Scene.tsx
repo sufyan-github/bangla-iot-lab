@@ -35,6 +35,8 @@ import {
 import {
   Acs712View,
   Ds18b20View,
+  GpsView,
+  PmsView,
   LineSensorView,
   SirenView,
   Bme280View,
@@ -443,6 +445,24 @@ export function BoardPartDrawing(props: {
           gnd={at(part.pins.gnd)}
           signal={at(part.pins.signal)}
           angle={reading?.angle}
+          selected={selected}
+        />
+      );
+    case 'gps':
+      return (
+        <GpsView
+          first={at(part.pins.vcc)}
+          last={at(part.pins.gnd)}
+          fix={part.props.fix}
+          selected={selected}
+        />
+      );
+    case 'pms5003':
+      return (
+        <PmsView
+          first={at(part.pins.vcc)}
+          last={at(part.pins.tx)}
+          label={props.formatNumber(part.props.pm25)}
           selected={selected}
         />
       );

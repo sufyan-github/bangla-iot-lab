@@ -1,6 +1,7 @@
 import type {
   I2cHandler,
   OneWireHandler,
+  UartHandler,
   PinDrive,
   PinListener,
   ProgrammableBoard,
@@ -43,6 +44,8 @@ const CHANGE = 3;
 const PINS = 40;
 /** Board time charged for one library call, microseconds. */
 const CALL_COST_US = 2;
+/** Bytes a UART's receive buffer holds, as Espressif's core sets it by default. */
+const UART_BUFFER_BYTES = 256;
 /** Fastest switching shown for a PWM output, hertz. Its duty is kept whatever the frequency. */
 const PWM_SHOWN_HZ = 2000;
 /** Room for the call stack of a paused sketch, bytes. */
@@ -114,6 +117,12 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   private readonly serialListeners = new Set<(text: string) => void>();
   private i2c: I2cHandler | null = null;
   private oneWire: OneWireHandler | null = null;
+  private uart: UartHandler | null = null;
+  /** Each UART the program has begun, and the bytes that have arrived and wait to be read. */
+  private readonly uarts = new Map<
+    number,
+    { baud: number; rx: number; tx: number; buffer: number[] }
+  >();
   private readonly decoder = new TextDecoder();
   private readonly exports: Exports;
   private readonly pauseData: number;
@@ -196,6 +205,27 @@ export class Esp32SketchBoard implements ProgrammableBoard {
           bit: value ? 1 : 0,
           timeMs: this.now / 1000,
         });
+      },
+      host_uart_begin: (port: number, baud: number, rx: number, tx: number) => {
+        this.uarts.set(port, { baud: baud >>> 0, rx, tx, buffer: [] });
+      },
+      host_uart_write: (port: number, pointer: number, length: number) => {
+        const uart = this.uarts.get(port);
+        if (!uart || !this.uart) return;
+        const bytes = new Uint8Array(this.exports.memory.buffer, pointer, length >>> 0).slice();
+        this.uart.write(
+          { port, baud: uart.baud, rx: uart.rx, tx: uart.tx, timeMs: this.now / 1000 },
+          bytes,
+        );
+      },
+      host_uart_available: (port: number) => this.uartBuffer(port).length,
+      host_uart_read: (port: number) => {
+        const buffer = this.uartBuffer(port);
+        return buffer.length ? buffer.shift()! : -1;
+      },
+      host_uart_peek: (port: number) => {
+        const buffer = this.uartBuffer(port);
+        return buffer.length ? buffer[0]! : -1;
       },
       host_serial_available: () => this.typed.length,
       host_serial_read: () => (this.typed.length ? this.typed.shift()! : -1),
@@ -287,6 +317,31 @@ export class Esp32SketchBoard implements ProgrammableBoard {
 
   onOneWire(handler: OneWireHandler): void {
     this.oneWire = handler;
+  }
+
+  onUart(handler: UartHandler): void {
+    this.uart = handler;
+  }
+
+  /**
+   * A UART's receive buffer, with what has arrived on its RX pin up to now. Like
+   * Espressif's core it holds 256 bytes; what arrives while it is full is lost.
+   */
+  private uartBuffer(port: number): number[] {
+    const uart = this.uarts.get(port);
+    if (!uart) return [];
+    if (this.uart) {
+      const arrived = this.uart.receive({
+        port,
+        baud: uart.baud,
+        rx: uart.rx,
+        tx: uart.tx,
+        timeMs: this.now / 1000,
+      });
+      for (const byte of arrived)
+        if (uart.buffer.length < UART_BUFFER_BYTES) uart.buffer.push(byte);
+    }
+    return uart.buffer;
   }
 
   onSerial(listener: (text: string) => void): () => void {

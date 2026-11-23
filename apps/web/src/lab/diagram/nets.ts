@@ -119,6 +119,8 @@ export const BOX_TYPES = new Set([
   'ds18b20',
   'jsnsr04t',
   'linesensor',
+  'gps',
+  'pms5003',
   'pir',
   'rgbled',
   'oled',

@@ -1,30 +1,59 @@
 {
   "formatVersion": 1,
   "id": "neo-6m",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "gps",
+  "status": "simulated",
   "family": "sensor",
   "tier": 2,
   "name": {
-    "bn": "NEO-6M GPS receiver",
+    "bn": "NEO-6M GPS রিসিভার",
     "en": "NEO-6M GPS receiver"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "আকাশের স্যাটেলাইট থেকে নিজের অবস্থান বের করে, প্রতি সেকেন্ডে সিরিয়ালে (৯৬০০ বড) NMEA বাক্য পাঠায়।",
+    "en": "Works out where it is from satellites, and sends NMEA sentences over serial (9600 baud) once a second."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "It sends the NEO-6's default sentences (RMC, VTG, GGA, GSA, GLL) at 9600 baud once a second, as u-blox gives; the bytes arrive at that speed. Its setup messages (UBX) are not modelled: it keeps its defaults.",
+      "Whether it has a fix, where it is and how many satellites it sees are set in the inspector. A real receiver needs open sky and about half a minute from a cold start; the lab has the fix as soon as it is set.",
+      "Its clock starts at an example date (23 November 2026, 06:00 UTC) when it is powered, as the lab has no real clock. Speed is always 0 and height 9 m.",
+      "It is the common module with its own regulator, for 3.3 V to 5 V. Its TX line is a 3.3 V signal. Its supply current is an estimate."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E17"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "rx",
+      "label": "RX",
+      "role": "input"
+    },
+    {
+      "id": "tx",
+      "label": "TX",
+      "role": "output"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["neo-6m"]
+  },
+  "placement": {
+    "idPrefix": "GPS",
+    "offsets": [0, 1, 2, 3]
   }
 }

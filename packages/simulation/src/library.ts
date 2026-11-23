@@ -383,6 +383,15 @@ export const I2C_MODULE_PULLUP = 10_000;
  */
 export const DS18B20_SUPPLY_RESISTANCE = 100_000;
 export const DS18B20_DQ_LEAK = 660_000;
+/**
+ * Serial modules. Their TX lines are 3.3 V signals (REPORTED: u-blox, Plantower),
+ * held HIGH between bytes. ESTIMATE: their output resistance, and supply currents
+ * of about 45 mA (the GPS) and 100 mA (the particle sensor, its fan running).
+ */
+export const UART_TX_VOLTS = 3.3;
+export const UART_TX_RESISTANCE = 1000;
+export const GPS_SUPPLY_RESISTANCE = 110;
+export const PMS_SUPPLY_RESISTANCE = 50;
 
 /**
  * Turbidity sensor (DFRobot SEN0189). REPORTED by DFRobot: a 5 V supply, up to
@@ -553,6 +562,8 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   bme280: 1.71,
   ina219: 3,
   ds18b20: 3,
+  gps: 3,
+  pms5003: 4.5,
   pir: 4.5,
   oled: 3,
   l298n: 6.5,

@@ -65,7 +65,10 @@ under other licences. Each is kept apart from the Apache-2.0 code.
    - in programs that use it: the DallasTemperature library 4.0.6 (Copyright
      2024 Miles Burton, MIT licence), unmodified, with its licence text, in
      third_party/dallas-temperature/. It runs over the board library's own
-     OneWire implementation; no code of the OneWire library is included.
+     OneWire implementation; no code of the OneWire library is included;
+   - in programs that use it: the PMS library 1.1.0 (Copyright 2017 Mariusz
+     Kacki, MIT licence), unmodified, with its licence text, in
+     third_party/pms/.
 
 3. ESP32 firmware for the chip emulator (experimental; LGPL-2.1-or-later)
 

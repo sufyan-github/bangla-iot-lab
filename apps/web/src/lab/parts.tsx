@@ -1640,6 +1640,70 @@ export function SirenView(props: { pos: Point; neg: Point; sounding: boolean; se
   );
 }
 
+/** NEO-6M GPS module: a blue board with its square ceramic antenna and a fix light. */
+export function GpsView(props: { first: Point; last: Point; fix: boolean; selected: boolean }) {
+  const { length, transform } = between(props.first, props.last);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 14} y={-62} width={length + 28} height={68} color="#1f5fa8" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {[0, 1, 2, 3].map((i) => (
+        <SolderDot key={i} x={-length / 2 + (i * length) / 3} />
+      ))}
+      <rect x={-17} y={-56} width={34} height={34} rx={3} fill="#c9b98a" stroke="#8a7a4a" />
+      <rect x={-11} y={-50} width={22} height={22} rx={2} fill="#d8cdb4" />
+      <circle cx={6} cy={-39} r={2} fill="#b8bcbf" />
+      <g transform={`translate(${length / 2 + 4} -16)`}>
+        {props.fix && <circle r={7} fill="#58e07f" opacity={0.35} />}
+        <rect x={-3} y={-2} width={6} height={4} rx={1} fill={props.fix ? '#58e07f' : '#1f4a2c'} />
+      </g>
+    </g>
+  );
+}
+
+/** PMS5003 particle sensor: a steel box with its fan's grille and air inlet. */
+export function PmsView(props: { first: Point; last: Point; label: string; selected: boolean }) {
+  const { length, transform } = between(props.first, props.last);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      {[0, 1, 2, 3].map((i) => (
+        <path
+          key={i}
+          d={`M${-length / 2 + (i * length) / 3} 0V-14`}
+          stroke={['#c9302c', '#23282b', '#2a6fd2', '#e1b51a'][i]}
+          strokeWidth={2}
+        />
+      ))}
+      <rect
+        x={-length / 2 - 16}
+        y={-58}
+        width={length + 32}
+        height={44}
+        rx={3}
+        fill="url(#shade-metal)"
+        stroke="#5d666a"
+      />
+      <circle cx={-length / 2 + 4} cy={-36} r={13} fill="#2a2e31" />
+      {[-6, -2, 2, 6].map((d) => (
+        <path key={d} d={`M${-length / 2 - 8} ${-36 + d}h24`} stroke="#5d666a" strokeWidth={1.2} />
+      ))}
+      <text
+        x={length / 2 - 6}
+        y={-30}
+        textAnchor="middle"
+        fontSize={10}
+        fontWeight={700}
+        fill="#23282b"
+        pointerEvents="none"
+      >
+        {props.label}
+      </text>
+    </g>
+  );
+}
+
 /** HC-SR501 motion sensor: a white faceted dome on a small board. */
 export function PirView(props: {
   vcc: Point;

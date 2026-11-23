@@ -296,6 +296,8 @@ export const bn = {
   'code.starter.esp32.weather': 'আবহাওয়া কেন্দ্র (BME280: D22, D21)',
   'code.starter.esp32.monitor': 'কারেন্ট মনিটর (INA219: D22, D21)',
   'code.starter.esp32.thermo': 'তাপমাত্রা প্রোব (DS18B20: D4)',
+  'code.starter.esp32.gps': 'জিপিএসে অবস্থান (RX2, TX2)',
+  'code.starter.esp32.air': 'বাতাসের ধূলিকণা (PMS5003: RX2, TX2)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -397,6 +399,20 @@ export const bn = {
   'part.siren': '১২ V সাইরেন',
   'part.siren.about':
     'অনেক জোরে বাজে, প্রায় ৩০০ mA নেয়। বোর্ডের পিন এত কারেন্ট দিতে পারে না: ১২ V ব্যাটারি থেকে রিলে বা ট্রানজিস্টর দিয়ে চালাও। উল্টো লাগালে বাজে না। পা: +, −।',
+  'tool.gps': 'GPS',
+  'part.gps': 'NEO-6M GPS রিসিভার',
+  'part.gps.about':
+    'আকাশের স্যাটেলাইটের সংকেত থেকে নিজের অবস্থান বের করে, আর প্রতি সেকেন্ডে সিরিয়ালে (UART, ৯৬০০ বড) লেখা বাক্য (NMEA) পাঠায়। আড়াআড়ি লাগাও: GPS-এর TX যাবে বোর্ডের RX-এ, GPS-এর RX যাবে বোর্ডের TX-এ। ESP32-এ দ্বিতীয় সিরিয়াল পোর্ট: RX2 (GPIO16) আর TX2 (GPIO17)। ঘরের ভেতরে আসল GPS প্রায়ই অবস্থান পায় না। পা: VCC, RX, TX, GND।',
+  'inspector.gpsFix': 'আকাশ দেখা যাচ্ছে: অবস্থান পেয়েছে',
+  'inspector.gpsNoFix': 'আকাশ দেখা যাচ্ছে না: অবস্থান নেই',
+  'inspector.latitude': 'অক্ষাংশ (°)',
+  'inspector.longitude': 'দ্রাঘিমাংশ (°)',
+  'inspector.satellites': 'কয়টা স্যাটেলাইট',
+  'tool.pms5003': 'ধূলিকণা সেন্সর',
+  'part.pms5003': 'PMS5003 ধূলিকণা সেন্সর',
+  'part.pms5003.about':
+    'একটা ছোট পাখা বাতাস টেনে নেয়, আর লেজারের আলো দিয়ে ভাসমান কণা গোনে: PM2.5 মানে ২.৫ মাইক্রোমিটারের চেয়ে ছোট কণা, যা ফুসফুসের গভীরে যেতে পারে। প্রতি সেকেন্ডের মতো সিরিয়ালে (৯৬০০ বড) মাপ পাঠায়। VCC-তে ৫ V লাগে; সিরিয়াল আড়াআড়ি লাগাও। পা: VCC, GND, RX, TX।',
+  'inspector.pm25': 'বাতাসে PM2.5',
   'tool.logic': 'লজিক চিপ',
   'part.logic': 'লজিক চিপ (74HC)',
   'part.logic.about':
@@ -927,6 +943,8 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.weather': 'Weather station (BME280: D22, D21)',
   'code.starter.esp32.monitor': 'Current monitor (INA219: D22, D21)',
   'code.starter.esp32.thermo': 'Temperature probe (DS18B20: D4)',
+  'code.starter.esp32.gps': 'Position from GPS (RX2, TX2)',
+  'code.starter.esp32.air': 'Dust in the air (PMS5003: RX2, TX2)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -1028,6 +1046,20 @@ export const en: Record<MessageKey, string> = {
   'part.siren': '12 V siren',
   'part.siren.about':
     'Very loud, and takes about 300 mA. A board pin cannot give that much: run it from a 12 V battery through a relay or a transistor. Wired the wrong way round it stays silent. Legs: +, −.',
+  'tool.gps': 'GPS',
+  'part.gps': 'NEO-6M GPS receiver',
+  'part.gps.about':
+    'Works out where it is from satellites’ signals, and sends written sentences (NMEA) over serial (UART, 9600 baud) once a second. Wire it crossed: the GPS’s TX to the board’s RX, the GPS’s RX to the board’s TX. On the ESP32, the second serial port is RX2 (GPIO16) and TX2 (GPIO17). Indoors a real GPS often finds no position. Legs: VCC, RX, TX, GND.',
+  'inspector.gpsFix': 'Sees the sky: has a position',
+  'inspector.gpsNoFix': 'Cannot see the sky: no position',
+  'inspector.latitude': 'Latitude (°)',
+  'inspector.longitude': 'Longitude (°)',
+  'inspector.satellites': 'How many satellites',
+  'tool.pms5003': 'Particle sensor',
+  'part.pms5003': 'PMS5003 particle sensor',
+  'part.pms5003.about':
+    'A small fan draws air in, and a laser counts the particles floating in it: PM2.5 means particles smaller than 2.5 micrometres, which can reach deep into the lungs. It sends its reading over serial (9600 baud) about once a second. VCC needs 5 V; wire the serial line crossed. Legs: VCC, GND, RX, TX.',
+  'inspector.pm25': 'PM2.5 in the air',
   'tool.logic': 'Logic chip',
   'part.logic': 'Logic chip (74HC)',
   'part.logic.about':

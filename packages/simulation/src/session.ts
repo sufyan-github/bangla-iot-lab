@@ -338,6 +338,10 @@ export class SimulationSession {
     });
     emulator.onI2c?.((transfer) => this.peripherals.i2c(boardId, transfer));
     emulator.onOneWire?.((step) => this.peripherals.oneWire(boardId, step));
+    emulator.onUart?.({
+      write: (port, bytes) => this.peripherals.uartWrite(boardId, port, bytes),
+      receive: (port) => this.peripherals.uartReceive(boardId, port),
+    });
     this.boards.get(boardId)?.emulator.dispose?.();
     this.boards.set(boardId, board);
     this.stepping = null;

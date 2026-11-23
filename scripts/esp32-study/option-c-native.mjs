@@ -57,6 +57,8 @@ for (const [file, object] of [
   ['src/arduino.cpp', 'arduino.o'],
   ['src/preferences.cpp', 'preferences.o'],
   ['src/onewire.cpp', 'onewire.o'],
+  ['src/tinygps.cpp', 'tinygps.o'],
+  ['src/serial-ports.cpp', 'serial-ports.o'],
   ['harness/world.cpp', 'world.o'],
 ]) {
   const built = spawnSync(

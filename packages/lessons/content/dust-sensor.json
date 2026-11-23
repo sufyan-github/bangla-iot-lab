@@ -1,0 +1,196 @@
+{
+  "id": "dust-sensor",
+  "order": 37,
+  "parts": ["pms5003", "resistor", "led-5mm"],
+  "title": {
+    "bn": "বাতাসের ধূলিকণা: PMS5003",
+    "en": "Dust in the air: the PMS5003"
+  },
+  "summary": {
+    "bn": "লেজার দিয়ে কণা গোনা সেন্সর থেকে সিরিয়ালে PM2.5 পড়ো, আর বাতাস খারাপ হলে বাতি জ্বালাও।",
+    "en": "Read PM2.5 over serial from a sensor that counts particles with a laser, and light a lamp when the air is bad."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "air",
+  "steps": [
+    {
+      "text": {
+        "bn": "**PMS5003** বসাও। এর পাখা চালাতে ৫ V লাগে: **VCC** যাবে **VIN**-এ, **GND** যাবে **GND**-তে।",
+        "en": "Place the **PMS5003**. Its fan needs 5 V: **VCC** goes to **VIN**, **GND** to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "pms5003"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pms5003",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pms5003",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সিরিয়াল আড়াআড়ি লাগাও: সেন্সরের **TX** যাবে বোর্ডের **RX2**-তে, সেন্সরের **RX** যাবে **TX2**-তে। সেন্সরের সিরিয়াল ৩.৩ V-এ কথা বলে, তাই ESP32-এর সাথে সরাসরি লাগানো যায়।",
+        "en": "Wire the serial line crossed: the sensor's **TX** to the board's **RX2**, the sensor's **RX** to **TX2**. The sensor's serial talks at 3.3 V, so it connects straight to the ESP32."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pms5003",
+            "pin": "tx"
+          },
+          "to": {
+            "board": "rx2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "pms5003",
+            "pin": "rx"
+          },
+          "to": {
+            "board": "tx2"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। এটা PMS লাইব্রেরি দিয়ে সেন্সরের ৩২ বাইটের প্যাকেট পড়ে, আর যোগফল মিলিয়ে দেখে প্যাকেটটা ঠিক এসেছে কি না।",
+        "en": "**Put this lesson's program on the board.** It uses the PMS library to read the sensor's 32-byte packets, and checks each one's sum to see that it arrived whole."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "air"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। প্রতি সেকেন্ডের মতো সিরিয়াল মনিটরে PM1.0, PM2.5 আর PM10 দেখাবে, µg/m³-এ (প্রতি ঘনমিটার বাতাসে কত মাইক্রোগ্রাম কণা)।",
+        "en": "Press **Run**. About once a second the serial monitor shows PM1.0, PM2.5 and PM10, in µg/m³ (micrograms of particles in each cubic metre of air)."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "PM2\\.5: \\d+,",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে PM2.5",
+            "en": "The serial monitor shows PM2.5"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সেন্সরে ট্যাপ করে PM2.5 **৫৫**-এর বেশি করো, যেন রাস্তার ধুলো বা ধোঁয়া। LED জ্বলবে।",
+        "en": "Tap the sensor and raise PM2.5 above **55**, as with road dust or smoke. The LED lights."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "pms5003",
+          "prop": "pm25",
+          "above": 55
+        },
+        {
+          "kind": "serial",
+          "matches": "PM2\\.5: (5[6-9]|[6-9]\\d|[1-9]\\d\\d),",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে PM2.5 ৫৫-এর বেশি",
+            "en": "The serial monitor shows PM2.5 above 55"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "PM2.5 মানে খুব ছোট কণা, যা ফুসফুসের গভীরে যেতে পারে।",
+      "সিরিয়ালে শুধু লেখা নয়, বাইটের প্যাকেটও আসে: শুরু চেনার চিহ্ন, মাপ, আর মেলানোর যোগফল।",
+      "যোগফল না মিললে প্যাকেটটা বাদ দিতে হয়: পথে কিছু ভুল হয়েছে।"
+    ],
+    "en": [
+      "PM2.5 means very small particles, which can reach deep into the lungs.",
+      "Serial carries not only text but packets of bytes: a mark to find the start, the readings, and a sum to check them.",
+      "When the sum does not match, the packet is thrown away: something went wrong on the way."
+    ]
+  },
+  "tryNext": {
+    "bn": "আগের GPS পাঠের সাথে মিলিয়ে ভাবো: দুটো সিরিয়াল যন্ত্র একসাথে লাগাতে চাইলে কোন পিন ব্যবহার করবে?",
+    "en": "Think back to the GPS lesson: to use two serial modules at once, which pins would you use?"
+  }
+}

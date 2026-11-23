@@ -849,6 +849,39 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     ],
     actions: { 4: [{ set: 'US1', props: { distance: 15 } }] },
   },
+  'gps-location': {
+    components: [
+      esp32,
+      part(
+        'GPS1',
+        'gps',
+        { vcc: 'c10', rx: 'c11', tx: 'c12', gnd: 'c13' },
+        { fix: true, lat: 23.7465, lng: 90.3763, satellites: 8 },
+      ),
+    ],
+    wires: [
+      ['ESP1.3v3', 'a10'],
+      ['ESP1.tx2', 'a11'],
+      ['ESP1.rx2', 'a12'],
+      ['ESP1.gnd1', 'a13'],
+    ],
+    actions: { 4: [{ set: 'GPS1', props: { fix: false } }] },
+  },
+  'dust-sensor': {
+    components: [
+      esp32,
+      part('PM1', 'pms5003', { vcc: 'c10', gnd: 'c11', rx: 'c12', tx: 'c13' }, { pm25: 35 }),
+      ...lamp,
+    ],
+    wires: [
+      ['ESP1.vin', 'a10'],
+      ['ESP1.gnd1', 'a11'],
+      ['ESP1.tx2', 'a12'],
+      ['ESP1.rx2', 'a13'],
+      ...lampWires,
+    ],
+    actions: { 5: [{ set: 'PM1', props: { pm25: 90 } }] },
+  },
 };
 
 /** The longest a student would have to watch for a step to complete, in simulated time. */

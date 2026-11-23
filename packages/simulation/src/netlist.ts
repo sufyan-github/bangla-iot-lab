@@ -50,6 +50,10 @@ import {
   CELL_RESISTANCE,
   BME280_SUPPLY_RESISTANCE,
   DS18B20_DQ_LEAK,
+  GPS_SUPPLY_RESISTANCE,
+  PMS_SUPPLY_RESISTANCE,
+  UART_TX_RESISTANCE,
+  UART_TX_VOLTS,
   DS18B20_SUPPLY_RESISTANCE,
   I2C_MODULE_PULLUP,
   INA219_SHUNT,
@@ -786,6 +790,33 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
             regulator.on
               ? theveninSource(id, outp, outn, regulator.volts, REGULATOR_OUTPUT_RESISTANCE)
               : resistor(id, outp, outn, REGULATOR_OFF),
+          ),
+        );
+        break;
+      }
+      case 'gps':
+      case 'pms5003': {
+        // A supply load, and a TX line held HIGH between bytes; the bytes themselves
+        // travel between the module and the board in the session, not here.
+        const ground = node(component.pins.gnd);
+        partDevice.set(
+          id,
+          add(
+            resistor(
+              id,
+              node(component.pins.vcc),
+              ground,
+              component.type === 'gps' ? GPS_SUPPLY_RESISTANCE : PMS_SUPPLY_RESISTANCE,
+            ),
+          ),
+        );
+        add(
+          theveninSource(
+            `${id}:tx`,
+            node(component.pins.tx),
+            ground,
+            UART_TX_VOLTS,
+            UART_TX_RESISTANCE,
           ),
         );
         break;
