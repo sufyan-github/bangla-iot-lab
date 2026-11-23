@@ -141,8 +141,12 @@ test('an ESP32 board can be added to an empty circuit and removed again', async 
   await page.getByTestId('new-project').click();
   await page.getByTestId('tool-esp32').click();
   await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
-  // One board at a time: with an ESP32 there, a UNO-compatible board is not added.
+  // Two boards at most, of either kind: a UNO-compatible board joins it, a third does not.
   await page.getByTestId('tool-uno').click();
+  await expect(page.locator('[data-part="UNO1"]')).toBeVisible();
+  await page.getByTestId('tool-esp32').click();
+  await expect(page.locator('[data-part="ESP2"]')).toHaveCount(0);
+  await page.getByTestId('undo').click();
   await expect(page.locator('[data-part="UNO1"]')).toHaveCount(0);
   await page.getByTestId('undo').click();
   await expect(page.locator('[data-part="ESP1"]')).toHaveCount(0);
