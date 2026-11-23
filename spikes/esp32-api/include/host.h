@@ -102,6 +102,18 @@ size_t host_settings_load(char* buffer, size_t capacity);
 /** Keeps the board's saved settings, all of them, after a change. */
 void host_settings_save(const char* data, size_t length);
 
+/**
+ * Deep sleep: the program stops, and the board starts it again from setup()
+ * after `wake_after_us` microseconds (none if negative), or as soon as pin
+ * `ext0_pin` (if it is a pin) reads `ext0_level`. The `rtc_length` bytes at
+ * `rtc_begin` (the RTC_DATA_ATTR variables) are kept; everything else is lost.
+ * Does not return.
+ */
+void host_deep_sleep(int64_t wake_after_us, int ext0_pin, int ext0_level, const void* rtc_begin,
+                     size_t rtc_length);
+/** Why the board last started, as ESP-IDF numbers it: 0 power-on, 2 a pin (ext0), 4 the timer. */
+int host_wakeup_cause(void);
+
 uint64_t host_micros(void);
 /** Lets time pass. This is where the world moves on and scripted inputs arrive. */
 void host_delay_micros(uint64_t microseconds);

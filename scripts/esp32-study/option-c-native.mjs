@@ -62,6 +62,7 @@ for (const [file, object] of [
   ['src/serial-ports.cpp', 'serial-ports.o'],
   ['src/spi.cpp', 'spi.o'],
   ['src/neopixel.cpp', 'neopixel.o'],
+  ['src/sleep.cpp', 'sleep.o'],
   ['harness/world.cpp', 'world.o'],
 ]) {
   const built = spawnSync(

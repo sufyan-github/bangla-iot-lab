@@ -200,6 +200,11 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}, circuit = n
     host_uart_available: () => 0,
     host_uart_read: () => -1,
     host_uart_peek: () => -1,
+    // This world has no second boot: deep sleep ends the run.
+    host_deep_sleep: () => {
+      throw new Error('deep sleep');
+    },
+    host_wakeup_cause: () => 0,
     host_micros: () => BigInt(now),
     host_delay_micros: (microseconds) => advance(Number(microseconds)),
     host_tick: () => advance(CALL_COST_US),

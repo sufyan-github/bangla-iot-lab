@@ -8,6 +8,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Deep sleep on the ESP32**: `esp_deep_sleep_start()` and its timer and pin
+  wake-ups, with `RTC_DATA_ATTR` variables kept and the program starting again
+  from `setup()` on waking, as on the chip. Ready-made program `deepsleep`.
 - **LoRa radio Ra-02** (circuit format version 22): two ESP32 boards, each with
   a radio on its SPI bus, send and receive short messages through the LoRa
   library 0.8.0 (MIT), built unmodified. Each radio's place along a road sets

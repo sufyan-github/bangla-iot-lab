@@ -18,6 +18,7 @@ describe('shipped ESP32 starter programs', () => {
       'bluetooth.ino',
       'button.ino',
       'counter.ino',
+      'deepsleep.ino',
       'dht.ino',
       'distance.ino',
       'dustbin.ino',

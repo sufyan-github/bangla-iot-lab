@@ -81,6 +81,27 @@ typedef enum { ADC_0db, ADC_2_5db, ADC_6db, ADC_11db, ADC_12db = ADC_11db } adc_
 // Attributes and flash-string helpers that mean nothing off the chip.
 #define IRAM_ATTR
 #define ICACHE_RAM_ATTR
+// Variables kept through deep sleep, in the RTC memory that stays powered (see esp_sleep.h).
+#define RTC_DATA_ATTR __attribute__((section("rtc_data"), used))
+#define RTC_NOINIT_ATTR RTC_DATA_ATTR
+
+/** ESP-IDF's result codes, as far as the board library's calls return them. */
+typedef int esp_err_t;
+#define ESP_OK 0
+#define ESP_FAIL -1
+#define ESP_ERR_INVALID_ARG 0x102
+
+/** The chip's pins as ESP-IDF names them. */
+typedef enum {
+  GPIO_NUM_NC = -1,
+  GPIO_NUM_0 = 0, GPIO_NUM_1, GPIO_NUM_2, GPIO_NUM_3, GPIO_NUM_4, GPIO_NUM_5, GPIO_NUM_6,
+  GPIO_NUM_7, GPIO_NUM_8, GPIO_NUM_9, GPIO_NUM_10, GPIO_NUM_11, GPIO_NUM_12, GPIO_NUM_13,
+  GPIO_NUM_14, GPIO_NUM_15, GPIO_NUM_16, GPIO_NUM_17, GPIO_NUM_18, GPIO_NUM_19,
+  GPIO_NUM_21 = 21, GPIO_NUM_22, GPIO_NUM_23,
+  GPIO_NUM_25 = 25, GPIO_NUM_26, GPIO_NUM_27,
+  GPIO_NUM_32 = 32, GPIO_NUM_33, GPIO_NUM_34, GPIO_NUM_35, GPIO_NUM_36, GPIO_NUM_37,
+  GPIO_NUM_38, GPIO_NUM_39,
+} gpio_num_t;
 #define ARDUINO_ISR_ATTR
 #define PROGMEM
 #define PSTR(text) (text)
@@ -350,6 +371,8 @@ extern HardwareSerial Serial2;
 class EspClass {
  public:
   void restart();
+  /** Deep sleep for this many microseconds; the program starts again on waking. */
+  [[noreturn]] void deepSleep(uint64_t time_us);
   uint32_t getFreeHeap() { return 280000; }
   uint32_t getHeapSize() { return 327680; }
   uint32_t getMinFreeHeap() { return 270000; }
@@ -370,3 +393,6 @@ uint32_t esp_random(void);
 // What every sketch defines.
 void setup(void);
 void loop(void);
+
+// The chip's sleep modes, which the ESP32 core makes available to every sketch.
+#include "esp_sleep.h"

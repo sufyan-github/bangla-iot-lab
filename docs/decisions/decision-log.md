@@ -1298,3 +1298,28 @@ lesson ask the student to check them before using a real module outdoors.
 
 Ready-made programs `lora-send` and `lora-receive`; hardware test E25 is
 written, not run.
+
+## D-072 — Deep sleep on the ESP32, with RTC_DATA_ATTR
+
+The first of the ESP32 gaps the study counted (E1): two reference sketches log
+a reading, then sleep. The lab's board library now has `esp_sleep_enable_timer_wakeup`,
+`esp_sleep_enable_ext0_wakeup`, `esp_deep_sleep_start`, `esp_deep_sleep`,
+`ESP.deepSleep`, `esp_sleep_get_wakeup_cause` and `esp_light_sleep_start`, as
+the ESP32 core offers them to every sketch.
+
+**How it works.** A variable marked `RTC_DATA_ATTR` is placed in a section of
+its own, whose bounds the linker marks. Going into deep sleep, the program
+hands the board those bytes and stops; the board lets go of every pin. When the
+timer runs out, or the ext0 pin reaches its level, the board starts a fresh
+copy of the program, as after a reset, puts the RTC bytes back, and runs it
+from `setup()`. `esp_sleep_get_wakeup_cause()` then says the timer (4) or the
+pin (2); at power-on it says 0. Light sleep simply waits for the timer, keeping
+everything.
+
+**Not modelled.** ext1 and touch wake-ups, the ULP co-processor, the RTC pins'
+own pull resistors while asleep, and the very small current the chip draws
+asleep. `ESP.restart()` still ends the run, as before.
+
+Ready-made program `deepsleep`; a test checks three boots, the wake-up cause,
+an RTC variable counting and an ordinary one starting again each time, and the
+LED let go while asleep.

@@ -96,6 +96,7 @@ export function buildLibraryWasm(work, optimise = '-O2') {
     ['src/serial-ports.cpp', 'serial-ports.o'],
     ['src/spi.cpp', 'spi.o'],
     ['src/neopixel.cpp', 'neopixel.o'],
+    ['src/sleep.cpp', 'sleep.o'],
     ['wasm/entry.cpp', 'entry.o'],
   ]) {
     const built = compile(path.join(library, file), path.join(work, object), optimise, [

@@ -29,6 +29,7 @@ const LIBRARY_SOURCES = [
   'src/serial-ports.cpp',
   'src/spi.cpp',
   'src/neopixel.cpp',
+  'src/sleep.cpp',
   'wasm/entry.cpp',
 ];
 

@@ -193,6 +193,12 @@ void host_spi_transfer(int, int, int, const uint8_t*, uint8_t* in, size_t length
 void host_led_strip(int, const uint8_t*, size_t, int) {}
 // No 1-Wire devices here: no presence pulse, and the line reads HIGH.
 int host_onewire(int, int op, int) { return op == 2 ? 1 : 0; }
+// The desk-computer world has no second boot: deep sleep ends the run.
+void host_deep_sleep(int64_t, int, int, const void*, size_t) {
+  fflush(stdout);
+  exit(0);
+}
+int host_wakeup_cause(void) { return 0; }
 uint64_t host_micros(void) { return now_us; }
 void host_delay_micros(uint64_t microseconds) { advance(microseconds); }
 void host_tick(void) { advance(CALL_COST_US); }

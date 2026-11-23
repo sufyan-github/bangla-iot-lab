@@ -35,6 +35,7 @@ import {
  */
 
 // Pin modes and interrupt edges, as the library's Arduino.h defines them.
+const INPUT = 0x01;
 const OUTPUT = 0x03;
 const PULLUP = 0x04;
 const PULLDOWN = 0x08;
@@ -128,8 +129,23 @@ export class Esp32SketchBoard implements ProgrammableBoard {
     { baud: number; rx: number; tx: number; buffer: number[] }
   >();
   private readonly decoder = new TextDecoder();
-  private readonly exports: Exports;
-  private readonly pauseData: number;
+  private exports!: Exports;
+  private pauseData = 0;
+  /** The compiled sketch and what it is given, kept to start it again after deep sleep. */
+  private readonly module: WebAssembly.Module;
+  private readonly imports: WebAssembly.Imports;
+  /**
+   * While in deep sleep: the bytes of the sketch's RTC_DATA_ATTR variables and
+   * where they go, and what wakes the board (a time, a pin's level, or both).
+   */
+  private sleeping: {
+    rtcPointer: number;
+    rtc: Uint8Array;
+    wakeAt: number | null;
+    ext0: { pin: number; level: number } | null;
+  } | null = null;
+  /** Why the board last started: ESP-IDF's numbers, 0 at power-on, 4 a timer, 2 a pin (ext0). */
+  private wakeCause = 0;
 
   /** The saved settings (Preferences), as UTF-8 text, and who wants to hear of changes. */
   private settings: Uint8Array;
@@ -142,6 +158,7 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   constructor(bytes: BufferSource, settings = '') {
     this.settings = new TextEncoder().encode(settings);
     const module = new WebAssembly.Module(bytes);
+    this.module = module;
     const env: Record<string, (...args: never[]) => unknown> = {
       host_settings_load: (pointer: number, capacity: number) => {
         if (pointer) {
@@ -256,6 +273,28 @@ export class Esp32SketchBoard implements ProgrammableBoard {
       host_serial_available: () => this.typed.length,
       host_serial_read: () => (this.typed.length ? this.typed.shift()! : -1),
       host_serial_peek: () => (this.typed.length ? this.typed[0]! : -1),
+      host_deep_sleep: (
+        wakeAfterUs: bigint,
+        ext0Pin: number,
+        ext0Level: number,
+        rtcPointer: number,
+        rtcLength: number,
+      ) => {
+        const after = Number(wakeAfterUs);
+        this.sleeping = {
+          rtcPointer,
+          rtc: new Uint8Array(this.exports.memory.buffer, rtcPointer, rtcLength >>> 0).slice(),
+          wakeAt: after >= 0 ? this.now + after : null,
+          ext0: valid(ext0Pin) ? { pin: ext0Pin, level: ext0Level ? 1 : 0 } : null,
+        };
+        // Asleep, the chip lets go of every pin.
+        for (let pin = 0; pin < PINS; pin++) {
+          this.outputLevel[pin] = 0;
+          this.pinMode(pin, INPUT);
+        }
+        throw new DeepSleep();
+      },
+      host_wakeup_cause: () => this.wakeCause,
       host_micros: () => BigInt(Math.floor(this.now)),
       host_delay_micros: (microseconds: bigint) => this.wait(Number(microseconds)),
       host_tick: () => this.wait(CALL_COST_US),
@@ -274,7 +313,13 @@ export class Esp32SketchBoard implements ProgrammableBoard {
         throw new Error(`not a sketch for this board: it asks for ${wanted.module}.${wanted.name}`);
       }
     }
-    const instance = new WebAssembly.Instance(module, { env, wasi_snapshot_preview1: system });
+    this.imports = { env, wasi_snapshot_preview1: system };
+    this.instantiate();
+  }
+
+  /** A fresh copy of the sketch, as at power-on: its memory, globals and constructors. */
+  private instantiate(): void {
+    const instance = new WebAssembly.Instance(this.module, this.imports);
     this.exports = instance.exports as unknown as Exports;
     if (typeof this.exports.asyncify_start_unwind !== 'function' || !this.exports.malloc) {
       throw new Error('not a sketch for this board: it was not built to be paused');
@@ -289,6 +334,37 @@ export class Esp32SketchBoard implements ProgrammableBoard {
     }
     // Where a paused call stack is kept: two words (where it is up to, where it ends), then the room.
     this.pauseData = this.exports.malloc(8 + PAUSE_STACK_BYTES);
+  }
+
+  /**
+   * When a board in deep sleep wakes, if it does by `target`: at its timer, or
+   * at once when the ext0 pin is at its level. Null while it sleeps on.
+   */
+  private wakeTime(target: number): number | null {
+    const sleep = this.sleeping!;
+    if (sleep.ext0 && this.inputLevel[sleep.ext0.pin] === sleep.ext0.level) return this.now;
+    return sleep.wakeAt !== null && sleep.wakeAt <= target ? sleep.wakeAt : null;
+  }
+
+  /**
+   * Wakes from deep sleep: the sketch starts again from setup(), as after a
+   * reset, with only its RTC_DATA_ATTR variables kept.
+   */
+  private wakeUp(): void {
+    const sleep = this.sleeping!;
+    const timer = sleep.wakeAt !== null && this.now >= sleep.wakeAt;
+    this.sleeping = null;
+    this.handler.fill(0);
+    this.handlerMode.fill(0);
+    this.pwm.clear();
+    this.uarts.clear();
+    this.pulse = null;
+    this.wakeAt = null;
+    this.rewinding = false;
+    this.started = false;
+    this.instantiate();
+    new Uint8Array(this.exports.memory.buffer, sleep.rtcPointer, sleep.rtc.length).set(sleep.rtc);
+    this.wakeCause = timer ? 4 : 2;
   }
 
   get timeMs(): number {
@@ -389,33 +465,48 @@ export class Esp32SketchBoard implements ProgrammableBoard {
     this.target = target;
     // The circuit has been shown to the board since the last slice.
     this.assumed.fill(-1);
-    if (this.finished) {
-      this.passTime(target);
-      return;
-    }
-    if (this.wakeAt !== null && this.wakeAt > target) {
-      // Still inside the same wait: only time passes.
-      this.passTime(target);
-      return;
-    }
-    try {
-      if (!this.started) {
-        this.started = true;
-        this.exports.run();
-      } else if (this.wakeAt !== null) {
-        this.passTime(this.wakeAt);
-        this.wakeAt = null;
-        this.exports.asyncify_start_rewind(this.pauseData);
-        this.exports.run();
+    for (;;) {
+      if (this.finished) {
+        this.passTime(target);
+        return;
       }
-      // run() comes back only when the sketch was paused inside a wait.
-      this.exports.asyncify_stop_unwind();
-    } catch (error) {
-      this.finished =
-        error instanceof SketchEnded
-          ? error.message
-          : `the sketch crashed (${error instanceof Error ? error.message : String(error)})`;
-      this.passTime(target);
+      if (this.sleeping) {
+        const wake = this.wakeTime(target);
+        if (wake === null) {
+          this.passTime(target);
+          return;
+        }
+        this.passTime(wake);
+        this.wakeUp();
+      }
+      if (this.wakeAt !== null && this.wakeAt > target) {
+        // Still inside the same wait: only time passes.
+        this.passTime(target);
+        return;
+      }
+      try {
+        if (!this.started) {
+          this.started = true;
+          this.exports.run();
+        } else if (this.wakeAt !== null) {
+          this.passTime(this.wakeAt);
+          this.wakeAt = null;
+          this.exports.asyncify_start_rewind(this.pauseData);
+          this.exports.run();
+        }
+        // run() comes back only when the sketch was paused inside a wait.
+        this.exports.asyncify_stop_unwind();
+        return;
+      } catch (error) {
+        // Deep sleep ends the run: the board sleeps, and may wake within this same stretch.
+        if (error instanceof DeepSleep) continue;
+        this.finished =
+          error instanceof SketchEnded
+            ? error.message
+            : `the sketch crashed (${error instanceof Error ? error.message : String(error)})`;
+        this.passTime(target);
+        return;
+      }
     }
   }
 
@@ -609,5 +700,7 @@ export class Esp32SketchBoard implements ProgrammableBoard {
 }
 
 class SketchEnded extends Error {}
+/** Thrown out of the sketch when it goes into deep sleep; the board starts it again on waking. */
+class DeepSleep extends Error {}
 
 const valid = (pin: number) => pin >= 0 && pin < PINS;
