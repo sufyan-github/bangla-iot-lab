@@ -105,10 +105,10 @@ int twice(int n) { return n * 2; }
     expect(missingHeader.ok).toBe(false);
     expect(missingHeader.diagnostics[0].message).toMatch(/WiFi\.h/);
     const missingFunction = (
-      await compile('void setup() { esp_deep_sleep_start(); }\nvoid loop() {}\n')
+      await compile('void setup() { esp_sleep_enable_ext1_wakeup(1, 0); }\nvoid loop() {}\n')
     ).json();
     expect(missingFunction.ok).toBe(false);
-    expect(JSON.stringify(missingFunction.diagnostics)).toMatch(/esp_deep_sleep_start/);
+    expect(JSON.stringify(missingFunction.diagnostics)).toMatch(/esp_sleep_enable_ext1_wakeup/);
   }, 60_000);
 
   it('gives the sandbox nothing to read', async () => {
