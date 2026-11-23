@@ -75,7 +75,10 @@ under other licences. Each is kept apart from the Apache-2.0 code.
      statement from its sources. Programs that use WS2812B LEDs run over the
      board library's own implementation of the NeoPixel programming interface;
      no code of Adafruit's NeoPixel library, which is under the LGPL, is
-     included.
+     included;
+   - in programs that use the LoRa radio: the LoRa library 0.8.0 (Copyright
+     2016 Sandeep Mistry, MIT licence), unmodified, with its licence text, in
+     third_party/lora/.
 
 3. ESP32 firmware for the chip emulator (experimental; LGPL-2.1-or-later)
 

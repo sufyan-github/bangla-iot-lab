@@ -40,9 +40,13 @@ describe('part definitions', () => {
     expect(definitionProblems({ ...real, status: 'generic', statusNote: undefined })).toContain(
       'a part that is not fully simulated must say what is missing in statusNote',
     );
+    // Every part now has a model, so a planned one is made up from a real one.
     expect(
       definitionProblems({
-        ...partDefinition('lora-ra-02'),
+        ...real,
+        status: 'planned',
+        statusNote: 'Not built yet.',
+        simulates: null,
         model: { level: 'timing', simplified: [] },
       }),
     ).toContain('a planned part has no model yet, so model.level must be "none"');
@@ -85,9 +89,9 @@ describe('recognising parts in a parts list', () => {
       'Unobtainium sensor',
     ]);
     expect(report.counts).toEqual({
-      simulated: 2,
+      simulated: 3,
       generic: 1,
-      planned: 1,
+      planned: 0,
       'not-simulated': 1,
       undefined: 1,
     });

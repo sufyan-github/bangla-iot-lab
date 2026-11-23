@@ -1,30 +1,51 @@
 {
   "formatVersion": 1,
   "id": "lora-ra-02",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "lora",
+  "status": "simulated",
   "family": "communication",
   "tier": 2,
   "name": {
-    "bn": "SX1278 Ra-02 LoRa radio",
-    "en": "SX1278 Ra-02 LoRa radio"
+    "bn": "LoRa রেডিও Ra-02 (SX1278, ৪৩৩ MHz)",
+    "en": "SX1278 Ra-02 LoRa radio (433 MHz)"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "অনেক দূরে, কম শক্তিতে ছোট বার্তা পাঠানোর রেডিও: এক বোর্ড পাঠায়, আরেক বোর্ড শোনে।",
+    "en": "A radio for sending short messages far on little power: one board sends, another listens."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "It works with the ESP32 board and the lab's own model of that board only, on its SPI bus, through the LoRa library by Sandeep Mistry. The UNO-compatible board and the chip emulator cannot drive it yet.",
+      "The chip's registers for LoRa mode are modelled from Semtech's datasheet: sleep, standby, sending, receiving (continuous and single), the FIFO, frequency, spreading factor, bandwidth, coding rate, sync word, CRC, power and DIO0. FSK mode, channel activity detection, frequency hopping and DIO1 to DIO5 are left out; a single receive waits until a packet arrives instead of timing out.",
+      "A packet takes its real time on air, from the datasheet's formula. Two radios hear each other only on the same frequency, spreading factor, bandwidth, sync word and header mode. Two packets at once are both lost.",
+      "Distance is set in the inspector, as each radio's place along a road. The signal falls off with distance by an estimate, between open country and a town, with the radios near the ground; a packet arrives while its signal is above the receiver's sensitivity. Real range depends on antennas, height, buildings and weather.",
+      "LoRaWAN, gateways and network servers are not modelled: two radios talk directly.",
+      "It runs from 1.8 V to 3.7 V, as Ai-Thinker gives; 5 V is shown as damage. The current it draws in the circuit is its receiving current; the larger current while sending is not modelled.",
+      "The lab does not check the rules for using 433 MHz in Bangladesh: check them before using a real module outdoors.",
+      "The Ra-02 is a small module with pads, usually soldered to a breakout. The lab's breakout has the legs GND, 3.3V, RST, DIO0, NSS, MOSI, MISO, SCK; breakouts differ, so read the labels on yours."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E25"]
   },
-  "pins": [],
+  "pins": [
+    { "id": "gnd", "label": "GND", "role": "ground" },
+    { "id": "vcc", "label": "3.3V", "role": "power" },
+    { "id": "rst", "label": "RST", "role": "input" },
+    { "id": "dio0", "label": "DIO0", "role": "output" },
+    { "id": "nss", "label": "NSS", "role": "input" },
+    { "id": "mosi", "label": "MOSI", "role": "input" },
+    { "id": "miso", "label": "MISO", "role": "output" },
+    { "id": "sck", "label": "SCK", "role": "input" }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["ra-02"]
+  },
+  "placement": {
+    "idPrefix": "LORA",
+    "offsets": [0, 1, 2, 3, 4, 5, 6, 7]
   }
 }

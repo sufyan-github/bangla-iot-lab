@@ -2108,6 +2108,82 @@ export function TftView(props: {
 }
 
 /**
+ * Ra-02 LoRa module on its breakout: the square metal can of the radio, a
+ * spring antenna at one end, eight legs along the bottom, and a light that
+ * shows when it is sending (red) or has just received (green).
+ */
+export function LoraView(props: {
+  first: Point;
+  last: Point;
+  mode: 'sleep' | 'standby' | 'transmitting' | 'receiving' | undefined;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const pins = Array.from({ length: 8 }, (_, i) => -length / 2 + (i * length) / 7);
+  const sending = props.mode === 'transmitting';
+  const listening = props.mode === 'receiving';
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-96} width={length + 24} height={102} color="#1f3f7a" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {pins.map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      <g fontSize={6.5} fontWeight={700} fill="#dfe9f5" textAnchor="middle" pointerEvents="none">
+        {['GND', '3.3V', 'RST', 'DIO0', 'NSS', 'MOSI', 'MISO', 'SCK'].map((name, i) => (
+          <text key={name} x={pins[i]} y={-9.5}>
+            {name}
+          </text>
+        ))}
+      </g>
+      {/* The Ra-02 itself: a shielded can on a small board. */}
+      <rect x={-46} y={-86} width={92} height={62} rx={3} fill="#1b1e20" />
+      <rect
+        x={-42}
+        y={-82}
+        width={84}
+        height={54}
+        rx={2}
+        fill="url(#shade-metal)"
+        stroke="#5d666a"
+      />
+      <text
+        x={0}
+        y={-52}
+        fontSize={10}
+        fontWeight={700}
+        fill="#3a4044"
+        textAnchor="middle"
+        pointerEvents="none"
+      >
+        Ra-02
+      </text>
+      {/* The spring antenna, off the right end. */}
+      <path
+        d={`M${length / 2 - 2} -70${Array.from({ length: 7 }, (_, i) => `l3 ${i % 2 ? 8 : -8}`).join('')}`}
+        stroke="#c9a227"
+        strokeWidth={2.2}
+        fill="none"
+      />
+      <g transform={`translate(${-length / 2 + 2} -60)`}>
+        {(sending || listening) && (
+          <circle r={7} fill={sending ? '#ff5b4a' : '#58e07f'} opacity={0.35} />
+        )}
+        <rect
+          x={-3}
+          y={-2}
+          width={6}
+          height={4}
+          rx={1}
+          fill={sending ? '#ff5b4a' : listening ? '#58e07f' : '#3b3f3c'}
+        />
+      </g>
+    </g>
+  );
+}
+
+/**
  * L298N motor driver module: the chip on its heat sink, motor screws on the two
  * sides, and along the bottom the power screws and the six control pins.
  * `terminals` gives each terminal's place from the module's corner.

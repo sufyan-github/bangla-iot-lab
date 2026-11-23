@@ -40,6 +40,7 @@ import {
   Mp3View,
   GsmView,
   LedRingView,
+  LoraView,
   TftView,
   PmsView,
   LineSensorView,
@@ -635,6 +636,15 @@ export function BoardPartDrawing(props: {
           selected={selected}
         />
       );
+    case 'lora':
+      return (
+        <LoraView
+          first={at(part.pins.gnd)}
+          last={at(part.pins.sck)}
+          mode={reading?.radio?.mode}
+          selected={selected}
+        />
+      );
     case 'tft': {
       const shown = reading?.tft;
       return (
@@ -868,6 +878,10 @@ export function Scene({
             }
             data-tft={
               reading?.tft && (reading.tft.pixels ? tftImage(reading.tft.pixels).litPixels : 'dark')
+            }
+            data-radio={
+              reading?.radio &&
+              `${reading.radio.mode}:${reading.radio.sent}:${reading.radio.received}`
             }
             data-ring={reading?.ring?.colours
               .map((colour) => colour.toString(16).padStart(6, '0'))

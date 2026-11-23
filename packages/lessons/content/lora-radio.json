@@ -1,0 +1,321 @@
+{
+  "id": "lora-radio",
+  "order": 43,
+  "parts": ["lora-ra-02", "esp32-devkit-30pin"],
+  "title": {
+    "bn": "LoRa রেডিও: দুই বোর্ডের দূরের কথা",
+    "en": "LoRa radio: two boards talking far apart"
+  },
+  "summary": {
+    "bn": "দুটো ESP32 বোর্ডে দুটো Ra-02 রেডিও লাগাও: একটা বার্তা পাঠায়, অন্যটা শোনে, আর দূরে সরালে সংকেত কীভাবে দুর্বল হয় দেখো।",
+    "en": "Fit a Ra-02 radio to each of two ESP32 boards: one sends messages and the other listens, and see how the signal weakens as they move apart."
+  },
+  "setup": {
+    "board": "esp32",
+    "boards": 2
+  },
+  "program": "lora-send",
+  "program2": "lora-receive",
+  "steps": [
+    {
+      "text": {
+        "bn": "প্রথম **LoRa রেডিও** বসাও আর **ESP1**-এর সাথে জোড়ো: **3.3V** যাবে **3V3**-তে (৫ V দিলে নষ্ট হয়), **GND** যাবে **GND**-তে।",
+        "en": "Place the first **LoRa radio** and join it to **ESP1**: **3.3V** to **3V3** (5 V damages it), **GND** to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "lora"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার SPI পথ: **SCK** যাবে **D18**-এ, **MISO** যাবে **D19**-এ, **MOSI** যাবে **D23**-এ। তারপর **NSS** যাবে **D5**-এ, **RST** যাবে **D14**-এ, **DIO0** যাবে **D2**-এ। DIO0 দিয়ে রেডিও বোর্ডকে জানায় কখন বার্তা গেল বা এল।",
+        "en": "Now the SPI bus: **SCK** to **D18**, **MISO** to **D19**, **MOSI** to **D23**. Then **NSS** to **D5**, **RST** to **D14** and **DIO0** to **D2**. On DIO0 the radio tells the board when a message has gone or arrived."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "sck"
+          },
+          "to": {
+            "board": "d18"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "miso"
+          },
+          "to": {
+            "board": "d19"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "mosi"
+          },
+          "to": {
+            "board": "d23"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "nss"
+          },
+          "to": {
+            "board": "d5"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "rst"
+          },
+          "to": {
+            "board": "d14"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "dio0"
+          },
+          "to": {
+            "board": "d2"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "দ্বিতীয় **LoRa রেডিও** বসাও আর **ESP2**-এর সাথে ঠিক একইভাবে জোড়ো: 3V3, GND, D18, D19, D23, D5, D14, D2।",
+        "en": "Place the second **LoRa radio** and join it to **ESP2** in just the same way: 3V3, GND, D18, D19, D23, D5, D14, D2."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3",
+            "unit": 2
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd",
+            "unit": 2
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "sck"
+          },
+          "to": {
+            "board": "d18",
+            "unit": 2
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "miso"
+          },
+          "to": {
+            "board": "d19",
+            "unit": 2
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "mosi"
+          },
+          "to": {
+            "board": "d23",
+            "unit": 2
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "nss"
+          },
+          "to": {
+            "board": "d5",
+            "unit": 2
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "rst"
+          },
+          "to": {
+            "board": "d14",
+            "unit": 2
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "lora",
+            "pin": "dio0"
+          },
+          "to": {
+            "board": "d2",
+            "unit": 2
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**প্রথম বোর্ডে (ESP1) পাঠানোর প্রোগ্রাম দাও**। `LoRa.begin(433E6)` রেডিওকে ৪৩৩ MHz-এ চালু করে; `beginPacket()`, `print()` আর `endPacket()` দিয়ে একটা বার্তা বাতাসে যায়।",
+        "en": "**Put the sending program on the first board (ESP1).** `LoRa.begin(433E6)` starts the radio on 433 MHz; `beginPacket()`, `print()` and `endPacket()` send one message into the air."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "lora-send"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**দ্বিতীয় বোর্ডে (ESP2) শোনার প্রোগ্রাম দাও**। `parsePacket()` বার বার দেখে বার্তা এসেছে কি না; `packetRssi()` বলে সংকেত কত জোরালো।",
+        "en": "**Put the listening program on the second board (ESP2).** `parsePacket()` keeps checking whether a message has arrived; `packetRssi()` says how strong its signal was."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "lora-receive",
+          "unit": 2
+        }
+      ],
+      "program": 2
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। কোড ট্যাবে **ESP2** বেছে নাও: প্রতি দুই সেকেন্ডে একটা বার্তা আসে, সাথে তার RSSI। শূন্যের যত কাছে, সংকেত তত জোরালো।",
+        "en": "Press **Run**. In the code tab choose **ESP2**: a message arrives every two seconds, with its RSSI. The closer to zero, the stronger the signal."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "unit": 2,
+          "matches": "পেলাম: hello \\d+  RSSI: -\\d+ dBm",
+          "label": {
+            "bn": "ESP2-এর সিরিয়াল মনিটরে \"পেলাম: hello\"",
+            "en": "ESP2's serial monitor shows \"পেলাম: hello\" (received)"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "lora",
+          "path": "radio.received",
+          "above": 0,
+          "label": {
+            "bn": "দ্বিতীয় রেডিও বার্তা পেয়েছে",
+            "en": "The second radio has received a message"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "দ্বিতীয় রেডিওটা বাছাই করো আর স্লাইডারে **৩ কিমি** দূরে সরাও। বার্তা তবু আসে, কিন্তু RSSI অনেক কমে যায়: রেডিও যত দূরে, সংকেত তত দুর্বল।",
+        "en": "Select the second radio and move it **3 km** away with its slider. Messages still arrive, but the RSSI drops a long way: the further apart, the weaker the signal."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "lora",
+          "prop": "km",
+          "above": 2.5,
+          "label": {
+            "bn": "একটা রেডিও ২.৫ কিমি-র বেশি দূরে",
+            "en": "One radio is more than 2.5 km along the road"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "lora",
+          "path": "radio.lastRssi",
+          "below": -115,
+          "label": {
+            "bn": "শেষ বার্তার সংকেত −১১৫ dBm-এর চেয়ে দুর্বল",
+            "en": "The last message's signal is weaker than −115 dBm"
+          }
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "LoRa রেডিও খুব কম শক্তিতে ছোট বার্তা কয়েক কিলোমিটার দূরে পাঠাতে পারে।",
+      "দুই রেডিওর ফ্রিকোয়েন্সি, স্প্রেডিং ফ্যাক্টর আর সিঙ্ক ওয়ার্ড একই না হলে তারা একে অপরকে শোনে না।",
+      "দূরত্ব বাড়লে সংকেত (RSSI) কমে; রিসিভারের সংবেদনশীলতার নিচে নামলে বার্তা আর আসে না।"
+    ],
+    "en": [
+      "A LoRa radio sends short messages several kilometres on very little power.",
+      "Two radios hear each other only with the same frequency, spreading factor and sync word.",
+      "The further apart, the weaker the signal (RSSI); below the receiver's sensitivity, messages stop arriving."
+    ]
+  },
+  "tryNext": {
+    "bn": "রেডিও ৪ কিমি দূরে সরাও: বার্তা আসা বন্ধ হয়। এবার দুই প্রোগ্রামেই `LoRa.setSpreadingFactor(12);` যোগ করো: বার্তা ধীরে যায়, কিন্তু আরও দূরে পৌঁছায়।",
+    "en": "Move the radio 4 km away: messages stop. Now add `LoRa.setSpreadingFactor(12);` to both programs: messages go slower, but reach further."
+  }
+}

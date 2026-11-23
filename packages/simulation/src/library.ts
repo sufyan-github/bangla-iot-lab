@@ -471,6 +471,16 @@ export const ST7789_ROWS = 320;
 export const TFT_SIZE = 240;
 
 /**
+ * Ra-02 LoRa module (SX1278). REPORTED, from Ai-Thinker's Ra-02 datasheet: a
+ * supply of 1.8 V to 3.7 V. REPORTED, from Semtech's datasheet: about 12 mA
+ * while receiving and about 90 mA while sending at +17 dBm. ESTIMATE: the
+ * circuit sees the receiving current only; the peaks while sending are not
+ * modelled.
+ */
+export const LORA_MAX_SUPPLY = 3.7;
+export const LORA_SUPPLY_RESISTANCE = 275;
+
+/**
  * L298N dual motor driver module. REPORTED, from the chip's datasheet
  * (STMicroelectronics, "L298", electrical characteristics): what its outputs
  * lose, typically 1.35 V on the supply side and 1.2 V on the ground side at
@@ -606,6 +616,7 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   oled: 3,
   ledring: 3.5,
   tft: 3,
+  lora: 1.8,
   l298n: 6.5,
   relaymodule: 3.75,
   logic: 2,

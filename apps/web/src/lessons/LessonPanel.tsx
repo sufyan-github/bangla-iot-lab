@@ -16,7 +16,11 @@ export function LessonPanel() {
   const progress = useLessonState((s) => s.progress);
   const checks = useLessonState((s) => s.checks);
   const goTo = useLessonState((s) => s.goTo);
-  const boardId = useLab((s) => s.circuit.components.find(isProgrammable)?.id);
+  // The board a program step is for: the first, or the second in a lesson with two.
+  const unit = useLessonState((s) =>
+    s.lesson && s.progress && s.lesson.steps[s.progress.step]?.program === 2 ? 2 : 1,
+  );
+  const boardId = useLab((s) => s.circuit.components.filter(isProgrammable)[unit - 1]?.id);
   const { t, locale, number } = useT();
   const navigate = useNavigate();
   const handbook = useHandbook(lesson?.id ?? '');
@@ -33,8 +37,9 @@ export function LessonPanel() {
   const position = sameKind.indexOf(lesson) + 1;
 
   const putProgram = async () => {
-    if (!boardId || !lesson.program) return;
-    const program = await starterProgram(lesson.program, 'esp32');
+    const starter = unit === 2 ? lesson.program2 : lesson.program;
+    if (!boardId || !starter) return;
+    const program = await starterProgram(starter, 'esp32');
     useLab.getState().uploadProgram(boardId, program);
   };
   const openNext = async () => {
@@ -92,7 +97,7 @@ export function LessonPanel() {
             onClick={() => void putProgram()}
             className="mt-3 min-h-11 rounded-lg bg-amber px-4 font-semibold text-ink hover:brightness-105 disabled:opacity-50"
           >
-            {t('lesson.program')}
+            {unit === 2 ? t('lesson.program2') : t('lesson.program')}
           </button>
         )}
       </div>

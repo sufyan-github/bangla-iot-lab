@@ -26,6 +26,8 @@ describe('shipped ESP32 starter programs', () => {
       'gps.ino',
       'knob.ino',
       'light.ino',
+      'lora-receive.ino',
+      'lora-send.ino',
       'monitor.ino',
       'motion.ino',
       'motor.ino',

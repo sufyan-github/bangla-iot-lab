@@ -176,10 +176,10 @@ measured.
 
 ## Section E: sensor modules outside the kit
 
-Twenty-four modules, power parts and board set-ups modelled for projects beyond the school kit. Each needs the module
+Twenty-five modules, power parts and board set-ups modelled for projects beyond the school kit. Each needs the module
 itself, a 5 V bench supply or the board's VIN, and a multimeter; E4 to E6 need
 water samples (see each row). Every figure the simulator uses is reported by a
-maker or seller, or estimated (decisions D-062 to D-070); none is measured.
+maker or seller, or estimated (decisions D-062 to D-071); none is measured.
 
 | Test | Module                   | Set-up                                                                                           | Record                                                                                                                |
 | ---- | ------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
@@ -207,6 +207,7 @@ maker or seller, or estimated (decisions D-062 to D-070); none is measured.
 | E22  | WS2812B ring (12 LEDs)   | VIN, DIN to GPIO4, a knob on GPIO34; the `ring` program; then a second ring on DOUT; then 3.3 V  | Colours in order; whether a 3.3 V data line works on 5 V; current at full white; whether it lights on 3.3 V           |
 | E23  | 1.54″ ST7789 display     | 3.3 V, SCL to GPIO18, SDA to GPIO23, RES GPIO4, DC GPIO2, CS GPIO5; the `tft` program            | Whether the picture is upright and its colours right; with BLK on GND; supply current                                 |
 | E24  | Two ESP32 boards         | ESP1 TX2 (GPIO17) to ESP2 RX2 (GPIO16), GNDs joined; `sender` on ESP1, `receiver` on ESP2        | Whether every line arrives; what arrives with the GNDs not joined; what arrives at different baud rates               |
+| E25  | Two Ra-02 LoRa radios    | Each on an ESP32 (NSS 5, RST 14, DIO0 2, SPI 18/19/23); `lora-send` and `lora-receive`; outdoors | RSSI and SNR at 0.1, 0.5, 1, 2 and 3 km, and where messages stop, at SF7 and SF12; the antennas and heights used      |
 
 **What the simulator assumes today.**
 
@@ -236,6 +237,7 @@ maker or seller, or estimated (decisions D-062 to D-070); none is measured.
 | E22  | Green, red, blue order; any 3.3 V data line accepted; about 1 mA an LED dark and 20 mA a colour at full; dark below 3.5 V. **Please note whether it lights on 3.3 V**       |
 | E23  | Rotation 0 upright with the pins along the top; colours right only with inversion on; dark with BLK on GND; about 30 mA at 3.3 V                                            |
 | E24  | Every line arrives once a second; nothing reliable without the shared GND; garbled bytes at a different baud rate                                                           |
+| E25  | 17 dBm out; the signal falls by 33 dB for each tenfold distance after the first metre; SF7 stops at about 3 km and SF12 at about 8 km. **Please check 433 MHz rules first** |
 
 ## Section D: systems (later)
 

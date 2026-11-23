@@ -25,16 +25,24 @@ export function lessonProblems(value: unknown): string[] {
       problems.push(`no part definition "${id}"`);
     }
   }
-  const programSteps = lesson.steps.filter((step) => step.program);
+  const programSteps = lesson.steps.filter((step) => step.program === true);
+  const secondSteps = lesson.steps.filter((step) => step.program === 2);
   if (lesson.program === undefined && programSteps.length > 0) {
     problems.push('a step puts a program on the board, but the lesson has none');
   }
   if (lesson.program !== undefined && programSteps.length !== 1) {
     problems.push('a lesson with a program has exactly one step that puts it on the board');
   }
+  if ((lesson.program2 !== undefined) !== (secondSteps.length === 1) || secondSteps.length > 1) {
+    problems.push('a second program goes with exactly one step that puts it on the second board');
+  }
+  if (lesson.program2 !== undefined && lesson.setup.boards !== 2) {
+    problems.push('a second program needs a second board');
+  }
   const checks: Check[] = lesson.steps.flatMap((step) => step.checks);
   for (const check of checks) {
-    if (check.kind === 'program' && check.starter !== lesson.program) {
+    const own = check.kind === 'program' && check.unit === 2 ? lesson.program2 : lesson.program;
+    if (check.kind === 'program' && check.starter !== own) {
       problems.push(`a step checks for program "${check.starter}", not the lesson's own`);
     }
     if (check.kind === 'serial') {

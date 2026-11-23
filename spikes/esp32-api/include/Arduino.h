@@ -23,6 +23,7 @@
 #include <string>
 
 #include "host.h"
+#include "binary.h"
 
 // What the ESP32's own build defines, so that libraries choose their ESP32 code.
 #ifndef ARDUINO
@@ -79,6 +80,7 @@ typedef enum { ADC_0db, ADC_2_5db, ADC_6db, ADC_11db, ADC_12db = ADC_11db } adc_
 
 // Attributes and flash-string helpers that mean nothing off the chip.
 #define IRAM_ATTR
+#define ICACHE_RAM_ATTR
 #define ARDUINO_ISR_ATTR
 #define PROGMEM
 #define PSTR(text) (text)
@@ -293,6 +295,12 @@ class Stream : public Print {
   virtual int available() = 0;
   virtual int read() = 0;
   virtual int peek() = 0;
+  /** How long the reading functions wait for the next byte, in milliseconds. */
+  void setTimeout(unsigned long milliseconds) { timeout_ = milliseconds; }
+  unsigned long getTimeout() const { return timeout_; }
+
+ protected:
+  unsigned long timeout_ = 1000;
 };
 
 /** The serial port to the computer: what the serial monitor shows and sends. */
@@ -315,7 +323,6 @@ class HardwareSerial : public Stream {
   void begin(unsigned long baud, uint32_t config = SERIAL_8N1, int8_t rx = -1, int8_t tx = -1,
              bool invert = false, unsigned long timeout_ms = 20000, uint8_t rx_threshold = 112);
   void end() {}
-  void setTimeout(unsigned long milliseconds) { timeout_ = milliseconds; }
   operator bool() const { return true; }
 
   using Print::write;
@@ -332,7 +339,6 @@ class HardwareSerial : public Stream {
 
  private:
   int port_;
-  unsigned long timeout_ = 1000;
   /** Waits for a byte to arrive, up to the timeout. */
   int timedRead();
 };

@@ -42,6 +42,7 @@ import { Hc05, Mp3Player, Sim800l } from './uart-modules';
 import { Ssd1306 } from './ssd1306';
 import { LedRing } from './led-ring';
 import { St7789 } from './st7789';
+import { Sx1278, receivedDbm, type Packet, type RadioStatus } from './lora';
 
 /** Turns bytes into base64 text, in a browser, a worker or Node. */
 function base64(bytes: Uint8Array): string {
@@ -183,6 +184,23 @@ export class Peripherals {
     blk: PinKey | boolean;
   }[] = [];
   private readonly tftChips = new Map<string, St7789>();
+  /**
+   * LoRa radios on an SPI bus: the board pins their legs are on, and where each
+   * is along the road, in kilometres, which sets how far apart two of them are.
+   */
+  private radios: {
+    id: string;
+    sck?: PinKey;
+    mosi?: PinKey;
+    miso?: PinKey;
+    nss?: PinKey;
+    rst?: PinKey;
+    dio0?: PinKey;
+    km: number;
+  }[] = [];
+  private readonly radioChips = new Map<string, Sx1278>();
+  /** DIO0 levels the radios have decided on, waiting for the session to deliver them. */
+  private pendingInputs: ScheduledInput[] = [];
   /** Each display's picture as text, with the version of the picture it was made from. */
   private readonly tftPictures = new Map<string, { version: number; pixels: string }>();
   /** What each board pin last drove, for pins a display's legs are on, and when it was last HIGH. */
@@ -233,6 +251,7 @@ export class Peripherals {
     }
     this.rings = [];
     this.tfts = [];
+    this.radios = [];
     this.sensorInputs.clear();
     for (const component of document.components) {
       if (component.type === 'servo') {
@@ -327,6 +346,32 @@ export class Peripherals {
             .filter((other) => pinOf.net((other as { pins: { din: string } }).pins.din) === out)
             .map((other) => other.id),
         });
+      } else if (component.type === 'lora') {
+        const id = component.id;
+        if (!this.radioChips.has(id)) {
+          this.radioChips.set(
+            id,
+            new Sx1278(
+              id,
+              (packet) => this.onAir(packet),
+              ({ timeMs, level }) => this.dio0Changed(id, timeMs, level),
+            ),
+          );
+        }
+        const { pins } = component;
+        const dio0 = pinOf.direct(pins.dio0);
+        // DIO0 rests LOW, and rises only when the radio says so.
+        if (dio0) this.sensorInputs.set(dio0, false);
+        this.radios.push({
+          id,
+          sck: pinOf.direct(pins.sck),
+          mosi: pinOf.direct(pins.mosi),
+          miso: pinOf.direct(pins.miso),
+          nss: pinOf.direct(pins.nss),
+          rst: pinOf.direct(pins.rst),
+          dio0,
+          km: component.props.km,
+        });
       } else if (component.type === 'tft') {
         if (!this.tftChips.has(component.id)) this.tftChips.set(component.id, new St7789());
         const leg = (endpoint: string): PinKey | boolean =>
@@ -372,6 +417,7 @@ export class Peripherals {
       this.ledRings,
       this.tftChips,
       this.tftPictures,
+      this.radioChips,
     ]) {
       for (const id of map.keys()) if (!present.has(id)) map.delete(id);
     }
@@ -393,6 +439,7 @@ export class Peripherals {
     for (const [id, chip] of this.serialChips) if (!powered(id)) chip.reset();
     for (const [id, ring] of this.ledRings) if (!powered(id)) ring.off();
     for (const [id, chip] of this.tftChips) if (!powered(id)) chip.powerOff();
+    for (const [id, chip] of this.radioChips) if (!powered(id)) chip.powerOff();
   }
 
   /**
@@ -425,15 +472,78 @@ export class Peripherals {
    * and its RES is HIGH. DC says whether the bytes are a command or data. The
    * display has no data-out line, so nothing comes back.
    */
-  spi(boardId: string, transfer: SpiTransfer, isHigh: (pin: number) => boolean): undefined {
+  spi(
+    boardId: string,
+    transfer: SpiTransfer,
+    isHigh: (pin: number) => boolean,
+  ): Uint8Array | undefined {
     const sck = pinKey(boardId, transfer.sck);
     const mosi = pinKey(boardId, transfer.mosi);
+    const miso = pinKey(boardId, transfer.miso);
     for (const tft of this.tfts) {
       if (tft.scl !== sck || tft.sda !== mosi || !this.powered(tft.id)) continue;
       if (this.legHigh(tft.cs, isHigh) || !this.legHigh(tft.res, isHigh)) continue;
       this.tftChips.get(tft.id)!.write(transfer.bytes, this.legHigh(tft.dc, isHigh));
     }
-    return undefined;
+    let reply: Uint8Array | undefined;
+    for (const radio of this.radios) {
+      if (radio.sck !== sck || radio.mosi !== mosi || !this.powered(radio.id)) continue;
+      // The radio listens only while its NSS is held LOW by the board.
+      if (!radio.nss || isHigh(Number(radio.nss.slice(radio.nss.lastIndexOf(':') + 1)))) continue;
+      const out = this.radioChips.get(radio.id)!.exchange(transfer.bytes, transfer.timeMs);
+      // Its answer reaches the board only along a MISO wire.
+      if (radio.miso === miso) reply = out;
+    }
+    return reply;
+  }
+
+  /** A packet leaves a radio: every other powered radio hears it, as strongly as the distance allows. */
+  private onAir(packet: Packet): void {
+    const sender = this.radios.find((r) => r.id === packet.from);
+    if (!sender) return;
+    for (const radio of this.radios) {
+      if (radio.id === sender.id || !this.powered(radio.id)) continue;
+      const km = Math.abs(radio.km - sender.km);
+      this.radioChips.get(radio.id)!.hear(packet, receivedDbm(packet.settings.txPowerDbm, km));
+    }
+  }
+
+  private dio0Changed(id: string, timeMs: number, level: boolean): void {
+    const dio0 = this.radios.find((r) => r.id === id)?.dio0;
+    if (!dio0) return;
+    const at = dio0.lastIndexOf(':');
+    this.pendingInputs.push({
+      timeMs,
+      boardId: dio0.slice(0, at),
+      pin: Number(dio0.slice(at + 1)),
+      level,
+      sensorId: id,
+      asIs: true,
+    });
+  }
+
+  /** Brings every radio up to `timeMs`, so packets end on time whether or not a program asks. */
+  advanceRadios(timeMs: number): void {
+    for (const [id, chip] of this.radioChips) if (this.powered(id)) chip.advance(timeMs);
+  }
+
+  /** DIO0 changes decided since the last call, for the session to deliver to the boards. */
+  takeInputs(): ScheduledInput[] {
+    const inputs = this.pendingInputs;
+    this.pendingInputs = [];
+    return inputs;
+  }
+
+  /** A board pin a radio's NSS or RST leg is on changed. */
+  private radioPinChanged(key: PinKey, drive: PinDrive): void {
+    for (const radio of this.radios) {
+      const chip = this.radioChips.get(radio.id)!;
+      if (radio.nss === key) {
+        if (drive === 'low') chip.select();
+        else chip.deselect();
+      }
+      if (radio.rst === key && drive === 'low') chip.reset();
+    }
   }
 
   /** A board pin a display's RES or BLK leg is on changed: RES going LOW resets the chip. */
@@ -602,6 +712,7 @@ export class Peripherals {
   ): ScheduledInput[] {
     const key = pinKey(boardId, pin);
     this.tftPinChanged(key, drive, timeMs);
+    this.radioPinChanged(key, drive);
     const asked = this.dhtAsked(boardId, pin, key, drive, timeMs);
     if (asked.length > 0) return asked;
     const high = drive === 'high';
@@ -713,6 +824,7 @@ export class Peripherals {
       oled?: { lit: boolean; brightness: number; pixels?: string };
       ring?: { colours: number[]; milliamps: number };
       tft?: { lit: boolean; pixels?: string };
+      radio?: RadioStatus;
     } & UartModuleStatus
   > {
     const status: ReturnType<Peripherals['status']> = {};
@@ -748,6 +860,15 @@ export class Peripherals {
     for (const [id, ring] of this.ledRings) {
       status[id] = {
         ring: { colours: ring.show(), milliamps: this.powered(id) ? ring.milliamps() : 0 },
+      };
+    }
+    for (const radio of this.radios) {
+      const other = this.radios.find((r) => r.id !== radio.id);
+      status[radio.id] = {
+        radio: {
+          ...this.radioChips.get(radio.id)!.status(),
+          ...(other ? { distanceKm: Math.abs(other.km - radio.km) } : {}),
+        },
       };
     }
     for (const tft of this.tfts) {

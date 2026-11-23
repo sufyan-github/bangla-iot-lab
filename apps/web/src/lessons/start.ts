@@ -1,5 +1,6 @@
 import type { Lesson } from '@banglalab/lessons';
 import { addBattery, addEsp32, emptyCircuit, type CircuitDocument } from '@banglalab/shared';
+import { placeBesideOtherBoard } from '../lab/geometry';
 import { projectStore, type ProjectRecord } from '../storage/projects';
 import { freshProgress } from './progress';
 
@@ -8,6 +9,10 @@ export function lessonCircuit(lesson: Lesson): CircuitDocument {
   let circuit = emptyCircuit();
   const board = addEsp32(circuit);
   if (board.ok) circuit = board.circuit;
+  if (lesson.setup.boards === 2) {
+    const second = addEsp32(circuit);
+    if (second.ok) circuit = placeBesideOtherBoard(second.circuit, second.id);
+  }
   if (lesson.setup.battery !== undefined) {
     const battery = addBattery(circuit, lesson.setup.battery);
     if (battery.ok) circuit = battery.circuit;

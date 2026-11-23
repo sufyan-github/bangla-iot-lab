@@ -234,6 +234,33 @@ function TftPreview({ id }: { id: string }) {
   );
 }
 
+/** What a LoRa radio is doing, what it has sent and heard, and how far the other radio is. */
+function RadioState({ id }: { id: string }) {
+  const radio = useLab((s) => s.result?.readings[id]?.radio);
+  const running = useLab((s) => s.running);
+  const { t, number } = useT();
+  if (!running || !radio) return null;
+  return (
+    <div className="space-y-1 text-sm" data-testid="radio-state" data-mode={radio.mode}>
+      <p className="font-medium">{t(`inspector.radio.${radio.mode}`)}</p>
+      <p className="text-ink-soft">
+        {t('inspector.radio.counts', {
+          sent: number(radio.sent),
+          received: number(radio.received),
+        })}
+      </p>
+      {radio.lastRssi !== undefined && (
+        <p className="text-ink-soft" data-testid="radio-rssi">
+          {t('inspector.radio.last', {
+            rssi: number(radio.lastRssi),
+            snr: number(radio.lastSnr ?? 0),
+          })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** An estimate of what a ring's lit LEDs draw, while the circuit runs. */
 function RingCurrent({ id }: { id: string }) {
   const ring = useLab((s) => s.result?.readings[id]?.ring);
@@ -462,6 +489,42 @@ function PartSettings({ part }: { part: CircuitComponent }) {
   }
   if (part.type === 'oled') return <OledPreview id={part.id} />;
   if (part.type === 'tft') return <TftPreview id={part.id} />;
+  if (part.type === 'lora') {
+    const others = useLab
+      .getState()
+      .circuit.components.filter((c) => c.type === 'lora' && c.id !== part.id);
+    const other = others[0];
+    const apart = other && other.type === 'lora' ? Math.abs(other.props.km - part.props.km) : null;
+    return (
+      <div className="space-y-3">
+        <label className="block">
+          <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+            {t('inspector.loraPlace')}
+            <span className="font-medium text-ink tabular-nums">{number(part.props.km)} km</span>
+          </span>
+          <input
+            type="range"
+            data-testid="slider-km"
+            min={0}
+            max={20}
+            step={0.1}
+            value={part.props.km}
+            onChange={(event) => setProps(part.id, { km: Number(event.target.value) })}
+            className="h-11 w-full accent-amber"
+          />
+        </label>
+        {apart !== null && (
+          <p className="text-sm text-ink-soft" data-testid="radio-distance">
+            {t('inspector.radio.distance', {
+              km: number(Math.round(apart * 10) / 10),
+              other: other!.id,
+            })}
+          </p>
+        )}
+        <RadioState id={part.id} />
+      </div>
+    );
+  }
   if (part.type === 'ledring') {
     return (
       <div className="space-y-3">

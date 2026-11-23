@@ -15,13 +15,14 @@ export type Text = Static<typeof Text>;
 /**
  * A place a wire can go, named the way a lesson talks about it:
  * - `{ board: 'd2' }`: a pin of the circuit's programmable board, by its id;
- *   `gnd` stands for any of the board's ground pins;
+ *   `gnd` stands for any of the board's ground pins. In a lesson with two
+ *   boards, `unit: 2` is a pin of the second;
  * - `{ part: 'led', pin: 'anode' }`: that leg or terminal of any part of that type
  *   (`pin: '*'` is any of its legs, for parts that may be turned either way round);
  * - `{ battery: 'pos' }`: a battery's terminal.
  */
 export const Place = Type.Union([
-  Type.Object({ board: Type.String() }),
+  Type.Object({ board: Type.String(), unit: Type.Optional(Type.Literal(2)) }),
   Type.Object({ part: Type.String(), pin: Type.String() }),
   Type.Object({ battery: Type.Union([Type.Literal('pos'), Type.Literal('neg')]) }),
 ]);
@@ -69,7 +70,13 @@ export const Check = Type.Union([
     ...Labelled,
   }),
   /** The board's uploaded program is this ready-made one, unchanged. */
-  Type.Object({ kind: Type.Literal('program'), starter: Type.String(), ...Labelled }),
+  Type.Object({
+    kind: Type.Literal('program'),
+    starter: Type.String(),
+    /** The second board, in a lesson with two. */
+    unit: Type.Optional(Type.Literal(2)),
+    ...Labelled,
+  }),
   /** The circuit is switched on. */
   Type.Object({ kind: Type.Literal('running'), ...Labelled }),
   /** Nothing in the circuit is being damaged or shorted right now. */
@@ -90,6 +97,8 @@ export const Check = Type.Union([
   Type.Object({
     kind: Type.Literal('serial'),
     matches: Type.String({ minLength: 1 }),
+    /** The second board's serial monitor, in a lesson with two. */
+    unit: Type.Optional(Type.Literal(2)),
     ...Labelled,
   }),
   /** The lab gave this explanation (a lesson may lead a student into a mistake on purpose). */
@@ -101,8 +110,11 @@ export const Step = Type.Object({
   text: Text,
   /** What must be true for the step to be done. A step with none is read and moved past. */
   checks: Type.Array(Check),
-  /** True on the step where the student puts the lesson's program on the board. */
-  program: Type.Optional(Type.Boolean()),
+  /**
+   * On the step where the student puts the lesson's program on the board: true
+   * for the board (`program`), 2 for the second board (`program2`).
+   */
+  program: Type.Optional(Type.Union([Type.Boolean(), Type.Literal(2)])),
 });
 export type Step = Static<typeof Step>;
 
@@ -124,10 +136,14 @@ export const LessonSchema = Type.Object({
   /** What the new project starts with: the board, and a battery of this voltage. */
   setup: Type.Object({
     board: Type.Literal('esp32'),
+    /** Two ESP32 boards instead of one, for a lesson where boards talk to each other. */
+    boards: Type.Optional(Type.Literal(2)),
     battery: Type.Optional(Type.Number()),
   }),
   /** The ready-made ESP32 program the lesson uses, if any. */
   program: Type.Optional(Type.String()),
+  /** The program for the second board, in a lesson with two. */
+  program2: Type.Optional(Type.String()),
   steps: Type.Array(Step, { minItems: 2 }),
   /** What the student learned, said at the end. */
   learned: Type.Object({ bn: Type.Array(Type.String()), en: Type.Array(Type.String()) }),

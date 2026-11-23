@@ -1246,3 +1246,55 @@ it, joined by its wires.
 
 Ready-made programs `sender` and `receiver`; hardware test E24 is written, not
 run.
+
+## D-071 — LoRa between two boards: the Ra-02's SX1278, the air, and a distance slider
+
+Stage 7, decided with the owner on 24 November 2026: the LoRa library by
+Sandeep Mistry, a distance slider, and point to point only (no LoRaWAN,
+gateway or network server).
+
+**The library is used as it is.** The LoRa library 0.8.0 is MIT (VERIFIED:
+GitHub reports MIT for the repository, and its LICENSE says Copyright 2016
+Sandeep Mistry). It is copied unmodified into `third_party/lora`. It needed two
+small things from the board library, both added as the Arduino cores have them:
+the `B…` binary constants (generated, not copied) and `Stream::setTimeout`.
+
+**The chip is modelled register by register**, from Semtech's SX1276/77/78/79
+datasheet: the LoRa-mode registers with their reset values, the version (0x12),
+the FIFO and its pointers, sleep, standby, transmit and the two receive modes,
+frequency, spreading factor, bandwidth, coding rate, header mode, CRC,
+preamble, sync word, power (PA_BOOST and the +20 dBm DAC), the interrupt flags
+and DIO0 (RxDone or TxDone). The SPI bus gains a reply path for it: bytes the
+radio clocks out on MISO reach the board only along a MISO wire. NSS frames
+each exchange, as on the chip: tied LOW, the radio cannot be talked to.
+
+**The air.** A packet takes its time on air from the datasheet's formula
+(tested against a hand calculation: 10 bytes at SF7, 125 kHz, 4/5 is
+41.216 ms). A listening radio hears it when both are on the same frequency
+(within a quarter of the bandwidth, ESTIMATE), spreading factor, bandwidth,
+sync word and header mode, and its signal is above the receiver's sensitivity:
+the noise floor for the bandwidth with a 6 dB noise figure, plus the lowest SNR
+each spreading factor decodes (REPORTED, datasheet). Two packets at once are
+both lost. A single receive waits until a packet arrives instead of timing out.
+
+**Distance.** Each radio has a place along a road, in kilometres; two radios
+are as far apart as their places differ. The signal falls with distance by a
+log-distance model with exponent 3.3 (ESTIMATE, between open country and a
+town, radios near the ground) from 17 dBm, so SF7 reaches about 3 km and SF12
+about 8 km. Real range depends on antennas, height, buildings and weather; the
+part says so.
+
+**Supply.** 1.8 V to 3.7 V (REPORTED, Ai-Thinker's Ra-02 datasheet); 5 V is
+shown as damage. The circuit sees the receiving current (about 12 mA); the
+larger current while sending is not modelled.
+
+**Lessons with two boards.** A lesson may now set up two ESP32 boards, name a
+pin or a serial monitor of the second (`unit: 2`), and put a second program on
+it (`program2`). One-board lessons are unchanged. The new lesson `lora-radio`
+is walked through by the lab.
+
+**Not checked.** The rules for using 433 MHz in Bangladesh: the part and the
+lesson ask the student to check them before using a real module outdoors.
+
+Ready-made programs `lora-send` and `lora-receive`; hardware test E25 is
+written, not run.

@@ -16,8 +16,9 @@ export interface Describer {
 /** A pin's name as printed on the board or the part. */
 function placeName(place: Place, { t }: Describer): string {
   if ('board' in place) {
-    if (place.board === 'gnd') return 'GND';
-    return place.board.toUpperCase();
+    const pin = place.board === 'gnd' ? 'GND' : place.board.toUpperCase();
+    // In a lesson with two boards, the second board's pins are named after it.
+    return place.unit === 2 ? `ESP2 ${pin}` : pin;
   }
   if ('battery' in place) return `${t('part.battery')} (${place.battery === 'pos' ? '+' : '−'})`;
   const name = t(`part.${place.part}` as MessageKey);

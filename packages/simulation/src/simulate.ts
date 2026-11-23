@@ -1,5 +1,6 @@
 import { solveDc, type Device, type NpnTransistor, type Solution } from '@banglalab/circuit-engine';
 import type { PhoneMessage } from './uart-devices';
+import type { RadioStatus } from './lora';
 import {
   LOGIC_CHIP_GATES,
   boardPinNumber,
@@ -33,6 +34,7 @@ import {
   BME280_MAX_SUPPLY,
   GSM_MAX_SUPPLY,
   LED_RING_MAX_SUPPLY,
+  LORA_MAX_SUPPLY,
   INA219_MAX_BUS,
   INA219_MAX_SHUNT_VOLTS,
   CELL_CUTOFF_VOLTS,
@@ -134,6 +136,8 @@ export interface Reading {
    * base64; absent while the backlight is off or the display has no power.
    */
   tft?: { lit: boolean; pixels?: string };
+  /** What a LoRa radio is doing, how many packets it has sent and received, and the last signal. */
+  radio?: RadioStatus;
 }
 
 export type DiagnosticCode =
@@ -1425,6 +1429,19 @@ export class Observation {
             componentId: id,
             volts: supply,
             limit: GSM_MAX_SUPPLY,
+          });
+        }
+      }
+      if (component.type === 'lora') {
+        // Ai-Thinker gives 3.7 V as the most the Ra-02 takes: 5 V harms it.
+        const supply = extreme((s) => s.parts[id]!.voltage, Math.max);
+        if (supply > LORA_MAX_SUPPLY) {
+          result.diagnostics.push({
+            code: 'module-overvoltage',
+            severity: 'error',
+            componentId: id,
+            volts: supply,
+            limit: LORA_MAX_SUPPLY,
           });
         }
       }

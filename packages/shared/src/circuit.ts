@@ -27,12 +27,13 @@ import { holeExists, holeName, isHole, parseHole, type BreadboardSize } from './
  * 14 to 20 — add further parts, each version some.
  * 21 — the breadboard becomes a part: a circuit holds one or more, of three
  *     sizes, and each hole is named after its breadboard ("BB1.a12").
+ * 22 — adds the Ra-02 LoRa radio.
  * Up to version 20 each version only adds part types or optional fields, so an
  * older document is valid in a newer version apart from the number. Version
  * 21 renames every hole: `migrateCircuit` puts the one fixed breadboard of an
  * older circuit in as BB1, where it was, and names its holes after it.
  */
-export const CIRCUIT_SCHEMA_VERSION = 21;
+export const CIRCUIT_SCHEMA_VERSION = 22;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 /** A breadboard hole: the breadboard's id, a dot and the hole, as "BB1.a12". */
@@ -608,6 +609,27 @@ export const TftSchema = Type.Object({
 });
 
 /**
+ * Ra-02 LoRa radio module (SX1278, 433 MHz) on an SPI bus, on a breakout with
+ * eight legs. `km` is where it stands along a road, in kilometres: two radios
+ * are as far apart as their places differ.
+ */
+export const LoraSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('lora'),
+  pins: Type.Object({
+    gnd: Hole,
+    vcc: Hole,
+    rst: Hole,
+    dio0: Hole,
+    nss: Hole,
+    mosi: Hole,
+    miso: Hole,
+    sck: Hole,
+  }),
+  props: Type.Object({ km: Type.Number({ minimum: 0, maximum: 20 }) }),
+});
+
+/**
  * One-channel relay module: a 5 V relay with the transistor and optocoupler
  * that let a board pin switch it, and a jumper that chooses whether IN must be
  * HIGH (`high`) or LOW (`low`) to switch the relay on. Its contact joins COM to
@@ -806,6 +828,7 @@ export const ComponentSchema = Type.Union([
   OledSchema,
   LedRingSchema,
   TftSchema,
+  LoraSchema,
   RelayModuleSchema,
   LogicSchema,
   UnoSchema,

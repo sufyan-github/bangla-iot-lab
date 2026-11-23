@@ -105,6 +105,8 @@ export const ESP32_EXTRA_LIBRARIES = [
     sources: ['Adafruit_ST77xx.cpp', 'Adafruit_ST7789.cpp'],
     headers: ['Adafruit_ST77xx.h', 'Adafruit_ST7789.h'],
   },
+  // The LoRa library 0.8.0 (MIT) by Sandeep Mistry: the Ra-02's SX1278 radio, over SPI.
+  { dir: path.join(THIRD_PARTY, 'lora'), sources: ['LoRa.cpp'], headers: ['LoRa.h'] },
   // Adafruit's INA219 library 1.2.3 (BSD): current and voltage monitor.
   {
     dir: path.join(THIRD_PARTY, 'adafruit-ina219'),

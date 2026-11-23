@@ -17,6 +17,14 @@ export interface LessonWorld {
   serial: string;
   /** The ready-made program the board's uploaded program is, unchanged; null if none. */
   uploadedStarter: string | null;
+  /** The same two for each board, in order, when there is more than one. */
+  boards?: { serial: string; uploadedStarter: string | null }[];
+}
+
+/** What a board printed and had put on it: the first, or the second in a lesson with two. */
+function boardWorld(world: LessonWorld, unit: 2 | undefined) {
+  if (unit === 2) return world.boards?.[1] ?? { serial: '', uploadedStarter: null };
+  return { serial: world.serial, uploadedStarter: world.uploadedStarter };
 }
 
 /** Checks about something that happened while the circuit ran. They count once seen. */
@@ -46,7 +54,7 @@ const ofType = (circuit: CircuitDocument, type: string) =>
 /** Every endpoint that a place could mean in this circuit. */
 function endpoints(circuit: CircuitDocument, place: Place): string[] {
   if ('board' in place) {
-    const board = circuit.components.find(isProgrammable);
+    const board = circuit.components.filter(isProgrammable)[(place.unit ?? 1) - 1];
     return board ? [`${board.id}.${place.board}`] : [];
   }
   if ('battery' in place) return ofType(circuit, 'battery').map((b) => `${b.id}.${place.battery}`);
@@ -116,7 +124,7 @@ export function evaluate(check: Check, world: LessonWorld): boolean {
       return check.every ? parts.length > 0 && parts.every(passes) : parts.some(passes);
     }
     case 'program':
-      return world.uploadedStarter === check.starter;
+      return boardWorld(world, check.unit).uploadedStarter === check.starter;
     case 'running':
       return world.running;
     case 'no-errors':
@@ -128,7 +136,7 @@ export function evaluate(check: Check, world: LessonWorld): boolean {
       return check.every ? parts.length > 0 && parts.every(passes) : parts.some(passes);
     }
     case 'serial':
-      return new RegExp(check.matches, 'u').test(world.serial);
+      return new RegExp(check.matches, 'u').test(boardWorld(world, check.unit).serial);
     case 'diagnostic':
       return result?.diagnostics.some((d) => d.code === check.code) ?? false;
   }

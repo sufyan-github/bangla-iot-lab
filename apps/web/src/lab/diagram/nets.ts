@@ -129,6 +129,7 @@ export const BOX_TYPES = new Set([
   'oled',
   'ledring',
   'tft',
+  'lora',
   'relaymodule',
   'logic',
   'relay',

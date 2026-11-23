@@ -54,6 +54,8 @@ import esp32RingSource from '@banglalab/board-emulators/fixtures/esp32-starters/
 import esp32TftSource from '@banglalab/board-emulators/fixtures/esp32-starters/tft.ino?raw';
 import esp32SenderSource from '@banglalab/board-emulators/fixtures/esp32-starters/sender.ino?raw';
 import esp32ReceiverSource from '@banglalab/board-emulators/fixtures/esp32-starters/receiver.ino?raw';
+import esp32LoraSendSource from '@banglalab/board-emulators/fixtures/esp32-starters/lora-send.ino?raw';
+import esp32LoraReceiveSource from '@banglalab/board-emulators/fixtures/esp32-starters/lora-receive.ino?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -121,6 +123,8 @@ export const ESP32_STARTERS = {
   tft: { source: esp32TftSource },
   sender: { source: esp32SenderSource },
   receiver: { source: esp32ReceiverSource },
+  'lora-send': { source: esp32LoraSendSource },
+  'lora-receive': { source: esp32LoraReceiveSource },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

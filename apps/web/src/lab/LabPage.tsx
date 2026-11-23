@@ -133,9 +133,15 @@ function useLessonChecks() {
       const { lesson, progress, report } = useLessonState.getState();
       if (!lesson || !progress) return;
       const lab = useLab.getState();
-      const boardId = lab.circuit.components.find(isProgrammable)?.id;
-      const program = boardId ? lab.programs[boardId] : undefined;
-      const uploaded = program?.hex && program.hexSource ? program.hexSource : null;
+      // Each board, in order: what it printed, and the ready-made program put on it, if any.
+      const boards = lab.circuit.components.filter(isProgrammable).map((board) => {
+        const program = lab.programs[board.id];
+        const uploaded = program?.hex && program.hexSource ? program.hexSource : null;
+        return {
+          serial: lab.serial[board.id] ?? '',
+          uploadedStarter: uploaded ? (matchingStarter(uploaded, 'esp32') ?? null) : null,
+        };
+      });
       report(
         checkStep(
           lesson.steps[progress.step]!,
@@ -143,8 +149,9 @@ function useLessonChecks() {
             circuit: lab.circuit,
             result: lab.result,
             running: lab.running,
-            serial: boardId ? (lab.serial[boardId] ?? '') : '',
-            uploadedStarter: uploaded ? (matchingStarter(uploaded, 'esp32') ?? null) : null,
+            serial: boards[0]?.serial ?? '',
+            uploadedStarter: boards[0]?.uploadedStarter ?? null,
+            boards,
           },
           progress.seen,
         ),

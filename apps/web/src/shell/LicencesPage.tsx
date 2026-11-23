@@ -141,6 +141,14 @@ const NOTICES = [
     source: 'https://github.com/adafruit/Adafruit-ST7735-Library',
   },
   {
+    id: 'lora',
+    name: 'LoRa (Sandeep Mistry)',
+    licence: 'MIT',
+    text: 'Copyright 2016 Sandeep Mistry. The library for the Ra-02 LoRa radio, built unmodified into ESP32 programs that use it.',
+    file: 'lora.txt',
+    source: 'https://github.com/sandeepmistry/arduino-LoRa',
+  },
+  {
     id: 'esp32-firmware',
     name: 'ESP32 firmware built for the chip emulator (experimental)',
     licence: 'LGPL-2.1-or-later',

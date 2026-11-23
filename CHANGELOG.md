@@ -8,6 +8,14 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **LoRa radio Ra-02** (circuit format version 22): two ESP32 boards, each with
+  a radio on its SPI bus, send and receive short messages through the LoRa
+  library 0.8.0 (MIT), built unmodified. Each radio's place along a road sets
+  how far apart they are; the signal (RSSI) weakens with distance, and packets
+  stop beyond the receiver's sensitivity. 5 V on the radio is shown as damage.
+- Lessons can use two boards; the new lesson **LoRa radio** is checked step by
+  step by the lab. Ready-made programs `lora-send` and `lora-receive`, and
+  hardware test E25.
 - **Two boards in one circuit**: two programmable boards, of either kind or one
   of each. Each runs its own program, with its own tab in the code view and its
   own serial monitor. Two ESP32 boards can talk over a serial wire (TX of one

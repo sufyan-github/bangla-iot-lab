@@ -345,14 +345,34 @@ export class SimulationSession {
       write: (port, bytes) => this.peripherals.uartWrite(boardId, port, bytes),
       receive: (port) => this.peripherals.uartReceive(boardId, port),
     });
-    emulator.onSpi?.((transfer) =>
-      this.peripherals.spi(boardId, transfer, (pin) => emulator.pinDrive(pin) === 'high'),
-    );
+    emulator.onSpi?.((transfer) => {
+      const reply = this.peripherals.spi(
+        boardId,
+        transfer,
+        (pin) => emulator.pinDrive(pin) === 'high',
+      );
+      // A radio may have decided when its DIO0 line next changes.
+      this.takeRadioInputs((timeMs) => emulator.stopAt?.(timeMs - board.startedAt), boardId);
+      return reply;
+    });
     emulator.onLedStrip?.((frame) => this.peripherals.ledStrip(boardId, frame));
     this.boards.get(boardId)?.emulator.dispose?.();
     this.boards.set(boardId, board);
     this.stepping = null;
     this.feedInputs();
+  }
+
+  /**
+   * Moves the DIO0 changes the radios have decided into the inputs to deliver.
+   * The board whose program is running now is stopped at the first of its own.
+   */
+  private takeRadioInputs(stopAt?: (timeMs: number) => void, boardId?: string): void {
+    const inputs = this.peripherals.takeInputs();
+    if (inputs.length === 0) return;
+    this.scheduled.push(...inputs);
+    this.scheduled.sort((a, b) => a.timeMs - b.timeMs);
+    const own = inputs.filter((input) => input.boardId === boardId);
+    if (stopAt && own.length) stopAt(Math.min(...own.map((input) => input.timeMs)));
   }
 
   private state(): CircuitState {
@@ -686,6 +706,9 @@ export class SimulationSession {
     const slice = this.peripherals.needsFineTiming ? FINE_SLICE_MS : SLICE_MS;
     while (this.time < end - 1e-9) {
       const sliceEnd = Math.min(end, this.time + slice);
+      // Radios finish sending and receiving on time, whether or not a program is asking.
+      this.peripherals.advanceRadios(this.time);
+      this.takeRadioInputs();
       /** Everything that changes the circuit during this slice, to be replayed in order. */
       const changes: { timeMs: number; apply(): void }[] = [];
       for (const [boardId, board] of this.boards) {

@@ -97,6 +97,7 @@ import {
   OLED_SUPPLY_RESISTANCE,
   LED_RING_OHMS_PER_LED,
   TFT_SUPPLY_RESISTANCE,
+  LORA_SUPPLY_RESISTANCE,
   RELAY_COIL_RESISTANCE,
   RELAY_MODULE_COIL_RESISTANCE,
   RELAY_MODULE_IDLE_RESISTANCE,
@@ -649,6 +650,20 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
               node(component.pins.vcc),
               node(component.pins.gnd),
               LED_RING_OHMS_PER_LED / component.props.leds,
+            ),
+          ),
+        );
+        break;
+      case 'lora':
+        // A supply load. What travels on the bus is handed to the radio by the session.
+        partDevice.set(
+          id,
+          add(
+            resistor(
+              id,
+              node(component.pins.vcc),
+              node(component.pins.gnd),
+              LORA_SUPPLY_RESISTANCE,
             ),
           ),
         );

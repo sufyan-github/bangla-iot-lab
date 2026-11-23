@@ -253,6 +253,16 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       ))}
     </>
   ),
+  lora: (
+    <>
+      <rect x="5" y="9" width="11" height="11" rx="1.5" {...stroke} />
+      <path
+        d="M16 9l2-5M14 6a5 5 0 0 1 7 0M12.5 3.5a8 8 0 0 1 10 0"
+        {...stroke}
+        strokeWidth={1.4}
+      />
+    </>
+  ),
   tft: (
     <>
       <rect x="3.5" y="2.5" width="17" height="17" rx="2" {...stroke} />
@@ -425,7 +435,7 @@ const GROUPS: PaletteItem[][] = [
   ['cell', 'tp4056', 'lm2596', 'solar'],
   ['bme280', 'ina219', 'ds18b20', 'jsnsr04t', 'linesensor', 'siren'],
   ['gps', 'pms5003', 'bluetooth', 'mp3', 'gsm'],
-  ['ledring', 'tft'],
+  ['ledring', 'tft', 'lora'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

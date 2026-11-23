@@ -94,6 +94,8 @@ test('the code tab says the ESP32 is experimental and offers only ESP32 programs
     'tft',
     'sender',
     'receiver',
+    'lora-send',
+    'lora-receive',
     'custom',
   ]);
 });

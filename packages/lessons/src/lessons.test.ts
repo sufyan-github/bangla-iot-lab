@@ -104,6 +104,9 @@ type Action =
   | { restart: true; afterMs?: number };
 
 const esp32: CircuitComponent = { id: 'ESP1', type: 'esp32', props: {} };
+/** A Ra-02's legs, and the ESP32 pins the LoRa lesson joins them to, in the same order. */
+const LORA_LEGS = ['gnd', 'vcc', 'rst', 'dio0', 'nss', 'mosi', 'miso', 'sck'] as const;
+const LORA_PINS = ['gnd1', '3v3', 'd14', 'd2', 'd5', 'd23', 'd19', 'd18'] as const;
 const part = (
   id: string,
   type: string,
@@ -1065,6 +1068,27 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       5: [{ set: 'POT1', props: { position: 0.5 } }],
     },
   },
+  'lora-radio': {
+    components: [
+      esp32,
+      { id: 'ESP2', type: 'esp32', props: {} },
+      part('LORA1', 'lora', Object.fromEntries(LORA_LEGS.map((leg, i) => [leg, `BB1.c${1 + i}`])), {
+        km: 0,
+      }),
+      part(
+        'LORA2',
+        'lora',
+        Object.fromEntries(LORA_LEGS.map((leg, i) => [leg, `BB1.c${11 + i}`])),
+        { km: 0.5 },
+      ),
+    ],
+    wires: [
+      ...LORA_PINS.map((pin, i): [string, string] => [`ESP1.${pin}`, `BB1.a${1 + i}`]),
+      ...LORA_PINS.map((pin, i): [string, string] => [`ESP2.${pin}`, `BB1.a${11 + i}`]),
+    ],
+    // The second radio moved 3 km along the road.
+    actions: { 6: [{ set: 'LORA2', props: { km: 3 } }] },
+  },
   'colour-display': {
     components: [
       esp32,
@@ -1128,12 +1152,19 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
   let pressed: string[] = [];
   let session: SimulationSession | null = null;
   let uploadedStarter: string | null = null;
+  /** The second board's program and what it printed, in a lesson with two boards. */
+  let uploadedStarter2: string | null = null;
   let serial = '';
+  let serial2 = '';
   let result: LessonWorld['result'] = null;
   const running = () => session !== null;
+  const load = (target: SimulationSession) => {
+    if (uploadedStarter) target.loadFirmware('ESP1', starter(uploadedStarter));
+    if (uploadedStarter2) target.loadFirmware('ESP2', starter(uploadedStarter2));
+  };
   const start = () => {
     session = new SimulationSession(circuit, pressed);
-    if (uploadedStarter) session.loadFirmware('ESP1', starter(uploadedStarter));
+    load(session);
   };
   const world = (): LessonWorld => ({
     circuit,
@@ -1141,11 +1172,18 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
     running: running(),
     serial,
     uploadedStarter,
+    boards: [
+      { serial, uploadedStarter },
+      { serial: serial2, uploadedStarter: uploadedStarter2 },
+    ],
   });
   const timeline: string[] = [];
 
   lesson.steps.forEach((step, index) => {
-    if (step.program) {
+    if (step.program === 2) {
+      uploadedStarter2 = lesson.program2!;
+      if (session) session.loadFirmware('ESP2', starter(uploadedStarter2));
+    } else if (step.program) {
       uploadedStarter = lesson.program!;
       if (session) session.loadFirmware('ESP1', starter(uploadedStarter));
     }
@@ -1190,6 +1228,7 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
         const frame = (session as SimulationSession).frame();
         result = frame.result;
         serial += frame.boards.ESP1?.serial ?? '';
+        serial2 += frame.boards.ESP2?.serial ?? '';
       }
       const status = checkStep(step, world(), seen);
       seen = status.seen;
