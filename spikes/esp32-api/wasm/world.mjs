@@ -189,6 +189,12 @@ export function runModule(bytes, { runMs = 5000, script = [] } = {}, circuit = n
     // No I2C device is on this world's bus.
     host_i2c_transfer: () => 2,
     host_onewire: (pin, op) => (op === 2 ? 1 : 0),
+    // No SPI devices or LED strips on this world's desk: transfers read back zeros.
+    host_spi_transfer: (_sck, _mosi, _miso, _out, inPointer, length) => {
+      if (inPointer)
+        new Uint8Array(instance.exports.memory.buffer, inPointer, length >>> 0).fill(0);
+    },
+    host_led_strip: () => {},
     host_uart_begin: () => {},
     host_uart_write: () => {},
     host_uart_available: () => 0,

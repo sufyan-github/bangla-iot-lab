@@ -342,6 +342,10 @@ export class SimulationSession {
       write: (port, bytes) => this.peripherals.uartWrite(boardId, port, bytes),
       receive: (port) => this.peripherals.uartReceive(boardId, port),
     });
+    emulator.onSpi?.((transfer) =>
+      this.peripherals.spi(boardId, transfer, (pin) => emulator.pinDrive(pin) === 'high'),
+    );
+    emulator.onLedStrip?.((frame) => this.peripherals.ledStrip(boardId, frame));
     this.boards.get(boardId)?.emulator.dispose?.();
     this.boards.set(boardId, board);
     this.stepping = null;

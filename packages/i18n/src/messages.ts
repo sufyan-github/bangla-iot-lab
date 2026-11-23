@@ -301,6 +301,8 @@ export const bn = {
   'code.starter.esp32.bluetooth': 'ব্লুটুথে বাতি (HC-05: RX2, TX2; LED: D2)',
   'code.starter.esp32.mp3': 'MP3 প্লেয়ার (DFPlayer: RX2, TX2; বোতাম: D4)',
   'code.starter.esp32.sms': 'SMS দিয়ে বাতি (SIM800L: RX2, TX2; LED: D2)',
+  'code.starter.esp32.ring': 'LED রিংয়ে মিটার (রিং: D4; নব: D34)',
+  'code.starter.esp32.tft': 'রঙিন ডিসপ্লে (SPI: D18, D23; CS: D5, DC: D2, RES: D4)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -448,6 +450,20 @@ export const bn = {
   'inspector.phone.send': 'পাঠাও',
   'diag.gsm-overvoltage':
     '{id} পাচ্ছে {volts}, কিন্তু এটা সর্বোচ্চ {limit}-এর জন্য বানানো। আসল মডিউল নষ্ট হতে পারে: একটা 18650 সেল বা ৪ V-এ সেট করা রেগুলেটর দাও।',
+  'tool.ledring': 'LED রিং',
+  'part.ledring': 'WS2812B RGB LED রিং',
+  'part.ledring.about':
+    'গোল করে বসানো রঙিন LED; প্রতিটা LED যেকোনো রঙে জ্বলতে পারে, আর সবগুলো চলে এক তারে। বোর্ড DIN-এ প্রতিটা LED-এর জন্য তিনটা বাইট পাঠায় (সবুজ, লাল, নীল): প্রথম LED প্রথম তিনটা রাখে, বাকিটা পরেরটাকে দেয়। DOUT থেকে আরেকটা রিংয়ের DIN-এ জোড়া যায়। VCC-তে ৫ V দাও (VIN), ৩.৩ V-এ জ্বলে না। প্রোগ্রামে Adafruit_NeoPixel লাইব্রেরি ব্যবহার করো; রং বদলে ring.show() না ডাকলে কিছুই বদলায় না। পুরো সাদা আলোয় একটা LED প্রায় ৬০ mA নেয়: অনেক LED একসাথে জ্বালালে আলাদা ৫ V লাগে। পা: VCC, GND, DIN, DOUT। এখন শুধু ESP32 বোর্ডে চলে।',
+  'inspector.leds': 'রিংয়ে কয়টা LED',
+  'inspector.ring.current': 'জ্বলন্ত LED-গুলো আনুমানিক {ma} নিচ্ছে',
+  'tool.tft': 'রঙিন ডিসপ্লে',
+  'part.tft': 'রঙিন ডিসপ্লে (১.৫৪ ইঞ্চি, ST7789)',
+  'part.tft.about':
+    '২৪০ × ২৪০ বিন্দুর রঙিন ডিসপ্লে; লেখা, ছবি আর রং দেখায়। এটা SPI নামের দ্রুত পথে চলে: SCL-এ ঘড়ির টিক, SDA-তে তথ্য। DC বলে কোনটা কমান্ড আর কোনটা ছবির বিন্দু, CS LOW হলে ডিসপ্লে শোনে, RES LOW হলে নতুন করে শুরু হয়। ESP32 বোর্ডে VCC দাও 3V3-তে, GND দাও GND-তে, SCL দাও D18-এ, SDA দাও D23-এ; RES, DC আর CS যেকোনো পিনে, প্রোগ্রামে সেই পিন লেখো। BLK খোলা রাখলে পেছনের আলো জ্বলে থাকে। প্রোগ্রামে Adafruit_ST7789 লাইব্রেরি ব্যবহার করো, tft.init(240, 240) দিয়ে শুরু করো। এই লাইব্রেরির অক্ষরে ইংরেজি আর সংখ্যা দেখানো যায়, বাংলা নয়। পা: GND, VCC, SCL, SDA, RES, DC, CS, BLK। এখন শুধু ESP32 বোর্ডে চলে।',
+  'inspector.tft.dark': 'ডিসপ্লে এখন অন্ধকার।',
+  'inspector.tft.picture': 'রঙিন ডিসপ্লেতে এখন যা দেখা যাচ্ছে',
+  'diag.ring-overvoltage':
+    '{id} পাচ্ছে {volts}, কিন্তু WS2812B সর্বোচ্চ {limit} নিতে পারে। আসল LED নষ্ট হতে পারে: ৫ V দাও।',
   'tool.logic': 'লজিক চিপ',
   'part.logic': 'লজিক চিপ (74HC)',
   'part.logic.about':
@@ -983,6 +999,8 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.bluetooth': 'Light over Bluetooth (HC-05: RX2, TX2; LED: D2)',
   'code.starter.esp32.mp3': 'MP3 player (DFPlayer: RX2, TX2; button: D4)',
   'code.starter.esp32.sms': 'Light by SMS (SIM800L: RX2, TX2; LED: D2)',
+  'code.starter.esp32.ring': 'Meter on an LED ring (ring: D4; knob: D34)',
+  'code.starter.esp32.tft': 'Colour display (SPI: D18, D23; CS: D5, DC: D2, RES: D4)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -1130,6 +1148,20 @@ export const en: Record<MessageKey, string> = {
   'inspector.phone.send': 'Send',
   'diag.gsm-overvoltage':
     '{id} is getting {volts}, but it is made for at most {limit}. A real module could be damaged: use an 18650 cell or a regulator set to 4 V.',
+  'tool.ledring': 'LED ring',
+  'part.ledring': 'WS2812B RGB LED ring',
+  'part.ledring.about':
+    'Colour LEDs set in a circle; each can light in any colour, and all of them work on one wire. The board sends three bytes on DIN for each LED (green, red, blue): the first LED keeps the first three and hands the rest on. DOUT can feed another ring’s DIN. Give VCC 5 V (VIN); it does not light on 3.3 V. Use the Adafruit_NeoPixel library in your program; nothing changes until you call ring.show(). At full white one LED draws about 60 mA: many LEDs lit at once need a 5 V supply of their own. Legs: VCC, GND, DIN, DOUT. For now it works with the ESP32 board only.',
+  'inspector.leds': 'LEDs on the ring',
+  'inspector.ring.current': 'The lit LEDs draw about {ma} (estimate)',
+  'tool.tft': 'Colour display',
+  'part.tft': 'Colour display (1.54 inch, ST7789)',
+  'part.tft.about':
+    'A colour display of 240 × 240 dots, for text, pictures and colour. It works over SPI, a fast path: SCL carries the clock ticks and SDA the data. DC says whether a byte is a command or picture dots, the display listens while CS is LOW, and RES LOW starts it afresh. On an ESP32 board connect VCC to 3V3, GND to GND, SCL to D18 and SDA to D23; RES, DC and CS can go to any pins, named in your program. With BLK left open the backlight stays on. Use the Adafruit_ST7789 library in your program and start it with tft.init(240, 240). The library’s letters cover English and digits, not Bangla. Legs: GND, VCC, SCL, SDA, RES, DC, CS, BLK. For now it works with the ESP32 board only.',
+  'inspector.tft.dark': 'The display is dark.',
+  'inspector.tft.picture': 'What the colour display is showing now',
+  'diag.ring-overvoltage':
+    '{id} is getting {volts}, but a WS2812B takes at most {limit}. Real LEDs could be damaged: give it 5 V.',
   'tool.logic': 'Logic chip',
   'part.logic': 'Logic chip (74HC)',
   'part.logic.about':

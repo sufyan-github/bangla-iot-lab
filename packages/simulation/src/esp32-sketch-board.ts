@@ -1,6 +1,8 @@
 import type {
   I2cHandler,
+  LedStripHandler,
   OneWireHandler,
+  SpiHandler,
   UartHandler,
   PinDrive,
   PinListener,
@@ -118,6 +120,8 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   private i2c: I2cHandler | null = null;
   private oneWire: OneWireHandler | null = null;
   private uart: UartHandler | null = null;
+  private spi: SpiHandler | null = null;
+  private ledStrip: LedStripHandler | null = null;
   /** Each UART the program has begun, and the bytes that have arrived and wait to be read. */
   private readonly uarts = new Map<
     number,
@@ -217,6 +221,28 @@ export class Esp32SketchBoard implements ProgrammableBoard {
           { port, baud: uart.baud, rx: uart.rx, tx: uart.tx, timeMs: this.now / 1000 },
           bytes,
         );
+      },
+      host_spi_transfer: (
+        sck: number,
+        mosi: number,
+        miso: number,
+        outPointer: number,
+        inPointer: number,
+        length: number,
+      ) => {
+        const memory = () => new Uint8Array(this.exports.memory.buffer);
+        const bytes = memory().slice(outPointer, outPointer + (length >>> 0));
+        const back = this.spi?.({ sck, mosi, miso, bytes, timeMs: this.now / 1000 });
+        if (!inPointer) return;
+        // Nothing answering leaves the data-in line where it rests.
+        const reply = new Uint8Array(length >>> 0);
+        if (back) reply.set(back.subarray(0, reply.length));
+        memory().set(reply, inPointer);
+      },
+      host_led_strip: (pin: number, pointer: number, length: number, khz: number) => {
+        if (!valid(pin) || !this.ledStrip) return;
+        const bytes = new Uint8Array(this.exports.memory.buffer, pointer, length >>> 0).slice();
+        this.ledStrip({ pin, bytes, khz, timeMs: this.now / 1000 });
       },
       host_uart_available: (port: number) => this.uartBuffer(port).length,
       host_uart_read: (port: number) => {
@@ -321,6 +347,14 @@ export class Esp32SketchBoard implements ProgrammableBoard {
 
   onUart(handler: UartHandler): void {
     this.uart = handler;
+  }
+
+  onSpi(handler: SpiHandler): void {
+    this.spi = handler;
+  }
+
+  onLedStrip(handler: LedStripHandler): void {
+    this.ledStrip = handler;
   }
 
   /**

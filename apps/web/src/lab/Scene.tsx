@@ -39,6 +39,8 @@ import {
   BluetoothView,
   Mp3View,
   GsmView,
+  LedRingView,
+  TftView,
   PmsView,
   LineSensorView,
   SirenView,
@@ -78,6 +80,7 @@ import {
 } from './parts';
 import { Esp32BoardView } from './esp32/Esp32BoardView';
 import { oledImage } from './oled-image';
+import { tftImage } from './tft-image';
 import { ShadingDefs } from './shading';
 
 const rowY = (row: string) => BOARD_Y + holeCoordinates(`${row}1`).y * PITCH;
@@ -623,6 +626,28 @@ export function BoardPartDrawing(props: {
         />
       );
     }
+    case 'ledring':
+      return (
+        <LedRingView
+          first={at(part.pins.vcc)}
+          last={at(part.pins.dout)}
+          colours={reading?.ring?.colours ?? []}
+          leds={part.props.leds}
+          selected={selected}
+        />
+      );
+    case 'tft': {
+      const shown = reading?.tft;
+      return (
+        <TftView
+          first={at(part.pins.gnd)}
+          last={at(part.pins.blk)}
+          image={shown?.pixels ? tftImage(shown.pixels).url : undefined}
+          lit={!!shown?.lit}
+          selected={selected}
+        />
+      );
+    }
     case 'pir':
       return (
         <PirView
@@ -826,6 +851,12 @@ export function Scene({
                 ? oledImage(reading.oled.pixels, reading.oled.brightness).litPixels
                 : 'dark')
             }
+            data-tft={
+              reading?.tft && (reading.tft.pixels ? tftImage(reading.tft.pixels).litPixels : 'dark')
+            }
+            data-ring={reading?.ring?.colours
+              .map((colour) => colour.toString(16).padStart(6, '0'))
+              .join(',')}
             data-colours={
               reading?.rgb &&
               (['r', 'g', 'b'] as const).filter((c) => reading.rgb![c] > 0.05).join('')

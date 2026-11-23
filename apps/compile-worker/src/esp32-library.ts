@@ -27,6 +27,8 @@ const LIBRARY_SOURCES = [
   'src/tinygps.cpp',
   'src/dfplayer.cpp',
   'src/serial-ports.cpp',
+  'src/spi.cpp',
+  'src/neopixel.cpp',
   'wasm/entry.cpp',
 ];
 
@@ -40,12 +42,19 @@ const THIRD_PARTY = fileURLToPath(new URL('../../../third_party/', import.meta.u
 export const ESP32_EXTRA_LIBRARIES = [
   // Adafruit's DHT sensor library 1.4.7 (MIT): DHT11 and DHT22.
   { dir: path.join(THIRD_PARTY, 'adafruit-dht'), sources: ['DHT.cpp'], headers: ['DHT.h'] },
-  // Adafruit's GFX graphics library 1.13.0 (BSD): drawing and text for displays.
+  // Adafruit's GFX graphics library 1.13.0 (BSD): drawing and text for displays, and
+  // SPITFT, the part colour displays on an SPI bus share.
   // Its extra fonts are not included: some come from GPL font files.
   {
     dir: path.join(THIRD_PARTY, 'adafruit-gfx'),
-    sources: ['Adafruit_GFX.cpp'],
-    headers: ['Adafruit_GFX.h', 'gfxfont.h', 'glcdfont.c'],
+    sources: ['Adafruit_GFX.cpp', 'Adafruit_SPITFT.cpp'],
+    headers: [
+      'Adafruit_GFX.h',
+      'gfxfont.h',
+      'glcdfont.c',
+      'Adafruit_SPITFT.h',
+      'Adafruit_SPITFT_Macros.h',
+    ],
   },
   // Adafruit's SSD1306 library 2.5.17 (BSD): the kit's OLED display.
   {
@@ -90,6 +99,12 @@ export const ESP32_EXTRA_LIBRARIES = [
   },
   // The PMS library 1.1.0 (MIT): Plantower particle sensors, the PMS5003 among them.
   { dir: path.join(THIRD_PARTY, 'pms'), sources: ['PMS.cpp'], headers: ['PMS.h'] },
+  // Adafruit's ST7735 and ST7789 library 1.12.0 (MIT): the colour display, on GFX's SPITFT.
+  {
+    dir: path.join(THIRD_PARTY, 'adafruit-st7735'),
+    sources: ['Adafruit_ST77xx.cpp', 'Adafruit_ST7789.cpp'],
+    headers: ['Adafruit_ST77xx.h', 'Adafruit_ST7789.h'],
+  },
   // Adafruit's INA219 library 1.2.3 (BSD): current and voltage monitor.
   {
     dir: path.join(THIRD_PARTY, 'adafruit-ina219'),

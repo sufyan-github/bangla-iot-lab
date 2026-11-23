@@ -1,30 +1,62 @@
 {
   "formatVersion": 1,
   "id": "ws2812b-ring",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "ledring",
+  "status": "simulated",
   "family": "output",
   "tier": 2,
   "name": {
-    "bn": "WS2812B RGB LED ring",
+    "bn": "WS2812B RGB LED রিং",
     "en": "WS2812B RGB LED ring"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "এক তারে চলা রঙিন LED-এর রিং: প্রতিটি LED নিজের রং নেয়, বাকিটা পরের LED-এ পাঠায়।",
+    "en": "A ring of colour LEDs on one data wire: each LED takes its own colour and passes the rest on to the next."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "It works with the ESP32 board and the lab's own model of that board only, through the lab's own version of the NeoPixel library. The UNO-compatible board and the chip emulator cannot drive it yet.",
+      "The colours travel as whole bytes from the program to the ring; the pulses on the data wire are not produced, so the oscilloscope and logic analyser show the line resting LOW.",
+      "Each LED takes three bytes in the order green, red, blue, as the WS2812B does. A program set up for another order shows other colours, as on a real ring.",
+      "It lights from 3.5 V, the lowest supply in the WS2812B's datasheet. Below that the lab shows it dark; real rings often still light dimly, with wrong colours.",
+      "A 3.3 V data signal from the ESP32 is accepted. The datasheet asks for at least 0.7 times the supply (3.5 V on a 5 V supply); many rings work anyway, some flicker. This is not modelled.",
+      "The current it draws in the circuit is fixed. The current the lit LEDs would draw is worked out separately and shown as an estimate: up to about 60 mA for one LED at full white, as Adafruit's guide gives.",
+      "Its legs are in the order VCC, GND, DIN, DOUT. Rings differ: read the labels on yours."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E22"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "din",
+      "label": "DIN",
+      "role": "input"
+    },
+    {
+      "id": "dout",
+      "label": "DOUT",
+      "role": "output"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["ws2812b"]
+  },
+  "placement": {
+    "idPrefix": "RING",
+    "offsets": [0, 1, 2, 3]
   }
 }

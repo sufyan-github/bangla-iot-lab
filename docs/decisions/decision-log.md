@@ -1103,3 +1103,68 @@ start of its SMS. The lab now treats that line feed as part of the command
 line.
 
 Hardware tests E19 to E21 are written; none is run.
+
+## D-068 — Colour on the ESP32: a WS2812B ring and an ST7789 display over SPI
+
+Stage 6 adds two parts that show colour, and the two ways of reaching them that
+the board library lacked: an LED data line and the SPI bus.
+
+**The board library gains an SPI bus.** `SPIClass` hands whole exchanges to the
+world (`host_spi_transfer`): the bytes going out and the bytes coming back. The
+devices that take part are chosen there from the levels of their chip-select
+pins at that moment, as on the wires. The library charges the time the bytes
+take at the bus's frequency. The bus's own pins are the core's (VSPI: SCK 18,
+MISO 19, MOSI 23, SS 5), checked against the vendored core's variant file.
+Not modelled: the data mode, the chip's own hardware chip-select, and software
+SPI (pins moved by hand), which would cost millions of pin changes for one
+picture.
+
+**An LED data line.** `host_led_strip` carries the colour bytes a program sends
+down a WS2812 data line, at 800 or 400 kbit/s; the library charges their time,
+and waits the 300 µs reset gap before the next frame. The core's own
+`rgbLedWrite` uses it too.
+
+**The NeoPixel library is the lab's own.** Adafruit's NeoPixel library is under
+the LGPL (VERIFIED: GitHub reports LGPL-3.0 for the repository), and the client
+takes no LGPL code. The board library has its own `Adafruit_NeoPixel`, written
+from the public documentation of its programming interface, with the same
+class, functions and NEO_ constants (whose values are the lab's own). Two
+differences a program may notice are listed in its header: colours are kept as
+set and scaled only when sent, and `ColorHSV`, `gamma8` and `sine8` are worked
+out from their documented meaning rather than copied tables.
+
+**The display library is Adafruit's own.** Adafruit's ST7735 and ST7789 library
+1.12.0 is MIT (VERIFIED: stated in each source file; the repository has no
+separate licence file), and it builds on `Adafruit_SPITFT` from the GFX library
+the lab already ships (BSD). Both are copied unmodified into `third_party`, so a
+student's sketch runs the same drawing code as on a board.
+
+**The WS2812B ring.** Each LED keeps the first three bytes it receives, in the
+order green, red, blue, and passes the rest on; what is left leaves by DOUT for
+the next ring, so rings chain. From WorldSemi's datasheet (REPORTED): a supply
+of 3.5 V to 5.3 V, so the lab shows it dark on 3.3 V and as damage above 5.3 V.
+Its 3.3 V data input on a 5 V supply is below the datasheet's 0.7 × VDD but is
+accepted, as it usually is in practice; the part says so. The current the lit
+LEDs draw is shown as an ESTIMATE from Adafruit's guide (about 20 mA a colour at
+full, 60 mA for white), but the circuit sees a fixed load of about 1 mA an LED
+(ESTIMATE): a load that changed with every frame would need a fresh solution of
+the circuit each time. Rings of 8, 12, 16 and 24 LEDs, the sizes sold.
+
+**The ST7789 display.** The 1.54-inch 240 × 240 module in its eight-pin form
+(GND, VCC, SCL, SDA, RES, DC, CS, BLK). The chip's commands for drawing are
+modelled from Sitronix's ST7789V datasheet: reset, sleep, display on and off,
+inversion, the drawing window, memory write and continue, the memory access
+setting (MX, MY, MV, BGR) and 16- and 18-bit colour. The memory is 240 × 320 and
+the panel shows the first 240 rows; the way up the picture appears is chosen so
+that rotation 0 of Adafruit's library is upright, which also makes its other
+rotations and offsets land correctly. Like the real IPS panels (REPORTED), it
+shows colours inverted until the program turns inversion on. A CS or RES leg
+left unconnected is taken as HIGH, BLK left unconnected leaves the backlight on,
+and a leg tied to the board's GND is LOW. The picture travels to the page as RGB
+565, only when it has changed. ESTIMATE: about 30 mA, mostly the backlight.
+
+**Not done.** The UNO-compatible board and the chip emulator cannot drive either
+part yet: for the UNO that would mean decoding WS2812 timing and SPI from the
+emulated chip's pins.
+
+Hardware tests E22 and E23 are written; none is run.

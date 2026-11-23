@@ -8,6 +8,8 @@ import { Hd44780 } from './hd44780';
 import type {
   I2cResult,
   I2cTransfer,
+  LedStripFrame,
+  SpiTransfer,
   OneWireStep,
   PinDrive,
   UartPort,
@@ -31,6 +33,8 @@ import { Ds18b20 } from './onewire-sensors';
 import { Neo6m, Pms5003, garbled, type UartDevice, type UartModuleStatus } from './uart-devices';
 import { Hc05, Mp3Player, Sim800l } from './uart-modules';
 import { Ssd1306 } from './ssd1306';
+import { LedRing } from './led-ring';
+import { St7789 } from './st7789';
 
 /** Turns bytes into base64 text, in a browser, a worker or Node. */
 function base64(bytes: Uint8Array): string {
@@ -66,6 +70,10 @@ interface PinFinder {
    * sensor's 5 V output brought down to a 3.3 V pin by a voltage divider.
    */
   throughResistor(endpoint: string): PinKey | undefined;
+  /** The net an endpoint is on, the same for every endpoint joined to it. */
+  net(endpoint: string): string;
+  /** True when an endpoint is wired to a board's GND. */
+  grounded(endpoint: string): boolean;
 }
 
 function boardPinFinder(document: CircuitDocument): PinFinder {
@@ -89,9 +97,18 @@ function boardPinFinder(document: CircuitDocument): PinFinder {
         pinOfNet.set(find(netName(`${component.id}.${terminal}`)), pinKey(component.id, pin));
     }
   }
+  const groundNets = new Set<string>();
+  for (const component of document.components) {
+    if (!isProgrammable(component)) continue;
+    for (const terminal of boardTerminals(component.type)) {
+      if (terminal.startsWith('gnd')) groundNets.add(find(netName(`${component.id}.${terminal}`)));
+    }
+  }
   const direct = (endpoint: string) => pinOfNet.get(find(netName(endpoint)));
   return {
     direct,
+    net: (endpoint) => find(netName(endpoint)),
+    grounded: (endpoint) => groundNets.has(find(netName(endpoint))),
     throughResistor(endpoint) {
       const wired = direct(endpoint);
       if (wired) return wired;
@@ -133,6 +150,29 @@ export class Peripherals {
   private lineUp: (id: string) => boolean = () => false;
   /** What each current monitor sees in the circuit now. */
   private measured: (id: string) => Ina219Inputs = () => ({ shunt: 0, bus: 0 });
+  /** LED rings: the board pin their DIN hears, and the rings their DOUT feeds. */
+  private rings: { id: string; din?: PinKey; next: string[] }[] = [];
+  private readonly ledRings = new Map<string, LedRing>();
+  /**
+   * Colour displays on an SPI bus: the board pins their clock and data legs are
+   * on, and what their other legs are wired to. A leg on a board pin is read
+   * from that pin; otherwise it is `true` when held HIGH or left unconnected,
+   * and `false` when tied to GND.
+   */
+  private tfts: {
+    id: string;
+    scl?: PinKey;
+    sda?: PinKey;
+    res: PinKey | boolean;
+    dc: PinKey | boolean;
+    cs: PinKey | boolean;
+    blk: PinKey | boolean;
+  }[] = [];
+  private readonly tftChips = new Map<string, St7789>();
+  /** Each display's picture as text, with the version of the picture it was made from. */
+  private readonly tftPictures = new Map<string, { version: number; pixels: string }>();
+  /** What each board pin last drove, for pins a display's legs are on, and when it was last HIGH. */
+  private readonly lastDrive = new Map<PinKey, { drive: PinDrive; highAt: number }>();
   private readonly panels = new Map<string, Ssd1306>();
   /** Each panel's picture as text, with the version of the picture it was made from. */
   private readonly pictures = new Map<string, { version: number; pixels: string }>();
@@ -165,6 +205,8 @@ export class Peripherals {
     this.i2cSensors = [];
     this.oneWires = [];
     this.serialModules = [];
+    this.rings = [];
+    this.tfts = [];
     this.sensorInputs.clear();
     for (const component of document.components) {
       if (component.type === 'servo') {
@@ -246,6 +288,33 @@ export class Peripherals {
           rx: pinOf.direct(component.pins.rx),
           tx: pinOf.direct(component.pins.tx),
         });
+      } else if (component.type === 'ledring') {
+        const ring = this.ledRings.get(component.id);
+        if (ring) ring.setLeds(component.props.leds);
+        else this.ledRings.set(component.id, new LedRing(component.props.leds));
+        const out = pinOf.net(component.pins.dout);
+        this.rings.push({
+          id: component.id,
+          din: pinOf.direct(component.pins.din),
+          next: document.components
+            .filter((other) => other.type === 'ledring' && other.id !== component.id)
+            .filter((other) => pinOf.net((other as { pins: { din: string } }).pins.din) === out)
+            .map((other) => other.id),
+        });
+      } else if (component.type === 'tft') {
+        if (!this.tftChips.has(component.id)) this.tftChips.set(component.id, new St7789());
+        const leg = (endpoint: string): PinKey | boolean =>
+          pinOf.direct(endpoint) ?? !pinOf.grounded(endpoint);
+        const { pins } = component;
+        this.tfts.push({
+          id: component.id,
+          scl: pinOf.direct(pins.scl),
+          sda: pinOf.direct(pins.sda),
+          res: leg(pins.res),
+          dc: leg(pins.dc),
+          cs: leg(pins.cs),
+          blk: leg(pins.blk),
+        });
       } else if (component.type === 'ds18b20') {
         const chip = this.thermometers.get(component.id);
         if (chip) chip.setCelsius(component.props.celsius);
@@ -274,6 +343,9 @@ export class Peripherals {
       this.sensorChips,
       this.thermometers,
       this.serialChips,
+      this.ledRings,
+      this.tftChips,
+      this.tftPictures,
     ]) {
       for (const id of map.keys()) if (!present.has(id)) map.delete(id);
     }
@@ -293,6 +365,75 @@ export class Peripherals {
     for (const [id, chip] of this.sensorChips) if (!powered(id)) chip.reset();
     for (const [id, chip] of this.thermometers) if (!powered(id)) chip.powerOn();
     for (const [id, chip] of this.serialChips) if (!powered(id)) chip.reset();
+    for (const [id, ring] of this.ledRings) if (!powered(id)) ring.off();
+    for (const [id, chip] of this.tftChips) if (!powered(id)) chip.powerOff();
+  }
+
+  /**
+   * Colours a board sent down an LED data line: each powered ring whose DIN is
+   * on that pin takes its share and passes the rest to the rings its DOUT is
+   * wired to. A ring without power passes nothing on.
+   */
+  ledStrip(boardId: string, frame: LedStripFrame): void {
+    const key = pinKey(boardId, frame.pin);
+    const passed = new Set<string>();
+    const deliver = (id: string, bytes: Uint8Array) => {
+      if (passed.has(id) || !this.powered(id)) return;
+      passed.add(id);
+      const rest = this.ledRings.get(id)!.receive(bytes);
+      if (rest.length === 0) return;
+      for (const next of this.rings.find((ring) => ring.id === id)?.next ?? []) deliver(next, rest);
+    };
+    for (const ring of this.rings) if (ring.din === key) deliver(ring.id, frame.bytes);
+  }
+
+  /** The level a display's leg is at: from its board pin, or how it is tied. */
+  private legHigh(leg: PinKey | boolean, isHigh: (pin: number) => boolean): boolean {
+    if (typeof leg === 'boolean') return leg;
+    return isHigh(Number(leg.slice(leg.lastIndexOf(':') + 1)));
+  }
+
+  /**
+   * One exchange on a board's SPI bus. A display takes part when its SCL and SDA
+   * legs are on the bus's clock and data-out pins, it has power, its CS is LOW
+   * and its RES is HIGH. DC says whether the bytes are a command or data. The
+   * display has no data-out line, so nothing comes back.
+   */
+  spi(boardId: string, transfer: SpiTransfer, isHigh: (pin: number) => boolean): undefined {
+    const sck = pinKey(boardId, transfer.sck);
+    const mosi = pinKey(boardId, transfer.mosi);
+    for (const tft of this.tfts) {
+      if (tft.scl !== sck || tft.sda !== mosi || !this.powered(tft.id)) continue;
+      if (this.legHigh(tft.cs, isHigh) || !this.legHigh(tft.res, isHigh)) continue;
+      this.tftChips.get(tft.id)!.write(transfer.bytes, this.legHigh(tft.dc, isHigh));
+    }
+    return undefined;
+  }
+
+  /** A board pin a display's RES or BLK leg is on changed: RES going LOW resets the chip. */
+  private tftPinChanged(key: PinKey, drive: PinDrive, timeMs: number): void {
+    for (const tft of this.tfts) {
+      if (tft.res === key && drive === 'low') this.tftChips.get(tft.id)!.reset();
+      if (tft.blk === key) {
+        const last = this.lastDrive.get(key);
+        this.lastDrive.set(key, {
+          drive,
+          highAt: drive === 'low' ? (last?.highAt ?? -Infinity) : timeMs,
+        });
+      }
+    }
+  }
+
+  /**
+   * Whether a display's backlight is on. BLK LOW switches it off; a BLK pin
+   * switched on and off quickly (PWM) counts as on.
+   */
+  private backlight(tft: (typeof this.tfts)[number]): boolean {
+    if (typeof tft.blk === 'boolean') return tft.blk;
+    const last = this.lastDrive.get(tft.blk);
+    if (!last || last.drive !== 'low') return true;
+    const now = this.boardClock(tft.blk.slice(0, tft.blk.lastIndexOf(':')));
+    return now !== undefined && now - last.highAt < BACKLIGHT_PWM_MS;
   }
 
   /** Bytes a board sends on a UART: every powered module whose RX leg is on its TX pin hears them. */
@@ -412,6 +553,7 @@ export class Peripherals {
     isHigh: (pin: number) => boolean,
   ): ScheduledInput[] {
     const key = pinKey(boardId, pin);
+    this.tftPinChanged(key, drive, timeMs);
     const asked = this.dhtAsked(boardId, pin, key, drive, timeMs);
     if (asked.length > 0) return asked;
     const high = drive === 'high';
@@ -521,6 +663,8 @@ export class Peripherals {
       angle?: number;
       lcd?: { lines: [string, string] };
       oled?: { lit: boolean; brightness: number; pixels?: string };
+      ring?: { colours: number[]; milliamps: number };
+      tft?: { lit: boolean; pixels?: string };
     } & UartModuleStatus
   > {
     const status: ReturnType<Peripherals['status']> = {};
@@ -553,6 +697,27 @@ export class Peripherals {
       const brightness = 0.45 + (0.55 * panel.contrast) / 255;
       status[id] = { oled: { lit: true, brightness, pixels: picture.pixels } };
     }
+    for (const [id, ring] of this.ledRings) {
+      status[id] = {
+        ring: { colours: ring.show(), milliamps: this.powered(id) ? ring.milliamps() : 0 },
+      };
+    }
+    for (const tft of this.tfts) {
+      if (!this.powered(tft.id) || !this.backlight(tft)) {
+        status[tft.id] = { tft: { lit: false } };
+        continue;
+      }
+      const chip = this.tftChips.get(tft.id)!;
+      let picture = this.tftPictures.get(tft.id);
+      if (picture?.version !== chip.version) {
+        picture = { version: chip.version, pixels: base64(chip.image()) };
+        this.tftPictures.set(tft.id, picture);
+      }
+      status[tft.id] = { tft: { lit: true, pixels: picture.pixels } };
+    }
     return status;
   }
 }
+
+/** A backlight pin LOW for longer than this is off; shorter is PWM dimming it. */
+const BACKLIGHT_PWM_MS = 20;

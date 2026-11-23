@@ -4,6 +4,7 @@ import {
   ACS712_RANGES,
   LOGIC_CHIPS,
   LOGIC_CHIP_GATES,
+  LED_RING_SIZES,
   type CircuitComponent,
   type LedColor,
 } from '@banglalab/shared';
@@ -20,6 +21,7 @@ import { useState, type ReactNode } from 'react';
 import { simulation } from '../sim/client';
 import { useT } from '../i18n';
 import { oledImage } from './oled-image';
+import { tftImage } from './tft-image';
 import { parseSettings } from './settings';
 import { LED_PAINT } from './parts';
 import { useLab } from './store';
@@ -200,6 +202,43 @@ function OledPreview({ id }: { id: string }) {
   );
 }
 
+/** A colour display's picture at its own size, where a phone can see it. */
+function TftPreview({ id }: { id: string }) {
+  const shown = useLab((s) => s.result?.readings[id]?.tft);
+  const { t } = useT();
+  if (!shown?.pixels) {
+    return (
+      <p className="text-sm text-ink-soft" data-testid="tft-preview" data-lit="false">
+        {t('inspector.tft.dark')}
+      </p>
+    );
+  }
+  return (
+    <img
+      data-testid="tft-preview"
+      data-lit="true"
+      src={tftImage(shown.pixels).url}
+      alt={t('inspector.tft.picture')}
+      width={240}
+      height={240}
+      className="block max-w-full rounded border-4 border-[#0b0e12]"
+    />
+  );
+}
+
+/** An estimate of what a ring's lit LEDs draw, while the circuit runs. */
+function RingCurrent({ id }: { id: string }) {
+  const ring = useLab((s) => s.result?.readings[id]?.ring);
+  const running = useLab((s) => s.running);
+  const { t, quantity } = useT();
+  if (!running || !ring || ring.milliamps === 0) return null;
+  return (
+    <p className="text-sm text-ink-soft" data-testid="ring-current">
+      {t('inspector.ring.current', { ma: quantity(ring.milliamps / 1000, 'A') })}
+    </p>
+  );
+}
+
 /** What the ESP32's program has saved (Preferences), and a way to erase it. */
 function SavedSettings({ boardId }: { boardId: string }) {
   const text = useLab((s) => s.settings[boardId] ?? '');
@@ -365,6 +404,28 @@ function PartSettings({ part }: { part: CircuitComponent }) {
     );
   }
   if (part.type === 'oled') return <OledPreview id={part.id} />;
+  if (part.type === 'tft') return <TftPreview id={part.id} />;
+  if (part.type === 'ledring') {
+    return (
+      <div className="space-y-3">
+        <div>
+          <p className="mb-1.5 text-sm text-ink-soft">{t('inspector.leds')}</p>
+          <div className="flex flex-wrap gap-1.5" data-testid="ring-leds">
+            {LED_RING_SIZES.map((size) => (
+              <Choice
+                key={size}
+                selected={part.props.leds === size}
+                onClick={() => setProps(part.id, { leds: size })}
+              >
+                {number(size)}
+              </Choice>
+            ))}
+          </div>
+        </div>
+        <RingCurrent id={part.id} />
+      </div>
+    );
+  }
   if (part.type === 'logic') {
     // The six chips share a shape, so one can be swapped for another where it sits.
     return (

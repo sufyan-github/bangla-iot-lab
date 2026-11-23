@@ -64,6 +64,32 @@ export interface UartHandler {
 }
 
 /**
+ * One exchange on an SPI bus with the board as master: `bytes` go out on the
+ * data-out pin, and as many come back on the data-in pin. The devices that take
+ * part are chosen by the levels on their chip-select pins at this moment.
+ */
+export interface SpiTransfer {
+  /** The board pins the program uses as the bus's clock, data out and data in. */
+  sck: number;
+  mosi: number;
+  miso: number;
+  bytes: Uint8Array;
+  timeMs: number;
+}
+/** Answers an exchange with the bytes that came back, or nothing when no device answered. */
+export type SpiHandler = (transfer: SpiTransfer) => Uint8Array | undefined;
+
+/** Colour bytes a program sent down a WS2812-style LED data line on a pin. */
+export interface LedStripFrame {
+  pin: number;
+  bytes: Uint8Array;
+  /** 800 or 400 kilobits a second. */
+  khz: number;
+  timeMs: number;
+}
+export type LedStripHandler = (frame: LedStripFrame) => void;
+
+/**
  * A board that runs a program, as the circuit simulation sees it: something
  * that can be run up to a moment in time, says what each pin drives, and is
  * told what each pin sees. Pins are numbered as the program numbers them.
@@ -105,6 +131,10 @@ export interface ProgrammableBoard {
   onOneWire?(handler: OneWireHandler): void;
   /** Optional. Gives the board whoever answers for the modules on its UARTs. */
   onUart?(handler: UartHandler): void;
+  /** Optional. Gives the board whoever answers for the devices on its SPI buses. */
+  onSpi?(handler: SpiHandler): void;
+  /** Optional. Gives the board whoever receives what it sends to LED strips. */
+  onLedStrip?(handler: LedStripHandler): void;
   /**
    * Optional. Called with all of the board's saved settings, as text, each time
    * the program changes them (the ESP32's Preferences). A board that offers

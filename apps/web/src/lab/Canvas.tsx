@@ -115,6 +115,8 @@ const BODY_HEIGHT: Partial<Record<string, number>> = {
   pir: 42,
   rgbled: 38,
   oled: 86,
+  ledring: 110,
+  tft: 180,
   relaymodule: 58,
   // A chip's body runs from its row f legs up to its row e legs.
   logic: 76,

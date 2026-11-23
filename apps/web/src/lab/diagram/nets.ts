@@ -127,6 +127,8 @@ export const BOX_TYPES = new Set([
   'pir',
   'rgbled',
   'oled',
+  'ledring',
+  'tft',
   'relaymodule',
   'logic',
   'relay',

@@ -176,10 +176,10 @@ measured.
 
 ## Section E: sensor modules outside the kit
 
-Twenty-one modules and power parts modelled for projects beyond the school kit. Each needs the module
+Twenty-three modules and power parts modelled for projects beyond the school kit. Each needs the module
 itself, a 5 V bench supply or the board's VIN, and a multimeter; E4 to E6 need
 water samples (see each row). Every figure the simulator uses is reported by a
-maker or seller, or estimated (decisions D-062 to D-067); none is measured.
+maker or seller, or estimated (decisions D-062 to D-068); none is measured.
 
 | Test | Module                   | Set-up                                                                                           | Record                                                                                                                |
 | ---- | ------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
@@ -204,6 +204,8 @@ maker or seller, or estimated (decisions D-062 to D-067); none is measured.
 | E19  | HC-05 Bluetooth          | VIN, TXD to GPIO16; the `bluetooth` program; a phone with a Bluetooth terminal app               | Whether 1 and 0 switch the LED; the answers on the phone; supply current paired and unpaired                          |
 | E20  | DFPlayer Mini            | VIN, TX to GPIO16, a card with 5 MP3 files and a small speaker; the `mp3` program                | Time from power to "card online"; whether the button moves on; how many "finished" messages per track; supply current |
 | E21  | SIM800L                  | An 18650 cell, shared ground, TXD to GPIO16, a SIM card; the `sms` program; a real phone         | Time to register; time to send an SMS; whether ON and OFF work; whether it restarts on a weaker supply                |
+| E22  | WS2812B ring (12 LEDs)   | VIN, DIN to GPIO4, a knob on GPIO34; the `ring` program; then a second ring on DOUT; then 3.3 V  | Colours in order; whether a 3.3 V data line works on 5 V; current at full white; whether it lights on 3.3 V           |
+| E23  | 1.54″ ST7789 display     | 3.3 V, SCL to GPIO18, SDA to GPIO23, RES GPIO4, DC GPIO2, CS GPIO5; the `tft` program            | Whether the picture is upright and its colours right; with BLK on GND; supply current                                 |
 
 **What the simulator assumes today.**
 
@@ -230,6 +232,8 @@ maker or seller, or estimated (decisions D-062 to D-067); none is measured.
 | E19  | 9600 baud in data mode; each phone line arrives with a newline; nothing passes unpaired; about 40 mA                                                                        |
 | E20  | "Card online" about 1 s after power; one "finished" message per track; about 25 mA without a speaker                                                                        |
 | E21  | Registered about 3 s after power; an SMS takes about 3 s; works from 3.4 V to 4.4 V with no restarts                                                                        |
+| E22  | Green, red, blue order; any 3.3 V data line accepted; about 1 mA an LED dark and 20 mA a colour at full; dark below 3.5 V. **Please note whether it lights on 3.3 V**       |
+| E23  | Rotation 0 upright with the pins along the top; colours right only with inversion on; dark with BLK on GND; about 30 mA at 3.3 V                                            |
 
 ## Section D: systems (later)
 

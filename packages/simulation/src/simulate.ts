@@ -30,6 +30,7 @@ import {
   SIREN_ON_VOLTAGE,
   BME280_MAX_SUPPLY,
   GSM_MAX_SUPPLY,
+  LED_RING_MAX_SUPPLY,
   INA219_MAX_BUS,
   INA219_MAX_SHUNT_VOLTS,
   CELL_CUTOFF_VOLTS,
@@ -120,6 +121,17 @@ export interface Reading {
    * bit, as base64; absent while the panel is dark. `brightness` is 0 to 1.
    */
   oled?: { lit: boolean; brightness: number; pixels?: string };
+  /**
+   * What an LED ring is showing: each LED's colour as 0xRRGGBB, from the one
+   * nearest DIN, and an ESTIMATE of what the lit LEDs draw, in milliamperes.
+   */
+  ring?: { colours: number[]; milliamps: number };
+  /**
+   * What a colour display is showing. `pixels` is the picture, 240 × 240, two
+   * bytes of RGB 565 a pixel (high byte first), row by row from the top, as
+   * base64; absent while the backlight is off or the display has no power.
+   */
+  tft?: { lit: boolean; pixels?: string };
 }
 
 export type DiagnosticCode =
@@ -153,6 +165,7 @@ export type DiagnosticCode =
   | 'regulator-dropout'
   | 'module-overvoltage'
   | 'gsm-overvoltage'
+  | 'ring-overvoltage'
   | 'onewire-no-pullup'
   | 'solver-failed';
 
@@ -1406,6 +1419,19 @@ export class Observation {
             componentId: id,
             volts: supply,
             limit: GSM_MAX_SUPPLY,
+          });
+        }
+      }
+      if (component.type === 'ledring') {
+        // The WS2812B's datasheet gives 5.3 V as the most it takes.
+        const supply = extreme((s) => s.parts[id]!.voltage, Math.max);
+        if (supply > LED_RING_MAX_SUPPLY) {
+          result.diagnostics.push({
+            code: 'ring-overvoltage',
+            severity: 'error',
+            componentId: id,
+            volts: supply,
+            limit: LED_RING_MAX_SUPPLY,
           });
         }
       }

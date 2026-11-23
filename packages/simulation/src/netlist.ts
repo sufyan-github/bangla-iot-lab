@@ -95,6 +95,8 @@ import {
   MODULE_SUPPLY_RESISTANCE,
   OLED_PULLUP_RESISTANCE,
   OLED_SUPPLY_RESISTANCE,
+  LED_RING_OHMS_PER_LED,
+  TFT_SUPPLY_RESISTANCE,
   RELAY_COIL_RESISTANCE,
   RELAY_MODULE_COIL_RESISTANCE,
   RELAY_MODULE_IDLE_RESISTANCE,
@@ -626,6 +628,31 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         add(resistor(`${id}:sda`, supply, node(component.pins.sda), OLED_PULLUP_RESISTANCE));
         break;
       }
+      case 'ledring':
+        // A supply load, about 1 mA an LED. The colours travel from the board in the
+        // session, as bytes; the data lines are left to themselves.
+        partDevice.set(
+          id,
+          add(
+            resistor(
+              id,
+              node(component.pins.vcc),
+              node(component.pins.gnd),
+              LED_RING_OHMS_PER_LED / component.props.leds,
+            ),
+          ),
+        );
+        break;
+      case 'tft':
+        // A supply load, mostly its backlight. What travels on the bus is handed to the
+        // display by the session, an exchange at a time.
+        partDevice.set(
+          id,
+          add(
+            resistor(id, node(component.pins.vcc), node(component.pins.gnd), TFT_SUPPLY_RESISTANCE),
+          ),
+        );
+        break;
       case 'ldrmodule':
       case 'rain':
       case 'mq135':

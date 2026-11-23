@@ -938,6 +938,70 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     ],
     actions: { 5: [{ phone: 'GSM1', text: 'ON' }] },
   },
+  'led-ring': {
+    components: [
+      esp32,
+      part('RING1', 'ledring', { vcc: 'c10', gnd: 'c11', din: 'c12', dout: 'c13' }, { leds: 12 }),
+      part(
+        'POT1',
+        'potentiometer',
+        { a: 'c20', wiper: 'c21', b: 'c22' },
+        { resistance: 10_000, position: 0 },
+      ),
+    ],
+    wires: [
+      ['ESP1.vin', 'a10'],
+      ['ESP1.gnd1', 'a11'],
+      ['ESP1.d4', 'a12'],
+      ['ESP1.gnd2', 'a20'],
+      ['ESP1.d34', 'a21'],
+      ['ESP1.3v3', 'a22'],
+    ],
+    actions: {
+      4: [{ set: 'POT1', props: { position: 1 }, afterMs: 300 }],
+      5: [{ set: 'POT1', props: { position: 0.5 } }],
+    },
+  },
+  'colour-display': {
+    components: [
+      esp32,
+      part(
+        'TFT1',
+        'tft',
+        {
+          gnd: 'c10',
+          vcc: 'c11',
+          scl: 'c12',
+          sda: 'c13',
+          res: 'c14',
+          dc: 'c15',
+          cs: 'c16',
+          blk: 'c17',
+        },
+        {},
+      ),
+    ],
+    wires: [
+      ['ESP1.gnd1', 'a10'],
+      ['ESP1.3v3', 'a11'],
+      ['ESP1.d18', 'a12'],
+      ['ESP1.d23', 'a13'],
+      ['ESP1.d4', 'a14'],
+      ['ESP1.d2', 'a15'],
+      ['ESP1.d5', 'a16'],
+    ],
+    actions: {
+      // BLK joined to GND.
+      5: [
+        {
+          edit: (circuit) => ({
+            ...circuit,
+            wires: [...circuit.wires, { id: 'W9', from: 'ESP1.gnd2', to: 'a17', color: '#000000' }],
+          }),
+        },
+      ],
+    },
+  },
 };
 
 /** The longest a student would have to watch for a step to complete, in simulated time. */

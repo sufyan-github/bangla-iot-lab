@@ -68,6 +68,12 @@ static const uint8_t A0 = 36, A3 = 39, A4 = 32, A5 = 33, A6 = 34, A7 = 35, A10 =
 static const uint8_t T0 = 4, T1 = 0, T2 = 2, T3 = 15, T4 = 13, T5 = 12, T6 = 14, T7 = 27, T8 = 33,
                      T9 = 32;
 static const uint8_t DAC1 = 25, DAC2 = 26, SDA = 21, SCL = 22, TX = 1, RX = 3;
+static const uint8_t SS = 5, MOSI = 23, MISO = 19, SCK = 18;
+
+// A single WS2812 LED on a pin, as the chip's core library offers: green, red
+// and blue bytes at 800 kHz (in neopixel.cpp).
+void rgbLedWrite(uint8_t pin, uint8_t red_val, uint8_t green_val, uint8_t blue_val);
+void neopixelWrite(uint8_t pin, uint8_t red_val, uint8_t green_val, uint8_t blue_val);
 
 typedef enum { ADC_0db, ADC_2_5db, ADC_6db, ADC_11db, ADC_12db = ADC_11db } adc_attenuation_t;
 

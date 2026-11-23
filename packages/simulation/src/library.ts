@@ -448,6 +448,29 @@ export const OLED_PULLUP_RESISTANCE = 4700;
 export const OLED_SUPPLY_RESISTANCE = 330;
 
 /**
+ * WS2812B LED ring. REPORTED, from WorldSemi's WS2812B datasheet: a supply of
+ * 3.5 V to 5.3 V. REPORTED, from Adafruit's NeoPixel guide: up to about 60 mA
+ * an LED at full white, 20 mA for each of its three colours. ESTIMATE: about
+ * 1 mA an LED while dark, which is all the circuit sees (`LED_RING_OHMS_PER_LED`).
+ */
+export const LED_RING_MAX_SUPPLY = 5.3;
+export const LED_RING_MA_PER_COLOUR = 20;
+export const LED_RING_IDLE_MA = 1;
+/** The ring's supply load is this many ohms divided by its number of LEDs: 1 mA each at 5 V. */
+export const LED_RING_OHMS_PER_LED = 5000;
+
+/**
+ * 1.54 inch ST7789 colour display module. REPORTED, from Sitronix's ST7789V
+ * datasheet: 240 × 320 pixels of memory, of which this panel shows 240 × 240.
+ * ESTIMATE: about 30 mA at 3.3 V, nearly all of it the backlight.
+ */
+export const TFT_SUPPLY_RESISTANCE = 110;
+/** Memory columns and rows; the panel shows the first `TFT_SIZE` rows. */
+export const ST7789_COLUMNS = 240;
+export const ST7789_ROWS = 320;
+export const TFT_SIZE = 240;
+
+/**
  * L298N dual motor driver module. REPORTED, from the chip's datasheet
  * (STMicroelectronics, "L298", electrical characteristics): what its outputs
  * lose, typically 1.35 V on the supply side and 1.2 V on the ground side at
@@ -581,6 +604,8 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   gsm: 3.4,
   pir: 4.5,
   oled: 3,
+  ledring: 3.5,
+  tft: 3,
   l298n: 6.5,
   relaymodule: 3.75,
   logic: 2,

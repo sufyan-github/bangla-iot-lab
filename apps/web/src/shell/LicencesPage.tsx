@@ -133,6 +133,14 @@ const NOTICES = [
     source: 'https://github.com/fu-hsi/PMS',
   },
   {
+    id: 'adafruit-st7735',
+    name: 'Adafruit ST7735 and ST7789 library',
+    licence: 'MIT',
+    text: 'Written by Limor Fried for Adafruit Industries. The library for the ST7789 colour display, built unmodified into ESP32 programs that use it.',
+    file: 'adafruit-st7735.txt',
+    source: 'https://github.com/adafruit/Adafruit-ST7735-Library',
+  },
+  {
     id: 'esp32-firmware',
     name: 'ESP32 firmware built for the chip emulator (experimental)',
     licence: 'LGPL-2.1-or-later',

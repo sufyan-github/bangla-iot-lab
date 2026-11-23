@@ -8,6 +8,20 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **WS2812B LED ring** and **1.54-inch ST7789 colour display** (circuit format
+  version 20). The ring takes each LED's colour from one data wire and passes
+  the rest on through DOUT, so rings chain; the display draws whatever the
+  program sends over the ESP32's SPI bus, and goes dark with its backlight off.
+- The board library gains an SPI bus, an LED data line (with the core's
+  `rgbLedWrite`) and its own `Adafruit_NeoPixel`, with that library's functions
+  (the library itself is LGPL, so it is not used).
+- Adafruit's ST7735 and ST7789 library 1.12.0 (MIT) and `Adafruit_SPITFT` from
+  the GFX library, built unmodified. Their licence is shown in the application.
+- A ring on more than 5.3 V is shown as being damaged; on 3.3 V it stays dark.
+- Ready-made programs `ring` and `tft`, and two lessons, each checked step by
+  step by the lab: **LED ring** (a knob sets how many LEDs light) and **colour
+  display** (SPI wiring, and the backlight).
+- Hardware tests E22 and E23.
 - **HC-05 Bluetooth module with a phone panel**, **DFPlayer Mini MP3 player**
   and **SIM800L GSM module** (circuit format version 19). While the circuit
   runs, the Bluetooth and GSM modules' inspector is a phone: type a message or

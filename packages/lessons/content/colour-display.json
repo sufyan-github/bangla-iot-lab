@@ -1,0 +1,206 @@
+{
+  "id": "colour-display",
+  "order": 42,
+  "parts": ["lcd-st7789-154"],
+  "title": {
+    "bn": "রঙিন ডিসপ্লে: SPI বাসে ছবি আঁকা",
+    "en": "Colour display: drawing over the SPI bus"
+  },
+  "summary": {
+    "bn": "১.৫৪″ ST7789 ডিসপ্লেতে লেখা আর রঙিন দাগ আঁকো, আর দেখো SPI-এর তারগুলো কে কী কাজ করে।",
+    "en": "Draw text and coloured bars on a 1.54\" ST7789 display, and see what each of the SPI wires does."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "tft",
+  "steps": [
+    {
+      "text": {
+        "bn": "**রঙিন ডিসপ্লে** বসাও। **VCC** যাবে **3V3**-এ, **GND** যাবে **GND**-তে।",
+        "en": "Place the **colour display**. **VCC** goes to **3V3**, **GND** to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "tft"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tft",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tft",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "SPI-এর দুই তার: **SCL** (ঘড়ির টিক) যাবে **D18**-এ, **SDA** (তথ্য) যাবে **D23**-এ। এ দুটো ESP32-এর SPI বাসের নিজের পিন।",
+        "en": "The two SPI wires: **SCL** (the clock ticks) to **D18**, **SDA** (the data) to **D23**. These are the ESP32's own SPI bus pins."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tft",
+            "pin": "scl"
+          },
+          "to": {
+            "board": "d18"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tft",
+            "pin": "sda"
+          },
+          "to": {
+            "board": "d23"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "নিয়ন্ত্রণের তিন তার: **RES** যাবে **D4**-এ, **DC** যাবে **D2**-এ, **CS** যাবে **D5**-এ। CS LOW হলে ডিসপ্লে শোনে; DC বলে বাইটটা কমান্ড না ছবির বিন্দু। **BLK** খোলা থাকুক।",
+        "en": "The three control wires: **RES** to **D4**, **DC** to **D2**, **CS** to **D5**. The display listens while CS is LOW; DC says whether a byte is a command or picture dots. Leave **BLK** open."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tft",
+            "pin": "res"
+          },
+          "to": {
+            "board": "d4"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tft",
+            "pin": "dc"
+          },
+          "to": {
+            "board": "d2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tft",
+            "pin": "cs"
+          },
+          "to": {
+            "board": "d5"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। `tft.init(240, 240)` ডিসপ্লেকে জাগায় আর চালু করে; `fillRect` একটা জানালা ঠিক করে দিয়ে তার সব বিন্দুর রং পাঠায়, প্রতিটা দুই বাইটে।",
+        "en": "**Put this lesson's program on the board.** `tft.init(240, 240)` wakes the display and switches it on; `fillRect` sets a window and sends the colour of every dot in it, two bytes each."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "tft"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। লেখা, তিনটা রঙিন দাগ আর প্রতি সেকেন্ডে বদলানো সময় দেখা যায়।",
+        "en": "Press **Run**. The title, three coloured bars and the time, changing every second, appear."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "ডিসপ্লে চালু হলো",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"ডিসপ্লে চালু হলো\"",
+            "en": "The serial monitor says the display started"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "tft",
+          "path": "tft.lit",
+          "equals": true,
+          "label": {
+            "bn": "ডিসপ্লে জ্বলছে",
+            "en": "The display is lit"
+          }
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার **BLK**-কে **GND**-তে জোড়ো। পেছনের আলো নিভে যায়: ছবি তখনও চিপের মেমোরিতে আছে, কিন্তু দেখা যায় না।",
+        "en": "Now join **BLK** to **GND**. The backlight goes out: the picture is still in the chip's memory, but it cannot be seen."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "tft",
+            "pin": "blk"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "tft",
+          "path": "tft.lit",
+          "equals": false,
+          "label": {
+            "bn": "ডিসপ্লে অন্ধকার",
+            "en": "The display is dark"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "SPI-এ এক তারে ঘড়ির টিক, আরেক তারে তথ্য যায়; তাই I2C-এর চেয়ে অনেক দ্রুত, পুরো ছবি পাঠানো যায়।",
+      "CS দিয়ে বোর্ড ঠিক করে কোন যন্ত্র শুনবে, DC দিয়ে বলে বাইটটা কমান্ড না তথ্য।",
+      "রঙিন ডিসপ্লেতে প্রতিটা বিন্দুর রং দুই বাইটে: লালের ৫ বিট, সবুজের ৬, নীলের ৫।"
+    ],
+    "en": [
+      "On SPI one wire carries the clock ticks and another the data, so it is much faster than I2C: whole pictures can be sent.",
+      "With CS the board chooses which device listens, and with DC it says whether a byte is a command or data.",
+      "On a colour display each dot's colour takes two bytes: 5 bits of red, 6 of green, 5 of blue."
+    ]
+  },
+  "tryNext": {
+    "bn": "BLK আবার খুলে দাও। তারপর `tft.setRotation(1)` দিয়ে ছবিটা পাশ ফিরিয়ে দেখো।",
+    "en": "Free BLK again. Then turn the picture on its side with `tft.setRotation(1)`."
+  }
+}

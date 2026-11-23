@@ -1,0 +1,198 @@
+{
+  "id": "led-ring",
+  "order": 41,
+  "parts": ["ws2812b-ring", "potentiometer"],
+  "title": {
+    "bn": "LED রিং: এক তারে অনেক রং",
+    "en": "LED ring: many colours on one wire"
+  },
+  "summary": {
+    "bn": "WS2812B রিংয়ের প্রতিটা LED আলাদা রঙে জ্বালাও, আর নব দিয়ে ঠিক করো কয়টা জ্বলবে।",
+    "en": "Light each LED of a WS2812B ring in its own colour, and choose with a knob how many light."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "ring",
+  "steps": [
+    {
+      "text": {
+        "bn": "**LED রিং** বসাও। **VCC** যাবে **VIN**-এ (৫ V), **GND** যাবে **GND**-তে। ৩.৩ V-এ WS2812B ঠিকমতো জ্বলে না।",
+        "en": "Place the **LED ring**. **VCC** goes to **VIN** (5 V), **GND** to **GND**. A WS2812B does not light properly on 3.3 V."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "ledring"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ledring",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ledring",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "রিংয়ের **DIN** যাবে **D4**-এ। সব LED-এর রং এই এক তার দিয়ে যায়। **DOUT** খালি থাকুক: সেখান দিয়ে আরেকটা রিং জোড়া যায়।",
+        "en": "Wire the ring's **DIN** to **D4**. Every LED's colour travels on this one wire. Leave **DOUT** free: another ring can be joined there."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "ledring",
+            "pin": "din"
+          },
+          "to": {
+            "board": "d4"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **পটেনশিওমিটার** বসাও: দুই পাশের পা যাবে **3V3** আর **GND**-তে, মাঝের পা **D34**-এ।",
+        "en": "Place a **potentiometer**: its outer legs to **3V3** and **GND**, its middle leg to **D34**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "potentiometer"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "potentiometer",
+            "pin": "wiper"
+          },
+          "to": {
+            "board": "d34"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "potentiometer",
+            "pin": "*"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "potentiometer",
+            "pin": "*"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। `ring.setPixelColor(i, রং)` শুধু বোর্ডের মেমোরিতে রং লেখে; `ring.show()` সব LED-এর রং একসাথে তারে পাঠায়: প্রতিটা LED-এর জন্য সবুজ, লাল, নীল তিনটা বাইট।",
+        "en": "**Put this lesson's program on the board.** `ring.setPixelColor(i, colour)` only writes a colour into the board's memory; `ring.show()` sends every LED's colour down the wire at once: three bytes for each LED, green, red and blue."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "ring"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**, তারপর নব পুরো ঘোরাও যতক্ষণ না ১২টা LED-ই জ্বলে। প্রথম LED সবুজ, শেষেরটা লাল।",
+        "en": "Press **Run**, then turn the knob all the way until all 12 LEDs light. The first LED is green, the last red."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "12 টি LED জ্বলছে",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"12 টি LED জ্বলছে\"",
+            "en": "The serial monitor shows \"12 টি LED জ্বলছে\" (12 LEDs lit)"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "ledring",
+          "path": "ring.colours.11",
+          "equals": 3932160,
+          "label": {
+            "bn": "শেষ LED লাল",
+            "en": "The last LED is red"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "নব আবার **মাঝামাঝি** আনো: অর্ধেকের মতো LED জ্বলে থাকে, শেষের দিকেরগুলো নিভে যায়।",
+        "en": "Bring the knob back to **the middle**: about half the LEDs stay lit, and the ones at the end go out."
+      },
+      "checks": [
+        {
+          "kind": "serial",
+          "matches": "\\n[3-9] টি LED জ্বলছে",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে ৩ থেকে ৯টা LED জ্বলছে",
+            "en": "The serial monitor shows 3 to 9 LEDs lit"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "ledring",
+          "path": "ring.colours.11",
+          "equals": 0,
+          "label": {
+            "bn": "শেষ LED নেভা",
+            "en": "The last LED is off"
+          }
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "WS2812B LED-এর ভেতরে ছোট চিপ থাকে: প্রথম তিনটা বাইট সে রাখে, বাকিটা পরের LED-কে দেয়। তাই এক তারে যত খুশি LED চলে।",
+      "রং বদলালেও `show()` না ডাকা পর্যন্ত LED-এ কিছু বদলায় না।",
+      "অনেক LED পুরো উজ্জ্বল জ্বালালে অনেক কারেন্ট লাগে (প্রতিটা প্রায় ৬০ mA): উজ্জ্বলতা কমিয়ে রাখো, দরকারে আলাদা ৫ V দাও।"
+    ],
+    "en": [
+      "Each WS2812B LED holds a small chip: it keeps the first three bytes and hands the rest to the next LED. So any number of LEDs work on one wire.",
+      "Changing a colour changes nothing on the LEDs until `show()` is called.",
+      "Many LEDs at full brightness need a lot of current (about 60 mA each): keep the brightness down, and give them a 5 V supply of their own when needed."
+    ]
+  },
+  "tryNext": {
+    "bn": "নব ঘোরালে সব LED একই রঙে জ্বলুক, আর রংটা বদলাক (`ring.ColorHSV(hue)`-এ hue বদলাও)।",
+    "en": "Make the knob light every LED in one colour that changes as it turns (vary hue in `ring.ColorHSV(hue)`)."
+  }
+}

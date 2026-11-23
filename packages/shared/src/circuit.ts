@@ -27,7 +27,7 @@ import { isHole } from './breadboard';
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 19;
+export const CIRCUIT_SCHEMA_VERSION = 20;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -545,6 +545,44 @@ export const OledSchema = Type.Object({
   props: noProps,
 });
 
+/** Number of LEDs a WS2812B ring may have: the sizes sold as rings. */
+export const LED_RING_SIZES = [8, 12, 16, 24] as const;
+
+/**
+ * A ring of WS2812B LEDs, each taking its own colour from the data stream on
+ * DIN and passing the rest on through DOUT to the next ring.
+ */
+export const LedRingSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('ledring'),
+  pins: Type.Object({ vcc: Hole, gnd: Hole, din: Hole, dout: Hole }),
+  props: Type.Object({
+    leds: Type.Union([Type.Literal(8), Type.Literal(12), Type.Literal(16), Type.Literal(24)]),
+  }),
+});
+
+/**
+ * A 1.54-inch 240 × 240 colour display driven by an ST7789 chip over SPI, in
+ * the eight-pin form: SCL and SDA are the bus's clock and data, RES resets the
+ * chip, DC says whether a byte is a command or data, CS selects it, and BLK
+ * switches the backlight.
+ */
+export const TftSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('tft'),
+  pins: Type.Object({
+    gnd: Hole,
+    vcc: Hole,
+    scl: Hole,
+    sda: Hole,
+    res: Hole,
+    dc: Hole,
+    cs: Hole,
+    blk: Hole,
+  }),
+  props: noProps,
+});
+
 /**
  * One-channel relay module: a 5 V relay with the transistor and optocoupler
  * that let a board pin switch it, and a jumper that chooses whether IN must be
@@ -741,6 +779,8 @@ export const ComponentSchema = Type.Union([
   PirSchema,
   RgbLedSchema,
   OledSchema,
+  LedRingSchema,
+  TftSchema,
   RelayModuleSchema,
   LogicSchema,
   UnoSchema,

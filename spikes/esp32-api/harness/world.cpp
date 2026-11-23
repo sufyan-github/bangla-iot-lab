@@ -186,6 +186,11 @@ void host_uart_write(int, const uint8_t*, size_t) {}
 int host_uart_available(int) { return 0; }
 int host_uart_read(int) { return -1; }
 int host_uart_peek(int) { return -1; }
+// No SPI devices or LED strips here: transfers read back zeros, and LED data goes nowhere.
+void host_spi_transfer(int, int, int, const uint8_t*, uint8_t* in, size_t length) {
+  if (in) memset(in, 0, length);
+}
+void host_led_strip(int, const uint8_t*, size_t, int) {}
 // No 1-Wire devices here: no presence pulse, and the line reads HIGH.
 int host_onewire(int, int op, int) { return op == 2 ? 1 : 0; }
 uint64_t host_micros(void) { return now_us; }

@@ -229,6 +229,29 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M8 20v2M11 20v2M14 20v2M17 20v2" {...stroke} strokeWidth={1.6} />
     </>
   ),
+  ledring: (
+    <>
+      <circle cx="12" cy="12" r="7.5" {...stroke} />
+      {[0, 60, 120, 180, 240, 300].map((angle) => (
+        <circle
+          key={angle}
+          cx={12 + 7.5 * Math.cos((angle * Math.PI) / 180)}
+          cy={12 + 7.5 * Math.sin((angle * Math.PI) / 180)}
+          r="1.7"
+          fill="currentColor"
+        />
+      ))}
+    </>
+  ),
+  tft: (
+    <>
+      <rect x="3.5" y="2.5" width="17" height="17" rx="2" {...stroke} />
+      <rect x="6.5" y="5.5" width="5" height="5" fill="currentColor" />
+      <rect x="12.5" y="5.5" width="5" height="5" fill="currentColor" opacity={0.6} />
+      <rect x="6.5" y="11.5" width="11" height="5" fill="currentColor" opacity={0.35} />
+      <path d="M6 22v-2M10 22v-2M14 22v-2M18 22v-2" {...stroke} strokeWidth={1.4} />
+    </>
+  ),
   bme280: (
     <>
       <path d="M8 14V5a2 2 0 0 1 4 0v9a3.5 3.5 0 1 1-4 0z" {...stroke} />
@@ -392,6 +415,7 @@ const GROUPS: PaletteItem[][] = [
   ['cell', 'tp4056', 'lm2596', 'solar'],
   ['bme280', 'ina219', 'ds18b20', 'jsnsr04t', 'linesensor', 'siren'],
   ['gps', 'pms5003', 'bluetooth', 'mp3', 'gsm'],
+  ['ledring', 'tft'],
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */

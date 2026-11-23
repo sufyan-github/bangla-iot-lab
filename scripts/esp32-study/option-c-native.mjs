@@ -60,6 +60,8 @@ for (const [file, object] of [
   ['src/tinygps.cpp', 'tinygps.o'],
   ['src/dfplayer.cpp', 'dfplayer.o'],
   ['src/serial-ports.cpp', 'serial-ports.o'],
+  ['src/spi.cpp', 'spi.o'],
+  ['src/neopixel.cpp', 'neopixel.o'],
   ['harness/world.cpp', 'world.o'],
 ]) {
   const built = spawnSync(

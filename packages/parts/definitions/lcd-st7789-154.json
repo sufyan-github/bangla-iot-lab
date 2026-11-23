@@ -1,30 +1,83 @@
 {
   "formatVersion": 1,
   "id": "lcd-st7789-154",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "tft",
+  "status": "simulated",
   "family": "display",
   "tier": 2,
   "name": {
-    "bn": "1.54\" IPS display (ST7789, SPI)",
+    "bn": "১.৫৪″ রঙিন IPS ডিসপ্লে (ST7789, SPI)",
     "en": "1.54\" IPS display (ST7789, SPI)"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "২৪০ × ২৪০ বিন্দুর রঙিন ডিসপ্লে, SPI বাসে চলে: লেখা, ছবি আর রং দেখায়।",
+    "en": "A 240 × 240 colour display on the SPI bus, for text, pictures and colour."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "It works with the ESP32 board and the lab's own model of that board only, with the display on the bus's own pins (SCL on D18, SDA on D23 for the usual bus). The UNO-compatible board and the chip emulator cannot drive it yet, and nor can a program that moves the bus pins by hand (software SPI).",
+      "The program and the display exchange whole bytes; the clock and data pulses are not produced, so the oscilloscope and logic analyser show those lines resting. The chip-select and DC lines are read at the moment each group of bytes is sent.",
+      "The chip's commands for drawing are modelled: reset, sleep, display on and off, colour inversion, the drawing window, memory write, the memory's orientation and the colour format (16 and 18 bits). Scrolling, partial mode, reading back from the display and the chip's other settings are left out.",
+      "Like the real IPS panels, it shows colours inverted until the program turns inversion on, as Adafruit's library does when it starts the display.",
+      "The SPI clock's polarity and phase (the data mode) are not checked. Some modules without a CS pin need mode 2 or 3; this one has CS.",
+      "Which way up the picture appears is chosen so that rotation 0 in Adafruit's library is upright, with the pins along the top. The real module's mounting may differ.",
+      "A RES pin held LOW keeps the chip in reset. A RES or CS leg left unconnected is taken as HIGH; a BLK leg left unconnected leaves the backlight on. The backlight is either on or off: dimming it with PWM is not shown.",
+      "The current it draws is fixed and an estimate, mostly the backlight's. Whether a given module has a regulator for 5 V is not modelled: it works from 3 V up."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E23"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "scl",
+      "label": "SCL",
+      "role": "input"
+    },
+    {
+      "id": "sda",
+      "label": "SDA",
+      "role": "input"
+    },
+    {
+      "id": "res",
+      "label": "RES",
+      "role": "input"
+    },
+    {
+      "id": "dc",
+      "label": "DC",
+      "role": "input"
+    },
+    {
+      "id": "cs",
+      "label": "CS",
+      "role": "input"
+    },
+    {
+      "id": "blk",
+      "label": "BLK",
+      "role": "input"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["1.54\" ips"]
+  },
+  "placement": {
+    "idPrefix": "TFT",
+    "offsets": [0, 1, 2, 3, 4, 5, 6, 7]
   }
 }

@@ -2,156 +2,164 @@
   "toolchain": "clang 21.1.8 wasm-opt 120",
   "starters": {
     "air": {
-      "sourceHash": "48e76e3c61fe81ecfe2ce03091d6407809e9ca898332c1a755c8ee17ea765986",
-      "bytes": 41533
+      "sourceHash": "af91d9cdc4d5a14a13da6cfa144e6359998844d089f194526ed795d9016402fe",
+      "bytes": 41506
     },
     "airquality": {
-      "sourceHash": "d677e9442ed2e71a6d3d3e0a2e39c87476f5d13e85440ffe506c932e5f95e2bf",
-      "bytes": 63683
+      "sourceHash": "2a6ff997847e8c553edf97c6af31cef91b2e00788cbb2fc76d2717df88c074b6",
+      "bytes": 65850
     },
     "beep": {
-      "sourceHash": "7c89763a46d8fb271ecbae599422fc9890b3667690b73b21f9796031ce4e32c8",
-      "bytes": 11158
+      "sourceHash": "bf609143b1a1126fa59a5048cec2c082d6431604f933e8b50a7be3b6d8116ad6",
+      "bytes": 11131
     },
     "blink": {
-      "sourceHash": "8b582c9d10b7a5e619dac8f3ce3ebb62ddfb4fba3ebea7d1dc877ff3c1f63aa5",
-      "bytes": 10024
+      "sourceHash": "1ae1cf1945d6602fc87a083ac819bcf222a8ed71b367b57e73d7277807f8df0a",
+      "bytes": 9997
     },
     "bluetooth": {
-      "sourceHash": "31ad7b86e10d74eef8c164b4c54127ed3fb539526f4ca0c64b054960a54462cc",
-      "bytes": 41467
+      "sourceHash": "b3c6372bc2e58ca03c9fdafea3661018a12ab23757230631338374266194d9f6",
+      "bytes": 41440
     },
     "button": {
-      "sourceHash": "7ad9d693f8893a5d859de39c3cda0cddeb47bdbf8a4515cc7d49ecc2eb39fe55",
-      "bytes": 10275
+      "sourceHash": "606f202e4253a535957257725df418a59922432380f5be1b18ffb8e68bfcf5a4",
+      "bytes": 10248
     },
     "counter": {
-      "sourceHash": "6f28ae18b9274088d0451c41b2454f99c72bfef1065937cbfea288f998c7c7fd",
-      "bytes": 57100
+      "sourceHash": "806ffecc1f41d843ef7cbf082e83f94e2d808c751e2be0ba5c5f225be1a7ca82",
+      "bytes": 57072
     },
     "dht": {
-      "sourceHash": "846515a44856c799718fda9146f7db27210c815135b5f9a3c07527560735a8a2",
-      "bytes": 41394
+      "sourceHash": "6a63bc482c4f57b1908d0c45f0e4ecc9718242da463d8befb93547418535f3b3",
+      "bytes": 41367
     },
     "distance": {
-      "sourceHash": "7a1665d0f6bd9dfa5ae0ababa134985c5e57412d7c352f2aa482708ce62103df",
-      "bytes": 40557
+      "sourceHash": "ac0c1d83fb766e5c4cc8a1bede1631b4d2fda207147d4d38aafde829f55063eb",
+      "bytes": 40530
     },
     "dustbin": {
-      "sourceHash": "5bf65caa3abae756c971eb1c68d3b3ffa4bcdcd57936caab815052459f211eaf",
-      "bytes": 12583
+      "sourceHash": "dbf7526d0fc9482ff8aa95aa69610c9dfbbd4ba5418e329d2a2d5cae593bbde2",
+      "bytes": 12556
     },
     "fade": {
-      "sourceHash": "ec611ed46c7ecc09bddbaa3a9296641f986e00bd4176bb920150aa17e8bc0541",
-      "bytes": 10703
+      "sourceHash": "d93d2bc897c23e72a4d59c64aac3ddaaedb7ac89a379cef0a71cedb788fd89cb",
+      "bytes": 10676
     },
     "gas": {
-      "sourceHash": "82755b908eec62b6181a70b90da1b7f388740fb2d844aeb6bd9993f485e039e1",
-      "bytes": 40752
+      "sourceHash": "b3bd65692d3a72fa7a65a08f603597b529b1c4d5a57372bc34718c6515f0edcf",
+      "bytes": 40725
     },
     "gps": {
-      "sourceHash": "bca729aec1fda6aae6ab2a0d057a09b2b7a3dda0d3bc38217fc247fe4133788b",
-      "bytes": 60138
+      "sourceHash": "6278eeb29a50e74b9c293084c8fca9e04a3448e659cf689c68692d5e688a4133",
+      "bytes": 60110
     },
     "knob": {
-      "sourceHash": "3ae4c005a51565bd319e06673f4258481a4fa491ec02e28eeb0625606d88e802",
-      "bytes": 40922
+      "sourceHash": "201056483e104dbedd8139ec154c222f0699a21fc862695b2a28a5908b585be3",
+      "bytes": 40895
     },
     "light": {
-      "sourceHash": "7e1a91667c7d9ae569045ed1e94bb0742f7f54bb26ae9eb7cce273e3c99b60e8",
-      "bytes": 40867
+      "sourceHash": "e5a58e1c2dffb636392ea0a7494dff477b9796b361af7a9ad2aaebfc55d7d127",
+      "bytes": 40840
     },
     "monitor": {
-      "sourceHash": "ac45844981ca25383b47405ef2022fa4923c57382b50f89ba0572e26af8024f1",
-      "bytes": 48761
+      "sourceHash": "2a7693bb6cde1b57b1475f90dc3ed1df101cee9490fb6d618a93d3708bd4faba",
+      "bytes": 50762
     },
     "motion": {
-      "sourceHash": "4bb3a8dc95b0cf3c14d4301771c5f8d9d6e607c4ed8e28bc53661506fa64306e",
-      "bytes": 11383
+      "sourceHash": "7c7705cb6fa3de9119ff838a59be2fc8e48542c2f59b0ed8229a3bd44b917b72",
+      "bytes": 11356
     },
     "motor": {
-      "sourceHash": "c4112ce2865c26f4ff03b911f24e964069d928f7b27451ea2f133882a6c9bfe2",
-      "bytes": 12371
+      "sourceHash": "7ebad0a047dc8916f44b3faedfe198d0d1882b2b4b3f40d8b861b36c8ce12d51",
+      "bytes": 12344
     },
     "mp3": {
-      "sourceHash": "d0d1927095c66a78dae0f5beda3c0362d2b33c88a1c9be53ff2c45ebec751fe5",
-      "bytes": 45631
+      "sourceHash": "288ca8644cedf53fec5288ab7ff49a2e64f4b66f2e2597901066eb2d92689310",
+      "bytes": 45604
     },
     "obstacle": {
-      "sourceHash": "fa3288317d36d93fef7af6e398b350c9a049b7c6736d9016708897b95f9896dd",
-      "bytes": 11405
+      "sourceHash": "8bf7469bf34aa44dff5407086eff6af87fd411aa2cbe663c316e4d0c2cc73eda",
+      "bytes": 11378
     },
     "oled": {
-      "sourceHash": "a817119f34b3840cc889018d3e784dc6e400e1cc748989bf241f7ca8ba332ed3",
-      "bytes": 62908
+      "sourceHash": "a279e94fc0b51e66a369bef3b24c00e00fa8422d9f0a1e77189f095d0d4f2d1f",
+      "bytes": 65121
     },
     "parking": {
-      "sourceHash": "7b037f271dbf6dbf74619011e1e90272f88054aa3424bc48d5e24254120e8db5",
-      "bytes": 35255
+      "sourceHash": "b166ea81bfea214b5bf91267613f75bf9379dcab9e9de253b591d5415a821aef",
+      "bytes": 37415
     },
     "plant": {
-      "sourceHash": "0d4c1ae4d280805e2f4ad32b5893fadd9bacd5f55354349fbf32d4267f48e537",
-      "bytes": 69192
+      "sourceHash": "fa3d6c656467ad8b7724a1f8d1d1ab3866c8dcd3e38fd37951b1d6d4bb2268bb",
+      "bytes": 71360
     },
     "power": {
-      "sourceHash": "af4dbfdc690c13bd31126239d668cf5b2ff0bea98a7d5125bfb3de9501f16632",
-      "bytes": 40442
+      "sourceHash": "10a30fe61b8a6d28661c9860f1c3b27da51304c56c461c30261b4d56558c45ec",
+      "bytes": 40415
     },
     "rain": {
-      "sourceHash": "740d80421cbbbf57f46410ff6087cca7e266c3937a97a12d95fd50cd1839dc4f",
-      "bytes": 40984
+      "sourceHash": "e371a8239e186e1fcb2ee93e6b32689d843b45f4b13d97ac3b85cacc795dfed7",
+      "bytes": 40957
     },
     "rainalert": {
-      "sourceHash": "4f849a61c9a1567b1b1fc7a1859e0f974e9e6f9fb7dca3605f8672514d213cbc",
-      "bytes": 12643
+      "sourceHash": "430fe1be3d83ecea31f8b4f4bb65df619a8691a10af94388977407c7bde8d6c7",
+      "bytes": 12616
     },
     "relay": {
-      "sourceHash": "7727e48b407be46b8436149251470222cacab6dc98872a1eff226d2e93cc414c",
-      "bytes": 11060
+      "sourceHash": "af883b47628df5aa9fd4e35031b333166b2af1e6dbf746549239afb7e8cf9773",
+      "bytes": 11033
     },
     "rgb": {
-      "sourceHash": "014466de27d11c65fa3fcd0b2724451ee5eebf2f502d682ee1d827e5d762ac1c",
-      "bytes": 11368
+      "sourceHash": "494cc6ea8af5772f251b1dad48b2bcd12240b55cd453a8fca89f77a3311123cc",
+      "bytes": 11341
+    },
+    "ring": {
+      "sourceHash": "324e7cdfb0413c77183ac341d70e8e52091401ee2d8bcece98d8dfbd5bf323c2",
+      "bytes": 42464
     },
     "robot": {
-      "sourceHash": "95acb051b08cd5c83ed1546b5f4a1b0d876539e6ed19dcacd0bb7d56aebef89f",
-      "bytes": 41215
+      "sourceHash": "f167b3e67529abae8749915d477ffdfb84e19e7f161c93cbef99ef959ccf5c1d",
+      "bytes": 41188
     },
     "security": {
-      "sourceHash": "acf7610c3ec1252031ac2330b22918c4470daf3590c8368a4be7676887992796",
-      "bytes": 34778
+      "sourceHash": "2a8d86c32929a40c1bb70de1fc2c5ec8105309e41189beafd241c96bb6074a93",
+      "bytes": 36938
     },
     "servo": {
-      "sourceHash": "0d131801123d93974601f923a7c504d0e0667c95610d03795d1fed1b333913dc",
-      "bytes": 12368
+      "sourceHash": "2d526dde333af4621e1bc0f7f84929891d4fdd76a42fb1413b115e4959c47b82",
+      "bytes": 12341
     },
     "sms": {
-      "sourceHash": "af2a8b344012d02ed87c0f840bfb5f387ecccc8a4f9c626be1cfe0838c5d8f25",
-      "bytes": 45475
+      "sourceHash": "7a9493989bed9852ee862cfbf1adf071575164edcadb168e02bcd88ad1c3c755",
+      "bytes": 45447
     },
     "soil": {
-      "sourceHash": "8290fcecb1fbfe249e7683ff597ffbb5dbae6b8d42b7cfc4d2e72129ea774ad8",
-      "bytes": 40721
+      "sourceHash": "9bf215cc6b3c23e96e2e10c2cd845b0f6da5174b9ae2a6de525f5a97a64615e1",
+      "bytes": 40694
     },
     "streetlight": {
-      "sourceHash": "8978bc9ecc8cbe25e66975ba721571f9f90857baddf0cb944b6e4ee4141ab146",
-      "bytes": 41310
+      "sourceHash": "28caeac46f0ae43ee056b2d9a27f534fc31414886136622adea46a658d7ff948",
+      "bytes": 41283
+    },
+    "tft": {
+      "sourceHash": "42df5bd816cc1b12a6ba485c0a6e6efea39db4f7141034d94e453fd036dec894",
+      "bytes": 65714
     },
     "thermo": {
-      "sourceHash": "c9712c64db741f82d4e315366bc39ba77d0713f308c9ba38420527ccd42bd1e3",
-      "bytes": 52051
+      "sourceHash": "e5be7421b6afec8d8aac01d4c67fbcd8a509bce5a9b557f97dc852abebb0f183",
+      "bytes": 52023
     },
     "water": {
-      "sourceHash": "7d367669490ac17d01c17a406fcb270d92145d17de4697e734d10663c3233c8c",
-      "bytes": 39500
+      "sourceHash": "bb8238baacb6f31a1362f144b76093a548605e1cbe81f04371c8decd1b3fcb61",
+      "bytes": 39473
     },
     "watering": {
-      "sourceHash": "3e8549fe6a358ac41433e24e89e0ec33c6183842e99a67ac30f0c6f4534babbd",
-      "bytes": 11601
+      "sourceHash": "e2225b571499f2f54f5fecb710d976e7275796e3c9f779032729b6b3b6085c51",
+      "bytes": 11574
     },
     "weather": {
-      "sourceHash": "216a3e4362e251aaff8272837fbf8dd73dad8ef97ca6921338e26094d292c8db",
-      "bytes": 53887
+      "sourceHash": "edab5390cc03bfb256e51f76dbd5b94d7514c434c082e2025d359c922233e656",
+      "bytes": 56178
     }
   }
 }

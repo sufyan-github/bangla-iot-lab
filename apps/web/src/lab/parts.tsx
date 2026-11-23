@@ -1973,6 +1973,140 @@ export function OledView(props: {
   );
 }
 
+/** How a WS2812B's colour looks lit: its hue at full strength, and how strongly it glows. */
+function ledGlow(colour: number): { fill: string; opacity: number } | null {
+  const [r, g, b] = [(colour >> 16) & 0xff, (colour >> 8) & 0xff, colour & 0xff];
+  const top = Math.max(r, g, b);
+  if (top === 0) return null;
+  // Even a small value is plainly lit on a real LED, so the hue is shown full and the glow says how bright.
+  const scale = (c: number) => Math.round((c / top) * 255);
+  return {
+    fill: `rgb(${scale(r)} ${scale(g)} ${scale(b)})`,
+    opacity: 0.45 + 0.55 * Math.sqrt(top / 255),
+  };
+}
+
+/**
+ * WS2812B LED ring: a black ring of square LEDs, each drawn in the colour it
+ * was sent, above a tab with the four legs. The first LED is beside DIN, at the
+ * bottom, and the rest follow clockwise.
+ */
+export function LedRingView(props: {
+  first: Point;
+  last: Point;
+  colours: readonly number[];
+  leds: number;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const pins = [-length / 2, -length / 6, length / 6, length / 2];
+  const radius = 48;
+  const centre = -radius - 12;
+  const size = props.leds > 16 ? 8 : 10;
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 10} y={-16} width={length + 20} height={22} color="#16191b" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {pins.map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      <g fontSize={6.5} fontWeight={700} fill="#dfe9f5" textAnchor="middle" pointerEvents="none">
+        {['VCC', 'GND', 'DIN', 'DOUT'].map((name, i) => (
+          <text key={name} x={pins[i]} y={-8}>
+            {name}
+          </text>
+        ))}
+      </g>
+      <circle cy={centre + 3} r={radius} fill="#000" opacity={0.22} />
+      <circle cy={centre} r={radius - 11} fill="none" stroke="#15191c" strokeWidth={22} />
+      <circle cy={centre} r={radius - 11} fill="none" stroke="url(#shade-board)" strokeWidth={22} />
+      {Array.from({ length: props.leds }, (_, i) => {
+        const angle = Math.PI / 2 + (i * 2 * Math.PI) / props.leds;
+        const x = Math.cos(angle) * (radius - 11);
+        const y = centre + Math.sin(angle) * (radius - 11);
+        const glow = ledGlow(props.colours[i] ?? 0);
+        return (
+          <g key={i} transform={`translate(${x} ${y})`}>
+            <rect
+              x={-size / 2}
+              y={-size / 2}
+              width={size}
+              height={size}
+              rx={1}
+              fill="#eef0ee"
+              stroke="#9aa09c"
+              strokeWidth={0.6}
+            />
+            {glow ? (
+              <>
+                <circle r={size * 0.95} fill={glow.fill} opacity={glow.opacity * 0.45} />
+                <circle r={size * 0.32} fill={glow.fill} opacity={glow.opacity} />
+              </>
+            ) : (
+              <circle r={size * 0.28} fill="#c9cdca" />
+            )}
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+/**
+ * 1.54-inch ST7789 colour display module: a square glass on its board, with the
+ * picture the chip shows, and eight legs along the bottom.
+ */
+export function TftView(props: {
+  first: Point;
+  last: Point;
+  image: string | undefined;
+  /** True while the backlight is on: the glass is grey even with nothing drawn. */
+  lit: boolean;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const pins = Array.from({ length: 8 }, (_, i) => -length / 2 + (i * length) / 7);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-178} width={length + 24} height={184} color="#1d3f8f" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {pins.map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      <g fontSize={6.5} fontWeight={700} fill="#dfe9f5" textAnchor="middle" pointerEvents="none">
+        {['GND', 'VCC', 'SCL', 'SDA', 'RES', 'DC', 'CS', 'BLK'].map((name, i) => (
+          <text key={name} x={pins[i]} y={-9.5}>
+            {name}
+          </text>
+        ))}
+      </g>
+      <rect x={-78} y={-172} width={156} height={156} rx={3} fill="#0b0e12" />
+      <rect x={-72} y={-166} width={144} height={144} fill={props.lit ? '#060708' : '#020303'} />
+      {props.image && (
+        <image
+          href={props.image}
+          x={-72}
+          y={-166}
+          width={144}
+          height={144}
+          preserveAspectRatio="none"
+        />
+      )}
+      <rect
+        x={-78}
+        y={-172}
+        width={156}
+        height={156}
+        rx={3}
+        fill="url(#shade-board)"
+        opacity={0.4}
+      />
+    </g>
+  );
+}
+
 /**
  * L298N motor driver module: the chip on its heat sink, motor screws on the two
  * sides, and along the bottom the power screws and the six control pins.

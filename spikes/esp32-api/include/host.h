@@ -75,6 +75,25 @@ int host_i2c_transfer(int sda, int scl, int address, const uint8_t* write, size_
 int host_onewire(int pin, int op, int value);
 
 /**
+ * One exchange on an SPI bus whose clock, data-out and data-in lines are the
+ * pins `sck`, `mosi` and `miso`, with the board as master: `length` bytes go
+ * out on `mosi`, most significant bit first, and as many come back on `miso`
+ * into `in` (which may be null). Which device listens is the world's business:
+ * it reads the chip-select and other pins as they are at this moment. No time
+ * passes here: the library charges what the exchange would take.
+ */
+void host_spi_transfer(int sck, int mosi, int miso, const uint8_t* out, uint8_t* in,
+                       size_t length);
+
+/**
+ * Bytes sent on pin `pin` as a WS2812-style LED data stream: each byte as eight
+ * pulses, most significant bit first, at `khz` (800 or 400) kilobits a second,
+ * followed by the line resting LOW. No time passes here: the library charges
+ * what sending them would take.
+ */
+void host_led_strip(int pin, const uint8_t* data, size_t length, int khz);
+
+/**
  * The board's saved settings (what the Preferences library keeps in flash), as
  * text. Copies up to `capacity` bytes into `buffer` and returns the whole
  * length; with a null buffer it only says how long it is.

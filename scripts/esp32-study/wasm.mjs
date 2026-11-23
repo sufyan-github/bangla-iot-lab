@@ -94,6 +94,8 @@ export function buildLibraryWasm(work, optimise = '-O2') {
     ['src/tinygps.cpp', 'tinygps.o'],
     ['src/dfplayer.cpp', 'dfplayer.o'],
     ['src/serial-ports.cpp', 'serial-ports.o'],
+    ['src/spi.cpp', 'spi.o'],
+    ['src/neopixel.cpp', 'neopixel.o'],
     ['wasm/entry.cpp', 'entry.o'],
   ]) {
     const built = compile(path.join(library, file), path.join(work, object), optimise, [
