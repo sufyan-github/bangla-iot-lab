@@ -28,7 +28,8 @@ import {
 import { netName } from './netlist';
 import { Bme280, Ina219, type I2cDevice, type Ina219Inputs } from './i2c-sensors';
 import { Ds18b20 } from './onewire-sensors';
-import { Neo6m, Pms5003, garbled, type UartDevice } from './uart-devices';
+import { Neo6m, Pms5003, garbled, type UartDevice, type UartModuleStatus } from './uart-devices';
+import { Hc05, Mp3Player, Sim800l } from './uart-modules';
 import { Ssd1306 } from './ssd1306';
 
 /** Turns bytes into base64 text, in a browser, a worker or Node. */
@@ -145,6 +146,7 @@ export class Peripherals {
   private readonly wentHighAt = new Map<PinKey, number>();
   private readonly echoBusyUntil = new Map<string, number>();
   private powered: (id: string) => boolean = () => false;
+  private boardClock: (boardId: string) => number | undefined = () => undefined;
 
   /**
    * Board inputs driven by a sensor's timed pulses, which the circuit's voltages
@@ -213,9 +215,24 @@ export class Peripherals {
           scl: pinOf.direct(component.pins.scl),
           address: component.type === 'bme280' ? component.props.address : INA219_ADDRESS,
         });
-      } else if (component.type === 'gps' || component.type === 'pms5003') {
+      } else if (
+        component.type === 'gps' ||
+        component.type === 'pms5003' ||
+        component.type === 'bluetooth' ||
+        component.type === 'mp3' ||
+        component.type === 'gsm'
+      ) {
         const chip = this.serialChips.get(component.id);
-        if (component.type === 'gps') {
+        if (component.type === 'bluetooth') {
+          if (chip instanceof Hc05) chip.setConnected(component.props.paired);
+          else this.serialChips.set(component.id, new Hc05(component.props.paired));
+        } else if (component.type === 'mp3') {
+          if (chip instanceof Mp3Player) chip.setTracks(component.props.tracks);
+          else this.serialChips.set(component.id, new Mp3Player(component.props.tracks));
+        } else if (component.type === 'gsm') {
+          if (chip instanceof Sim800l) chip.setSignal(component.props.signal);
+          else this.serialChips.set(component.id, new Sim800l(component.props.signal));
+        } else if (component.type === 'gps') {
           const sky = { ...component.props };
           if (chip instanceof Neo6m) chip.setSky(sky);
           else this.serialChips.set(component.id, new Neo6m(sky));
@@ -298,6 +315,29 @@ export class Peripherals {
     const chip = this.serialChips.get(module.id)!;
     const bytes = chip.transmit(port.timeMs);
     return chip.baud === port.baud ? bytes : garbled(bytes);
+  }
+
+  /** Sets how the board each module is wired to tells the time: its program's clock. */
+  setBoardClock(clock: (boardId: string) => number | undefined): void {
+    this.boardClock = clock;
+  }
+
+  /** The program's clock on the board a serial module is wired to, if any. */
+  private moduleTime(id: string): number | undefined {
+    const module = this.serialModules.find((m) => m.id === id);
+    const key = module?.tx ?? module?.rx;
+    return key ? this.boardClock(key.slice(0, key.lastIndexOf(':'))) : undefined;
+  }
+
+  /**
+   * Text typed on a phone to a module: over Bluetooth, or as an SMS. It arrives
+   * only while the module is powered and wired to a running board.
+   */
+  phone(id: string, text: string): void {
+    const chip = this.serialChips.get(id);
+    const time = this.moduleTime(id);
+    if (!chip?.fromPhone || time === undefined || !this.powered(id)) return;
+    chip.fromPhone(text, time);
   }
 
   /** Tells each thermometer whether its line has a pull-up, as the circuit is now solved. */
@@ -481,10 +521,21 @@ export class Peripherals {
       angle?: number;
       lcd?: { lines: [string, string] };
       oled?: { lit: boolean; brightness: number; pixels?: string };
-    }
+    } & UartModuleStatus
   > {
     const status: ReturnType<Peripherals['status']> = {};
     for (const [id, angle] of this.angles) if (this.powered(id)) status[id] = { angle };
+    for (const [id, chip] of this.serialChips) {
+      // A phone keeps its conversation whether or not the module is on.
+      if (!chip.status) continue;
+      const shown = chip.status(this.moduleTime(id) ?? 0);
+      if (!this.powered(id)) {
+        if (shown.phone) shown.phone.connected = false;
+        delete shown.player;
+        if (shown.network) shown.network.registered = false;
+      }
+      status[id] = shown;
+    }
     for (const [id, display] of this.displays) {
       if (this.powered(id) && display.displayOn) status[id] = { lcd: { lines: display.lines() } };
     }

@@ -92,6 +92,7 @@ export function buildLibraryWasm(work, optimise = '-O2') {
     ['src/preferences.cpp', 'preferences.o'],
     ['src/onewire.cpp', 'onewire.o'],
     ['src/tinygps.cpp', 'tinygps.o'],
+    ['src/dfplayer.cpp', 'dfplayer.o'],
     ['src/serial-ports.cpp', 'serial-ports.o'],
     ['wasm/entry.cpp', 'entry.o'],
   ]) {

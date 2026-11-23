@@ -27,3 +27,5 @@ export {
   type Reading,
   type SimulationResult,
 } from './simulate';
+export type { PhoneMessage } from './uart-devices';
+export { LAB_PHONE_NUMBER } from './uart-modules';

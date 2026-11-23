@@ -51,6 +51,10 @@ import {
   BME280_SUPPLY_RESISTANCE,
   DS18B20_DQ_LEAK,
   GPS_SUPPLY_RESISTANCE,
+  BLUETOOTH_SUPPLY_RESISTANCE,
+  MP3_SUPPLY_RESISTANCE,
+  GSM_SUPPLY_RESISTANCE,
+  GSM_TX_VOLTS,
   PMS_SUPPLY_RESISTANCE,
   UART_TX_RESISTANCE,
   UART_TX_VOLTS,
@@ -242,6 +246,15 @@ export interface Netlist {
 }
 
 /** The electrical net an endpoint belongs to: a board strip or a terminal. */
+/** Each serial module's supply load. */
+const SERIAL_SUPPLY_RESISTANCE = {
+  gps: GPS_SUPPLY_RESISTANCE,
+  pms5003: PMS_SUPPLY_RESISTANCE,
+  bluetooth: BLUETOOTH_SUPPLY_RESISTANCE,
+  mp3: MP3_SUPPLY_RESISTANCE,
+  gsm: GSM_SUPPLY_RESISTANCE,
+} as const;
+
 export function netName(endpoint: string): string {
   if (isHole(endpoint)) return stripOf(endpoint);
   // A board's ground sockets are the same piece of copper.
@@ -795,7 +808,10 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         break;
       }
       case 'gps':
-      case 'pms5003': {
+      case 'pms5003':
+      case 'bluetooth':
+      case 'mp3':
+      case 'gsm': {
         // A supply load, and a TX line held HIGH between bytes; the bytes themselves
         // travel between the module and the board in the session, not here.
         const ground = node(component.pins.gnd);
@@ -806,7 +822,7 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
               id,
               node(component.pins.vcc),
               ground,
-              component.type === 'gps' ? GPS_SUPPLY_RESISTANCE : PMS_SUPPLY_RESISTANCE,
+              SERIAL_SUPPLY_RESISTANCE[component.type],
             ),
           ),
         );
@@ -815,7 +831,7 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
             `${id}:tx`,
             node(component.pins.tx),
             ground,
-            UART_TX_VOLTS,
+            component.type === 'gsm' ? GSM_TX_VOLTS : UART_TX_VOLTS,
             UART_TX_RESISTANCE,
           ),
         );

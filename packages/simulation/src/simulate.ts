@@ -1,4 +1,5 @@
 import { solveDc, type Device, type NpnTransistor, type Solution } from '@banglalab/circuit-engine';
+import type { PhoneMessage } from './uart-devices';
 import {
   LOGIC_CHIP_GATES,
   boardTerminals,
@@ -28,6 +29,7 @@ import {
   ACS712_RANGE_AMPS,
   SIREN_ON_VOLTAGE,
   BME280_MAX_SUPPLY,
+  GSM_MAX_SUPPLY,
   INA219_MAX_BUS,
   INA219_MAX_SHUNT_VOLTS,
   CELL_CUTOFF_VOLTS,
@@ -106,6 +108,12 @@ export interface Reading {
   angle?: number;
   /** What a character LCD is showing: its two lines of sixteen characters. */
   lcd?: { lines: [string, string] };
+  /** A phone's conversation with a Bluetooth or GSM module. */
+  phone?: { connected: boolean; messages: PhoneMessage[] };
+  /** What an MP3 player is doing. */
+  player?: { track: number; playing: boolean; volume: number; ready: boolean };
+  /** A GSM module's network. */
+  network?: { registered: boolean; signal: number };
   /**
    * What an OLED display is showing. `pixels` is the picture, 128 × 64, one bit
    * a pixel, row by row from the top with the leftmost pixel in the highest
@@ -144,6 +152,7 @@ export type DiagnosticCode =
   | 'regulator-overload'
   | 'regulator-dropout'
   | 'module-overvoltage'
+  | 'gsm-overvoltage'
   | 'onewire-no-pullup'
   | 'solver-failed';
 
@@ -1383,6 +1392,20 @@ export class Observation {
             componentId: id,
             volts: supply,
             limit: BME280_MAX_SUPPLY,
+          });
+        }
+      }
+      if (component.type === 'gsm') {
+        // The SIM800L runs from a lithium cell's voltage: 5 V harms it (SIMCom's limit is 4.4 V).
+        // Its part is its supply load, so its voltage is its supply.
+        const supply = extreme((s) => s.parts[id]!.voltage, Math.max);
+        if (supply > GSM_MAX_SUPPLY) {
+          result.diagnostics.push({
+            code: 'gsm-overvoltage',
+            severity: 'error',
+            componentId: id,
+            volts: supply,
+            limit: GSM_MAX_SUPPLY,
           });
         }
       }

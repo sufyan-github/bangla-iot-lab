@@ -1,0 +1,202 @@
+{
+  "id": "bluetooth-light",
+  "order": 38,
+  "parts": ["hc-05", "resistor", "led-5mm"],
+  "title": {
+    "bn": "ফোন দিয়ে বাতি: HC-05 ব্লুটুথ",
+    "en": "A light from your phone: HC-05 Bluetooth"
+  },
+  "summary": {
+    "bn": "ব্লুটুথে ফোন থেকে লিখে বাতি জ্বালাও-নেভাও, আর বোর্ডের উত্তর ফোনে পড়ো।",
+    "en": "Switch a light by typing on a phone over Bluetooth, and read the board's answer on the phone."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "bluetooth",
+  "steps": [
+    {
+      "text": {
+        "bn": "**HC-05 ব্লুটুথ মডিউল** বসাও। এর **VCC**-তে ৩.৬ V-এর বেশি লাগে, তাই যাবে **VIN**-এ (৫ V); **GND** যাবে **GND**-তে।",
+        "en": "Place the **HC-05 Bluetooth module**. Its **VCC** needs more than 3.6 V, so it goes to **VIN** (5 V); **GND** goes to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "bluetooth"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "bluetooth",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "bluetooth",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সিরিয়াল আড়াআড়ি লাগাও: মডিউল-এর **TX** যাবে বোর্ডের **RX2**-তে (GPIO16), **RX** যাবে **TX2**-তে (GPIO17)।",
+        "en": "Wire the serial line crossed: the module's **TX** to the board's **RX2** (GPIO16), its **RX** to **TX2** (GPIO17)."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "bluetooth",
+            "pin": "tx"
+          },
+          "to": {
+            "board": "rx2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "bluetooth",
+            "pin": "rx"
+          },
+          "to": {
+            "board": "tx2"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। মডিউলটা বোর্ডের কাছে শুধু একটা সিরিয়াল পোর্ট: ফোন যা লেখে তা `bt.available()`-এ আসে, আর `bt.println()` যা লেখে তা ফোনে যায়।",
+        "en": "**Put this lesson's program on the board.** To the board, the module is just a serial port: what the phone writes arrives in `bt.available()`, and what `bt.println()` writes goes to the phone."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "bluetooth"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। মডিউলে ট্যাপ করো: ফোনে বোর্ডের শুভেচ্ছা দেখবে। এবার ফোন থেকে **1** লিখে পাঠাও। বাতি জ্বলবে, আর ফোনে উত্তর আসবে।",
+        "en": "Press **Run**. Tap the module: the phone shows the board's greeting. Now type **1** on the phone and send it. The light comes on, and an answer comes back to the phone."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "ফোন বলল: 1",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"ফোন বলল: 1\"",
+            "en": "The serial monitor shows \"ফোন বলল: 1\" (the phone said 1)"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার **0** পাঠাও: বাতি নিভবে। তারপর মডিউলে ট্যাপ করে **ফোন যুক্ত নেই** করো, আর আবার 1 পাঠানোর চেষ্টা করো: কিছুই যায় না।",
+        "en": "Now send **0**: the light goes out. Then tap the module, set it to **no phone connected**, and try sending 1 again: nothing goes through."
+      },
+      "checks": [
+        {
+          "kind": "serial",
+          "matches": "ফোন বলল: 0",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"ফোন বলল: 0\"",
+            "en": "The serial monitor shows \"ফোন বলল: 0\" (the phone said 0)"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "off"
+        },
+        {
+          "kind": "prop",
+          "part": "bluetooth",
+          "prop": "paired",
+          "equals": false
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "ব্লুটুথ মডিউল তারের বদলে বাতাসে সিরিয়াল লাইন টানে: বোর্ডের কাছে এটা আরেকটা সিরিয়াল পোর্ট।",
+      "ফোন থেকে আসা লেখার শেষে নতুন লাইন থাকে: `trim()` দিয়ে সেটা ফেলে দিতে হয়।",
+      "ফোন যুক্ত না থাকলে কিছুই আসা-যাওয়া করে না, আর প্রোগ্রাম সেটা জানতেও পারে না।"
+    ],
+    "en": [
+      "A Bluetooth module carries a serial line through the air instead of a wire: to the board it is one more serial port.",
+      "What comes from the phone ends with a newline: `trim()` takes it off.",
+      "With no phone connected nothing passes either way, and the program cannot even tell."
+    ]
+  },
+  "tryNext": {
+    "bn": "প্রোগ্রামে একটা নতুন কমান্ড যোগ করো: \"?\" পাঠালে বোর্ড উত্তরে বলুক বাতি জ্বলছে না নিভে আছে।",
+    "en": "Add a new command to the program: when \"?\" is sent, the board answers whether the light is on or off."
+  }
+}

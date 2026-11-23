@@ -12,6 +12,27 @@ export interface UartDevice {
   transmit(timeMs: number): number[];
   /** As when switched on. */
   reset(): void;
+  /** Text typed on the phone (Bluetooth or SMS), arriving at `timeMs`. */
+  fromPhone?(text: string, timeMs: number): void;
+  /** What it shows at `timeMs`, merged into its reading. */
+  status?(timeMs: number): UartModuleStatus;
+}
+
+/** One message in a phone's conversation with a module. */
+export interface PhoneMessage {
+  /** Who wrote it: the phone, or the module (that is, the board's program). */
+  from: 'phone' | 'module';
+  text: string;
+  /** For an SMS, the other side's number. */
+  number?: string;
+  /** An SMS that did not arrive: the module had no network. */
+  undelivered?: boolean;
+}
+
+export interface UartModuleStatus {
+  phone?: { connected: boolean; messages: PhoneMessage[] };
+  player?: { track: number; playing: boolean; volume: number; ready: boolean };
+  network?: { registered: boolean; signal: number };
 }
 
 /** Milliseconds a byte takes on the wire: a start bit, eight data bits and a stop bit. */
@@ -27,7 +48,7 @@ export function garbled(bytes: number[]): number[] {
 }
 
 /** Bytes to send, each with the time its stop bit ends. */
-class Outbox {
+export class Outbox {
   private queue: { at: number; byte: number }[] = [];
   private freeAt = 0;
   constructor(private readonly baud: number) {}

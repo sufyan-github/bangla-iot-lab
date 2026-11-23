@@ -12,10 +12,12 @@ import {
   CAPACITOR_VALUES,
   POTENTIOMETER_VALUES,
   RESISTOR_VALUES,
+  LAB_PHONE_NUMBER,
   type Diagnostic,
   type Reading,
 } from '@banglalab/simulation';
 import { useState, type ReactNode } from 'react';
+import { simulation } from '../sim/client';
 import { useT } from '../i18n';
 import { oledImage } from './oled-image';
 import { parseSettings } from './settings';
@@ -55,6 +57,121 @@ function Choice(props: {
     >
       {props.children}
     </button>
+  );
+}
+
+/**
+ * The phone on the other side of a Bluetooth or GSM module: its conversation
+ * with the board, and a box to type into while the circuit runs.
+ */
+function PhoneChat({ id, sms }: { id: string; sms: boolean }) {
+  const phone = useLab((s) => s.result?.readings[id]?.phone);
+  const running = useLab((s) => s.running);
+  const [draft, setDraft] = useState('');
+  const { t } = useT();
+  const send = () => {
+    const text = draft.trim();
+    if (!text || !running) return;
+    void simulation().phone(id, text);
+    setDraft('');
+  };
+  const connected = running && phone?.connected;
+  return (
+    <div className="space-y-2" data-testid="phone">
+      <p
+        className="text-sm text-ink-soft"
+        data-testid="phone-state"
+        data-connected={String(!!connected)}
+      >
+        {!running
+          ? t('inspector.phone.stopped')
+          : connected
+            ? t(sms ? 'inspector.phone.network' : 'inspector.phone.paired', {
+                number: LAB_PHONE_NUMBER,
+              })
+            : t(sms ? 'inspector.phone.noNetwork' : 'inspector.phone.unpaired')}
+      </p>
+      <ol
+        className="max-h-56 space-y-1.5 overflow-auto rounded-xl border border-line bg-paper p-2"
+        data-testid="phone-messages"
+        aria-live="polite"
+      >
+        {(phone?.messages ?? []).map((message, i) => (
+          <li
+            key={i}
+            data-from={message.from}
+            className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-sm break-words ${
+              message.from === 'phone'
+                ? 'ml-auto bg-amber-soft text-ink'
+                : 'mr-auto border border-line bg-surface text-ink'
+            }`}
+          >
+            {message.number && message.from === 'module' && (
+              <span className="block text-xs text-ink-soft">
+                {t('inspector.phone.to', { number: message.number })}
+              </span>
+            )}
+            {message.text}
+            {message.undelivered && (
+              <span className="block text-xs text-ink-soft">
+                {t('inspector.phone.undelivered')}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+      <form
+        className="flex gap-1.5"
+        onSubmit={(event) => {
+          event.preventDefault();
+          send();
+        }}
+      >
+        <input
+          type="text"
+          data-testid="phone-input"
+          value={draft}
+          maxLength={160}
+          disabled={!running}
+          onChange={(event) => setDraft(event.target.value)}
+          aria-label={t(sms ? 'inspector.phone.smsLabel' : 'inspector.phone.label')}
+          className="min-h-11 min-w-0 flex-1 rounded-lg border-2 border-line bg-surface px-3"
+        />
+        <button
+          type="submit"
+          data-testid="phone-send"
+          disabled={!running || !draft.trim()}
+          className="min-h-11 rounded-lg bg-ink px-4 font-medium text-paper disabled:opacity-40"
+        >
+          {t('inspector.phone.send')}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+/** What an MP3 player is doing, while the circuit runs. */
+function PlayerState({ id }: { id: string }) {
+  const player = useLab((s) => s.result?.readings[id]?.player);
+  const { t, number } = useT();
+  return (
+    <p
+      className="text-sm text-ink"
+      data-testid="player-state"
+      data-track={player?.track ?? 0}
+      data-playing={String(!!player?.playing)}
+    >
+      {!player?.ready
+        ? t('inspector.player.off')
+        : player.playing
+          ? t('inspector.player.playing', {
+              track: number(player.track),
+              volume: number(player.volume),
+            })
+          : player.track > 0
+            ? t('inspector.player.paused', { track: number(player.track) })
+            : t('inspector.player.idle')}
+    </p>
   );
 }
 
@@ -345,6 +462,68 @@ function PartSettings({ part }: { part: CircuitComponent }) {
             className="h-11 w-full accent-amber"
           />
         </label>
+      </div>
+    );
+  }
+  if (part.type === 'bluetooth') {
+    return (
+      <div className="space-y-3">
+        <div className="flex gap-1.5">
+          <Choice
+            testId="bluetooth-paired"
+            selected={part.props.paired}
+            onClick={() => setProps(part.id, { paired: !part.props.paired })}
+          >
+            {t(part.props.paired ? 'inspector.bluetoothPaired' : 'inspector.bluetoothUnpaired')}
+          </Choice>
+        </div>
+        <PhoneChat id={part.id} sms={false} />
+      </div>
+    );
+  }
+  if (part.type === 'mp3') {
+    return (
+      <div className="space-y-3">
+        <label className="block">
+          <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+            {t('inspector.tracks')}
+            <span className="font-medium text-ink tabular-nums">{number(part.props.tracks)}</span>
+          </span>
+          <input
+            type="range"
+            data-testid="slider-tracks"
+            min={1}
+            max={30}
+            step={1}
+            value={part.props.tracks}
+            onChange={(event) => setProps(part.id, { tracks: Number(event.target.value) })}
+            className="h-11 w-full accent-amber"
+          />
+        </label>
+        <PlayerState id={part.id} />
+      </div>
+    );
+  }
+  if (part.type === 'gsm') {
+    return (
+      <div className="space-y-3">
+        <label className="block">
+          <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+            {t('inspector.signal')}
+            <span className="font-medium text-ink tabular-nums">{number(part.props.signal)}</span>
+          </span>
+          <input
+            type="range"
+            data-testid="slider-signal"
+            min={0}
+            max={31}
+            step={1}
+            value={part.props.signal}
+            onChange={(event) => setProps(part.id, { signal: Number(event.target.value) })}
+            className="h-11 w-full accent-amber"
+          />
+        </label>
+        <PhoneChat id={part.id} sms />
       </div>
     );
   }

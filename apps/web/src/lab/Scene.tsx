@@ -36,6 +36,9 @@ import {
   Acs712View,
   Ds18b20View,
   GpsView,
+  BluetoothView,
+  Mp3View,
+  GsmView,
   PmsView,
   LineSensorView,
   SirenView,
@@ -445,6 +448,33 @@ export function BoardPartDrawing(props: {
           gnd={at(part.pins.gnd)}
           signal={at(part.pins.signal)}
           angle={reading?.angle}
+          selected={selected}
+        />
+      );
+    case 'bluetooth':
+      return (
+        <BluetoothView
+          first={at(part.pins.vcc)}
+          last={at(part.pins.rx)}
+          connected={part.props.paired && !!reading?.phone?.connected}
+          selected={selected}
+        />
+      );
+    case 'mp3':
+      return (
+        <Mp3View
+          first={at(part.pins.vcc)}
+          last={at(part.pins.gnd)}
+          playing={!!reading?.player?.playing}
+          selected={selected}
+        />
+      );
+    case 'gsm':
+      return (
+        <GsmView
+          first={at(part.pins.vcc)}
+          last={at(part.pins.gnd)}
+          registered={!!reading?.network?.registered}
           selected={selected}
         />
       );

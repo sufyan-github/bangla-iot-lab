@@ -149,6 +149,11 @@ const api = {
     return loaded;
   },
 
+  /** Text typed on a module's phone panel: a Bluetooth message or an SMS. */
+  phone(partId: string, text: string): void {
+    session?.phone(partId, text);
+  },
+
   /** Chooses the signals recorded for the oscilloscope; remembered across runs. */
   setProbes(next: Probe[]): void {
     probes = next;

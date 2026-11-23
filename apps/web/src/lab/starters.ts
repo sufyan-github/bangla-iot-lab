@@ -47,6 +47,9 @@ import esp32MonitorSource from '@banglalab/board-emulators/fixtures/esp32-starte
 import esp32ThermoSource from '@banglalab/board-emulators/fixtures/esp32-starters/thermo.ino?raw';
 import esp32GpsSource from '@banglalab/board-emulators/fixtures/esp32-starters/gps.ino?raw';
 import esp32AirSource from '@banglalab/board-emulators/fixtures/esp32-starters/air.ino?raw';
+import esp32BluetoothSource from '@banglalab/board-emulators/fixtures/esp32-starters/bluetooth.ino?raw';
+import esp32Mp3Source from '@banglalab/board-emulators/fixtures/esp32-starters/mp3.ino?raw';
+import esp32SmsSource from '@banglalab/board-emulators/fixtures/esp32-starters/sms.ino?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -107,6 +110,9 @@ export const ESP32_STARTERS = {
   thermo: { source: esp32ThermoSource },
   gps: { source: esp32GpsSource },
   air: { source: esp32AirSource },
+  bluetooth: { source: esp32BluetoothSource },
+  mp3: { source: esp32Mp3Source },
+  sms: { source: esp32SmsSource },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

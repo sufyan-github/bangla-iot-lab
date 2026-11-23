@@ -1,0 +1,214 @@
+{
+  "id": "sms-light",
+  "order": 40,
+  "parts": ["sim800l", "li-ion-18650", "resistor", "led-5mm"],
+  "title": {
+    "bn": "SMS দিয়ে বাতি: SIM800L আর AT কমান্ড",
+    "en": "A light by SMS: the SIM800L and AT commands"
+  },
+  "summary": {
+    "bn": "AT কমান্ড লিখে GSM মডিউল চালাও: দূর থেকে SMS পাঠিয়ে বাতি জ্বালাও, আর উত্তর SMS পাও।",
+    "en": "Drive a GSM module by writing AT commands: switch a light by sending an SMS from afar, and get an SMS back."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "sms",
+  "steps": [
+    {
+      "text": {
+        "bn": "**SIM800L** আর একটা **18650 সেল** বসাও। SIM800L-এর VCC-তে ৩.৪ থেকে ৪.৪ V লাগে: ESP32-এর ৩.৩ V কম, ৫ V বেশি। তাই সেলের **+** যাবে মডিউলের **VCC**-তে, সেলের **−** যাবে মডিউলের **GND**-তে।",
+        "en": "Place the **SIM800L** and an **18650 cell**. The SIM800L's VCC needs 3.4 V to 4.4 V: the ESP32's 3.3 V is too little and 5 V too much. So the cell's **+** goes to the module's **VCC**, and the cell's **−** to the module's **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "gsm"
+        },
+        {
+          "kind": "part",
+          "type": "cell"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "cell",
+            "pin": "pos"
+          },
+          "to": {
+            "part": "gsm",
+            "pin": "vcc"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "cell",
+            "pin": "neg"
+          },
+          "to": {
+            "part": "gsm",
+            "pin": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "মডিউলের **GND** তার দিয়ে বোর্ডের **GND**-তেও লাগাও: সিরিয়ালের সংকেত মাপা হয় এই এক মাটির সাপেক্ষে। তারপর আড়াআড়ি: মডিউলের **TXD** যাবে **RX2**-তে, **RXD** যাবে **TX2**-তে।",
+        "en": "Also wire the module's **GND** to the board's **GND**: serial signals are measured against this shared ground. Then cross the line: the module's **TXD** to **RX2**, **RXD** to **TX2**."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "gsm",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "gsm",
+            "pin": "tx"
+          },
+          "to": {
+            "board": "rx2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "gsm",
+            "pin": "rx"
+          },
+          "to": {
+            "board": "tx2"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "part",
+          "type": "resistor"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "board": "d2"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [100, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। এতে কোনো লাইব্রেরি নেই: বোর্ড শুধু লেখা পাঠায়, যেমন `AT+CMGF=1` (SMS লেখা হিসেবে), আর মডিউল লেখায় উত্তর দেয়, যেমন `OK`।",
+        "en": "**Put this lesson's program on the board.** It uses no library: the board just writes text such as `AT+CMGF=1` (SMS as text), and the module answers in text, such as `OK`."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "sms"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। মডিউল কয়েক সেকেন্ডে নেটওয়ার্ক খুঁজে পায়, আর প্রোগ্রাম ল্যাবের ফোনে একটা SMS পাঠায়। মডিউলে ট্যাপ করে ফোনে সেটা দেখো।",
+        "en": "Press **Run**. The module finds the network in a few seconds, and the program sends an SMS to the lab's phone. Tap the module to see it on the phone."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "নেটওয়ার্ক পাওয়া গেছে",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"নেটওয়ার্ক পাওয়া গেছে\"",
+            "en": "The serial monitor says the network was found"
+          }
+        },
+        {
+          "kind": "serial",
+          "matches": "SMS পাঠানো হলো",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"SMS পাঠানো হলো\"",
+            "en": "The serial monitor says the SMS was sent"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "ফোন থেকে **ON** লিখে SMS পাঠাও। বাতি জ্বলবে, আর ফোনে উত্তর আসবে। (SMS-এ ইংরেজি অক্ষর লেখো: এই মডিউলের সাধারণ লেখায় বাংলা অক্ষর থাকে না।)",
+        "en": "Send an SMS saying **ON** from the phone. The light comes on, and an answer comes back. (Write in English letters: the module's plain text has no Bangla letters.)"
+      },
+      "checks": [
+        {
+          "kind": "serial",
+          "matches": "SMS এসেছে: ON",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"SMS এসেছে: ON\"",
+            "en": "The serial monitor shows \"SMS এসেছে: ON\" (SMS arrived: ON)"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on"
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "AT কমান্ড হলো মডিউলকে লেখা আদেশ: \"AT\" দিয়ে শুরু, আর উত্তর আসে OK বা ERROR।",
+      "GSM মডিউলের নিজের বিদ্যুৎ লাগে (৩.৪ থেকে ৪.৪ V); আসল মডিউল পাঠানোর মুহূর্তে ২ A পর্যন্ত টানে, তাই দুর্বল সাপ্লাইয়ে বারবার চালু-বন্ধ হয়।",
+      "দুই যন্ত্রের সিরিয়াল কাজ করতে তাদের GND এক করতে হয়।"
+    ],
+    "en": [
+      "AT commands are written orders to a module: they start with \"AT\", and the answer is OK or ERROR.",
+      "A GSM module needs its own supply (3.4 V to 4.4 V); a real one draws up to 2 A as it transmits, so on a weak supply it keeps restarting.",
+      "For serial to work between two devices, their grounds must be joined."
+    ]
+  },
+  "tryNext": {
+    "bn": "মডিউলে ট্যাপ করে সংকেত ০ করো, তারপর সার্কিট আবার চালু করো: প্রোগ্রাম কী বলে? তারপর একটা গ্যাস সেন্সর যোগ করে গ্যাস পেলে SMS পাঠাও।",
+    "en": "Tap the module, set the signal to 0, and run the circuit again: what does the program say? Then add a gas sensor and send an SMS when it finds gas."
+  }
+}

@@ -1048,3 +1048,58 @@ Plantower), so they connect straight to the ESP32. ESTIMATE: the GPS draws
 about 30 mA at 3.3 V and the particle sensor about 100 mA with its fan running.
 
 Hardware tests E17 and E18 are written; none is run.
+
+## D-067 — A phone panel for Bluetooth and SMS; the MP3 library is the lab's own
+
+The second half of stage 5 puts three more modules on the serial line of D-066.
+Two of them talk to a person as well as to the board, so the lab gives them a
+**phone panel**: the module's inspector shows the conversation, and while the
+circuit runs the student types into it. Text typed there reaches the module at
+that moment and the board as fast as the serial line carries it. The
+conversation is not saved with the circuit.
+
+**HC-05 Bluetooth.** In data mode at 9600 baud, as it leaves the factory
+(REPORTED by sellers). A phone already paired is the lab's own panel; each line
+typed there is sent with a newline, as most Bluetooth terminal apps do. With
+the phone disconnected nothing passes either way. AT command mode, its
+settings and the EN and STATE legs are not modelled. The board works on 3.6 V to
+6 V (REPORTED by sellers), so the lessons power it from VIN.
+
+**DFPlayer Mini.** Messages are ten bytes as DFRobot's manual gives them, with
+the manual's checksum, tested against the manual's own example. The player
+answers play, next, previous, pause, resume, stop, volume, loop and the queries
+for state, volume, equaliser, file count and track; it says when its card is
+online and when a track has finished. The lab's card holds the number of tracks
+set in the inspector, each 8 seconds long (the lab's choice), and nothing is
+heard. ESTIMATE: it reads its card in about a second, and starts at volume 25.
+The real module is reported to send "finished" twice; the lab sends it once.
+
+**The MP3 library is the lab's own.** DFRobotDFPlayerMini is LGPL, and the
+client takes no LGPL code. So the board library has its own
+`DFRobotDFPlayerMini` with the same class, functions and constant names
+(written from DFRobot's published examples and the manual's message format,
+not from the library's code). Sketches written for it build unchanged.
+
+**SIM800L.** The network is the lab's own: no SIM card and no real message is
+ever sent. SMS go to and come from the lab's phone panel, whose number
+(+8801000000000) is not a real one. The module learns its baud rate from the
+first "AT", as SIMCom describes (REPORTED). It answers a set of AT commands in
+text mode (AT, ATE, ATI, CSQ, CREG, CPIN, COPS, CMGF, CSCS, CNMI, CMGS, CMGR,
+CMGD, CMGDA) and ERROR to anything else; an SMS needs text mode first, as on the
+real module. ESTIMATE: it finds the network about 3 seconds after power-up, and
+sending an SMS takes about 3 seconds. Text uses the GSM alphabet, so Bangla
+letters arrive as "?": the lesson says so. When it has no signal, it never
+registers, and a message from the phone is shown as not delivered.
+
+**Its supply.** SIMCom gives 3.4 V to 4.4 V (REPORTED), so 5 V is shown as
+damage, with advice to use an 18650 cell or a regulator, and the ESP32's 3.3 V
+is too little for it to start. Its 2 A peaks while transmitting are not
+modelled, so the restarts a weak supply causes on a real module do not happen
+here; the lesson mentions them. Its TX line is a 2.8 V signal (REPORTED).
+
+**A detail found on the way.** A program that ends the AT+CMGS line with a
+carriage return and a line feed (as `println` does) had the line feed at the
+start of its SMS. The lab now treats that line feed as part of the command
+line.
+
+Hardware tests E19 to E21 are written; none is run.

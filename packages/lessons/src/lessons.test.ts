@@ -96,6 +96,8 @@ interface Walkthrough {
 type Action =
   | { set: string; props: Record<string, unknown>; afterMs?: number }
   | { press: string; afterMs?: number }
+  /** A line typed on a module's phone panel. */
+  | { phone: string; text: string; afterMs?: number }
   | { release: string; afterMs?: number }
   | { edit: (circuit: CircuitDocument) => CircuitDocument; afterMs?: number }
   /** The circuit is stopped and started again: the board keeps only what it saved. */
@@ -882,6 +884,60 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     ],
     actions: { 5: [{ set: 'PM1', props: { pm25: 90 } }] },
   },
+  'bluetooth-light': {
+    components: [
+      esp32,
+      part('BT1', 'bluetooth', { vcc: 'c10', gnd: 'c11', tx: 'c12', rx: 'c13' }, { paired: true }),
+      ...lamp,
+    ],
+    wires: [
+      ['ESP1.vin', 'a10'],
+      ['ESP1.gnd1', 'a11'],
+      ['ESP1.rx2', 'a12'],
+      ['ESP1.tx2', 'a13'],
+      ...lampWires,
+    ],
+    actions: {
+      4: [{ phone: 'BT1', text: '1', afterMs: 500 }],
+      5: [
+        { phone: 'BT1', text: '0' },
+        { set: 'BT1', props: { paired: false }, afterMs: 1000 },
+      ],
+    },
+  },
+  'mp3-player': {
+    components: [
+      esp32,
+      part('MP1', 'mp3', { vcc: 'c10', rx: 'c11', tx: 'c12', gnd: 'c13' }, { tracks: 5 }),
+      part('SW1', 'button', { a: 'e20', b: 'e22' }),
+    ],
+    wires: [
+      ['ESP1.vin', 'a10'],
+      ['ESP1.tx2', 'a11'],
+      ['ESP1.rx2', 'a12'],
+      ['ESP1.gnd1', 'a13'],
+      ['ESP1.d4', 'a20'],
+      ['ESP1.gnd2', 'a22'],
+    ],
+    actions: { 5: [{ press: 'SW1' }, { release: 'SW1', afterMs: 300 }] },
+  },
+  'sms-light': {
+    components: [
+      esp32,
+      part('GSM1', 'gsm', { vcc: 'c10', rx: 'c11', tx: 'c12', gnd: 'c13' }, { signal: 20 }),
+      part('CELL1', 'cell', { pos: 'c3', neg: 'c5' }, { charge: 0.5, capacity: 2600 }),
+      ...lamp,
+    ],
+    wires: [
+      ['a3', 'a10'],
+      ['a5', 'a13'],
+      ['ESP1.gnd1', 'b13'],
+      ['ESP1.tx2', 'a11'],
+      ['ESP1.rx2', 'a12'],
+      ...lampWires,
+    ],
+    actions: { 5: [{ phone: 'GSM1', text: 'ON' }] },
+  },
 };
 
 /** The longest a student would have to watch for a step to complete, in simulated time. */
@@ -946,6 +1002,10 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
           if (uploadedStarter)
             (session as SimulationSession).loadFirmware('ESP1', starter(uploadedStarter));
           serial = '';
+          continue;
+        } else if ('phone' in action) {
+          (session as SimulationSession | null)?.phone(action.phone, action.text);
+          since = 0;
           continue;
         } else if ('press' in action) {
           pressed = [...pressed, action.press];

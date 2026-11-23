@@ -176,31 +176,34 @@ measured.
 
 ## Section E: sensor modules outside the kit
 
-Eighteen modules and power parts modelled for projects beyond the school kit. Each needs the module
+Twenty-one modules and power parts modelled for projects beyond the school kit. Each needs the module
 itself, a 5 V bench supply or the board's VIN, and a multimeter; E4 to E6 need
 water samples (see each row). Every figure the simulator uses is reported by a
-maker or seller, or estimated (decisions D-062 to D-066); none is measured.
+maker or seller, or estimated (decisions D-062 to D-067); none is measured.
 
-| Test | Module                   | Set-up                                                                                           | Record                                                                                 |
-| ---- | ------------------------ | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| E1   | 0–25 V voltage sensor    | Bench supply at 3, 6, 9 and 12 V on VCC and GND                                                  | S voltage at each; the two resistors measured out of circuit                           |
-| E2   | ACS712 current sensor    | 5 V supply; a known load at 0, 0.5, 1 and 2 A through IP+/IP−                                    | OUT at each current; which chip (5, 20 or 30 A) is fitted                              |
-| E3   | MQ-7 carbon monoxide     | 5 V on the heater, clean air, 10 minutes                                                         | AO every minute; heater current                                                        |
-| E4   | pH sensor module         | pH 4, 7 and 10 buffer solutions, after setting the offset                                        | Po voltage in each; which pin order the board has                                      |
-| E5   | TDS meter                | Distilled water, tap water, a salt solution; 3.3 V then 5 V                                      | A voltage in each, on both supplies; a TDS pen's reading                               |
-| E6   | Turbidity sensor         | Clear water, then water with a little milk, on 5 V and on VIN                                    | A voltage in each, on both supplies                                                    |
-| E7   | 18650 cell               | A charged, a half and a nearly empty cell; 1 Ω and 10 Ω loads                                    | Resting voltage of each; voltage under each load                                       |
-| E8   | TP4056 charger           | From 5 V with a half-full cell; then a 0.5 Ω load on OUT                                         | Charge current; cell voltage at the end; whether OUT cuts off                          |
-| E9   | LM2596 regulator         | 9 V in, set to 5 V; 25 Ω, 10 Ω and 5 Ω loads                                                     | Output voltage and current; input current                                              |
-| E10  | 5 V solar panel          | Full sun, shade, cloud; open, into 5 Ω, into a short                                             | Voltage and current in each                                                            |
-| E11  | BME280 module            | 3.3 V supply; a room, then beside a kettle                                                       | Temperature, humidity, pressure against reference instruments; address 0x76 or 0x77    |
-| E12  | INA219 module            | 9 V through 100 Ω and through a motor                                                            | Current and bus voltage read by the library against a multimeter                       |
-| E13  | DS18B20 probe            | 3.3 V, 4.7 kΩ pull-up; ice water, room, warm water; then two probes on one wire; then no pull-up | Readings against a thermometer; conversion time; how many probes are found             |
-| E14  | JSN-SR04T                | 5 V, echo through a 1 kΩ / 2 kΩ divider; a wall at 15, 30, 100 and 400 cm                        | Readings at each distance                                                              |
-| E15  | Five-channel line sensor | 5 V; black tape on white card under each channel in turn                                         | Each output's voltage over black and over white                                        |
-| E16  | 12 V siren               | 12 V through a relay; then 6 V; then reversed                                                    | Current; whether it sounds                                                             |
-| E17  | NEO-6M GPS               | 3.3 V, TX to GPIO16; the `gps` program; indoors, then outdoors for 10 minutes                    | The sentences as sent (a raw capture); time to the first fix; position against a phone |
-| E18  | PMS5003 particle sensor  | 5 V, TX to GPIO16; the `air` program; a room, then near incense smoke                            | PM1.0, PM2.5, PM10 every second; time between frames; supply current with the fan      |
+| Test | Module                   | Set-up                                                                                           | Record                                                                                                                |
+| ---- | ------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| E1   | 0–25 V voltage sensor    | Bench supply at 3, 6, 9 and 12 V on VCC and GND                                                  | S voltage at each; the two resistors measured out of circuit                                                          |
+| E2   | ACS712 current sensor    | 5 V supply; a known load at 0, 0.5, 1 and 2 A through IP+/IP−                                    | OUT at each current; which chip (5, 20 or 30 A) is fitted                                                             |
+| E3   | MQ-7 carbon monoxide     | 5 V on the heater, clean air, 10 minutes                                                         | AO every minute; heater current                                                                                       |
+| E4   | pH sensor module         | pH 4, 7 and 10 buffer solutions, after setting the offset                                        | Po voltage in each; which pin order the board has                                                                     |
+| E5   | TDS meter                | Distilled water, tap water, a salt solution; 3.3 V then 5 V                                      | A voltage in each, on both supplies; a TDS pen's reading                                                              |
+| E6   | Turbidity sensor         | Clear water, then water with a little milk, on 5 V and on VIN                                    | A voltage in each, on both supplies                                                                                   |
+| E7   | 18650 cell               | A charged, a half and a nearly empty cell; 1 Ω and 10 Ω loads                                    | Resting voltage of each; voltage under each load                                                                      |
+| E8   | TP4056 charger           | From 5 V with a half-full cell; then a 0.5 Ω load on OUT                                         | Charge current; cell voltage at the end; whether OUT cuts off                                                         |
+| E9   | LM2596 regulator         | 9 V in, set to 5 V; 25 Ω, 10 Ω and 5 Ω loads                                                     | Output voltage and current; input current                                                                             |
+| E10  | 5 V solar panel          | Full sun, shade, cloud; open, into 5 Ω, into a short                                             | Voltage and current in each                                                                                           |
+| E11  | BME280 module            | 3.3 V supply; a room, then beside a kettle                                                       | Temperature, humidity, pressure against reference instruments; address 0x76 or 0x77                                   |
+| E12  | INA219 module            | 9 V through 100 Ω and through a motor                                                            | Current and bus voltage read by the library against a multimeter                                                      |
+| E13  | DS18B20 probe            | 3.3 V, 4.7 kΩ pull-up; ice water, room, warm water; then two probes on one wire; then no pull-up | Readings against a thermometer; conversion time; how many probes are found                                            |
+| E14  | JSN-SR04T                | 5 V, echo through a 1 kΩ / 2 kΩ divider; a wall at 15, 30, 100 and 400 cm                        | Readings at each distance                                                                                             |
+| E15  | Five-channel line sensor | 5 V; black tape on white card under each channel in turn                                         | Each output's voltage over black and over white                                                                       |
+| E16  | 12 V siren               | 12 V through a relay; then 6 V; then reversed                                                    | Current; whether it sounds                                                                                            |
+| E17  | NEO-6M GPS               | 3.3 V, TX to GPIO16; the `gps` program; indoors, then outdoors for 10 minutes                    | The sentences as sent (a raw capture); time to the first fix; position against a phone                                |
+| E18  | PMS5003 particle sensor  | 5 V, TX to GPIO16; the `air` program; a room, then near incense smoke                            | PM1.0, PM2.5, PM10 every second; time between frames; supply current with the fan                                     |
+| E19  | HC-05 Bluetooth          | VIN, TXD to GPIO16; the `bluetooth` program; a phone with a Bluetooth terminal app               | Whether 1 and 0 switch the LED; the answers on the phone; supply current paired and unpaired                          |
+| E20  | DFPlayer Mini            | VIN, TX to GPIO16, a card with 5 MP3 files and a small speaker; the `mp3` program                | Time from power to "card online"; whether the button moves on; how many "finished" messages per track; supply current |
+| E21  | SIM800L                  | An 18650 cell, shared ground, TXD to GPIO16, a SIM card; the `sms` program; a real phone         | Time to register; time to send an SMS; whether ON and OFF work; whether it restarts on a weaker supply                |
 
 **What the simulator assumes today.**
 
@@ -224,6 +227,9 @@ maker or seller, or estimated (decisions D-062 to D-066); none is measured.
 | E16  | About 300 mA at 12 V; sounds from about 6 V; silent the wrong way round                                                                                                     |
 | E17  | RMC, VTG, GGA, GSA and GLL once a second at 9600 baud; without a fix, empty position fields; about 30 mA at 3.3 V                                                           |
 | E18  | A 32-byte frame about once a second at 9600 baud; PM1.0 about 0.7 and PM10 about 1.3 times PM2.5; about 100 mA                                                              |
+| E19  | 9600 baud in data mode; each phone line arrives with a newline; nothing passes unpaired; about 40 mA                                                                        |
+| E20  | "Card online" about 1 s after power; one "finished" message per track; about 25 mA without a speaker                                                                        |
+| E21  | Registered about 3 s after power; an SMS takes about 3 s; works from 3.4 V to 4.4 V with no restarts                                                                        |
 
 ## Section D: systems (later)
 

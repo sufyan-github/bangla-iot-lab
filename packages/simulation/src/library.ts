@@ -392,6 +392,18 @@ export const UART_TX_VOLTS = 3.3;
 export const UART_TX_RESISTANCE = 1000;
 export const GPS_SUPPLY_RESISTANCE = 110;
 export const PMS_SUPPLY_RESISTANCE = 50;
+/**
+ * HC-05, DFPlayer Mini and SIM800L. REPORTED: the HC-05 board works on 3.6 V to
+ * 6 V (sellers) and its TX is 3.3 V; the DFPlayer on 3.2 V to 5 V (DFRobot); the
+ * SIM800L on 3.4 V to 4.4 V with 2.8 V signals (SIMCom). ESTIMATE: supply
+ * currents of about 40 mA, 25 mA without a speaker, and 20 mA between the
+ * SIM800L's bursts, whose 2 A peaks are not modelled.
+ */
+export const BLUETOOTH_SUPPLY_RESISTANCE = 125;
+export const MP3_SUPPLY_RESISTANCE = 200;
+export const GSM_SUPPLY_RESISTANCE = 200;
+export const GSM_TX_VOLTS = 2.8;
+export const GSM_MAX_SUPPLY = 4.4;
 
 /**
  * Turbidity sensor (DFRobot SEN0189). REPORTED by DFRobot: a 5 V supply, up to
@@ -564,6 +576,9 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   ds18b20: 3,
   gps: 3,
   pms5003: 4.5,
+  bluetooth: 3.6,
+  mp3: 3.2,
+  gsm: 3.4,
   pir: 4.5,
   oled: 3,
   l298n: 6.5,

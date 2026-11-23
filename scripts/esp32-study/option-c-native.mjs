@@ -58,6 +58,7 @@ for (const [file, object] of [
   ['src/preferences.cpp', 'preferences.o'],
   ['src/onewire.cpp', 'onewire.o'],
   ['src/tinygps.cpp', 'tinygps.o'],
+  ['src/dfplayer.cpp', 'dfplayer.o'],
   ['src/serial-ports.cpp', 'serial-ports.o'],
   ['harness/world.cpp', 'world.o'],
 ]) {

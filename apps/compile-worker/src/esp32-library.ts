@@ -25,6 +25,7 @@ const LIBRARY_SOURCES = [
   'src/preferences.cpp',
   'src/onewire.cpp',
   'src/tinygps.cpp',
+  'src/dfplayer.cpp',
   'src/serial-ports.cpp',
   'wasm/entry.cpp',
 ];

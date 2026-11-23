@@ -1,30 +1,59 @@
 {
   "formatVersion": 1,
   "id": "mp3-module",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "mp3",
+  "status": "simulated",
   "family": "output",
   "tier": 2,
   "name": {
-    "bn": "MP3 player module with speaker",
-    "en": "MP3 player module with speaker"
+    "bn": "DFPlayer Mini MP3 প্লেয়ার",
+    "en": "DFPlayer Mini MP3 player"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "মেমোরি কার্ড থেকে গান বাজায়; বোর্ড সিরিয়ালে (৯৬০০ বড) বলে কোন গান, কত জোরে।",
+    "en": "Plays tracks from a memory card; the board tells it which track and how loud over serial (9600 baud)."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "It answers the commands of DFRobot's manual: play a track, next, previous, pause, resume, stop, volume, loop a track, and the queries for state, volume and track. Equaliser, output device, shuffle and folders are accepted but change nothing (a folder's file number picks the track).",
+      "The lab's memory card holds the number of tracks set in the inspector, each 8 seconds long, and nothing is heard: the lab shows the track playing. It starts after about a second (an estimate) and says so with its \"card online\" message.",
+      "A finished track is reported once (the real module is reported to send it twice). The BUSY leg and the speaker legs are not modelled.",
+      "Its supply range (3.2 V to 5 V) is DFRobot's; its supply current is an estimate, without a speaker."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E20"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "rx",
+      "label": "RX",
+      "role": "input"
+    },
+    {
+      "id": "tx",
+      "label": "TX",
+      "role": "output"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["dfplayer", "mp3 module"]
+  },
+  "placement": {
+    "idPrefix": "MP",
+    "offsets": [0, 1, 2, 3]
   }
 }

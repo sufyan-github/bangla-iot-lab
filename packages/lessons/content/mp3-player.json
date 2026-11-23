@@ -1,0 +1,190 @@
+{
+  "id": "mp3-player",
+  "order": 39,
+  "parts": ["mp3-module", "push-button"],
+  "title": {
+    "bn": "MP3 প্লেয়ার: বার্তা দিয়ে গান বাজানো",
+    "en": "MP3 player: playing tracks by message"
+  },
+  "summary": {
+    "bn": "DFPlayer Mini-কে সিরিয়ালে বার্তা পাঠিয়ে গান বাজাও, আর বোতাম চেপে পরের গানে যাও।",
+    "en": "Play tracks on a DFPlayer Mini by sending it messages over serial, and move to the next track with a button."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "mp3",
+  "steps": [
+    {
+      "text": {
+        "bn": "**DFPlayer Mini** বসাও। **VCC** যাবে **VIN**-এ, **GND** যাবে **GND**-তে।",
+        "en": "Place the **DFPlayer Mini**. **VCC** goes to **VIN**, **GND** to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "mp3"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mp3",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mp3",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সিরিয়াল আড়াআড়ি লাগাও: প্লেয়ার-এর **TX** যাবে বোর্ডের **RX2**-তে (GPIO16), **RX** যাবে **TX2**-তে (GPIO17)।",
+        "en": "Wire the serial line crossed: the player's **TX** to the board's **RX2** (GPIO16), its **RX** to **TX2** (GPIO17)."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mp3",
+            "pin": "tx"
+          },
+          "to": {
+            "board": "rx2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "mp3",
+            "pin": "rx"
+          },
+          "to": {
+            "board": "tx2"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **বোতাম** বসাও: এক পা যাবে **D4**-এ, অন্য পা **GND**-তে।",
+        "en": "Place a **button**: one leg to **D4**, the other to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "button"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "board": "d4"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**এই পাঠের প্রোগ্রাম বোর্ডে দাও**। এটা DFRobotDFPlayerMini-র মতো একটা লাইব্রেরি ব্যবহার করে: `player.play(1)` প্লেয়ারকে ১০ বাইটের একটা বার্তা পাঠায়, যার মধ্যে আছে কমান্ড, গানের নম্বর আর মেলানোর যোগফল।",
+        "en": "**Put this lesson's program on the board.** It uses a library like DFRobotDFPlayerMini: `player.play(1)` sends the player a ten-byte message holding the command, the track number and a checksum."
+      },
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "mp3"
+        }
+      ],
+      "program": true
+    },
+    {
+      "text": {
+        "bn": "**চালু করো**। প্লেয়ার কার্ড পড়তে এক সেকেন্ডের মতো নেয়, তারপর জানায় সে তৈরি। প্রোগ্রাম তখন গান ১ বাজায়।",
+        "en": "Press **Run**. The player takes about a second to read its card, then says it is ready. The program then plays track 1."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "serial",
+          "matches": "প্লেয়ার তৈরি, কার্ডে গান আছে: \\d+",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"প্লেয়ার তৈরি\"",
+            "en": "The serial monitor says the player is ready"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "mp3",
+          "path": "player.playing",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**বোতাম চাপো**: প্রোগ্রাম প্লেয়ারকে \"পরের গান\" বার্তা পাঠায়, আর জিজ্ঞেস করে এখন কোন গান বাজছে।",
+        "en": "**Press the button**: the program sends the player a \"next track\" message, then asks which track is playing now."
+      },
+      "checks": [
+        {
+          "kind": "serial",
+          "matches": "গান 2 বাজছে",
+          "label": {
+            "bn": "সিরিয়াল মনিটরে \"গান 2 বাজছে\"",
+            "en": "The serial monitor shows \"গান 2 বাজছে\" (track 2 playing)"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "mp3",
+          "path": "player.track",
+          "equals": 2
+        },
+        {
+          "kind": "no-errors"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "সিরিয়ালে লেখা ছাড়াও নির্দিষ্ট মাপের বার্তা পাঠানো যায়: শুরু চেনার বাইট, কমান্ড, মান, যোগফল, শেষের বাইট।",
+      "দুই দিকেই কথা হয়: বোর্ড আদেশ দেয়, প্লেয়ার জানায় কখন তৈরি বা কখন গান শেষ।",
+      "বোতাম চাপার মুহূর্ত ধরতে আগের অবস্থার সাথে মেলাতে হয়, নইলে চেপে ধরে থাকলে বারবার ঘটে।"
+    ],
+    "en": [
+      "Besides text, serial can carry messages of a fixed size: a start byte, a command, a value, a checksum, an end byte.",
+      "Talk goes both ways: the board gives orders, and the player says when it is ready or a track has ended.",
+      "To catch the moment a button is pressed, compare with how it was before, or holding it down repeats the action."
+    ]
+  },
+  "tryNext": {
+    "bn": "দ্বিতীয় একটা বোতাম যোগ করো যেটা চাপলে আওয়াজ কমে (`player.volumeDown()`)।",
+    "en": "Add a second button that turns the volume down (`player.volumeDown()`)."
+  }
+}

@@ -1,30 +1,59 @@
 {
   "formatVersion": 1,
   "id": "sim800l",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "gsm",
+  "status": "simulated",
   "family": "communication",
   "tier": 2,
   "name": {
-    "bn": "SIM800L GSM modem",
-    "en": "SIM800L GSM modem"
+    "bn": "SIM800L GSM মডিউল",
+    "en": "SIM800L GSM module"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "মোবাইল নেটওয়ার্কে SMS পাঠায় আর পায়; বোর্ড AT কমান্ড দিয়ে কথা বলে। ল্যাবের নেটওয়ার্ক বানানো: কোনো আসল SMS যায় না।",
+    "en": "Sends and receives SMS on a mobile network; the board talks to it with AT commands. The lab's network is made up: no real SMS is sent."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "The network is the lab's own: no SIM card, no real messages, no calls or data. SMS go to and come from the lab's phone panel, whose number is not a real one.",
+      "It answers a set of AT commands in text mode: AT, ATE, ATI, CSQ, CREG, CPIN, COPS, CMGF, CSCS, CNMI, CMGS, CMGR, CMGD, CMGDA. Anything else gets ERROR. It learns the baud rate from the first \"AT\", as the real module does.",
+      "It finds the network about 3 seconds after power-up and takes about 3 seconds to send an SMS: estimates. Text is in the GSM alphabet: letters other than plain Latin (Bangla, for one) arrive as \"?\".",
+      "It needs 3.4 V to 4.4 V, as SIMCom gives; more is shown as damage. Its peaks of up to 2 A while transmitting are not modelled, so a weak supply that makes a real module restart does not here. Its TX line is a 2.8 V signal."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E21"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "rx",
+      "label": "RXD",
+      "role": "input"
+    },
+    {
+      "id": "tx",
+      "label": "TXD",
+      "role": "output"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["sim800l"]
+  },
+  "placement": {
+    "idPrefix": "GSM",
+    "offsets": [0, 1, 2, 3]
   }
 }

@@ -27,7 +27,7 @@ import { isHole } from './breadboard';
  * Each version only adds part types or optional fields, so an older document
  * is valid in a newer version apart from the number.
  */
-export const CIRCUIT_SCHEMA_VERSION = 18;
+export const CIRCUIT_SCHEMA_VERSION = 19;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
@@ -488,6 +488,30 @@ export const Pms5003Schema = Type.Object({
   props: Type.Object({ pm25: Type.Number({ minimum: 0, maximum: 500 }) }),
 });
 
+/** HC-05 Bluetooth module on a UART. `paired` is whether a phone is connected to it. */
+export const BluetoothSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('bluetooth'),
+  pins: Type.Object({ vcc: Hole, gnd: Hole, tx: Hole, rx: Hole }),
+  props: Type.Object({ paired: Type.Boolean() }),
+});
+
+/** DFPlayer Mini MP3 player on a UART. `tracks` is how many tracks its memory card holds. */
+export const Mp3Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('mp3'),
+  pins: Type.Object({ vcc: Hole, rx: Hole, tx: Hole, gnd: Hole }),
+  props: Type.Object({ tracks: Type.Integer({ minimum: 1, maximum: 30 }) }),
+});
+
+/** SIM800L GSM module on a UART. `signal` is its signal strength, 0 (none) to 31. */
+export const GsmSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('gsm'),
+  pins: Type.Object({ vcc: Hole, rx: Hole, tx: Hole, gnd: Hole }),
+  props: Type.Object({ signal: Type.Integer({ minimum: 0, maximum: 31 }) }),
+});
+
 /**
  * HC-SR501 motion sensor. Its output goes HIGH when something moves in front of
  * it and stays HIGH for `hold` seconds after the movement stops.
@@ -711,6 +735,9 @@ export const ComponentSchema = Type.Union([
   SirenSchema,
   GpsSchema,
   Pms5003Schema,
+  BluetoothSchema,
+  Mp3Schema,
+  GsmSchema,
   PirSchema,
   RgbLedSchema,
   OledSchema,

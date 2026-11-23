@@ -1,30 +1,58 @@
 {
   "formatVersion": 1,
   "id": "hc-05",
-  "simulates": null,
-  "status": "planned",
-  "statusNote": "Not built yet.",
+  "simulates": "bluetooth",
+  "status": "simulated",
   "family": "communication",
   "tier": 2,
   "name": {
-    "bn": "HC-05 Bluetooth module",
+    "bn": "HC-05 ব্লুটুথ মডিউল",
     "en": "HC-05 Bluetooth module"
   },
   "summary": {
-    "bn": "",
-    "en": "Needed by a shortlisted project."
+    "bn": "ফোনের সাথে তারবিহীন সিরিয়াল লাইন: ফোনে লেখা বোর্ডে আসে, বোর্ডের লেখা ফোনে যায় (৯৬০০ বড)।",
+    "en": "A wireless serial line to a phone: what is typed on the phone reaches the board, and what the board writes reaches the phone (9600 baud)."
   },
   "model": {
-    "level": "none",
-    "simplified": []
+    "level": "behaviour",
+    "simplified": [
+      "It works in data mode at 9600 baud, as it leaves the factory. Its AT command mode (the EN or KEY pin) and its settings (name, PIN, baud rate) are not modelled; neither are the EN and STATE legs.",
+      "The phone is the lab's own panel, already paired. Each line typed there is sent with a newline at the end, as most Bluetooth terminal apps do. Radio range and pairing time are not modelled.",
+      "It is the common board with its own regulator, for 3.6 V to 6 V. Its TX line is a 3.3 V signal. Its supply current is an estimate."
+    ]
   },
   "validation": {
     "state": "not-checked",
-    "tests": []
+    "tests": ["E19"]
   },
-  "pins": [],
+  "pins": [
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
+    },
+    {
+      "id": "gnd",
+      "label": "GND",
+      "role": "ground"
+    },
+    {
+      "id": "tx",
+      "label": "TXD",
+      "role": "output"
+    },
+    {
+      "id": "rx",
+      "label": "RXD",
+      "role": "input"
+    }
+  ],
   "variants": [],
   "catalog": {
     "keywords": ["hc-05"]
+  },
+  "placement": {
+    "idPrefix": "BT",
+    "offsets": [0, 1, 2, 3]
   }
 }

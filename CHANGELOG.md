@@ -8,6 +8,18 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **HC-05 Bluetooth module with a phone panel**, **DFPlayer Mini MP3 player**
+  and **SIM800L GSM module** (circuit format version 19). While the circuit
+  runs, the Bluetooth and GSM modules' inspector is a phone: type a message or
+  an SMS, and read what the board sends back. The SMS network is the lab's own:
+  nothing real is sent.
+- The board library's own `DFRobotDFPlayerMini`, with that library's functions
+  (the library itself is LGPL, so it is not used).
+- A SIM800L on more than 4.4 V is shown as being damaged.
+- Ready-made programs `bluetooth`, `mp3` and `sms`, and three lessons, each
+  checked step by step by the lab: **Bluetooth light**, **MP3 player** and
+  **light by SMS** (AT commands, powered from an 18650 cell).
+- Hardware tests E19 to E21.
 - **Serial modules on the ESP32** (circuit format version 18). Programs can use
   `Serial1`, `Serial2` and their own `HardwareSerial` ports on any pins. Modules
   send and receive bytes at their baud rate; a line wired TX to TX carries

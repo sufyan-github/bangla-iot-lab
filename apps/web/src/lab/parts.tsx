@@ -1640,6 +1640,116 @@ export function SirenView(props: { pos: Point; neg: Point; sounding: boolean; se
   );
 }
 
+/** HC-05 Bluetooth module: a blue board carrying the green radio card, with its status light. */
+export function BluetoothView(props: {
+  first: Point;
+  last: Point;
+  connected: boolean;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-62} width={length + 24} height={68} color="#1f5fa8" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {[0, 1, 2, 3].map((i) => (
+        <SolderDot key={i} x={-length / 2 + (i * length) / 3} />
+      ))}
+      <rect x={-length / 2 - 6} y={-58} width={length + 12} height={34} rx={2} fill="#2f7a3a" />
+      <path d={`M${-length / 2} -52h10v8h-6v8h10`} stroke="#d9c27a" strokeWidth={1.5} fill="none" />
+      <rect x={-2} y={-50} width={18} height={16} rx={1} fill="#23282b" />
+      <g transform={`translate(${length / 2 + 2} -16)`}>
+        {!props.connected && <circle r={7} fill="#ff5b4a" opacity={0.35} />}
+        <rect
+          x={-3}
+          y={-2}
+          width={6}
+          height={4}
+          rx={1}
+          fill={props.connected ? '#2a6fd2' : '#ff5b4a'}
+        />
+      </g>
+    </g>
+  );
+}
+
+/** DFPlayer Mini: a small red board with its memory card slot, and a note while it plays. */
+export function Mp3View(props: { first: Point; last: Point; playing: boolean; selected: boolean }) {
+  const { length, transform } = between(props.first, props.last);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 10} y={-54} width={length + 20} height={60} color="#b3262c" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {[0, 1, 2, 3].map((i) => (
+        <SolderDot key={i} x={-length / 2 + (i * length) / 3} />
+      ))}
+      <rect
+        x={-length / 2 - 4}
+        y={-50}
+        width={length + 8}
+        height={20}
+        rx={2}
+        fill="url(#shade-metal)"
+        stroke="#5d666a"
+      />
+      <rect x={-8} y={-26} width={16} height={12} rx={1} fill="#23282b" />
+      {props.playing && (
+        <text x={length / 2 + 14} y={-38} fontSize={18} fill="#e8a21a" pointerEvents="none">
+          ♪
+        </text>
+      )}
+    </g>
+  );
+}
+
+/** SIM800L: a small red board with its SIM holder, spring antenna and network light. */
+export function GsmView(props: {
+  first: Point;
+  last: Point;
+  registered: boolean;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 10} y={-54} width={length + 20} height={60} color="#b3262c" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {[0, 1, 2, 3].map((i) => (
+        <SolderDot key={i} x={-length / 2 + (i * length) / 3} />
+      ))}
+      <rect
+        x={-length / 2 - 4}
+        y={-50}
+        width={length - 6}
+        height={28}
+        rx={2}
+        fill="url(#shade-metal)"
+        stroke="#5d666a"
+      />
+      <path
+        d={`M${length / 2 + 4} -48${Array.from({ length: 6 }, (_, i) => `l4 ${i % 2 ? 4 : -4}`).join('')}`}
+        stroke="#c9a227"
+        strokeWidth={2}
+        fill="none"
+      />
+      <g transform={`translate(${length / 2 + 2} -14)`}>
+        {props.registered && <circle r={7} fill="#ff5b4a" opacity={0.35} />}
+        <rect
+          x={-3}
+          y={-2}
+          width={6}
+          height={4}
+          rx={1}
+          fill={props.registered ? '#ff5b4a' : '#5a1f1b'}
+        />
+      </g>
+    </g>
+  );
+}
+
 /** NEO-6M GPS module: a blue board with its square ceramic antenna and a fix light. */
 export function GpsView(props: { first: Point; last: Point; fix: boolean; selected: boolean }) {
   const { length, transform } = between(props.first, props.last);

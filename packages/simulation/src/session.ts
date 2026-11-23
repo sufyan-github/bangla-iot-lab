@@ -492,6 +492,10 @@ export class SimulationSession {
     this.peripherals.setPowered(
       (id) => (solution?.parts[id]?.voltage ?? 0) >= (minSupply.get(id) ?? MODULE_MIN_SUPPLY),
     );
+    this.peripherals.setBoardClock((boardId) => {
+      const board = this.boards.get(boardId);
+      return board ? this.time - board.startedAt : undefined;
+    });
     this.peripherals.setLinesUp((id) => {
       const supply = solution?.parts[id]?.supply ?? 0;
       return supply > 0 && (solution?.channels[`${id}.dq`]?.voltage ?? 0) > supply / 2;
@@ -732,6 +736,14 @@ export class SimulationSession {
       this.feedInputs();
     }
     this.time = end;
+  }
+
+  /**
+   * Text typed on the phone panel of a Bluetooth or GSM module: it reaches the
+   * module now, and the board as fast as the serial line carries it.
+   */
+  phone(id: string, text: string): void {
+    this.peripherals.phone(id, text);
   }
 
   /** Readings averaged since the previous frame, plus each board's status. */

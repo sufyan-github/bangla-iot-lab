@@ -1,6 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
-/** Stage 5a: the ESP32's second serial port, with the NEO-6M GPS and the PMS5003 particle sensor. */
+/**
+ * Stage 5: the ESP32's second serial port, with the NEO-6M GPS, the PMS5003
+ * particle sensor, the HC-05 Bluetooth module and its phone, the DFPlayer Mini
+ * and the SIM800L.
+ */
 
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 async function place(page: Page, tool: string, hole: string) {
@@ -77,4 +81,63 @@ test('the air program reads the PMS5003 and follows its slider; both parts are k
   await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
   await page.reload();
   await expect(page.locator('[data-part]')).toHaveCount(2);
+});
+
+test('the phone switches the LED over Bluetooth, and reads the board’s answers', async ({
+  page,
+}) => {
+  await newEsp32Circuit(page);
+  await place(page, 'bluetooth', 'c10'); // VCC c10, GND c11, TXD c12, RXD c13
+  await place(page, 'resistor', 'f20'); // f20 – f24
+  await place(page, 'led', 'g24'); // anode g24, cathode g25
+  await wire(page, [
+    ['ESP1.vin', 'a10'],
+    ['ESP1.gnd1', 'a11'],
+    ['ESP1.rx2', 'a12'],
+    ['ESP1.tx2', 'a13'],
+    ['ESP1.d2', 'j20'],
+    ['ESP1.gnd2', 'j25'],
+  ]);
+  await page.locator('[data-hit="R1"]').click();
+  await page.getByTestId('resistance').selectOption('220');
+  await page.getByTestId('tab-code').click();
+  await page.getByTestId('starter').selectOption('bluetooth');
+  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
+  await page.getByTestId('run').click();
+  await page.getByTestId('tab-circuit').click();
+  await page.locator('[data-hit="BT1"]').click();
+  const phone = page.getByTestId('phone');
+  await expect(phone.getByTestId('phone-state')).toHaveAttribute('data-connected', 'true');
+  await expect(phone.locator('[data-from="module"]').first()).toContainText('হ্যালো!');
+  await phone.getByTestId('phone-input').fill('1');
+  await phone.getByTestId('phone-send').click();
+  await expect(phone.locator('[data-from="phone"]')).toHaveText(['1']);
+  await expect(phone.locator('[data-from="module"]').last()).toHaveText('বাতি জ্বলছে');
+  await expect(page.locator('[data-part="LED1"]')).toHaveAttribute('data-led-state', 'on');
+});
+
+test('the MP3 program finds the player and plays; a SIM800L on 5 V is flagged', async ({
+  page,
+}) => {
+  await newEsp32Circuit(page);
+  await place(page, 'mp3', 'c10'); // VCC c10, RX c11, TX c12, GND c13
+  await place(page, 'gsm', 'c20'); // VCC c20, RXD c21, TXD c22, GND c23
+  await wire(page, [
+    ['ESP1.vin', 'a10'],
+    ['ESP1.tx2', 'a11'],
+    ['ESP1.rx2', 'a12'],
+    ['ESP1.gnd1', 'a13'],
+    ['b10', 'a20'],
+    ['b13', 'a23'],
+  ]);
+  await page.getByTestId('tab-code').click();
+  await page.getByTestId('starter').selectOption('mp3');
+  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
+  await page.getByTestId('run').click();
+  await expect(page.getByTestId('serial')).toContainText('গান 1 বাজছে', { timeout: 20_000 });
+  await page.getByTestId('tab-circuit').click();
+  await page.locator('[data-hit="MP1"]').click();
+  await expect(page.getByTestId('player-state')).toHaveAttribute('data-playing', 'true');
+  await expect(page.getByTestId('player-state')).toHaveAttribute('data-track', '1');
+  await expect(page.locator('[data-diag^="gsm-overvoltage"]')).toBeVisible();
 });
