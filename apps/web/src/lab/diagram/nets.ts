@@ -143,6 +143,7 @@ export const BOX_TYPES = new Set([
 export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno', 'esp32', 'l298n', 'logic']);
 
 export function pinNames(component: CircuitComponent): readonly string[] {
+  if (component.type === 'breadboard') return [];
   if (component.type === 'battery') return BATTERY_TERMINALS;
   if (isProgrammable(component)) return boardTerminals(component.type);
   if (component.type === 'l298n') return L298N_TERMINALS;

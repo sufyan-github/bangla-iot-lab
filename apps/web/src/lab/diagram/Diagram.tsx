@@ -1,4 +1,4 @@
-import type { CircuitComponent } from '@banglalab/shared';
+import { partsOf, type CircuitComponent } from '@banglalab/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT } from '../../i18n';
 import { LED_PAINT } from '../parts';
@@ -86,7 +86,7 @@ export function Diagram() {
         ? `+${quantity(net.source.voltage, 'V')}`
         : (net.source?.label ?? '5V');
 
-  if (circuit.components.length === 0) {
+  if (partsOf(circuit).length === 0) {
     return (
       <div className="diagram-paper flex min-h-0 flex-1 items-center justify-center p-6">
         <p className="max-w-sm text-center text-ink-soft" data-testid="diagram-empty">

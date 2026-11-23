@@ -38,26 +38,33 @@ const resistor = (id: string, a: string, b: string, resistance: number): Circuit
 const cell = (charge: number): CircuitComponent => ({
   id: 'CELL1',
   type: 'cell',
-  pins: { pos: 'a1', neg: 'a7' },
+  pins: { pos: 'BB1.a1', neg: 'BB1.a7' },
   props: { charge, capacity: 2600 },
 });
 /** A panel with its + wire at a20 and its − wire at a22. */
 const panel = (light: number): CircuitComponent => ({
   id: 'PV1',
   type: 'solar',
-  pins: { pos: 'a20', neg: 'a22' },
+  pins: { pos: 'BB1.a20', neg: 'BB1.a22' },
   props: { light },
 });
 /** A charger along columns 10 to 17: IN+ 10, IN− 11, B+ 13, B− 14, OUT+ 16, OUT− 17. */
 const charger: CircuitComponent = {
   id: 'CHG1',
   type: 'tp4056',
-  pins: { inp: 'c10', inn: 'c11', bp: 'c13', bn: 'c14', outp: 'c16', outn: 'c17' },
+  pins: {
+    inp: 'BB1.c10',
+    inn: 'BB1.c11',
+    bp: 'BB1.c13',
+    bn: 'BB1.c14',
+    outp: 'BB1.c16',
+    outn: 'BB1.c17',
+  },
   props: {},
 };
 const cellOnCharger: [string, string][] = [
-  ['b1', 'a13'],
-  ['b7', 'a14'],
+  ['BB1.b1', 'BB1.a13'],
+  ['BB1.b7', 'BB1.a14'],
 ];
 const problems = (document: CircuitDocument) =>
   simulate(document).diagnostics.filter((d) => d.severity !== 'info');
@@ -76,7 +83,7 @@ describe('18650 cell', () => {
   });
 
   it('gives its current to a load, a little lower than its resting voltage', () => {
-    const loaded = circuit([cell(0.5), resistor('R1', 'c1', 'c7', 10)], []);
+    const loaded = circuit([cell(0.5), resistor('R1', 'BB1.c1', 'BB1.c7', 10)], []);
     const reading = simulate(loaded).readings.CELL1!;
     // Delivering: negative into its + terminal.
     expect(reading.current).toBeCloseTo(-3.74 / 10.05, 3);
@@ -85,7 +92,7 @@ describe('18650 cell', () => {
   });
 
   it('a wire across it is a short circuit', () => {
-    const shorted = circuit([cell(1)], [['b1', 'b7']]);
+    const shorted = circuit([cell(1)], [['BB1.b1', 'BB1.b7']]);
     expect(problems(shorted)).toMatchObject([{ code: 'short-circuit', componentId: 'CELL1' }]);
   });
 
@@ -93,8 +100,8 @@ describe('18650 cell', () => {
     const forced = circuit(
       [battery(5), cell(0.9)],
       [
-        ['BAT1.pos', 'b1'],
-        ['BAT1.neg', 'b7'],
+        ['BAT1.pos', 'BB1.b1'],
+        ['BAT1.neg', 'BB1.b7'],
       ],
     );
     expect(problems(forced)).toMatchObject([{ code: 'cell-overcharge', componentId: 'CELL1' }]);
@@ -103,7 +110,7 @@ describe('18650 cell', () => {
 
 describe('5 V solar panel', () => {
   const across = (light: number, ohms: number) =>
-    simulate(circuit([panel(light), resistor('R1', 'c20', 'c22', ohms)], [])).readings.PV1!;
+    simulate(circuit([panel(light), resistor('R1', 'BB1.c20', 'BB1.c22', ohms)], [])).readings.PV1!;
 
   it('gives 7.2 V with almost nothing connected in full sun, and nothing in the dark', () => {
     expect(across(1, 1e6).voltage).toBeCloseTo(SOLAR_OPEN_VOLTS, 1);
@@ -133,7 +140,7 @@ describe('TP4056 charger', () => {
   const fromBattery = (charge: number, volts = 5) =>
     circuit(
       [battery(volts), charger, cell(charge)],
-      [['BAT1.pos', 'a10'], ['BAT1.neg', 'a11'], ...cellOnCharger],
+      [['BAT1.pos', 'BB1.a10'], ['BAT1.neg', 'BB1.a11'], ...cellOnCharger],
     );
 
   it('charges a half-full cell at 1 A, taking the same 1 A from its input, red light on', () => {
@@ -173,7 +180,7 @@ describe('TP4056 charger', () => {
       simulate(
         circuit(
           [panel(light), charger, cell(0.5)],
-          [['a20', 'a10'], ['a22', 'a11'], ...cellOnCharger],
+          [['BB1.a20', 'BB1.a10'], ['BB1.a22', 'BB1.a11'], ...cellOnCharger],
         ),
       ).readings;
     const bright = solar(1);
@@ -187,12 +194,18 @@ describe('TP4056 charger', () => {
   });
 
   it('its protection cuts off a load that takes too much, and lets go when it is removed', () => {
-    const heavy = circuit([charger, cell(0.8), resistor('R1', 'a16', 'a17', 0.5)], cellOnCharger);
+    const heavy = circuit(
+      [charger, cell(0.8), resistor('R1', 'BB1.a16', 'BB1.a17', 0.5)],
+      cellOnCharger,
+    );
     const result = simulate(heavy);
     expect(problems(heavy)).toMatchObject([{ code: 'protection-tripped', componentId: 'CHG1' }]);
     // The load is cut off: the cell gives almost nothing.
     expect(Math.abs(result.readings.CELL1!.current)).toBeLessThan(0.01);
-    const light = circuit([charger, cell(0.8), resistor('R1', 'a16', 'a17', 100)], cellOnCharger);
+    const light = circuit(
+      [charger, cell(0.8), resistor('R1', 'BB1.a16', 'BB1.a17', 100)],
+      cellOnCharger,
+    );
     // 3.97 V into 100 Ω, the cell's 50 mΩ and the protection's 50 mΩ.
     expect(simulate(light).readings.CELL1!.current).toBeCloseTo(-3.97 / 100.1, 3);
   });
@@ -209,15 +222,15 @@ describe('LM2596 step-down regulator', () => {
   const regulator = (volts: number): CircuitComponent => ({
     id: 'REG1',
     type: 'lm2596',
-    pins: { inp: 'c24', inn: 'c25', outn: 'c29', outp: 'c30' },
+    pins: { inp: 'BB1.c24', inn: 'BB1.c25', outn: 'BB1.c29', outp: 'BB1.c30' },
     props: { volts },
   });
   const powered = (supply: number, set: number, load: number) =>
     circuit(
-      [battery(supply), regulator(set), resistor('R1', 'b30', 'b29', load)],
+      [battery(supply), regulator(set), resistor('R1', 'BB1.b30', 'BB1.b29', load)],
       [
-        ['BAT1.pos', 'a24'],
-        ['BAT1.neg', 'a25'],
+        ['BAT1.pos', 'BB1.a24'],
+        ['BAT1.neg', 'BB1.a25'],
       ],
     );
 

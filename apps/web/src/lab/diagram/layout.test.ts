@@ -68,7 +68,7 @@ describe('nets', () => {
   });
 
   it('leaves out legs that are joined to nothing', () => {
-    const circuit = ok(placePart(ledCircuitExample(), 'resistor', 'h20'));
+    const circuit = ok(placePart(ledCircuitExample(), 'resistor', 'BB1.h20'));
     expect(findNets(circuit)).toHaveLength(3);
     const layout = layoutDiagram(circuit);
     expect(layout.parts.find((part) => part.id === 'R2')!.pins.map((pin) => pin.net)).toEqual([
@@ -122,9 +122,9 @@ describe('diagram of the LED circuit', () => {
 
   it('mirrors an LED that was put in the other way round', () => {
     let circuit = ok(addBattery(emptyCircuit()));
-    circuit = ok(placePart(circuit, 'led', 'd9')); // anode d9, cathode d10
-    circuit = ok(addWire(circuit, 'BAT1.pos', 'a10')); // + to the cathode
-    circuit = ok(addWire(circuit, 'BAT1.neg', 'a9'));
+    circuit = ok(placePart(circuit, 'led', 'BB1.d9')); // anode d9, cathode d10
+    circuit = ok(addWire(circuit, 'BAT1.pos', 'BB1.a10')); // + to the cathode
+    circuit = ok(addWire(circuit, 'BAT1.neg', 'BB1.a9'));
     const reversed = layoutDiagram(circuit);
     const led = reversed.parts.find((part) => part.id === 'LED1')!;
     expect(led.flipped).toBe(true);
@@ -135,9 +135,9 @@ describe('diagram of the LED circuit', () => {
 describe('rails layout, a leg pointing away from its net', () => {
   it('turns a transistor leg round through a free column', () => {
     let circuit = ok(addBattery(emptyCircuit()));
-    circuit = ok(placePart(circuit, 'transistor', 'h24')); // C h24, B h25, E h26
-    circuit = ok(placePart(circuit, 'resistor', 'i10')); // i10 to i14
-    circuit = ok(placePart(circuit, 'led', 'h16')); // anode h16, cathode h17
+    circuit = ok(placePart(circuit, 'transistor', 'BB1.h24')); // C h24, B h25, E h26
+    circuit = ok(placePart(circuit, 'resistor', 'BB1.i10')); // i10 to i14
+    circuit = ok(placePart(circuit, 'led', 'BB1.h16')); // anode h16, cathode h17
     circuit = wired(circuit, [
       ['Q1.collector', 'R1.a'], // the collector's net is neither supply nor ground
       ['R1.b', 'LED1.anode'],
@@ -163,15 +163,15 @@ function tapInto(circuit: CircuitDocument, endpoint: string): string {
     const rail = pin === '5v' ? 'bp' : pin === 'gnd' ? 'bn' : null;
     if (!rail) return endpoint;
     for (let column = 1; column <= 29; column++) {
-      if (attachError(circuit, `${rail}${column}`) === null) return `${rail}${column}`;
+      if (attachError(circuit, `BB1.${rail}${column}`) === null) return `BB1.${rail}${column}`;
     }
     throw new Error('rail is full');
   }
   const hole = (part.pins as Record<string, string>)[pin!]!;
-  const column = hole.slice(1);
-  const rows = 'abcde'.includes(hole[0]!) ? 'abcde' : 'fghij';
+  const [, row0, column] = /^BB1\.([a-j])(\d+)$/.exec(hole)!;
+  const rows = 'abcde'.includes(row0!) ? 'abcde' : 'fghij';
   for (const row of rows) {
-    if (attachError(circuit, `${row}${column}`) === null) return `${row}${column}`;
+    if (attachError(circuit, `BB1.${row}${column}`) === null) return `BB1.${row}${column}`;
   }
   throw new Error(`no free hole beside ${endpoint}`);
 }
@@ -180,13 +180,13 @@ function tapInto(circuit: CircuitDocument, endpoint: string): string {
 function wired(circuit: CircuitDocument, pairs: [string, string][]): CircuitDocument {
   let next = circuit;
   // The board's power sockets take one wire each; bring them out to the bottom rails once.
-  if (next.components.some((c) => c.id === 'UNO1') && attachError(next, 'bp29') === null) {
-    next = ok(addWire(next, 'tp25', 'bp29'));
-    next = ok(addWire(next, 'tn25', 'bn29'));
+  if (next.components.some((c) => c.id === 'UNO1') && attachError(next, 'BB1.bp29') === null) {
+    next = ok(addWire(next, 'BB1.tp25', 'BB1.bp29'));
+    next = ok(addWire(next, 'BB1.tn25', 'BB1.bn29'));
   }
   for (const [from, to] of pairs) {
     const a = tapInto(next, from);
-    next = ok(addWire(next, a, tapInto(ok(addWire(next, a, 'j30')), to)));
+    next = ok(addWire(next, a, tapInto(ok(addWire(next, a, 'BB1.j30')), to)));
   }
   return next;
 }
@@ -354,7 +354,7 @@ describe('diagram of a circuit built round the board', () => {
 
 describe('diagrams of busier board circuits', () => {
   it('runs parallel lines from the board to a module wired to several pins', () => {
-    let circuit = placed(unoCircuitExample(), [['ultrasonic', 'h3']]);
+    let circuit = placed(unoCircuitExample(), [['ultrasonic', 'BB1.h3']]);
     circuit = wired(circuit, [
       ['US1.vcc', 'UNO1.5v'],
       ['US1.trig', 'UNO1.d9'],
@@ -379,10 +379,10 @@ describe('diagrams of busier board circuits', () => {
 
   it('draws a transistor switching a motor, with its diode in parallel', () => {
     let circuit = placed(unoCircuitExample(), [
-      ['resistor', 'h1'], // R2: h1 to h5
-      ['transistor', 'h8'], // Q1: C h8, B h9, E h10
-      ['motor', 'h13'], // M1: h13 to h16
-      ['diode', 'h19'], // D1: h19 to h22
+      ['resistor', 'BB1.h1'], // R2: h1 to h5
+      ['transistor', 'BB1.h8'], // Q1: C h8, B h9, E h10
+      ['motor', 'BB1.h13'], // M1: h13 to h16
+      ['diode', 'BB1.h19'], // D1: h19 to h22
     ]);
     circuit = wired(circuit, [
       ['UNO1.d5', 'R2.a'],
@@ -406,9 +406,9 @@ describe('diagrams of busier board circuits', () => {
 
   it('closes two parts in parallel with a short wire instead of a flag', () => {
     let circuit = placed(unoCircuitExample(), [
-      ['resistor', 'g1'], // R2
-      ['resistor', 'i1'], // R3, in the same strips as R2: in parallel with it
-      ['led', 'h8'], // LED2: anode h8, cathode h9
+      ['resistor', 'BB1.g1'], // R2
+      ['resistor', 'BB1.i1'], // R3, in the same strips as R2: in parallel with it
+      ['led', 'BB1.h8'], // LED2: anode h8, cathode h9
     ]);
     circuit = wired(circuit, [
       ['UNO1.d7', 'R2.a'],
@@ -425,7 +425,7 @@ describe('diagrams of busier board circuits', () => {
 
   it('draws a battery the board does not lead to on its own, between its two terminals', () => {
     let circuit = ok(addBattery(unoCircuitExample()));
-    circuit = placed(circuit, [['motor', 'h13']]);
+    circuit = placed(circuit, [['motor', 'BB1.h13']]);
     circuit = wired(circuit, [
       ['BAT1.pos', 'M1.a'],
       ['M1.b', 'UNO1.gnd'],
@@ -441,7 +441,7 @@ describe('diagrams of busier board circuits', () => {
 
   it('names a connection it cannot draw, at both ends', () => {
     // The button's far leg goes back to another board pin: a loop the tree cannot close.
-    let circuit = placed(unoCircuitExample(), [['button', 'h3']]); // SW2: h3, h5
+    let circuit = placed(unoCircuitExample(), [['button', 'BB1.h3']]); // SW2: h3, h5
     circuit = wired(circuit, [
       ['UNO1.d4', 'SW2.a'],
       ['SW2.b', 'UNO1.d7'],
@@ -454,12 +454,12 @@ describe('diagrams of busier board circuits', () => {
 
   it('keeps every kind of part sound in one crowded circuit', () => {
     let circuit = placed(unoCircuitExample(), [
-      ['lcd', 'h1'], // 16 legs, h1 to h16
-      ['potentiometer', 'h19'], // POT2 for the contrast
-      ['temperature', 'h24'],
-      ['servo', 'c26'],
-      ['ldr', 'b1'], // LDR1: b1 to b3
-      ['relay', 'e24'],
+      ['lcd', 'BB1.h1'], // 16 legs, h1 to h16
+      ['potentiometer', 'BB1.h19'], // POT2 for the contrast
+      ['temperature', 'BB1.h24'],
+      ['servo', 'BB1.c26'],
+      ['ldr', 'BB1.b1'], // LDR1: b1 to b3
+      ['relay', 'BB1.e24'],
     ]);
     circuit = wired(circuit, [
       ['LCD1.vss', 'UNO1.gnd'],
@@ -488,7 +488,8 @@ describe('diagrams of busier board circuits', () => {
       ['K1.coil2', 'UNO1.gnd'],
     ]);
     const layout = layoutDiagram(circuit);
-    expect(layout.parts).toHaveLength(circuit.components.length);
+    // Every part but the breadboard, which the diagram leaves out.
+    expect(layout.parts).toHaveLength(circuit.components.length - 1);
     // The display's six data lines run side by side from the board.
     const display = layout.parts.find((part) => part.id === 'LCD1')!;
     expect(display.pins.filter((pin) => pin.side === 'left')).toHaveLength(6);
@@ -499,15 +500,15 @@ describe('diagrams of busier board circuits', () => {
 describe('diagram of a motor driver circuit', () => {
   it('draws the driver as a box with the terminals in use, joined soundly to the rest', () => {
     let circuit = ok(addMotorDriver(ok(addBattery(ok(addEsp32(emptyCircuit())), 7.2))));
-    circuit = ok(placePart(circuit, 'motor', 'c10')); // M1: c10 to c13
+    circuit = ok(placePart(circuit, 'motor', 'BB1.c10')); // M1: c10 to c13
     for (const [from, to] of [
       ['BAT1.pos', 'DRV1.vs'],
       ['BAT1.neg', 'DRV1.gnd'],
       ['ESP1.gnd1', 'DRV1.gnd'],
       ['ESP1.d26', 'DRV1.in1'],
       ['ESP1.d27', 'DRV1.in2'],
-      ['DRV1.out1', 'a10'],
-      ['DRV1.out2', 'a13'],
+      ['DRV1.out1', 'BB1.a10'],
+      ['DRV1.out2', 'BB1.a13'],
     ] as const) {
       circuit = ok(addWire(circuit, from, to));
     }
@@ -526,7 +527,7 @@ describe('diagram of a motor driver circuit', () => {
 describe('diagram of a logic chip', () => {
   // A 74HC08 placed at e10 has legs 1 to 7 along row f, columns 10 to 16, and 8 to 14
   // back along row e, so leg 14 (supply) is at e10 and leg 7 (ground) at f16.
-  const chip = (circuit: CircuitDocument) => ok(placePart(circuit, 'logic', 'e10'));
+  const chip = (circuit: CircuitDocument) => ok(placePart(circuit, 'logic', 'BB1.e10'));
   const wire = (circuit: CircuitDocument, pairs: [string, string][]) =>
     pairs.reduce((c, [from, to]) => ok(addWire(c, from, to)), circuit);
   const expectGateBox = (layout: DiagramLayout, gates: number) => {
@@ -540,15 +541,15 @@ describe('diagram of a logic chip', () => {
 
   it('makes room in the box for the gates in use when the board drives it', () => {
     let circuit = chip(ok(addEsp32(emptyCircuit())));
-    circuit = ok(placePart(circuit, 'led', 'c20'));
+    circuit = ok(placePart(circuit, 'led', 'BB1.c20'));
     circuit = wire(circuit, [
-      ['ESP1.3v3', 'a10'],
-      ['ESP1.gnd1', 'j16'],
-      ['ESP1.d26', 'g10'], // 1A
-      ['ESP1.d27', 'g11'], // 1B
-      ['h12', 'a20'], // 1Y to the LED
-      ['a21', 'ESP1.gnd2'],
-      ['ESP1.d25', 'g13'], // 2A: a second gate in use
+      ['ESP1.3v3', 'BB1.a10'],
+      ['ESP1.gnd1', 'BB1.j16'],
+      ['ESP1.d26', 'BB1.g10'], // 1A
+      ['ESP1.d27', 'BB1.g11'], // 1B
+      ['BB1.h12', 'BB1.a20'], // 1Y to the LED
+      ['BB1.a21', 'ESP1.gnd2'],
+      ['ESP1.d25', 'BB1.g13'], // 2A: a second gate in use
     ]);
     const layout = layoutDiagram(circuit);
     const part = expectGateBox(layout, 2);
@@ -560,14 +561,14 @@ describe('diagram of a logic chip', () => {
 
   it('makes room for the gates in a circuit with no board', () => {
     let circuit = chip(ok(addBattery(emptyCircuit(), 5)));
-    circuit = ok(placePart(circuit, 'led', 'c20'));
+    circuit = ok(placePart(circuit, 'led', 'BB1.c20'));
     circuit = wire(circuit, [
-      ['BAT1.pos', 'a10'],
-      ['BAT1.neg', 'j16'],
-      ['g10', 'b10'], // 1A tied high
-      ['g11', 'c10'], // 1B tied high
-      ['h12', 'a20'],
-      ['a21', 'BAT1.neg'],
+      ['BAT1.pos', 'BB1.a10'],
+      ['BAT1.neg', 'BB1.j16'],
+      ['BB1.g10', 'BB1.b10'], // 1A tied high
+      ['BB1.g11', 'BB1.c10'], // 1B tied high
+      ['BB1.h12', 'BB1.a20'],
+      ['BB1.a21', 'BAT1.neg'],
     ]);
     const layout = layoutDiagram(circuit);
     expectGateBox(layout, 1);

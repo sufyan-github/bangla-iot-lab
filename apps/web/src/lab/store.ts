@@ -1,5 +1,6 @@
 import {
   addBattery,
+  addBreadboard,
   addEsp32,
   addMotorDriver,
   addUno,
@@ -21,7 +22,7 @@ import {
 import type { BoardStatus, Probe, SimulationFrame, SimulationResult } from '@banglalab/simulation';
 import { create } from 'zustand';
 import type { BoardProgram, ProjectContent } from '../storage/projects';
-import { settleOffBoardPart } from './geometry';
+import { freeBreadboardPlace, settleOffBoardPart } from './geometry';
 import { signals } from './signals';
 import { starterProgram } from './starters';
 
@@ -97,6 +98,8 @@ interface LabState {
   /** Takes both multimeter probes off the circuit. */
   clearMeter(): void;
   addBattery(): void;
+  /** Adds a half breadboard in a free place, below what is already there. */
+  addBreadboard(): void;
   addUno(): void;
   addEsp32(): void;
   addMotorDriver(): void;
@@ -278,6 +281,15 @@ export const useLab = create<LabState>((set, get) => {
     endWire: (toSelect) =>
       set(toSelect ? { wireStart: null, tool: 'select' } : { wireStart: null }),
 
+    addBreadboard() {
+      const place = freeBreadboardPlace(get().circuit, 'half');
+      if (!place) {
+        set({ notice: 'no-room' });
+        return;
+      }
+      const id = apply(addBreadboard(get().circuit, 'half', place));
+      if (id) set({ tool: 'select', selectedId: id, wireStart: null });
+    },
     addBattery() {
       const id = apply(addBattery(get().circuit));
       if (!id) return;

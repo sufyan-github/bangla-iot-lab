@@ -129,7 +129,7 @@ describe('too much voltage on a pin', () => {
 
   it('says so when a 3.3 V pin is wired to the board’s own 5 V pin', () => {
     // The top rail carries VIN instead of 3V3, and GPIO34 is wired straight to it.
-    const circuit = wiredTo('tp5');
+    const circuit = wiredTo('BB1.tp5');
     const fiveVolts = {
       ...circuit,
       wires: circuit.wires.map((w) => (w.id === 'W2' ? { ...w, from: 'ESP1.vin' } : w)),
@@ -143,7 +143,7 @@ describe('too much voltage on a pin', () => {
 
   it('says nothing at 3.3 V, nor about the supply pins themselves', () => {
     expect(
-      simulate(wiredTo('tp5')).diagnostics.filter((d) => d.code === 'pin-overvoltage'),
+      simulate(wiredTo('BB1.tp5')).diagnostics.filter((d) => d.code === 'pin-overvoltage'),
     ).toEqual([]);
     expect(
       simulate(esp32CircuitExample()).diagnostics.filter((d) => d.code === 'pin-overvoltage'),

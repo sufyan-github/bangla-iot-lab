@@ -12,17 +12,17 @@ describe('lab editor state', () => {
   it('builds the LED circuit from taps, as a student would', () => {
     lab().addBattery();
     lab().setTool('resistor');
-    lab().tapEndpoint('c5');
+    lab().tapEndpoint('BB1.c5');
     expect(lab().tool).toBe('select'); // back to selecting, with the new part selected
     expect(lab().selectedId).toBe('R1');
     lab().setTool('led');
-    lab().tapEndpoint('d9');
+    lab().tapEndpoint('BB1.d9');
     lab().setTool('wire');
     for (const [from, to] of [
-      ['BAT1.pos', 'tp1'],
-      ['BAT1.neg', 'tn1'],
-      ['tp4', 'a5'],
-      ['a10', 'tn8'],
+      ['BAT1.pos', 'BB1.tp1'],
+      ['BAT1.neg', 'BB1.tn1'],
+      ['BB1.tp4', 'BB1.a5'],
+      ['BB1.a10', 'BB1.tn8'],
     ] as const) {
       lab().tapEndpoint(from);
       expect(lab().wireStart).toBe(from);
@@ -36,16 +36,16 @@ describe('lab editor state', () => {
   it('explains a refused edit and keeps the circuit unchanged', () => {
     lab().open(project(ledCircuitExample()));
     lab().setTool('led');
-    lab().tapEndpoint('c5');
+    lab().tapEndpoint('BB1.c5');
     expect(lab().notice).toBe('hole-occupied');
     expect(lab().circuit).toEqual(ledCircuitExample());
 
     lab().setTool('wire');
     expect(lab().notice).toBeNull();
-    lab().tapEndpoint('c9'); // occupied by R1: refused before a wire is started
+    lab().tapEndpoint('BB1.c9'); // occupied by R1: refused before a wire is started
     expect(lab()).toMatchObject({ notice: 'hole-occupied', wireStart: null });
-    lab().tapEndpoint('b1');
-    lab().tapEndpoint('b1'); // tapping the start again cancels the wire
+    lab().tapEndpoint('BB1.b1');
+    lab().tapEndpoint('BB1.b1'); // tapping the start again cancels the wire
     expect(lab().wireStart).toBeNull();
     expect(lab().circuit.wires).toHaveLength(4);
   });
@@ -54,11 +54,13 @@ describe('lab editor state', () => {
     lab().open(project(ledCircuitExample()));
     lab().select('LED1');
     lab().flipSelected();
-    expect(lab().circuit.components[2]).toMatchObject({ pins: { anode: 'd10', cathode: 'd9' } });
+    expect(lab().circuit.components[3]).toMatchObject({
+      pins: { anode: 'BB1.d10', cathode: 'BB1.d9' },
+    });
     lab().setProps('LED1', { color: 'blue' });
-    expect(lab().circuit.components[2]).toMatchObject({ props: { color: 'blue' } });
+    expect(lab().circuit.components[3]).toMatchObject({ props: { color: 'blue' } });
     lab().removeSelected();
-    expect(lab().circuit.components.map((c) => c.id)).toEqual(['BAT1', 'R1']);
+    expect(lab().circuit.components.map((c) => c.id)).toEqual(['BB1', 'BAT1', 'R1']);
     expect(lab().selectedId).toBeNull();
   });
 
@@ -80,10 +82,10 @@ describe('lab editor state', () => {
 
   it('places buttons and potentiometers with their tools', () => {
     lab().setTool('button');
-    lab().tapEndpoint('c14');
+    lab().tapEndpoint('BB1.c14');
     lab().setTool('potentiometer');
-    lab().tapEndpoint('c20');
-    expect(lab().circuit.components.map((c) => c.id)).toEqual(['SW1', 'POT1']);
+    lab().tapEndpoint('BB1.c20');
+    expect(lab().circuit.components.map((c) => c.id)).toEqual(['BB1', 'SW1', 'POT1']);
   });
 
   it('tracks held buttons, collects serial text and forgets both when stopped', () => {
@@ -125,12 +127,12 @@ describe('undo and redo', () => {
     lab().open(project(ledCircuitExample()));
     expect(lab().past).toHaveLength(0);
     lab().setTool('led');
-    lab().tapEndpoint('h3');
+    lab().tapEndpoint('BB1.h3');
     lab().setTool('wire');
-    lab().tapEndpoint('g1');
-    lab().tapEndpoint('g2');
+    lab().tapEndpoint('BB1.g1');
+    lab().tapEndpoint('BB1.g2');
     const built = lab().circuit;
-    expect(built.components).toHaveLength(4);
+    expect(built.components).toHaveLength(5);
     expect(built.wires).toHaveLength(5);
 
     lab().undo();
@@ -163,7 +165,7 @@ describe('undo and redo', () => {
   it('does not record refused edits or selection', () => {
     lab().open(project(ledCircuitExample()));
     lab().setTool('led');
-    lab().tapEndpoint('c5'); // taken
+    lab().tapEndpoint('BB1.c5'); // taken
     lab().setTool('select');
     lab().select('R1');
     expect(lab().past).toHaveLength(0);
@@ -212,12 +214,12 @@ describe('undo and redo', () => {
     expect(lab().programs.UNO1).toBeUndefined();
 
     lab().undo();
-    expect(lab().circuit.components.map((c) => c.id)).toEqual(['UNO1']);
+    expect(lab().circuit.components.map((c) => c.id)).toEqual(['BB1', 'UNO1']);
     expect(lab().programs.UNO1).toBe(program);
     expect(lab().uploads.UNO1).toBe(uploadsBefore + 1);
 
     lab().undo(); // back before the board was added
-    expect(lab().circuit.components).toHaveLength(0);
+    expect(lab().circuit.components.map((c) => c.id)).toEqual(['BB1']);
     expect(lab().programs).toEqual({});
     lab().redo();
     expect(lab().programs.UNO1).toBe(program);
@@ -226,10 +228,10 @@ describe('undo and redo', () => {
   it('keeps program text typed after the step that is undone', () => {
     lab().addUno();
     lab().setTool('led');
-    lab().tapEndpoint('d9');
+    lab().tapEndpoint('BB1.d9');
     lab().setSource('UNO1', '// my own program');
     lab().undo();
-    expect(lab().circuit.components.map((c) => c.id)).toEqual(['UNO1']);
+    expect(lab().circuit.components.map((c) => c.id)).toEqual(['BB1', 'UNO1']);
     expect(lab().programs.UNO1!.source).toBe('// my own program');
   });
 
@@ -252,14 +254,14 @@ describe('multimeter probes', () => {
   it('places red first, then black, and then they take turns', () => {
     lab().open(project(ledCircuitExample()));
     lab().setTool('probe');
-    lab().tapEndpoint('a5');
-    expect(lab().meter).toMatchObject({ red: 'a5', black: null });
-    lab().tapEndpoint('a9');
-    expect(lab().meter).toMatchObject({ red: 'a5', black: 'a9' });
+    lab().tapEndpoint('BB1.a5');
+    expect(lab().meter).toMatchObject({ red: 'BB1.a5', black: null });
+    lab().tapEndpoint('BB1.a9');
+    expect(lab().meter).toMatchObject({ red: 'BB1.a5', black: 'BB1.a9' });
     lab().tapEndpoint('BAT1.pos'); // red was placed longest ago, so red moves
-    expect(lab().meter).toMatchObject({ red: 'BAT1.pos', black: 'a9' });
-    lab().tapEndpoint('tn1');
-    expect(lab().meter).toMatchObject({ red: 'BAT1.pos', black: 'tn1' });
+    expect(lab().meter).toMatchObject({ red: 'BAT1.pos', black: 'BB1.a9' });
+    lab().tapEndpoint('BB1.tn1');
+    expect(lab().meter).toMatchObject({ red: 'BAT1.pos', black: 'BB1.tn1' });
     // Probing changes nothing in the circuit and is not an undo step.
     expect(lab().circuit).toEqual(ledCircuitExample());
     expect(lab().past).toHaveLength(0);
@@ -267,12 +269,12 @@ describe('multimeter probes', () => {
 
   it('lifts a probe that is tapped, and clears both', () => {
     lab().setTool('probe');
-    lab().tapEndpoint('a5');
-    lab().tapEndpoint('a9');
-    lab().tapEndpoint('a5');
-    expect(lab().meter).toMatchObject({ red: null, black: 'a9' });
-    lab().tapEndpoint('b5'); // the free probe goes down again
-    expect(lab().meter).toMatchObject({ red: 'b5', black: 'a9' });
+    lab().tapEndpoint('BB1.a5');
+    lab().tapEndpoint('BB1.a9');
+    lab().tapEndpoint('BB1.a5');
+    expect(lab().meter).toMatchObject({ red: null, black: 'BB1.a9' });
+    lab().tapEndpoint('BB1.b5'); // the free probe goes down again
+    expect(lab().meter).toMatchObject({ red: 'BB1.b5', black: 'BB1.a9' });
     lab().clearMeter();
     expect(lab().meter).toMatchObject({ red: null, black: null });
   });
@@ -283,19 +285,19 @@ describe('multimeter probes', () => {
       black,
       last: 'red' as const,
     });
-    expect(meterReading(result, probes(null, 'a5'))).toBeNull();
-    expect(meterReading(null, probes('a5', null))).toEqual({ state: 'off' });
-    expect(meterReading(result, probes('h20', null))).toEqual({ state: 'open' });
+    expect(meterReading(result, probes(null, 'BB1.a5'))).toBeNull();
+    expect(meterReading(null, probes('BB1.a5', null))).toEqual({ state: 'off' });
+    expect(meterReading(result, probes('BB1.h20', null))).toEqual({ state: 'open' });
 
     const battery = meterReading(result, probes('BAT1.pos', null));
     expect(battery).toMatchObject({ state: 'ok' });
     expect((battery as { volts: number }).volts).toBeCloseTo(9, 1);
     // Across the LED: its forward voltage, with either sign depending on which way round.
-    const across = meterReading(result, probes('d9', 'd10')) as { volts: number };
+    const across = meterReading(result, probes('BB1.d9', 'BB1.d10')) as { volts: number };
     expect(across.volts).toBeCloseTo(result.readings.LED1!.voltage, 6);
-    const reversed = meterReading(result, probes('d10', 'd9')) as { volts: number };
+    const reversed = meterReading(result, probes('BB1.d10', 'BB1.d9')) as { volts: number };
     expect(reversed.volts).toBeCloseTo(-across.volts, 9);
     // Two holes in one strip are the same point.
-    expect((meterReading(result, probes('a9', 'e9')) as { volts: number }).volts).toBe(0);
+    expect((meterReading(result, probes('BB1.a9', 'BB1.e9')) as { volts: number }).volts).toBe(0);
   });
 });

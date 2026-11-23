@@ -66,11 +66,11 @@ test('the first lesson is checked step by step, and its progress is kept', async
   await expect(checks(page)).toHaveCount(4);
   await expect(checks(page).first()).toHaveAttribute('data-passed', 'false');
   await page.getByTestId('tab-circuit').click();
-  await place(page, 'resistor', 'c20'); // c20 – c24
-  await place(page, 'led', 'e24'); // e24 – e25
+  await place(page, 'resistor', 'BB1.c20'); // c20 – c24
+  await place(page, 'led', 'BB1.e24'); // e24 – e25
   await wire(page, [
-    ['ESP1.d2', 'a20'],
-    ['ESP1.gnd2', 'a25'],
+    ['ESP1.d2', 'BB1.a20'],
+    ['ESP1.gnd2', 'BB1.a25'],
   ]);
   await page.getByTestId('tab-lesson').click();
   await expectStepDone(page);
@@ -104,10 +104,10 @@ test('a step that is not done says what is still missing', async ({ page }) => {
   await page.getByTestId('lesson-next').click();
   // The LED straight on 3V3, without its resistor: joined, but not as the step asks.
   await page.getByTestId('tab-circuit').click();
-  await place(page, 'led', 'e24');
+  await place(page, 'led', 'BB1.e24');
   await wire(page, [
-    ['ESP1.3v3', 'a24'],
-    ['ESP1.gnd2', 'a25'],
+    ['ESP1.3v3', 'BB1.a24'],
+    ['ESP1.gnd2', 'BB1.a25'],
   ]);
   await page.getByTestId('tab-lesson').click();
   await expect(checks(page).nth(0)).toHaveAttribute('data-passed', 'true'); // an LED is there

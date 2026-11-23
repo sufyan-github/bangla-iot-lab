@@ -197,6 +197,17 @@ export const bn = {
   'inspector.jumper.on': 'লাগানো',
   'inspector.jumper.off': 'খোলা',
   'edit.driver-limit': 'একটাই মোটর ড্রাইভার রাখা যায়।',
+  'edit.breadboard-limit': 'চারটার বেশি ব্রেডবোর্ড রাখা যায় না।',
+  'tool.breadboard': 'ব্রেডবোর্ড',
+  'part.breadboard': 'ব্রেডবোর্ড',
+  'part.breadboard.about':
+    'ঝালাই ছাড়া সার্কিট বানানোর বোর্ড। মাঝের খাঁজের দুই পাশে প্রতিটা খাড়া সারির পাঁচটা ছিদ্র ভেতরে জোড়া; ওপর-নিচের লাল (+) আর নীল (−) লাইন পুরোটা জোড়া। দুটো ব্রেডবোর্ড নিজে থেকে জোড়া লাগে না: তার দিয়ে জুড়তে হয়। ওপরের ট্যাব ধরে টেনে সরাও; ভেতরের পার্টস আর তার সাথে সাথে যায়। মিনি বোর্ডে পাওয়ার লাইন নেই।',
+  'inspector.boardSize': 'আকার',
+  'inspector.boardSize.half': 'হাফ ({holes} ছিদ্র)',
+  'inspector.boardSize.full': 'ফুল ({holes} ছিদ্র)',
+  'inspector.boardSize.mini': 'মিনি ({holes} ছিদ্র)',
+  'inspector.breadboardCarries':
+    'এতে {parts}টা পার্ট আর {wires}টা তার আছে। ব্রেডবোর্ড সরিয়ে ফেললে এগুলোও সরে যাবে।',
   'diag.supply-backfeed':
     '{id}-র {socket} পিনে বাইরে থেকে {volts} আসছে, অথচ বোর্ড USB থেকেও চলছে। কিছু বোর্ডে একটা ডায়োড থাকে বলে এতে ক্ষতি হয় না, অনেক বোর্ডে থাকে না। আসল বোর্ড ব্যাটারি থেকে চালানোর সময় USB তার খুলে রাখো।',
   'code.starter.esp32.motor': 'মোটর সামনে-পেছনে (D25, D26, D27)',
@@ -895,6 +906,17 @@ export const en: Record<MessageKey, string> = {
   'inspector.jumper.on': 'In place',
   'inspector.jumper.off': 'Taken off',
   'edit.driver-limit': 'Only one motor driver can be used.',
+  'edit.breadboard-limit': 'No more than four breadboards can be used.',
+  'tool.breadboard': 'Breadboard',
+  'part.breadboard': 'Breadboard',
+  'part.breadboard.about':
+    'A board for building circuits without solder. On each side of the centre trench, the five holes of every column are joined inside; the red (+) and blue (−) lines along the top and bottom are joined all along. Two breadboards are not joined by themselves: join them with a wire. Drag one by its tab to move it; the parts and wires in it go with it. The mini board has no power lines.',
+  'inspector.boardSize': 'Size',
+  'inspector.boardSize.half': 'Half ({holes} holes)',
+  'inspector.boardSize.full': 'Full ({holes} holes)',
+  'inspector.boardSize.mini': 'Mini ({holes} holes)',
+  'inspector.breadboardCarries':
+    'It holds {parts} parts and {wires} wires. Removing the breadboard removes them too.',
   'diag.supply-backfeed':
     'Pin {socket} of {id} is being fed {volts} from outside while the board is also on USB. Some boards have a diode that makes this harmless; many do not. When a real board runs from a battery, unplug its USB cable.',
   'code.starter.esp32.motor': 'Motor forwards and back (D25, D26, D27)',

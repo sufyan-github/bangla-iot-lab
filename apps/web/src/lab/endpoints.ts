@@ -1,7 +1,9 @@
 import {
-  allHoles,
   esp32GpioNumber,
   isHole,
+  isRailHole,
+  layoutOf,
+  parseHole,
   parseTerminal,
   stripOf,
   unoPinNumber,
@@ -14,7 +16,7 @@ import {
  * canvas so it can be tested without a browser.
  */
 export interface EndpointInfo {
-  /** The place itself, as printed on the board: "c5", "D13", "+". */
+  /** The place itself, as printed on the board: "c5", "D13", "+"; "BB2 c5" with several breadboards. */
   name: string;
   /** The part and leg plugged in here, e.g. "LED1 +". */
   lead?: string;
@@ -77,27 +79,33 @@ export const DRIVER_TERMINAL_NAMES: Record<string, string> = {
   out4: 'OUT4',
 };
 
-function holeName(hole: string): string {
-  if (hole.startsWith('tp') || hole.startsWith('bp')) return '+';
-  if (hole.startsWith('tn') || hole.startsWith('bn')) return '−';
-  return hole;
+/** A hole as printed on its breadboard, with the breadboard's name when there are several. */
+function holeName(circuit: CircuitDocument, hole: string): string {
+  const parsed = parseHole(hole)!;
+  const printed = isRailHole(hole, 'plus')
+    ? '+'
+    : isRailHole(hole, 'minus')
+      ? '−'
+      : `${parsed.kind === 'terminal' ? parsed.row : ''}${parsed.column}`;
+  return layoutOf(circuit).boards.length > 1 ? `${parsed.board} ${printed}` : printed;
 }
 
 export function describeEndpoint(circuit: CircuitDocument, endpoint: string): EndpointInfo | null {
   const wired = circuit.wires.some((wire) => wire.from === endpoint || wire.to === endpoint);
   if (isHole(endpoint)) {
+    if (!layoutOf(circuit).has(endpoint)) return null;
     for (const component of circuit.components) {
       if (!('pins' in component)) continue;
       const leg = Object.entries(component.pins).find(([, hole]) => hole === endpoint);
       if (leg) {
         return {
-          name: holeName(endpoint),
+          name: holeName(circuit, endpoint),
           lead: `${component.id} ${legName(leg[0])}`.trim(),
           used: true,
         };
       }
     }
-    return { name: holeName(endpoint), used: wired };
+    return { name: holeName(circuit, endpoint), used: wired };
   }
   const terminal = parseTerminal(endpoint);
   const owner = circuit.components.find((c) => c.id === terminal?.componentId);
@@ -117,13 +125,11 @@ export function describeEndpoint(circuit: CircuitDocument, endpoint: string): En
   return null;
 }
 
-const STRIPS = new Map<string, string[]>();
-for (const hole of allHoles()) {
-  const strip = stripOf(hole);
-  STRIPS.set(strip, [...(STRIPS.get(strip) ?? []), hole]);
-}
-
-/** Every hole joined to `endpoint` inside the breadboard, itself included. */
-export function joinedHoles(endpoint: string): readonly string[] {
-  return isHole(endpoint) ? (STRIPS.get(stripOf(endpoint)) ?? []) : [];
+/** Every hole joined to `endpoint` inside its breadboard, itself included. */
+export function joinedHoles(circuit: CircuitDocument, endpoint: string): readonly string[] {
+  if (!isHole(endpoint) || !layoutOf(circuit).has(endpoint)) return [];
+  const strip = stripOf(endpoint);
+  return layoutOf(circuit)
+    .holes()
+    .filter((hole) => hole.startsWith(`${parseHole(endpoint)!.board}.`) && stripOf(hole) === strip);
 }

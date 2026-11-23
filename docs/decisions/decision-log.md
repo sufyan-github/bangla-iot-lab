@@ -1168,3 +1168,43 @@ part yet: for the UNO that would mean decoding WS2812 timing and SPI from the
 emulated chip's pins.
 
 Hardware tests E22 and E23 are written; none is run.
+
+## D-069 — The breadboard is a part: several per circuit, in three sizes
+
+Until now every circuit had one half-size breadboard, fixed in place, and a
+hole was named by its row and column alone ("c10"). The owner asked for
+breadboards that are added, moved and removed like any other part, with the
+designer otherwise unchanged. Decided with the owner on 24 November 2026: half
+(400 holes), full (830) and mini (170, no power rails) sizes; parts still sit in
+breadboard holes, not loose on the work surface; a new circuit starts with one
+half board; and one programmable board per circuit for now (several boards, for
+LoRa, is the next change).
+
+**Each hole names its breadboard.** A hole is "BB1.c10": the breadboard's id, a
+dot and the hole, the same "part.pin" form board sockets already use
+("ESP1.d4"). Breadboard ids are always "BB" and a number, so a hole can never
+be mistaken for a socket. Strips are named after their breadboard too, so
+"BB1.c10" and "BB2.c10" are never joined unless a wire joins them. The
+electrical solution needs nothing else: breadboards are left out of it, and
+the strips follow from the names.
+
+**One grid for all breadboards.** A breadboard sits at whole hole pitches, so
+the holes of every board lie on one grid. A part dragged off the edge of one
+board drops into the next if they are close; but all of a part's legs must sit
+on one board, as a part's legs cannot reach across the gap between two real
+boards. At most four breadboards, to keep the work surface usable on a phone.
+
+**Editing.** A breadboard is picked up by a tab above its corner, so its holes
+stay free for parts and wires; the parts and wires in it go with it. Its size
+can be changed in the inspector, except to a size that would leave a leg or wire
+end in a hole the board no longer has, or that would run into something.
+Removing it says how many parts and wires are on it, and removes them too. The
+work surface grows to the right and down to hold what is placed.
+
+**Old circuits.** Version 21 of the circuit format renames every hole. A circuit
+saved before it is opened with its one board as BB1, at the old fixed place,
+and "c10" read as "BB1.c10", so it looks and works exactly as before. Lessons
+name parts and board pins, never holes, so none needed changing.
+
+**Simplified.** Power rails are joined along their whole length; some real
+full-size boards split them in the middle (noted in the part definition).

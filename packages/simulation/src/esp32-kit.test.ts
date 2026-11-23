@@ -38,16 +38,16 @@ describe('servo on the ESP32', () => {
   const servo: CircuitComponent = {
     id: 'SRV1',
     type: 'servo',
-    pins: { gnd: 'c10', vcc: 'c11', signal: 'c12' },
+    pins: { gnd: 'BB1.c10', vcc: 'BB1.c11', signal: 'BB1.c12' },
     props: {},
   };
   const wired = (supply: string) =>
     circuit(
       [esp32, servo],
       [
-        ['ESP1.gnd1', 'a10'],
-        [supply, 'a11'],
-        ['ESP1.d13', 'a12'],
+        ['ESP1.gnd1', 'BB1.a10'],
+        [supply, 'BB1.a11'],
+        ['ESP1.d13', 'BB1.a12'],
       ],
     );
   const angles = (session: SimulationSession) => {
@@ -84,13 +84,13 @@ describe('ultrasonic distance sensor on the ESP32', () => {
   const sensor = (distance: number): CircuitComponent => ({
     id: 'US1',
     type: 'ultrasonic',
-    pins: { vcc: 'c10', trig: 'c11', echo: 'c12', gnd: 'c13' },
+    pins: { vcc: 'BB1.c10', trig: 'BB1.c11', echo: 'BB1.c12', gnd: 'BB1.c13' },
     props: { distance },
   });
   const supply: [string, string][] = [
-    ['ESP1.vin', 'a10'],
-    ['ESP1.d5', 'a11'],
-    ['ESP1.gnd1', 'a13'],
+    ['ESP1.vin', 'BB1.a10'],
+    ['ESP1.d5', 'BB1.a11'],
+    ['ESP1.gnd1', 'BB1.a13'],
   ];
   /** Echo to GPIO18 through `top`, and GPIO18 to ground through `bottom`: a voltage divider. */
   const divided = (distance: number, top: number, bottom: number) =>
@@ -98,13 +98,13 @@ describe('ultrasonic distance sensor on the ESP32', () => {
       [
         esp32,
         sensor(distance),
-        resistor('R1', 'd12', 'd20', top),
-        resistor('R2', 'e20', 'e25', bottom),
+        resistor('R1', 'BB1.d12', 'BB1.d20', top),
+        resistor('R2', 'BB1.e20', 'BB1.e25', bottom),
       ],
-      [...supply, ['ESP1.d18', 'a20'], ['a25', 'a13']],
+      [...supply, ['ESP1.d18', 'BB1.a20'], ['BB1.a25', 'BB1.a13']],
     );
   const direct = (distance: number) =>
-    circuit([esp32, sensor(distance)], [...supply, ['ESP1.d18', 'a12']]);
+    circuit([esp32, sensor(distance)], [...supply, ['ESP1.d18', 'BB1.a12']]);
 
   function measure(session: SimulationSession, milliseconds: number) {
     let printed = '';
@@ -151,16 +151,16 @@ describe('DHT11 on the ESP32, read by the real DHT library', () => {
   const dht = (celsius: number, humidity: number): CircuitComponent => ({
     id: 'DHT1',
     type: 'dht11',
-    pins: { vcc: 'c10', data: 'c11', gnd: 'c12' },
+    pins: { vcc: 'BB1.c10', data: 'BB1.c11', gnd: 'BB1.c12' },
     props: { celsius, humidity },
   });
   const wired = (sensor: CircuitComponent, supply = 'ESP1.3v3') =>
     circuit(
       [esp32, sensor],
       [
-        [supply, 'a10'],
-        ['ESP1.d4', 'a11'],
-        ['ESP1.gnd1', 'a12'],
+        [supply, 'BB1.a10'],
+        ['ESP1.d4', 'BB1.a11'],
+        ['ESP1.gnd1', 'BB1.a12'],
       ],
     );
   function printed(session: SimulationSession, milliseconds: number): string[] {
@@ -194,7 +194,7 @@ describe('DHT11 on the ESP32, read by the real DHT library', () => {
   });
 
   it('with no supply the library says it could not read the sensor', () => {
-    const unpowered = circuit([esp32, dht(28, 70)], [['ESP1.d4', 'a11']]);
+    const unpowered = circuit([esp32, dht(28, 70)], [['ESP1.d4', 'BB1.a11']]);
     const session = new SimulationSession(unpowered);
     session.loadFirmware('ESP1', starter('dht'));
     const lines = printed(session, 4500);

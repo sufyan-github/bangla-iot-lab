@@ -6,6 +6,7 @@ import {
   gateOutput,
   isProgrammable,
   terminalsOf,
+  withoutBreadboards,
   type CircuitDocument,
 } from '@banglalab/shared';
 import { BOARD_MODELS } from './boards';
@@ -1544,9 +1545,10 @@ export class Observation {
  * Pure and synchronous. To follow a program or a capacitor through time use `SimulationSession`.
  */
 export function simulate(
-  document: CircuitDocument,
+  circuit: CircuitDocument,
   state: CircuitState = IDLE_STATE,
 ): SimulationResult {
+  const document = withoutBreadboards(circuit);
   const observation = new Observation();
   if (document.components.length > 0) observation.add(solveState(document, state), 1);
   const timeDependent = document.components.some((c) => c.type === 'capacitor');

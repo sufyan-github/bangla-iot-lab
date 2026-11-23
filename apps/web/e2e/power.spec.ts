@@ -27,10 +27,10 @@ async function newCircuit(page: Page) {
 test('the four power parts can be placed, set and are kept', async ({ page }) => {
   await newCircuit(page);
   const tools = [
-    ['solar', 'a1', 'PV1'],
-    ['tp4056', 'c5', 'CHG1'],
-    ['cell', 'c14', 'CELL1'],
-    ['lm2596', 'c22', 'REG1'],
+    ['solar', 'BB1.a1', 'PV1'],
+    ['tp4056', 'BB1.c5', 'CHG1'],
+    ['cell', 'BB1.c14', 'CELL1'],
+    ['lm2596', 'BB1.c22', 'REG1'],
   ] as const;
   for (const [tool, hole] of tools) await place(page, tool, hole);
   await page.getByTestId('tool-select').click();
@@ -55,14 +55,14 @@ test('a solar panel charges a cell through the TP4056 in sun, and stops in the d
   page,
 }) => {
   await newCircuit(page);
-  await place(page, 'solar', 'a1'); // + a1, − a3
-  await place(page, 'tp4056', 'c10'); // IN+ c10, IN− c11, B+ c13, B− c14, OUT+ c16, OUT− c17
-  await place(page, 'cell', 'c20'); // + c20, − c26
+  await place(page, 'solar', 'BB1.a1'); // + a1, − a3
+  await place(page, 'tp4056', 'BB1.c10'); // IN+ c10, IN− c11, B+ c13, B− c14, OUT+ c16, OUT− c17
+  await place(page, 'cell', 'BB1.c20'); // + c20, − c26
   await wire(page, [
-    ['b1', 'a10'],
-    ['b3', 'a11'],
-    ['a20', 'a13'],
-    ['a26', 'a14'],
+    ['BB1.b1', 'BB1.a10'],
+    ['BB1.b3', 'BB1.a11'],
+    ['BB1.a20', 'BB1.a13'],
+    ['BB1.a26', 'BB1.a14'],
   ]);
   await page.getByTestId('run').click();
   // Full sun: the charger's red light, about 1 A into the cell.

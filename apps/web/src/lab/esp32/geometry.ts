@@ -1,4 +1,4 @@
-import { TERMINAL_ROWS, holeCoordinates, type TerminalRow } from '@banglalab/shared';
+import { TERMINAL_ROWS, BREADBOARD_SPECS, type TerminalRow } from '@banglalab/shared';
 import { ESP32_DEVKIT_PINS, ESP32_PINS_PER_ROW } from '@banglalab/simulation';
 import { PITCH, type Box, type Point } from '../units';
 
@@ -167,7 +167,7 @@ export interface BreadboardFit {
  */
 export function esp32BreadboardFits(variantId: Esp32BoardVariantId): BreadboardFit[] {
   const { rowSpacing } = ESP32_BOARD_VARIANTS[variantId];
-  const rowY = (row: TerminalRow) => holeCoordinates(`${row}1`).y;
+  const rowY = (row: TerminalRow) => BREADBOARD_SPECS.half.rowY[row]!;
   const upper = TERMINAL_ROWS.slice(0, 5);
   const lower = TERMINAL_ROWS.slice(5);
   return upper.flatMap((topRow, above) => {

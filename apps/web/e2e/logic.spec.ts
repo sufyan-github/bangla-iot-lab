@@ -15,7 +15,7 @@ test('a logic chip sits across the gap wherever it is tapped, and can be swapped
   await page.getByTestId('new-project').click();
   await expect(page).toHaveURL(/\/lab\//);
   // Tapped in row b: the chip still lands with pin 1 in row f.
-  await place(page, 'logic', 'b10');
+  await place(page, 'logic', 'BB1.b10');
   const chip = page.locator('[data-part="U1"]');
   await expect(chip).toBeVisible();
   await expect(chip).toContainText('74HC08');
@@ -29,9 +29,9 @@ test('the truth table appears once there is a switch and an LED', async ({ page 
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await page.getByTestId('tool-battery').click();
-  await place(page, 'switch', 'a1');
+  await place(page, 'switch', 'BB1.a1');
   await expect(page.getByTestId('truth-table')).toHaveCount(0);
-  await place(page, 'led', 'a20');
+  await place(page, 'led', 'BB1.a20');
   await page.getByTestId('tool-select').click();
   await page.getByTestId('make-table').click();
   // One switch: two rows.
@@ -42,17 +42,17 @@ test('the diagram draws a chip with its gates in use inside it', async ({ page }
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await page.getByTestId('tool-battery').click();
-  await place(page, 'logic', 'e10');
+  await place(page, 'logic', 'BB1.e10');
   await page.locator('[data-hit="U1"]').click();
   await page.getByTestId('logic-chip').selectOption('74HC00');
-  await place(page, 'led', 'c20');
+  await place(page, 'led', 'BB1.c20');
   await page.getByTestId('tool-wire').click();
   for (const [from, to] of [
-    ['BAT1.pos', 'a10'],
-    ['BAT1.neg', 'j16'],
-    ['g10', 'b10'],
-    ['h12', 'a20'],
-    ['a21', 'i16'],
+    ['BAT1.pos', 'BB1.a10'],
+    ['BAT1.neg', 'BB1.j16'],
+    ['BB1.g10', 'BB1.b10'],
+    ['BB1.h12', 'BB1.a20'],
+    ['BB1.a21', 'BB1.i16'],
   ]) {
     await tap(page, from!);
     await tap(page, to!);

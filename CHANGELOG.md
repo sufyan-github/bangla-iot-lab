@@ -8,6 +8,14 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Breadboards are parts** (circuit format version 21). A circuit starts with
+  one half breadboard as before, and up to four can be used, in half (400
+  holes), full (830) and mini (170, no power rails) sizes. Each is moved by the
+  tab above its corner, with its parts and wires; its size is chosen in the
+  inspector; removing it removes what is on it. Two breadboards are joined only
+  by a wire. A part slides from one board on to a neighbouring one.
+- Saved circuits are upgraded when opened: the old fixed board becomes BB1, in
+  the same place, and every hole is named after it ("c10" is now "BB1.c10").
 - **WS2812B LED ring** and **1.54-inch ST7789 colour display** (circuit format
   version 20). The ring takes each LED's colour from one data wire and passes
   the rest on through DOUT, so rings chain; the display draws whatever the

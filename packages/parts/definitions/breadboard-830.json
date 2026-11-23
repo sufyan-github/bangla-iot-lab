@@ -6,16 +6,21 @@
   "family": "basic",
   "tier": 1,
   "name": {
-    "bn": "ব্রেডবোর্ড (৮৩০)",
-    "en": "830-hole breadboard"
+    "bn": "ব্রেডবোর্ড (হাফ, ফুল, মিনি)",
+    "en": "Breadboard (half, full, mini)"
   },
   "summary": {
-    "bn": "ঝালাই ছাড়া সার্কিট বানানোর বোর্ড।",
-    "en": "A board for building circuits without soldering."
+    "bn": "ঝালাই ছাড়া সার্কিট বানানোর বোর্ড। এক সার্কিটে চারটা পর্যন্ত, যেখানে খুশি সরানো যায়।",
+    "en": "A board for building circuits without soldering. Up to four in a circuit, each moved wherever it is wanted."
   },
   "model": {
     "level": "electrical",
-    "simplified": ["Strips are perfect conductors; no worn contacts."]
+    "simplified": [
+      "Strips are perfect conductors; no worn contacts.",
+      "Each power rail is joined along its whole length. On some full-size boards the rails are split in the middle; check yours with a meter.",
+      "Two breadboards never touch electrically, even placed side by side: only a wire joins them. A part's legs all sit on one breadboard.",
+      "A breadboard moves a whole hole at a time, so the holes of every board line up."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -24,12 +29,22 @@
   "pins": [],
   "variants": [
     {
+      "id": "400",
+      "name": "Half: 400 tie points (30 columns, four rails)",
+      "measured": false
+    },
+    {
       "id": "830",
-      "name": "830 tie points",
+      "name": "Full: 830 tie points (63 columns, four rails)",
+      "measured": false
+    },
+    {
+      "id": "170",
+      "name": "Mini: 170 tie points (17 columns, no rails)",
       "measured": false
     }
   ],
   "catalog": {
-    "keywords": ["breadboard 830", "breadboard"]
+    "keywords": ["breadboard 830", "breadboard 400", "breadboard 170", "breadboard"]
   }
 }

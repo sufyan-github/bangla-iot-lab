@@ -10,7 +10,8 @@ import {
 import { describe, expect, it } from 'vitest';
 import { describeEndpoint, joinedHoles } from './endpoints';
 import {
-  BREADBOARD_BOX,
+  BOARD_X,
+  BOARD_Y,
   DRIVER_BOX,
   UNO_BOX,
   canvasHeight,
@@ -53,7 +54,7 @@ describe('moving batteries and the board', () => {
 
   it('refuses a place on the breadboard, on another part or off the work surface', () => {
     const circuit = ok(addBattery(unoCircuitExample()));
-    const onBoard = { x: BREADBOARD_BOX.x + 40, y: BREADBOARD_BOX.y + 40 };
+    const onBoard = { x: BOARD_X + 40, y: BOARD_Y + 40 };
     expect(moveOffBoardTo(circuit, 'BAT1', onBoard)).toEqual({ ok: false, error: 'no-room' });
     expect(moveOffBoardTo(circuit, 'BAT1', { x: UNO_BOX.x + 20, y: UNO_BOX.y + 10 }).ok).toBe(
       false,
@@ -85,12 +86,16 @@ describe('what the pointer is over', () => {
   const circuit = ledCircuitExample();
 
   it('names holes, rails, legs and terminals', () => {
-    expect(describeEndpoint(circuit, 'h20')).toEqual({ name: 'h20', used: false });
-    expect(describeEndpoint(circuit, 'd9')).toEqual({ name: 'd9', lead: 'LED1 +', used: true });
-    expect(describeEndpoint(circuit, 'd10')).toMatchObject({ lead: 'LED1 −' });
-    expect(describeEndpoint(circuit, 'c5')).toMatchObject({ lead: 'R1' });
-    expect(describeEndpoint(circuit, 'tp1')).toEqual({ name: '+', used: true });
-    expect(describeEndpoint(circuit, 'bn3')).toEqual({ name: '−', used: false });
+    expect(describeEndpoint(circuit, 'BB1.h20')).toEqual({ name: 'h20', used: false });
+    expect(describeEndpoint(circuit, 'BB1.d9')).toEqual({
+      name: 'd9',
+      lead: 'LED1 +',
+      used: true,
+    });
+    expect(describeEndpoint(circuit, 'BB1.d10')).toMatchObject({ lead: 'LED1 −' });
+    expect(describeEndpoint(circuit, 'BB1.c5')).toMatchObject({ lead: 'R1' });
+    expect(describeEndpoint(circuit, 'BB1.tp1')).toEqual({ name: '+', used: true });
+    expect(describeEndpoint(circuit, 'BB1.bn3')).toEqual({ name: '−', used: false });
     expect(describeEndpoint(circuit, 'BAT1.pos')).toEqual({ name: '+', lead: 'BAT1', used: true });
     expect(describeEndpoint(circuit, 'NOPE.pos')).toBeNull();
   });
@@ -105,9 +110,15 @@ describe('what the pointer is over', () => {
   });
 
   it('knows which holes are joined inside the board', () => {
-    expect(joinedHoles('h20')).toEqual(['f20', 'g20', 'h20', 'i20', 'j20']);
-    expect(joinedHoles('tp1')).toHaveLength(25);
-    expect(joinedHoles('BAT1.pos')).toEqual([]);
+    expect(joinedHoles(circuit, 'BB1.h20')).toEqual([
+      'BB1.f20',
+      'BB1.g20',
+      'BB1.h20',
+      'BB1.i20',
+      'BB1.j20',
+    ]);
+    expect(joinedHoles(circuit, 'BB1.tp1')).toHaveLength(25);
+    expect(joinedHoles(circuit, 'BAT1.pos')).toEqual([]);
   });
 });
 

@@ -34,7 +34,7 @@ const probe = (id: string, column: number, celsius: number): CircuitComponent =>
   ({
     id,
     type: 'ds18b20',
-    pins: { gnd: `c${column}`, dq: `c${column + 1}`, vdd: `c${column + 2}` },
+    pins: { gnd: `BB1.c${column}`, dq: `BB1.c${column + 1}`, vdd: `BB1.c${column + 2}` },
     props: { celsius },
   }) as CircuitComponent;
 function printed(session: SimulationSession, milliseconds: number): string {
@@ -85,23 +85,23 @@ describe('DS18B20 on the ESP32, read by DallasTemperature', () => {
               {
                 id: 'R9',
                 type: 'resistor',
-                pins: { a: 'd11', b: 'd15' },
+                pins: { a: 'BB1.d11', b: 'BB1.d15' },
                 props: { resistance: 4700 },
               } as CircuitComponent,
             ]
           : []),
       ],
       [
-        ['ESP1.gnd1', 'a10'],
-        ['ESP1.d4', 'a11'],
-        ['ESP1.3v3', 'a12'],
-        ['b12', 'b15'],
+        ['ESP1.gnd1', 'BB1.a10'],
+        ['ESP1.d4', 'BB1.a11'],
+        ['ESP1.3v3', 'BB1.a12'],
+        ['BB1.b12', 'BB1.b15'],
         // A second probe at columns 20 to 22 shares the same three lines.
         ...(probes.length > 1
           ? ([
-              ['b10', 'a20'],
-              ['b11', 'a21'],
-              ['c15', 'a22'],
+              ['BB1.b10', 'BB1.a20'],
+              ['BB1.b11', 'BB1.a21'],
+              ['BB1.c15', 'BB1.a22'],
             ] as [string, string][])
           : []),
       ],

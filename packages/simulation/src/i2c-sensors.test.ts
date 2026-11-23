@@ -112,17 +112,17 @@ describe('BME280 on the ESP32, read by its library', () => {
     ({
       id: 'BME1',
       type: 'bme280',
-      pins: { vcc: 'c10', gnd: 'c11', scl: 'c12', sda: 'c13' },
+      pins: { vcc: 'BB1.c10', gnd: 'BB1.c11', scl: 'BB1.c12', sda: 'BB1.c13' },
       props: { celsius: 28, humidity: 70, hpa: 1010, address: 0x76, ...props },
     }) as CircuitComponent;
   const wired = (component: CircuitComponent, supply = 'ESP1.3v3') =>
     circuit(
       [esp32, component],
       [
-        [supply, 'a10'],
-        ['ESP1.gnd1', 'a11'],
-        ['ESP1.d22', 'a12'],
-        ['ESP1.d21', 'a13'],
+        [supply, 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a11'],
+        ['ESP1.d22', 'BB1.a12'],
+        ['ESP1.d21', 'BB1.a13'],
       ],
     );
 
@@ -168,20 +168,32 @@ describe('INA219 on the ESP32, read by its library', () => {
       {
         id: 'INA1',
         type: 'ina219',
-        pins: { vcc: 'c10', gnd: 'c11', scl: 'c12', sda: 'c13', vinm: 'c14', vinp: 'c15' },
+        pins: {
+          vcc: 'BB1.c10',
+          gnd: 'BB1.c11',
+          scl: 'BB1.c12',
+          sda: 'BB1.c13',
+          vinm: 'BB1.c14',
+          vinp: 'BB1.c15',
+        },
         props: {},
       },
-      { id: 'R1', type: 'resistor', pins: { a: 'c20', b: 'c24' }, props: { resistance: 100 } },
+      {
+        id: 'R1',
+        type: 'resistor',
+        pins: { a: 'BB1.c20', b: 'BB1.c24' },
+        props: { resistance: 100 },
+      },
     ],
     [
-      ['ESP1.3v3', 'a10'],
-      ['ESP1.gnd1', 'a11'],
-      ['ESP1.d22', 'a12'],
-      ['ESP1.d21', 'a13'],
-      ['BAT1.pos', 'a15'],
-      ['a14', 'a20'],
-      ['a24', 'BAT1.neg'],
-      ['ESP1.gnd2', 'b24'],
+      ['ESP1.3v3', 'BB1.a10'],
+      ['ESP1.gnd1', 'BB1.a11'],
+      ['ESP1.d22', 'BB1.a12'],
+      ['ESP1.d21', 'BB1.a13'],
+      ['BAT1.pos', 'BB1.a15'],
+      ['BB1.a14', 'BB1.a20'],
+      ['BB1.a24', 'BAT1.neg'],
+      ['ESP1.gnd2', 'BB1.b24'],
     ],
   );
 

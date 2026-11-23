@@ -11,7 +11,7 @@ const stroke = {
 } as const;
 const lead = <path d="M2 12h4M18 12h4" {...stroke} />;
 
-type PaletteItem = Tool | 'battery' | 'uno' | 'esp32' | 'l298n';
+type PaletteItem = Tool | 'breadboard' | 'battery' | 'uno' | 'esp32' | 'l298n';
 
 const ICONS: Record<PaletteItem, ReactNode> = {
   select: <path d="M7 4l11 9-5 .8 3 6-2.4 1.2-3-6L7 18z" fill="currentColor" />,
@@ -27,6 +27,16 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M4 20l7-9" {...stroke} strokeWidth={1.6} />
       <path d="M11 11l6-8" {...stroke} strokeWidth={4.4} />
       <circle cx="4" cy="20" r="1.6" fill="currentColor" />
+    </>
+  ),
+  breadboard: (
+    <>
+      <rect x="2.5" y="5" width="19" height="14" rx="2" {...stroke} />
+      <path d="M2.5 12h19" {...stroke} strokeWidth={1.4} />
+      {[6, 9.5, 13, 16.5].flatMap((x) => [
+        <circle key={`${x}a`} cx={x} cy="8.6" r="1" fill="currentColor" />,
+        <circle key={`${x}b`} cx={x} cy="15.4" r="1" fill="currentColor" />,
+      ])}
     </>
   ),
   battery: (
@@ -406,7 +416,7 @@ const ICONS: Record<PaletteItem, ReactNode> = {
 /** Tools in the order they are shown; each inner list is one group. */
 const GROUPS: PaletteItem[][] = [
   ['select', 'wire', 'probe'],
-  ['battery', 'uno', 'esp32'],
+  ['breadboard', 'battery', 'uno', 'esp32'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
   ['buzzer', 'motor', 'l298n', 'relay', 'relaymodule', 'servo', 'rgbled', 'lcd', 'oled'],
   ['logic'],
@@ -436,7 +446,8 @@ export function Palette() {
   const wireStart = useLab((s) => s.wireStart);
   const running = useLab((s) => s.running);
   const wireSelected = useLab((s) => s.circuit.wires.some((wire) => wire.id === s.selectedId));
-  const { setTool, addBattery, addUno, addEsp32, addMotorDriver } = useLab.getState();
+  const { setTool, addBreadboard, addBattery, addUno, addEsp32, addMotorDriver } =
+    useLab.getState();
   const { t } = useT();
 
   const hint: MessageKey =
@@ -448,15 +459,17 @@ export function Palette() {
           ? 'hint.running'
           : (HINTS[tool] ?? 'hint.place');
   const choose = (item: PaletteItem) =>
-    item === 'battery'
-      ? addBattery()
-      : item === 'uno'
-        ? addUno()
-        : item === 'esp32'
-          ? addEsp32()
-          : item === 'l298n'
-            ? addMotorDriver()
-            : setTool(item);
+    item === 'breadboard'
+      ? addBreadboard()
+      : item === 'battery'
+        ? addBattery()
+        : item === 'uno'
+          ? addUno()
+          : item === 'esp32'
+            ? addEsp32()
+            : item === 'l298n'
+              ? addMotorDriver()
+              : setTool(item);
 
   return (
     <div className="border-b border-line bg-surface">

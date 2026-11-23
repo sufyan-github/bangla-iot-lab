@@ -1,8 +1,13 @@
 /**
- * Model of a half-size solderless breadboard (30 columns).
+ * Model of solderless breadboards. A circuit holds one or more, each a part of
+ * its own (`BB1`, `BB2`, …), and every hole is named after its breadboard:
+ * "BB1.a12" is a terminal strip hole, "BB2.tp7" a power rail hole. Holes of
+ * different breadboards are never joined by the boards themselves.
  *
  * Coordinates are in units of one hole pitch (2.54 mm on a real board), so the
- * same numbers drive rendering, lead-length rules and connectivity.
+ * same numbers drive rendering, lead-length rules and connectivity. Here they
+ * are measured from a breadboard's own top-left corner; `layout.ts` places the
+ * breadboards on the circuit's shared grid.
  *
  *   tp  + + + + +   + + + + +   ...   top power rail (+)
  *   tn  - - - - -   - - - - -   ...   top power rail (−)
@@ -10,8 +15,11 @@
  *   (centre trench)
  *   f-j             five holes joined per column
  *   bp / bn         bottom power rails
+ *
+ * The mini board has the terminal strips only, without power rails.
  */
-export const BOARD_COLUMNS = 30;
+export const BREADBOARD_SIZES = ['half', 'full', 'mini'] as const;
+export type BreadboardSize = (typeof BREADBOARD_SIZES)[number];
 
 export const TERMINAL_ROWS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
 export type TerminalRow = (typeof TERMINAL_ROWS)[number];
@@ -19,10 +27,28 @@ export type TerminalRow = (typeof TERMINAL_ROWS)[number];
 export const RAILS = ['tp', 'tn', 'bp', 'bn'] as const;
 export type Rail = (typeof RAILS)[number];
 
-/** A hole name such as "a12" (terminal strip) or "tp7" (power rail). */
+/** A hole name such as "BB1.a12" (terminal strip) or "BB1.tp7" (power rail). */
 export type HoleId = string;
 
-const ROW_Y: Record<TerminalRow | Rail, number> = {
+/** A breadboard's id: "BB" and a number. */
+export const BREADBOARD_ID = /^BB[1-9]\d*$/;
+
+export interface BreadboardSpec {
+  /** Columns of terminal strips, numbered from 1. */
+  columns: number;
+  rails: boolean;
+  /** Size in pitch units, including the margin around the outer holes. */
+  width: number;
+  height: number;
+  /** Rows of holes, by their distance from the top edge. */
+  rowY: Readonly<Partial<Record<TerminalRow | Rail, number>>>;
+  /** True for the columns that have a hole in the power rails. */
+  railHole(column: number): boolean;
+  /** Holes in all: 400, 830 or 170, as the boards are sold. */
+  holes: number;
+}
+
+const WITH_RAILS = {
   tp: 1,
   tn: 2,
   a: 4,
@@ -37,35 +63,92 @@ const ROW_Y: Record<TerminalRow | Rail, number> = {
   j: 15,
   bp: 17,
   bn: 18,
+} as const;
+const WITHOUT_RAILS = { a: 2, b: 3, c: 4, d: 5, e: 6, f: 9, g: 10, h: 11, i: 12, j: 13 } as const;
+
+export const BREADBOARD_SPECS: Readonly<Record<BreadboardSize, BreadboardSpec>> = {
+  // 30 columns; each rail has 25 holes in groups of five, a gap every sixth column.
+  half: {
+    columns: 30,
+    rails: true,
+    width: 31,
+    height: 19,
+    rowY: WITH_RAILS,
+    railHole: (column) => column % 6 !== 0,
+    holes: 400,
+  },
+  // 63 columns; each rail has 50 holes in ten groups of five, from column 2 to column 60.
+  full: {
+    columns: 63,
+    rails: true,
+    width: 64,
+    height: 19,
+    rowY: WITH_RAILS,
+    railHole: (column) => column >= 2 && column <= 60 && (column - 2) % 6 !== 5,
+    holes: 830,
+  },
+  // 17 columns and no rails.
+  mini: {
+    columns: 17,
+    rails: false,
+    width: 18,
+    height: 15,
+    rowY: WITHOUT_RAILS,
+    railHole: () => false,
+    holes: 170,
+  },
 };
 
-/** Board size in pitch units, including the margin around the outer holes. */
-export const BOARD_WIDTH = BOARD_COLUMNS + 1;
-export const BOARD_HEIGHT = 19;
-
 export type ParsedHole =
-  | { kind: 'terminal'; row: TerminalRow; column: number }
-  | { kind: 'rail'; rail: Rail; column: number };
+  | { board: string; kind: 'terminal'; row: TerminalRow; column: number }
+  | { board: string; kind: 'rail'; rail: Rail; column: number };
 
-/** Rail holes come in groups of five with a gap, as on a real board. */
-function railHasHole(column: number): boolean {
-  return column % 6 !== 0;
-}
-
+/** Reads a hole's name. It says nothing of whether the breadboard is that big. */
 export function parseHole(id: string): ParsedHole | null {
-  const match = /^([a-j]|tp|tn|bp|bn)([1-9]\d?)$/.exec(id);
+  const match = /^(BB[1-9]\d*)\.([a-j]|tp|tn|bp|bn)([1-9]\d?)$/.exec(id);
   if (!match) return null;
-  const name = match[1] as TerminalRow | Rail;
-  const column = Number(match[2]);
-  if (column < 1 || column > BOARD_COLUMNS) return null;
-  if (name.length === 2) {
-    return railHasHole(column) ? { kind: 'rail', rail: name as Rail, column } : null;
-  }
-  return { kind: 'terminal', row: name as TerminalRow, column };
+  const board = match[1]!;
+  const name = match[2] as TerminalRow | Rail;
+  const column = Number(match[3]);
+  return name.length === 2
+    ? { board, kind: 'rail', rail: name as Rail, column }
+    : { board, kind: 'terminal', row: name as TerminalRow, column };
 }
 
+/** True for anything written as a breadboard hole. */
 export function isHole(id: string): boolean {
   return parseHole(id) !== null;
+}
+
+/** True when a breadboard of this size has the hole. */
+export function holeExists(hole: ParsedHole, size: BreadboardSize): boolean {
+  const spec = BREADBOARD_SPECS[size];
+  if (hole.column < 1 || hole.column > spec.columns) return false;
+  return hole.kind === 'terminal' || (spec.rails && spec.railHole(hole.column));
+}
+
+/** The name of a hole on a breadboard: `holeName('BB1', 'a', 12)` is "BB1.a12". */
+export function holeName(board: string, row: TerminalRow | Rail, column: number): HoleId {
+  return `${board}.${row}${column}`;
+}
+
+/** The breadboard a hole belongs to, or undefined when it is not a hole. */
+export function boardOfHole(id: string): string | undefined {
+  return parseHole(id)?.board;
+}
+
+/** A hole's row of terminal strips ("a" to "j") or rail ("tp" and so on). */
+export function rowOfHole(id: string): TerminalRow | Rail | undefined {
+  const hole = parseHole(id);
+  return hole ? (hole.kind === 'rail' ? hole.rail : hole.row) : undefined;
+}
+
+/** True for a hole in a power rail marked + (`plus`) or − (`minus`). */
+export function isRailHole(id: string, sign?: 'plus' | 'minus'): boolean {
+  const row = rowOfHole(id);
+  if (row === undefined || row.length !== 2) return false;
+  if (sign === undefined) return true;
+  return sign === 'plus' ? row.endsWith('p') : row.endsWith('n');
 }
 
 function requireHole(id: string): ParsedHole {
@@ -76,43 +159,30 @@ function requireHole(id: string): ParsedHole {
 
 /**
  * Name of the metal strip a hole belongs to. Two holes are electrically
- * connected by the board itself exactly when their strip names are equal.
+ * connected by a breadboard itself exactly when their strip names are equal.
  */
 export function stripOf(id: HoleId): string {
   const hole = requireHole(id);
-  if (hole.kind === 'rail') return `rail:${hole.rail}`;
+  if (hole.kind === 'rail') return `${hole.board}:rail:${hole.rail}`;
   const half = hole.row <= 'e' ? 'top' : 'bottom';
-  return `strip:${hole.column}:${half}`;
+  return `${hole.board}:strip:${hole.column}:${half}`;
 }
 
-export function holeCoordinates(id: HoleId): { x: number; y: number } {
-  const hole = requireHole(id);
-  return { x: hole.column, y: ROW_Y[hole.kind === 'rail' ? hole.rail : hole.row] };
+/** Where a hole is on its own breadboard, in pitch units from the board's top-left corner. */
+export function localCoordinates(hole: ParsedHole, size: BreadboardSize): { x: number; y: number } {
+  const y = BREADBOARD_SPECS[size].rowY[hole.kind === 'rail' ? hole.rail : hole.row];
+  return { x: hole.column, y: y ?? 0 };
 }
 
-const HOLES: HoleId[] = [];
-const HOLE_AT = new Map<string, HoleId>();
-for (const name of [...RAILS, ...TERMINAL_ROWS]) {
-  for (let column = 1; column <= BOARD_COLUMNS; column++) {
-    const id = `${name}${column}`;
-    if (!parseHole(id)) continue;
-    HOLES.push(id);
-    HOLE_AT.set(`${column},${ROW_Y[name]}`, id);
+/** Every hole of a breadboard of this size, named after `board`. */
+export function holesOf(board: string, size: BreadboardSize): HoleId[] {
+  const spec = BREADBOARD_SPECS[size];
+  const holes: HoleId[] = [];
+  for (const name of [...(spec.rails ? RAILS : []), ...TERMINAL_ROWS]) {
+    for (let column = 1; column <= spec.columns; column++) {
+      const id = holeName(board, name, column);
+      if (holeExists(requireHole(id), size)) holes.push(id);
+    }
   }
-}
-
-export function allHoles(): readonly HoleId[] {
-  return HOLES;
-}
-
-/** The hole at exact grid coordinates, if there is one. */
-export function holeAt(x: number, y: number): HoleId | undefined {
-  return HOLE_AT.get(`${x},${y}`);
-}
-
-/** Straight-line distance between two holes in pitch units. */
-export function holeDistance(a: HoleId, b: HoleId): number {
-  const p = holeCoordinates(a);
-  const q = holeCoordinates(b);
-  return Math.hypot(p.x - q.x, p.y - q.y);
+  return holes;
 }

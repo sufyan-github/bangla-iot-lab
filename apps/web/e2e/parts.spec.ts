@@ -27,30 +27,30 @@ test('every part in the palette can be placed, and the circuit still solves', as
   await newCircuit(page);
   await page.getByTestId('tool-battery').click();
   const tools = [
-    ['resistor', 'a1'],
-    ['led', 'a7'],
-    ['button', 'a10'],
-    ['switch', 'a14'],
-    ['potentiometer', 'a18'],
-    ['capacitor', 'a22'],
-    ['diode', 'a26'],
-    ['transistor', 'h1'],
-    ['buzzer', 'h5'],
-    ['motor', 'h9'],
-    ['ldr', 'h14'],
-    ['temperature', 'h18'],
-    ['soil', 'h22'],
-    ['ir', 'h26'],
-    ['relay', 'e20'],
-    ['servo', 'e1'],
-    ['ultrasonic', 'j1'],
-    ['lcd', 'j8'],
-    ['dht11', 'j25'],
+    ['resistor', 'BB1.a1'],
+    ['led', 'BB1.a7'],
+    ['button', 'BB1.a10'],
+    ['switch', 'BB1.a14'],
+    ['potentiometer', 'BB1.a18'],
+    ['capacitor', 'BB1.a22'],
+    ['diode', 'BB1.a26'],
+    ['transistor', 'BB1.h1'],
+    ['buzzer', 'BB1.h5'],
+    ['motor', 'BB1.h9'],
+    ['ldr', 'BB1.h14'],
+    ['temperature', 'BB1.h18'],
+    ['soil', 'BB1.h22'],
+    ['ir', 'BB1.h26'],
+    ['relay', 'BB1.e20'],
+    ['servo', 'BB1.e1'],
+    ['ultrasonic', 'BB1.j1'],
+    ['lcd', 'BB1.j8'],
+    ['dht11', 'BB1.j25'],
   ] as const;
   for (const [tool, hole] of tools) await place(page, tool, hole);
   await expect(page.locator('[data-part]')).toHaveCount(tools.length + 1);
 
-  await wire(page, [['BAT1.pos', 'tp1']]);
+  await wire(page, [['BAT1.pos', 'BB1.tp1']]);
   await page.getByTestId('run').click();
   await expect(page.getByTestId('meter')).toContainText('V');
   await expect(page.locator('[data-diag^="solver-failed"]')).toHaveCount(0);
@@ -64,12 +64,12 @@ test('every part in the palette can be placed, and the circuit still solves', as
 test('a switch turns the LED on and off while the circuit runs', async ({ page }) => {
   await newCircuit(page);
   await page.getByTestId('tool-battery').click();
-  await place(page, 'switch', 'a1'); // a1 – a3
-  await place(page, 'resistor', 'b3'); // b3 – b7
-  await place(page, 'led', 'c7'); // c7 – c8
+  await place(page, 'switch', 'BB1.a1'); // a1 – a3
+  await place(page, 'resistor', 'BB1.b3'); // b3 – b7
+  await place(page, 'led', 'BB1.c7'); // c7 – c8
   await wire(page, [
-    ['BAT1.pos', 'b1'],
-    ['d8', 'BAT1.neg'],
+    ['BAT1.pos', 'BB1.b1'],
+    ['BB1.d8', 'BAT1.neg'],
   ]);
   await page.getByTestId('run').click();
   await expect(part(page, 'LED1')).toHaveAttribute('data-led-state', 'off');
@@ -85,11 +85,11 @@ test('a switch turns the LED on and off while the circuit runs', async ({ page }
 test('a temperature sensor on the board follows its slider', async ({ page }) => {
   await newCircuit(page);
   await page.getByTestId('tool-uno').click();
-  await place(page, 'temperature', 'c10'); // legs: c10 supply, c11 output, c12 ground
+  await place(page, 'temperature', 'BB1.c10'); // legs: c10 supply, c11 output, c12 ground
   await wire(page, [
-    ['UNO1.5v', 'a10'],
-    ['UNO1.a0', 'a11'],
-    ['UNO1.gnd', 'a12'],
+    ['UNO1.5v', 'BB1.a10'],
+    ['UNO1.a0', 'BB1.a11'],
+    ['UNO1.gnd', 'BB1.a12'],
   ]);
   await page.getByTestId('run').click();
   await expect(part(page, 'TMP1')).toHaveAttribute('data-voltage', '0.250'); // 25 °C
@@ -103,11 +103,11 @@ test('a temperature sensor on the board follows its slider', async ({ page }) =>
 test('a buzzer sounds when powered and can be muted', async ({ page }) => {
   await newCircuit(page);
   await page.getByTestId('tool-battery').click();
-  await place(page, 'buzzer', 'a1');
+  await place(page, 'buzzer', 'BB1.a1');
   await expect(page.getByTestId('mute')).toBeVisible();
   await wire(page, [
-    ['BAT1.pos', 'b1'],
-    ['b3', 'BAT1.neg'],
+    ['BAT1.pos', 'BB1.b1'],
+    ['BB1.b3', 'BAT1.neg'],
   ]);
   await page.getByTestId('run').click();
   await expect(part(page, 'BZ1')).toHaveAttribute('data-activity', '1.00');
@@ -130,11 +130,11 @@ test('a servo follows the angle its program sets', async ({ page }) => {
   test.setTimeout(90_000);
   await newCircuit(page);
   await page.getByTestId('tool-uno').click();
-  await place(page, 'servo', 'c10'); // legs: c10 ground, c11 supply, c12 signal
+  await place(page, 'servo', 'BB1.c10'); // legs: c10 ground, c11 supply, c12 signal
   await wire(page, [
-    ['UNO1.gnd', 'a10'],
-    ['UNO1.5v', 'a11'],
-    ['UNO1.d9', 'a12'],
+    ['UNO1.gnd', 'BB1.a10'],
+    ['UNO1.5v', 'BB1.a11'],
+    ['UNO1.d9', 'BB1.a12'],
   ]);
   await chooseStarter(page, 'servo');
   await page.getByTestId('tab-circuit').click();
@@ -148,12 +148,12 @@ test('a servo follows the angle its program sets', async ({ page }) => {
 test('an ultrasonic sensor reports the distance set on its slider', async ({ page }) => {
   await newCircuit(page);
   await page.getByTestId('tool-uno').click();
-  await place(page, 'ultrasonic', 'c10'); // legs: c10 supply, c11 trig, c12 echo, c13 ground
+  await place(page, 'ultrasonic', 'BB1.c10'); // legs: c10 supply, c11 trig, c12 echo, c13 ground
   await wire(page, [
-    ['UNO1.5v', 'a10'],
-    ['UNO1.d7', 'a11'],
-    ['UNO1.d6', 'a12'],
-    ['UNO1.gnd', 'a13'],
+    ['UNO1.5v', 'BB1.a10'],
+    ['UNO1.d7', 'BB1.a11'],
+    ['UNO1.d6', 'BB1.a12'],
+    ['UNO1.gnd', 'BB1.a13'],
   ]);
   await chooseStarter(page, 'distance');
   await page.getByTestId('run').click();
@@ -170,16 +170,16 @@ test('an ultrasonic sensor reports the distance set on its slider', async ({ pag
 test('an LCD shows the text its program prints', async ({ page }) => {
   await newCircuit(page);
   await page.getByTestId('tool-uno').click();
-  await place(page, 'lcd', 'h5'); // sixteen legs along row h, columns 5 to 20
+  await place(page, 'lcd', 'BB1.h5'); // sixteen legs along row h, columns 5 to 20
   await wire(page, [
-    ['UNO1.gnd', 'j5'], // VSS
-    ['UNO1.5v', 'j6'], // VDD
-    ['UNO1.d12', 'j8'], // RS
-    ['UNO1.d11', 'j10'], // E
-    ['UNO1.d5', 'j15'], // D4
-    ['UNO1.d4', 'j16'], // D5
-    ['UNO1.d3', 'j17'], // D6
-    ['UNO1.d2', 'j18'], // D7
+    ['UNO1.gnd', 'BB1.j5'], // VSS
+    ['UNO1.5v', 'BB1.j6'], // VDD
+    ['UNO1.d12', 'BB1.j8'], // RS
+    ['UNO1.d11', 'BB1.j10'], // E
+    ['UNO1.d5', 'BB1.j15'], // D4
+    ['UNO1.d4', 'BB1.j16'], // D5
+    ['UNO1.d3', 'BB1.j17'], // D6
+    ['UNO1.d2', 'BB1.j18'], // D7
   ]);
   await chooseStarter(page, 'lcd');
   await page.getByTestId('tab-circuit').click();

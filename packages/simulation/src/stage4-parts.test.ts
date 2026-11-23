@@ -45,18 +45,18 @@ describe('JSN-SR04T on the ESP32, read by the distance program', () => {
         {
           id: 'US1',
           type: 'jsnsr04t',
-          pins: { vcc: 'c10', trig: 'c11', echo: 'c12', gnd: 'c13' },
+          pins: { vcc: 'BB1.c10', trig: 'BB1.c11', echo: 'BB1.c12', gnd: 'BB1.c13' },
           props: { distance },
         } as CircuitComponent,
-        resistor('R1', 'd12', 'd20', 1000),
-        resistor('R2', 'e20', 'e25', 2000),
+        resistor('R1', 'BB1.d12', 'BB1.d20', 1000),
+        resistor('R2', 'BB1.e20', 'BB1.e25', 2000),
       ],
       [
-        ['ESP1.vin', 'a10'],
-        ['ESP1.d5', 'a11'],
-        ['ESP1.gnd1', 'a13'],
-        ['ESP1.d18', 'a20'],
-        ['a25', 'a13'],
+        ['ESP1.vin', 'BB1.a10'],
+        ['ESP1.d5', 'BB1.a11'],
+        ['ESP1.gnd1', 'BB1.a13'],
+        ['ESP1.d18', 'BB1.a20'],
+        ['BB1.a25', 'BB1.a13'],
       ],
     );
   const readings = (distance: number) => {
@@ -87,18 +87,26 @@ describe('five-channel line sensor', () => {
         {
           id: 'LINE1',
           type: 'linesensor',
-          pins: { gnd: 'c10', vcc: 'c11', s1: 'c12', s2: 'c13', s3: 'c14', s4: 'c15', s5: 'c16' },
+          pins: {
+            gnd: 'BB1.c10',
+            vcc: 'BB1.c11',
+            s1: 'BB1.c12',
+            s2: 'BB1.c13',
+            s3: 'BB1.c14',
+            s4: 'BB1.c15',
+            s5: 'BB1.c16',
+          },
           props: { black: [false, true, true, false, false] },
         } as CircuitComponent,
         { id: 'BAT1', type: 'battery', props: { voltage: 4.5 } },
       ],
       [
-        ['BAT1.neg', 'a10'],
-        ['BAT1.pos', 'a11'],
+        ['BAT1.neg', 'BB1.a10'],
+        ['BAT1.pos', 'BB1.a11'],
       ],
     );
     const result = simulate(document);
-    const level = (column: number) => result.nodeVoltages[stripOf(`c${column}`)] ?? -1;
+    const level = (column: number) => result.nodeVoltages[stripOf(`BB1.c${column}`)] ?? -1;
     // Nothing loads the outputs, so HIGH is the module's supply and LOW is ground.
     expect([12, 13, 14, 15, 16].map((c) => level(c) > 2)).toEqual([
       false,
@@ -117,12 +125,12 @@ describe('12 V siren', () => {
   const powered = (volts: number, reversed = false) =>
     circuit(
       [
-        { id: 'SIR1', type: 'siren', pins: { pos: 'c10', neg: 'c13' }, props: {} },
+        { id: 'SIR1', type: 'siren', pins: { pos: 'BB1.c10', neg: 'BB1.c13' }, props: {} },
         { id: 'BAT1', type: 'battery', props: { voltage: volts } },
       ],
       [
-        [reversed ? 'BAT1.neg' : 'BAT1.pos', 'a10'],
-        [reversed ? 'BAT1.pos' : 'BAT1.neg', 'a13'],
+        [reversed ? 'BAT1.neg' : 'BAT1.pos', 'BB1.a10'],
+        [reversed ? 'BAT1.pos' : 'BAT1.neg', 'BB1.a13'],
       ],
     );
 

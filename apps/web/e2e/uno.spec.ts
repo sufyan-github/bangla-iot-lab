@@ -36,13 +36,13 @@ test('build a board circuit by tapping; the program blinks the LED, also offline
 
   await page.getByTestId('tool-uno').click();
   await page.getByTestId('tool-resistor').click();
-  await tap(page, 'c5');
+  await tap(page, 'BB1.c5');
   await page.getByTestId('tool-led').click();
-  await tap(page, 'd9');
+  await tap(page, 'BB1.d9');
   await page.getByTestId('tool-wire').click();
   for (const [from, to] of [
-    ['UNO1.d13', 'a5'],
-    ['a10', 'UNO1.gnd'],
+    ['UNO1.d13', 'BB1.a5'],
+    ['BB1.a10', 'UNO1.gnd'],
   ]) {
     await tap(page, from);
     await tap(page, to);
@@ -191,13 +191,13 @@ test('a capacitor charges over time on the oscilloscope', async ({ page }) => {
   await page.getByTestId('new-project').click();
   await page.getByTestId('tool-battery').click();
   await page.getByTestId('tool-resistor').click();
-  await tap(page, 'a5');
+  await tap(page, 'BB1.a5');
   await page.getByTestId('tool-capacitor').click();
-  await tap(page, 'b9');
+  await tap(page, 'BB1.b9');
   await page.getByTestId('tool-wire').click();
   for (const [from, to] of [
-    ['BAT1.pos', 'c5'],
-    ['c11', 'BAT1.neg'],
+    ['BAT1.pos', 'BB1.c5'],
+    ['BB1.c11', 'BAT1.neg'],
   ]) {
     await tap(page, from);
     await tap(page, to);

@@ -29,12 +29,12 @@ async function newEsp32Circuit(page: Page) {
 test('the six sensors can be placed, set and are kept', async ({ page }) => {
   await newEsp32Circuit(page);
   const tools = [
-    ['voltagesensor', 'a1', 'VS1'],
-    ['acs712', 'a5', 'CS1'],
-    ['mq7', 'a13', 'MQ1'],
-    ['ph', 'a18', 'PH1'],
-    ['tds', 'a23', 'TDS1'],
-    ['turbidity', 'a27', 'TU1'],
+    ['voltagesensor', 'BB1.a1', 'VS1'],
+    ['acs712', 'BB1.a5', 'CS1'],
+    ['mq7', 'BB1.a13', 'MQ1'],
+    ['ph', 'BB1.a18', 'PH1'],
+    ['tds', 'BB1.a23', 'TDS1'],
+    ['turbidity', 'BB1.a27', 'TU1'],
   ] as const;
   for (const [tool, hole] of tools) await place(page, tool, hole);
   await page.getByTestId('tool-select').click();
@@ -65,10 +65,10 @@ test('the voltage sensor gives a fifth of the battery it measures', async ({ pag
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await page.getByTestId('tool-battery').click();
-  await place(page, 'voltagesensor', 'c10'); // c10 VCC, c11 GND, c12 S
+  await place(page, 'voltagesensor', 'BB1.c10'); // c10 VCC, c11 GND, c12 S
   await wire(page, [
-    ['BAT1.pos', 'a10'],
-    ['BAT1.neg', 'a11'],
+    ['BAT1.pos', 'BB1.a10'],
+    ['BAT1.neg', 'BB1.a11'],
   ]);
   const battery = Number(await partAttribute(page, 'BAT1', 'data-voltage'));
   await expect
@@ -78,10 +78,10 @@ test('the voltage sensor gives a fifth of the battery it measures', async ({ pag
 
 test('the TDS meter’s output follows its slider on the ESP32’s 3.3 V', async ({ page }) => {
   await newEsp32Circuit(page);
-  await place(page, 'tds', 'c10'); // c10 A, c11 +, c12 −
+  await place(page, 'tds', 'BB1.c10'); // c10 A, c11 +, c12 −
   await wire(page, [
-    ['ESP1.3v3', 'a11'],
-    ['ESP1.gnd1', 'a12'],
+    ['ESP1.3v3', 'BB1.a11'],
+    ['ESP1.gnd1', 'BB1.a12'],
   ]);
   const output = async () => Number(await partAttribute(page, 'TDS1', 'data-voltage'));
   // The board gives its 3.3 V while it runs; its ready-made program is enough.

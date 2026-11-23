@@ -1,4 +1,4 @@
-import { CIRCUIT_SCHEMA_VERSION, type CircuitDocument } from './circuit';
+import { CIRCUIT_SCHEMA_VERSION, FIRST_BREADBOARD, type CircuitDocument } from './circuit';
 import { WIRE_COLORS } from './editing';
 
 /**
@@ -9,15 +9,26 @@ export function ledCircuitExample(): CircuitDocument {
   return {
     schemaVersion: CIRCUIT_SCHEMA_VERSION,
     components: [
+      FIRST_BREADBOARD,
       { id: 'BAT1', type: 'battery', props: { voltage: 9 } },
-      { id: 'R1', type: 'resistor', pins: { a: 'c5', b: 'c9' }, props: { resistance: 330 } },
-      { id: 'LED1', type: 'led', pins: { anode: 'd9', cathode: 'd10' }, props: { color: 'red' } },
+      {
+        id: 'R1',
+        type: 'resistor',
+        pins: { a: 'BB1.c5', b: 'BB1.c9' },
+        props: { resistance: 330 },
+      },
+      {
+        id: 'LED1',
+        type: 'led',
+        pins: { anode: 'BB1.d9', cathode: 'BB1.d10' },
+        props: { color: 'red' },
+      },
     ],
     wires: [
-      { id: 'W1', from: 'BAT1.pos', to: 'tp1', color: WIRE_COLORS.red },
-      { id: 'W2', from: 'BAT1.neg', to: 'tn1', color: WIRE_COLORS.black },
-      { id: 'W3', from: 'tp4', to: 'a5', color: WIRE_COLORS.red },
-      { id: 'W4', from: 'a10', to: 'tn8', color: WIRE_COLORS.black },
+      { id: 'W1', from: 'BAT1.pos', to: 'BB1.tp1', color: WIRE_COLORS.red },
+      { id: 'W2', from: 'BAT1.neg', to: 'BB1.tn1', color: WIRE_COLORS.black },
+      { id: 'W3', from: 'BB1.tp4', to: 'BB1.a5', color: WIRE_COLORS.red },
+      { id: 'W4', from: 'BB1.a10', to: 'BB1.tn8', color: WIRE_COLORS.black },
     ],
   };
 }
@@ -30,27 +41,38 @@ export function unoCircuitExample(): CircuitDocument {
   return {
     schemaVersion: CIRCUIT_SCHEMA_VERSION,
     components: [
+      FIRST_BREADBOARD,
       { id: 'UNO1', type: 'uno', props: {} },
-      { id: 'R1', type: 'resistor', pins: { a: 'c5', b: 'c9' }, props: { resistance: 220 } },
-      { id: 'LED1', type: 'led', pins: { anode: 'd9', cathode: 'd10' }, props: { color: 'red' } },
-      { id: 'SW1', type: 'button', pins: { a: 'c14', b: 'c16' }, props: {} },
+      {
+        id: 'R1',
+        type: 'resistor',
+        pins: { a: 'BB1.c5', b: 'BB1.c9' },
+        props: { resistance: 220 },
+      },
+      {
+        id: 'LED1',
+        type: 'led',
+        pins: { anode: 'BB1.d9', cathode: 'BB1.d10' },
+        props: { color: 'red' },
+      },
+      { id: 'SW1', type: 'button', pins: { a: 'BB1.c14', b: 'BB1.c16' }, props: {} },
       {
         id: 'POT1',
         type: 'potentiometer',
-        pins: { a: 'c20', wiper: 'c21', b: 'c22' },
+        pins: { a: 'BB1.c20', wiper: 'BB1.c21', b: 'BB1.c22' },
         props: { resistance: 10_000, position: 0.5 },
       },
     ],
     wires: [
-      { id: 'W1', from: 'UNO1.gnd', to: 'tn1', color: WIRE_COLORS.black },
-      { id: 'W2', from: 'UNO1.5v', to: 'tp1', color: WIRE_COLORS.red },
-      { id: 'W3', from: 'UNO1.d13', to: 'a5', color: WIRE_COLORS.yellow },
-      { id: 'W4', from: 'a10', to: 'tn8', color: WIRE_COLORS.black },
-      { id: 'W5', from: 'UNO1.d2', to: 'a14', color: WIRE_COLORS.blue },
-      { id: 'W6', from: 'a16', to: 'tn13', color: WIRE_COLORS.black },
-      { id: 'W7', from: 'a20', to: 'tp17', color: WIRE_COLORS.red },
-      { id: 'W8', from: 'UNO1.a0', to: 'a21', color: WIRE_COLORS.green },
-      { id: 'W9', from: 'a22', to: 'tn19', color: WIRE_COLORS.black },
+      { id: 'W1', from: 'UNO1.gnd', to: 'BB1.tn1', color: WIRE_COLORS.black },
+      { id: 'W2', from: 'UNO1.5v', to: 'BB1.tp1', color: WIRE_COLORS.red },
+      { id: 'W3', from: 'UNO1.d13', to: 'BB1.a5', color: WIRE_COLORS.yellow },
+      { id: 'W4', from: 'BB1.a10', to: 'BB1.tn8', color: WIRE_COLORS.black },
+      { id: 'W5', from: 'UNO1.d2', to: 'BB1.a14', color: WIRE_COLORS.blue },
+      { id: 'W6', from: 'BB1.a16', to: 'BB1.tn13', color: WIRE_COLORS.black },
+      { id: 'W7', from: 'BB1.a20', to: 'BB1.tp17', color: WIRE_COLORS.red },
+      { id: 'W8', from: 'UNO1.a0', to: 'BB1.a21', color: WIRE_COLORS.green },
+      { id: 'W9', from: 'BB1.a22', to: 'BB1.tn19', color: WIRE_COLORS.black },
     ],
   };
 }
@@ -63,27 +85,38 @@ export function esp32CircuitExample(): CircuitDocument {
   return {
     schemaVersion: CIRCUIT_SCHEMA_VERSION,
     components: [
+      FIRST_BREADBOARD,
       { id: 'ESP1', type: 'esp32', props: {} },
-      { id: 'R1', type: 'resistor', pins: { a: 'c5', b: 'c9' }, props: { resistance: 220 } },
-      { id: 'LED1', type: 'led', pins: { anode: 'd9', cathode: 'd10' }, props: { color: 'red' } },
-      { id: 'SW1', type: 'button', pins: { a: 'c14', b: 'c16' }, props: {} },
+      {
+        id: 'R1',
+        type: 'resistor',
+        pins: { a: 'BB1.c5', b: 'BB1.c9' },
+        props: { resistance: 220 },
+      },
+      {
+        id: 'LED1',
+        type: 'led',
+        pins: { anode: 'BB1.d9', cathode: 'BB1.d10' },
+        props: { color: 'red' },
+      },
+      { id: 'SW1', type: 'button', pins: { a: 'BB1.c14', b: 'BB1.c16' }, props: {} },
       {
         id: 'POT1',
         type: 'potentiometer',
-        pins: { a: 'c20', wiper: 'c21', b: 'c22' },
+        pins: { a: 'BB1.c20', wiper: 'BB1.c21', b: 'BB1.c22' },
         props: { resistance: 10_000, position: 0.5 },
       },
     ],
     wires: [
-      { id: 'W1', from: 'ESP1.gnd1', to: 'tn1', color: WIRE_COLORS.black },
-      { id: 'W2', from: 'ESP1.3v3', to: 'tp1', color: WIRE_COLORS.red },
-      { id: 'W3', from: 'ESP1.d2', to: 'a5', color: WIRE_COLORS.yellow },
-      { id: 'W4', from: 'a10', to: 'tn8', color: WIRE_COLORS.black },
-      { id: 'W5', from: 'ESP1.d4', to: 'a14', color: WIRE_COLORS.blue },
-      { id: 'W6', from: 'a16', to: 'tn13', color: WIRE_COLORS.black },
-      { id: 'W7', from: 'a20', to: 'tp17', color: WIRE_COLORS.red },
-      { id: 'W8', from: 'ESP1.d34', to: 'a21', color: WIRE_COLORS.green },
-      { id: 'W9', from: 'a22', to: 'tn19', color: WIRE_COLORS.black },
+      { id: 'W1', from: 'ESP1.gnd1', to: 'BB1.tn1', color: WIRE_COLORS.black },
+      { id: 'W2', from: 'ESP1.3v3', to: 'BB1.tp1', color: WIRE_COLORS.red },
+      { id: 'W3', from: 'ESP1.d2', to: 'BB1.a5', color: WIRE_COLORS.yellow },
+      { id: 'W4', from: 'BB1.a10', to: 'BB1.tn8', color: WIRE_COLORS.black },
+      { id: 'W5', from: 'ESP1.d4', to: 'BB1.a14', color: WIRE_COLORS.blue },
+      { id: 'W6', from: 'BB1.a16', to: 'BB1.tn13', color: WIRE_COLORS.black },
+      { id: 'W7', from: 'BB1.a20', to: 'BB1.tp17', color: WIRE_COLORS.red },
+      { id: 'W8', from: 'ESP1.d34', to: 'BB1.a21', color: WIRE_COLORS.green },
+      { id: 'W9', from: 'BB1.a22', to: 'BB1.tn19', color: WIRE_COLORS.black },
     ],
   };
 }

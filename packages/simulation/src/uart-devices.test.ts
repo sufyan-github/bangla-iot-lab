@@ -106,15 +106,15 @@ describe('the serial line between board and module', () => {
         {
           id: 'GPS1',
           type: 'gps',
-          pins: { vcc: 'c10', rx: 'c11', tx: 'c12', gnd: 'c13' },
+          pins: { vcc: 'BB1.c10', rx: 'BB1.c11', tx: 'BB1.c12', gnd: 'BB1.c13' },
           props: { fix: true, lat: 23.7465, lng: 90.3763, satellites: 8 },
         } as CircuitComponent,
       ],
       [
-        ['ESP1.3v3', 'a10'],
-        [rx, 'a11'],
-        [tx, 'a12'],
-        ['ESP1.gnd1', 'a13'],
+        ['ESP1.3v3', 'BB1.a10'],
+        [rx, 'BB1.a11'],
+        [tx, 'BB1.a12'],
+        ['ESP1.gnd1', 'BB1.a13'],
       ],
     );
 
@@ -170,24 +170,29 @@ describe('the serial line between board and module', () => {
           {
             id: 'PM1',
             type: 'pms5003',
-            pins: { vcc: 'c10', gnd: 'c11', rx: 'c12', tx: 'c13' },
+            pins: { vcc: 'BB1.c10', gnd: 'BB1.c11', rx: 'BB1.c12', tx: 'BB1.c13' },
             props: { pm25 },
           } as CircuitComponent,
-          { id: 'R1', type: 'resistor', pins: { a: 'f20', b: 'f24' }, props: { resistance: 220 } },
+          {
+            id: 'R1',
+            type: 'resistor',
+            pins: { a: 'BB1.f20', b: 'BB1.f24' },
+            props: { resistance: 220 },
+          },
           {
             id: 'LED1',
             type: 'led',
-            pins: { anode: 'g24', cathode: 'g25' },
+            pins: { anode: 'BB1.g24', cathode: 'BB1.g25' },
             props: { color: 'red' },
           } as CircuitComponent,
         ],
         [
-          ['ESP1.vin', 'a10'],
-          ['ESP1.gnd1', 'a11'],
-          ['ESP1.tx2', 'a12'],
-          ['ESP1.rx2', 'a13'],
-          ['ESP1.d2', 'j20'],
-          ['ESP1.gnd2', 'j25'],
+          ['ESP1.vin', 'BB1.a10'],
+          ['ESP1.gnd1', 'BB1.a11'],
+          ['ESP1.tx2', 'BB1.a12'],
+          ['ESP1.rx2', 'BB1.a13'],
+          ['ESP1.d2', 'BB1.j20'],
+          ['ESP1.gnd2', 'BB1.j25'],
         ],
       );
     const session = new SimulationSession(document(35));

@@ -42,12 +42,17 @@ const resistor = (id: string, a: string, b: string, resistance: number): Circuit
 });
 /** An LED on D2 through 220 Ω, as every ready-made program expects. */
 const lamp: CircuitComponent[] = [
-  resistor('R1', 'c20', 'c24', 220),
-  { id: 'LED1', type: 'led', pins: { anode: 'e24', cathode: 'e25' }, props: { color: 'red' } },
+  resistor('R1', 'BB1.c20', 'BB1.c24', 220),
+  {
+    id: 'LED1',
+    type: 'led',
+    pins: { anode: 'BB1.e24', cathode: 'BB1.e25' },
+    props: { color: 'red' },
+  },
 ];
 const lampWires: [string, string][] = [
-  ['ESP1.d2', 'a20'],
-  ['ESP1.gnd2', 'a25'],
+  ['ESP1.d2', 'BB1.a20'],
+  ['ESP1.gnd2', 'BB1.a25'],
 ];
 function withProps(document: CircuitDocument, id: string, props: Record<string, unknown>) {
   const result = updateProps(document, id, props);
@@ -58,7 +63,7 @@ const warnings = (document: CircuitDocument) =>
   simulate(document).diagnostics.filter((d) => d.severity !== 'info');
 
 /** Legs of a four-pin module in the order printed on it: VCC, GND, DO, AO. */
-const modulePins = { vcc: 'c10', gnd: 'c11', do: 'c12', ao: 'c13' };
+const modulePins = { vcc: 'BB1.c10', gnd: 'BB1.c11', do: 'BB1.c12', ao: 'BB1.c13' };
 
 describe('LDR light sensor module', () => {
   const module = (light: number, threshold = 0.5): CircuitComponent => ({
@@ -71,15 +76,15 @@ describe('LDR light sensor module', () => {
     circuit(
       [esp32, module(light, threshold)],
       [
-        ['ESP1.3v3', 'a10'],
-        ['ESP1.gnd1', 'a11'],
+        ['ESP1.3v3', 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a11'],
       ],
     );
   const outputs = (light: number, threshold?: number) => {
     const result = simulate(wired(light, threshold));
     return {
       ao: result.readings.LDM1!.voltage,
-      do: result.nodeVoltages[netName('c12')]!,
+      do: result.nodeVoltages[netName('BB1.c12')]!,
       lit: result.readings.LDM1!.activity,
     };
   };
@@ -106,16 +111,16 @@ describe('LDR light sensor module', () => {
   });
 
   it('gives nothing without power', () => {
-    const result = simulate(circuit([esp32, module(0.9)], [['ESP1.gnd1', 'a11']]));
+    const result = simulate(circuit([esp32, module(0.9)], [['ESP1.gnd1', 'BB1.a11']]));
     expect(result.readings.LDM1).toMatchObject({ voltage: 0, activity: 0 });
   });
 
   it('the ready-made program lights its LED in the dark and prints the reading', () => {
     const wires: [string, string][] = [
-      ['ESP1.3v3', 'a10'],
-      ['ESP1.gnd1', 'a11'],
-      ['ESP1.d27', 'a12'],
-      ['ESP1.d34', 'a13'],
+      ['ESP1.3v3', 'BB1.a10'],
+      ['ESP1.gnd1', 'BB1.a11'],
+      ['ESP1.d27', 'BB1.a12'],
+      ['ESP1.d34', 'BB1.a13'],
       ...lampWires,
     ];
     const document = circuit([esp32, module(0.9), ...lamp], wires);
@@ -149,8 +154,8 @@ describe('rain sensor module', () => {
     circuit(
       [esp32, { id: 'RAIN1', type: 'rain', pins: modulePins, props: { wetness, threshold: 0.5 } }],
       [
-        ['ESP1.3v3', 'a10'],
-        ['ESP1.gnd1', 'a11'],
+        ['ESP1.3v3', 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a11'],
       ],
     );
 
@@ -164,7 +169,7 @@ describe('rain sensor module', () => {
   it('DO goes LOW once it is wet enough', () => {
     const at = (wetness: number) => {
       const result = simulate(wired(wetness));
-      return { do: result.nodeVoltages[netName('c12')]!, lit: result.readings.RAIN1!.activity };
+      return { do: result.nodeVoltages[netName('BB1.c12')]!, lit: result.readings.RAIN1!.activity };
     };
     expect(at(0).do).toBeGreaterThan(3.2);
     expect(at(0).lit).toBe(0);
@@ -186,8 +191,8 @@ describe('MQ-135 gas sensor module', () => {
       circuit(
         [uno, module(gas)],
         [
-          ['UNO1.5v', 'a10'],
-          ['UNO1.gnd', 'a11'],
+          ['UNO1.5v', 'BB1.a10'],
+          ['UNO1.gnd', 'BB1.a11'],
         ],
       );
     const clean = simulate(wired(0)).readings.MQ1!;
@@ -206,9 +211,9 @@ describe('MQ-135 gas sensor module', () => {
     const direct = circuit(
       [esp32, module(1)],
       [
-        ['ESP1.vin', 'a10'],
-        ['ESP1.gnd1', 'a11'],
-        ['ESP1.d34', 'a13'],
+        ['ESP1.vin', 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a11'],
+        ['ESP1.d34', 'BB1.a13'],
       ],
     );
     expect(warnings(direct)).toMatchObject([
@@ -219,14 +224,14 @@ describe('MQ-135 gas sensor module', () => {
       [
         esp32,
         module(1),
-        resistor('R1', 'e13', 'e20', 10_000),
-        resistor('R2', 'd20', 'd25', 10_000),
+        resistor('R1', 'BB1.e13', 'BB1.e20', 10_000),
+        resistor('R2', 'BB1.d20', 'BB1.d25', 10_000),
       ],
       [
-        ['ESP1.vin', 'a10'],
-        ['ESP1.gnd1', 'a11'],
-        ['ESP1.d34', 'a20'],
-        ['ESP1.gnd2', 'a25'],
+        ['ESP1.vin', 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a11'],
+        ['ESP1.d34', 'BB1.a20'],
+        ['ESP1.gnd2', 'BB1.a25'],
       ],
     );
     const result = simulate(divided);
@@ -239,8 +244,8 @@ describe('MQ-135 gas sensor module', () => {
     const cool = circuit(
       [esp32, module(0.5)],
       [
-        ['ESP1.3v3', 'a10'],
-        ['ESP1.gnd1', 'a11'],
+        ['ESP1.3v3', 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a11'],
       ],
     );
     const [warning, ...others] = warnings(cool);
@@ -287,13 +292,13 @@ describe('HC-SR501 motion sensor', () => {
   const sensor = (motion: boolean): CircuitComponent => ({
     id: 'PIR1',
     type: 'pir',
-    pins: { vcc: 'c10', out: 'c11', gnd: 'c12' },
+    pins: { vcc: 'BB1.c10', out: 'BB1.c11', gnd: 'BB1.c12' },
     props: { motion, hold: 3 },
   });
   const sensorWires = (supply: string): [string, string][] => [
-    [supply, 'a10'],
-    ['ESP1.d27', 'a11'],
-    ['ESP1.gnd1', 'a12'],
+    [supply, 'BB1.a10'],
+    ['ESP1.d27', 'BB1.a11'],
+    ['ESP1.gnd1', 'BB1.a12'],
   ];
   /** The sensor alone on the board. */
   const alone = (motion: boolean, supply = 'ESP1.vin') =>
@@ -394,19 +399,19 @@ describe('RGB LED module', () => {
   const rgb: CircuitComponent = {
     id: 'RGB1',
     type: 'rgbled',
-    pins: { r: 'e10', g: 'e11', b: 'e12', gnd: 'e13' },
+    pins: { r: 'BB1.e10', g: 'BB1.e11', b: 'BB1.e12', gnd: 'BB1.e13' },
     props: {},
   };
   const resistors = [
-    resistor('R1', 'c5', 'c10', 220),
-    resistor('R2', 'd6', 'd11', 220),
-    resistor('R3', 'b7', 'b12', 220),
+    resistor('R1', 'BB1.c5', 'BB1.c10', 220),
+    resistor('R2', 'BB1.d6', 'BB1.d11', 220),
+    resistor('R3', 'BB1.b7', 'BB1.b12', 220),
   ];
   const onBoard: [string, string][] = [
-    ['ESP1.d25', 'a5'],
-    ['ESP1.d26', 'a6'],
-    ['ESP1.d27', 'a7'],
-    ['ESP1.gnd1', 'a13'],
+    ['ESP1.d25', 'BB1.a5'],
+    ['ESP1.d26', 'BB1.a6'],
+    ['ESP1.d27', 'BB1.a7'],
+    ['ESP1.gnd1', 'BB1.a13'],
   ];
 
   it('each colour lights by itself, and red is the brightest on 3.3 V', () => {
@@ -414,10 +419,10 @@ describe('RGB LED module', () => {
     const document = circuit(
       [esp32, rgb, ...resistors],
       [
-        ['ESP1.3v3', 'a5'],
-        ['a5', 'a6'],
-        ['a6', 'a7'],
-        ['ESP1.gnd1', 'a13'],
+        ['ESP1.3v3', 'BB1.a5'],
+        ['BB1.a5', 'BB1.a6'],
+        ['BB1.a6', 'BB1.a7'],
+        ['ESP1.gnd1', 'BB1.a13'],
       ],
     );
     const result = simulate(document);
@@ -440,8 +445,8 @@ describe('RGB LED module', () => {
     const bare = circuit(
       [uno, rgb],
       [
-        ['UNO1.5v', 'a10'],
-        ['UNO1.gnd', 'a13'],
+        ['UNO1.5v', 'BB1.a10'],
+        ['UNO1.gnd', 'BB1.a13'],
       ],
     );
     const result = simulate(bare);
@@ -453,8 +458,8 @@ describe('RGB LED module', () => {
     const reversed = circuit(
       [uno, rgb],
       [
-        ['UNO1.5v', 'a13'],
-        ['UNO1.gnd', 'a10'],
+        ['UNO1.5v', 'BB1.a13'],
+        ['UNO1.gnd', 'BB1.a10'],
       ],
     );
     const result = simulate(reversed);
@@ -489,13 +494,13 @@ describe('a module on too little voltage', () => {
         {
           id: 'US1',
           type: 'ultrasonic',
-          pins: { vcc: 'c10', trig: 'c11', echo: 'c12', gnd: 'c13' },
+          pins: { vcc: 'BB1.c10', trig: 'BB1.c11', echo: 'BB1.c12', gnd: 'BB1.c13' },
           props: { distance: 50 },
         },
       ],
       [
-        ['ESP1.3v3', 'a10'],
-        ['ESP1.gnd1', 'a13'],
+        ['ESP1.3v3', 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a13'],
       ],
     );
     expect(warnings(document)).toMatchObject([
@@ -510,17 +515,17 @@ describe('OLED display', () => {
   const oled: CircuitComponent = {
     id: 'OLED1',
     type: 'oled',
-    pins: { gnd: 'c10', vcc: 'c11', scl: 'c12', sda: 'c13' },
+    pins: { gnd: 'BB1.c10', vcc: 'BB1.c11', scl: 'BB1.c12', sda: 'BB1.c13' },
     props: {},
   };
   const wired = (supply = 'ESP1.3v3', scl = 'ESP1.d22', sda = 'ESP1.d21') =>
     circuit(
       [esp32, oled],
       [
-        ['ESP1.gnd1', 'a10'],
-        [supply, 'a11'],
-        [scl, 'a12'],
-        [sda, 'a13'],
+        ['ESP1.gnd1', 'BB1.a10'],
+        [supply, 'BB1.a11'],
+        [scl, 'BB1.a12'],
+        [sda, 'BB1.a13'],
       ],
     );
   /** Runs the ready-made program for a while and returns what the display shows. */
@@ -592,9 +597,9 @@ describe('OLED display', () => {
     const unpowered = circuit(
       [esp32, oled],
       [
-        ['ESP1.gnd1', 'a10'],
-        ['ESP1.d22', 'a12'],
-        ['ESP1.d21', 'a13'],
+        ['ESP1.gnd1', 'BB1.a10'],
+        ['ESP1.d22', 'BB1.a12'],
+        ['ESP1.d21', 'BB1.a13'],
       ],
     );
     expect(shown(unpowered).display).toMatchObject({ lit: false });
@@ -603,7 +608,7 @@ describe('OLED display', () => {
   it('forgets its picture when its supply wire is pulled out, until the program draws again', () => {
     const { session } = shown(wired());
     const document = wired();
-    session.update({ ...document, wires: document.wires.filter((wire) => wire.to !== 'a11') });
+    session.update({ ...document, wires: document.wires.filter((wire) => wire.to !== 'BB1.a11') });
     session.advance(50);
     expect(session.frame().result.readings.OLED1!.oled).toMatchObject({ lit: false });
     // Power back: the panel was never switched on again, so it stays dark though the

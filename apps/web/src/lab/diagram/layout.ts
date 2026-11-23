@@ -1,4 +1,4 @@
-import { isProgrammable, type CircuitDocument } from '@banglalab/shared';
+import { isProgrammable, withoutBreadboards, type CircuitDocument } from '@banglalab/shared';
 import { analyse, type DiagramLayout } from './nets';
 import { layoutRails } from './rails';
 import { layoutTree } from './tree';
@@ -14,7 +14,9 @@ export * from './nets';
  * through the parts wired to it. A circuit without a board is a loop between
  * a battery's two rails.
  */
-export function layoutDiagram(circuit: CircuitDocument): DiagramLayout {
+export function layoutDiagram(drawn: CircuitDocument): DiagramLayout {
+  // The diagram shows what is joined, not where: breadboards are not drawn in it.
+  const circuit = withoutBreadboards(drawn);
   const analysis = analyse(circuit);
   const board = circuit.components.find(isProgrammable);
   return board ? layoutTree(circuit, board, analysis) : layoutRails(circuit, analysis);

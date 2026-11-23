@@ -1,10 +1,11 @@
 import {
-  BOARD_COLUMNS,
-  BOARD_HEIGHT,
-  BOARD_WIDTH,
+  BREADBOARD_SPECS,
   LED_COLORS,
   TERMINAL_ROWS,
-  holeCoordinates,
+  holesOf,
+  layoutOf,
+  localCoordinates,
+  parseHole,
   type CircuitComponent,
   type CircuitDocument,
 } from '@banglalab/shared';
@@ -17,14 +18,13 @@ import {
 import { memo } from 'react';
 import { DRIVER_TERMINAL_NAMES } from './endpoints';
 import {
-  BOARD_X,
-  BOARD_Y,
-  CANVAS_WIDTH,
+  BREADBOARD_TAB,
   DRIVER_TERMINALS,
-  HOLE_POINTS,
   PITCH,
   batteryTerminalPoint,
+  breadboardBox,
   canvasHeight,
+  canvasWidth,
   endpointPoint,
   holePoint,
   partBox,
@@ -83,12 +83,8 @@ import { oledImage } from './oled-image';
 import { tftImage } from './tft-image';
 import { ShadingDefs } from './shading';
 
-const rowY = (row: string) => BOARD_Y + holeCoordinates(`${row}1`).y * PITCH;
-
-/** The empty breadboard on its mat. Never changes, so it renders once. */
-const Board = memo(function Board({ detailed, height }: { detailed: boolean; height: number }) {
-  const left = BOARD_X + PITCH * 0.4;
-  const right = BOARD_X + (BOARD_WIDTH - 0.4) * PITCH;
+/** The mat the breadboards lie on, and the patterns and colours the drawings share. */
+const Mat = memo(function Mat({ width, height }: { width: number; height: number }) {
   return (
     <g>
       <defs>
@@ -115,106 +111,130 @@ const Board = memo(function Board({ detailed, height }: { detailed: boolean; hei
           </radialGradient>
         ))}
       </defs>
-      <rect width={CANVAS_WIDTH} height={height} fill="#1d5a4e" />
-      <rect width={CANVAS_WIDTH} height={height} fill="url(#mat-fine)" />
-      <rect width={CANVAS_WIDTH} height={height} fill="url(#mat-coarse)" />
+      <rect width={width} height={height} fill="#1d5a4e" />
+      <rect width={width} height={height} fill="url(#mat-fine)" />
+      <rect width={width} height={height} fill="url(#mat-coarse)" />
+    </g>
+  );
+});
 
-      {/* The board casts a soft shadow on the mat and has a lit top edge. */}
+/**
+ * One empty breadboard, with its name on a tab above its corner. Drawn at its
+ * own corner, so the same drawing serves wherever it is moved.
+ */
+const BreadboardDrawing = memo(function BreadboardDrawing(props: {
+  id: string;
+  size: 'half' | 'full' | 'mini';
+  x: number;
+  y: number;
+  detailed: boolean;
+  selected: boolean;
+}) {
+  const spec = BREADBOARD_SPECS[props.size];
+  const width = spec.width * PITCH;
+  const height = spec.height * PITCH;
+  const rowY = (row: keyof typeof spec.rowY) => (spec.rowY[row] ?? 0) * PITCH;
+  const left = PITCH * 0.4;
+  const right = (spec.width - 0.4) * PITCH;
+  const holes = holesOf(props.id, props.size).map((hole) => {
+    const at = localCoordinates(parseHole(hole)!, props.size);
+    return { hole, x: at.x * PITCH, y: at.y * PITCH };
+  });
+  const rails = spec.rails;
+  return (
+    <g transform={`translate(${props.x} ${props.y})`} data-breadboard={props.id}>
+      {/* The tab it is picked up by, with its name. */}
       <rect
-        x={BOARD_X + 2}
-        y={BOARD_Y + 6}
-        width={BOARD_WIDTH * PITCH}
-        height={BOARD_HEIGHT * PITCH}
-        rx={10}
-        fill="#0d3129"
-        opacity={0.55}
+        x={0}
+        y={-BREADBOARD_TAB.height}
+        width={BREADBOARD_TAB.width}
+        height={BREADBOARD_TAB.height + 8}
+        rx={6}
+        fill={props.selected ? '#e8a21a' : '#cfc6aa'}
       />
+      {props.detailed && (
+        <text
+          x={BREADBOARD_TAB.width / 2}
+          y={-6}
+          fontSize={11.5}
+          fontWeight={700}
+          fill="#3d3a2c"
+          textAnchor="middle"
+          pointerEvents="none"
+        >
+          ⠿ {props.id}
+        </text>
+      )}
+      {/* The board casts a soft shadow on the mat and has a lit top edge. */}
+      <rect x={2} y={6} width={width} height={height} rx={10} fill="#0d3129" opacity={0.55} />
       <rect
-        x={BOARD_X}
-        y={BOARD_Y}
-        width={BOARD_WIDTH * PITCH}
-        height={BOARD_HEIGHT * PITCH}
+        width={width}
+        height={height}
         rx={9}
         fill="#efe9d8"
-        stroke="#c9c0a4"
-        strokeWidth={1.5}
+        stroke={props.selected ? '#e8a21a' : '#c9c0a4'}
+        strokeWidth={props.selected ? 3 : 1.5}
       />
-      <rect
-        x={BOARD_X + 6}
-        y={BOARD_Y + 1.5}
-        width={BOARD_WIDTH * PITCH - 12}
-        height={2}
-        rx={1}
-        fill="#fffdf4"
-        opacity={0.9}
-      />
+      <rect x={6} y={1.5} width={width - 12} height={2} rx={1} fill="#fffdf4" opacity={0.9} />
       {/* The trench down the middle, where chips straddle the two halves. */}
-      <rect
-        x={BOARD_X}
-        y={rowY('e') + PITCH * 0.9}
-        width={BOARD_WIDTH * PITCH}
-        height={PITCH * 1.2}
-        fill="#ddd5bd"
-      />
-      <rect
-        x={BOARD_X}
-        y={rowY('e') + PITCH * 0.9}
-        width={BOARD_WIDTH * PITCH}
-        height={2.5}
-        fill="#c4bb9f"
-      />
+      <rect y={rowY('e') + PITCH * 0.9} width={width} height={PITCH * 1.2} fill="#ddd5bd" />
+      <rect y={rowY('e') + PITCH * 0.9} width={width} height={2.5} fill="#c4bb9f" />
 
       {/* Power rail markings: red for +, blue for −. */}
-      {(['tp', 'bp'] as const).map((rail) => (
-        <line
-          key={rail}
-          x1={left}
-          x2={right}
-          y1={rowY(rail) - PITCH * 0.5}
-          y2={rowY(rail) - PITCH * 0.5}
-          stroke="#d8342a"
-          strokeWidth={2}
-        />
-      ))}
-      {(['tn', 'bn'] as const).map((rail) => (
-        <line
-          key={rail}
-          x1={left}
-          x2={right}
-          y1={rowY(rail) + PITCH * 0.5}
-          y2={rowY(rail) + PITCH * 0.5}
-          stroke="#2f6fd0"
-          strokeWidth={2}
-        />
-      ))}
-      {detailed && (
+      {rails &&
+        (['tp', 'bp'] as const).map((rail) => (
+          <line
+            key={rail}
+            x1={left}
+            x2={right}
+            y1={rowY(rail) - PITCH * 0.5}
+            y2={rowY(rail) - PITCH * 0.5}
+            stroke="#d8342a"
+            strokeWidth={2}
+          />
+        ))}
+      {rails &&
+        (['tn', 'bn'] as const).map((rail) => (
+          <line
+            key={rail}
+            x1={left}
+            x2={right}
+            y1={rowY(rail) + PITCH * 0.5}
+            y2={rowY(rail) + PITCH * 0.5}
+            stroke="#2f6fd0"
+            strokeWidth={2}
+          />
+        ))}
+      {props.detailed && (
         <>
-          <g fontSize={13} fontWeight={700} textAnchor="middle" pointerEvents="none">
-            {(['tp', 'bp'] as const).map((rail) => (
-              <text key={rail} x={BOARD_X + PITCH * 0.42} y={rowY(rail) + 4.5} fill="#d8342a">
-                +
-              </text>
-            ))}
-            {(['tn', 'bn'] as const).map((rail) => (
-              <text key={rail} x={BOARD_X + PITCH * 0.42} y={rowY(rail) + 4.5} fill="#2f6fd0">
-                −
-              </text>
-            ))}
-          </g>
+          {rails && (
+            <g fontSize={13} fontWeight={700} textAnchor="middle" pointerEvents="none">
+              {(['tp', 'bp'] as const).map((rail) => (
+                <text key={rail} x={PITCH * 0.42} y={rowY(rail) + 4.5} fill="#d8342a">
+                  +
+                </text>
+              ))}
+              {(['tn', 'bn'] as const).map((rail) => (
+                <text key={rail} x={PITCH * 0.42} y={rowY(rail) + 4.5} fill="#2f6fd0">
+                  −
+                </text>
+              ))}
+            </g>
+          )}
 
           <g fontSize={9.5} fill="#8b8468" textAnchor="middle" pointerEvents="none">
-            {Array.from({ length: BOARD_COLUMNS }, (_, i) => i + 1)
+            {Array.from({ length: spec.columns }, (_, i) => i + 1)
               .filter((column) => column === 1 || column % 5 === 0)
               .flatMap((column) => [
-                <text key={`t${column}`} x={BOARD_X + column * PITCH} y={rowY('a') - PITCH * 0.55}>
+                <text key={`t${column}`} x={column * PITCH} y={rowY('a') - PITCH * 0.55}>
                   {column}
                 </text>,
-                <text key={`b${column}`} x={BOARD_X + column * PITCH} y={rowY('j') + PITCH * 0.85}>
+                <text key={`b${column}`} x={column * PITCH} y={rowY('j') + PITCH * 0.85}>
                   {column}
                 </text>,
               ])}
             {TERMINAL_ROWS.map((row) => (
-              <text key={row} x={BOARD_X + PITCH * 0.42} y={rowY(row) + 3.5}>
+              <text key={row} x={PITCH * 0.42} y={rowY(row) + 3.5}>
                 {row}
               </text>
             ))}
@@ -222,39 +242,18 @@ const Board = memo(function Board({ detailed, height }: { detailed: boolean; hei
 
           {/* Each hole: a bevelled rim, then the dark opening with a glint of the metal clip. */}
           <g fill="#d6ceb4">
-            {HOLE_POINTS.map(({ hole, point }) => (
-              <rect
-                key={hole}
-                x={point.x - 4.6}
-                y={point.y - 4.6}
-                width={9.2}
-                height={9.2}
-                rx={2.4}
-              />
+            {holes.map(({ hole, x, y }) => (
+              <rect key={hole} x={x - 4.6} y={y - 4.6} width={9.2} height={9.2} rx={2.4} />
             ))}
           </g>
           <g fill="#2a2d29">
-            {HOLE_POINTS.map(({ hole, point }) => (
-              <rect
-                key={hole}
-                x={point.x - 3.4}
-                y={point.y - 3.4}
-                width={6.8}
-                height={6.8}
-                rx={1.6}
-              />
+            {holes.map(({ hole, x, y }) => (
+              <rect key={hole} x={x - 3.4} y={y - 3.4} width={6.8} height={6.8} rx={1.6} />
             ))}
           </g>
           <g fill="#6f7a78">
-            {HOLE_POINTS.map(({ hole, point }) => (
-              <rect
-                key={hole}
-                x={point.x - 1.3}
-                y={point.y + 0.9}
-                width={2.6}
-                height={1.3}
-                rx={0.6}
-              />
+            {holes.map(({ hole, x, y }) => (
+              <rect key={hole} x={x - 1.3} y={y + 0.9} width={2.6} height={1.3} rx={0.6} />
             ))}
           </g>
         </>
@@ -298,11 +297,11 @@ export function BoardPartDrawing(props: {
   held: boolean;
   selected: boolean;
   formatNumber(value: number): string;
-  /** Overrides where a hole is drawn; used for a lead that is being carried. */
-  pointOf?(hole: string): Point;
+  /** Where a hole is drawn: on its breadboard, or in the hand for a lead being carried. */
+  pointOf(hole: string): Point;
 }) {
   const { part, reading, selected } = props;
-  const at = props.pointOf ?? holePoint;
+  const at = props.pointOf;
   switch (part.type) {
     case 'resistor':
       return (
@@ -760,10 +759,26 @@ export function Scene({
       : undefined;
   return (
     <>
-      <Board detailed={detailed} height={canvasHeight(circuit)} />
+      <Mat width={canvasWidth(circuit)} height={canvasHeight(circuit)} />
+      {layoutOf(circuit).boards.map((board) => {
+        const box = breadboardBox(board);
+        return (
+          <g key={board.id}>
+            <BreadboardDrawing
+              id={board.id}
+              size={board.size}
+              x={box.x}
+              y={box.y}
+              detailed={detailed}
+              selected={board.id === selectedId}
+            />
+          </g>
+        );
+      })}
       {circuit.components.map((component) => {
         const selected = component.id === selectedId;
         const reading = result?.readings[component.id];
+        if (component.type === 'breadboard') return null;
         if (component.type === 'battery') {
           const box = partBox(circuit, component);
           return (
@@ -873,10 +888,8 @@ export function Scene({
               held={held}
               selected={selected}
               formatNumber={formatNumber}
-              pointOf={
-                carried
-                  ? (hole) => (hole === carriedHole ? carried.point : holePoint(hole))
-                  : undefined
+              pointOf={(hole) =>
+                carried && hole === carriedHole ? carried.point : holePoint(circuit, hole)
               }
             />
           </g>
@@ -909,10 +922,9 @@ export function Scene({
             const reading = result.readings[component.id];
             if (!reading || (component.type !== 'resistor' && component.type !== 'led'))
               return null;
-            const [first, second] = Object.values(component.pins).map(holePoint) as [
-              { x: number; y: number },
-              { x: number; y: number },
-            ];
+            const [first, second] = Object.values(component.pins).map((hole) =>
+              holePoint(circuit, hole),
+            ) as [{ x: number; y: number }, { x: number; y: number }];
             const text = readingLabel(reading.current);
             const x = (first.x + second.x) / 2;
             // Resistor readings sit above the part and LED readings below, so the

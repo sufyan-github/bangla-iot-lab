@@ -28,7 +28,7 @@ test('the diagram shows the breadboard circuit as a schematic', async ({ page })
   await page.getByTestId('view-board').click();
   await expect(page.getByTestId('canvas-frame')).toBeVisible();
   await page.getByTestId('tool-button').click();
-  await page.locator('[data-endpoint="h20"]').click();
+  await page.locator('[data-endpoint="BB1.h20"]').click();
   await page.getByTestId('view-diagram').click();
   await expect(symbols).toHaveCount(4);
   await page.getByTestId('view-board').click();

@@ -30,12 +30,12 @@ async function chooseStarter(page: Page, starter: string) {
 
 test('the weather program reads the BME280 over I2C and follows its sliders', async ({ page }) => {
   await newEsp32Circuit(page);
-  await place(page, 'bme280', 'c10'); // VIN c10, GND c11, SCL c12, SDA c13
+  await place(page, 'bme280', 'BB1.c10'); // VIN c10, GND c11, SCL c12, SDA c13
   await wire(page, [
-    ['ESP1.3v3', 'a10'],
-    ['ESP1.gnd1', 'a11'],
-    ['ESP1.d22', 'a12'],
-    ['ESP1.d21', 'a13'],
+    ['ESP1.3v3', 'BB1.a10'],
+    ['ESP1.gnd1', 'BB1.a11'],
+    ['ESP1.d22', 'BB1.a12'],
+    ['ESP1.d21', 'BB1.a13'],
   ]);
   await chooseStarter(page, 'weather');
   await page.getByTestId('run').click();
@@ -54,10 +54,10 @@ test('the INA219 can be placed and kept, and its pins are named in the diagram',
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'ina219', 'c10');
+  await place(page, 'ina219', 'BB1.c10');
   await page.getByTestId('tool-select').click();
   await expect(page.locator('[data-part="INA1"]')).toBeVisible();
-  await wire(page, [['ESP1.d22', 'a12']]);
+  await wire(page, [['ESP1.d22', 'BB1.a12']]);
   await page.getByTestId('view-diagram').click();
   await expect(page.getByTestId('diagram').locator('[data-symbol="INA1"]')).toContainText('SCL');
   await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');

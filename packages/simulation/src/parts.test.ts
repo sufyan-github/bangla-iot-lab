@@ -52,13 +52,13 @@ describe('switch', () => {
   const document = circuit(
     [
       battery(),
-      { id: 'S1', type: 'switch', pins: { a: 'a1', b: 'a3' }, props: { closed: false } },
-      resistor('R1', 'b3', 'b7', 330),
-      led('c7', 'c8'),
+      { id: 'S1', type: 'switch', pins: { a: 'BB1.a1', b: 'BB1.a3' }, props: { closed: false } },
+      resistor('R1', 'BB1.b3', 'BB1.b7', 330),
+      led('BB1.c7', 'BB1.c8'),
     ],
     [
-      ['BAT1.pos', 'b1'],
-      ['d8', 'BAT1.neg'],
+      ['BAT1.pos', 'BB1.b1'],
+      ['BB1.d8', 'BAT1.neg'],
     ],
   );
 
@@ -84,12 +84,12 @@ describe('diode', () => {
       circuit(
         [
           battery(),
-          { id: 'D1', type: 'diode', pins: { anode: 'a1', cathode: 'a5' }, props: {} },
-          resistor('R1', 'b5', 'b9', 330),
+          { id: 'D1', type: 'diode', pins: { anode: 'BB1.a1', cathode: 'BB1.a5' }, props: {} },
+          resistor('R1', 'BB1.b5', 'BB1.b9', 330),
         ],
         [
-          ['BAT1.pos', 'b1'],
-          ['c9', 'BAT1.neg'],
+          ['BAT1.pos', 'BB1.b1'],
+          ['BB1.c9', 'BAT1.neg'],
         ],
       ),
     );
@@ -103,12 +103,12 @@ describe('diode', () => {
       circuit(
         [
           battery(),
-          { id: 'D1', type: 'diode', pins: { anode: 'a5', cathode: 'a1' }, props: {} },
-          resistor('R1', 'b5', 'b9', 330),
+          { id: 'D1', type: 'diode', pins: { anode: 'BB1.a5', cathode: 'BB1.a1' }, props: {} },
+          resistor('R1', 'BB1.b5', 'BB1.b9', 330),
         ],
         [
-          ['BAT1.pos', 'b1'],
-          ['c9', 'BAT1.neg'],
+          ['BAT1.pos', 'BB1.b1'],
+          ['BB1.c9', 'BAT1.neg'],
         ],
       ),
     );
@@ -122,13 +122,13 @@ describe('light-dependent resistor', () => {
   const document = circuit(
     [
       uno,
-      { id: 'LDR1', type: 'ldr', pins: { a: 'a1', b: 'a3' }, props: { light: 0.5 } },
-      resistor('R1', 'b3', 'b7', 10_000),
+      { id: 'LDR1', type: 'ldr', pins: { a: 'BB1.a1', b: 'BB1.a3' }, props: { light: 0.5 } },
+      resistor('R1', 'BB1.b3', 'BB1.b7', 10_000),
     ],
     [
-      ['UNO1.5v', 'b1'],
-      ['c7', 'UNO1.gnd'],
-      ['UNO1.a0', 'c3'],
+      ['UNO1.5v', 'BB1.b1'],
+      ['BB1.c7', 'UNO1.gnd'],
+      ['UNO1.a0', 'BB1.c3'],
     ],
   );
   const a0 = (light: number) =>
@@ -144,10 +144,13 @@ describe('light-dependent resistor', () => {
 describe('buzzer', () => {
   const document = (voltage: number) =>
     circuit(
-      [battery(voltage), { id: 'BZ1', type: 'buzzer', pins: { pos: 'a1', neg: 'a3' }, props: {} }],
       [
-        ['BAT1.pos', 'b1'],
-        ['b3', 'BAT1.neg'],
+        battery(voltage),
+        { id: 'BZ1', type: 'buzzer', pins: { pos: 'BB1.a1', neg: 'BB1.a3' }, props: {} },
+      ],
+      [
+        ['BAT1.pos', 'BB1.b1'],
+        ['BB1.b3', 'BAT1.neg'],
       ],
     );
 
@@ -160,10 +163,10 @@ describe('buzzer', () => {
   it('beeps in step with a blinking pin', () => {
     const session = new SimulationSession(
       circuit(
-        [uno, { id: 'BZ1', type: 'buzzer', pins: { pos: 'a1', neg: 'a3' }, props: {} }],
+        [uno, { id: 'BZ1', type: 'buzzer', pins: { pos: 'BB1.a1', neg: 'BB1.a3' }, props: {} }],
         [
-          ['UNO1.d13', 'b1'],
-          ['b3', 'UNO1.gnd'],
+          ['UNO1.d13', 'BB1.b1'],
+          ['BB1.b3', 'UNO1.gnd'],
         ],
       ),
     );
@@ -182,10 +185,10 @@ describe('motor and transistor', () => {
   it('a motor straight on a pin overloads the pin and barely turns', () => {
     const session = new SimulationSession(
       circuit(
-        [uno, { id: 'M1', type: 'motor', pins: { a: 'a1', b: 'a4' }, props: {} }],
+        [uno, { id: 'M1', type: 'motor', pins: { a: 'BB1.a1', b: 'BB1.a4' }, props: {} }],
         [
-          ['UNO1.d13', 'b1'],
-          ['b4', 'UNO1.gnd'],
+          ['UNO1.d13', 'BB1.b1'],
+          ['BB1.b4', 'UNO1.gnd'],
         ],
       ),
     );
@@ -211,19 +214,19 @@ describe('motor and transistor', () => {
     [
       uno,
       battery(6),
-      { id: 'M1', type: 'motor', pins: { a: 'a1', b: 'a4' }, props: {} },
+      { id: 'M1', type: 'motor', pins: { a: 'BB1.a1', b: 'BB1.a4' }, props: {} },
       {
         id: 'Q1',
         type: 'transistor',
-        pins: { collector: 'c4', base: 'c5', emitter: 'c6' },
+        pins: { collector: 'BB1.c4', base: 'BB1.c5', emitter: 'BB1.c6' },
         props: {},
       },
-      resistor('R1', 'd5', 'd10', 1000),
+      resistor('R1', 'BB1.d5', 'BB1.d10', 1000),
     ],
     [
-      ['BAT1.pos', 'b1'],
-      ['UNO1.d13', 'e10'],
-      ['e6', 'UNO1.gnd'],
+      ['BAT1.pos', 'BB1.b1'],
+      ['UNO1.d13', 'BB1.e10'],
+      ['BB1.e6', 'UNO1.gnd'],
       ['BAT1.neg', 'UNO1.gnd2'],
     ],
   );
@@ -255,12 +258,12 @@ describe('three-pin sensor modules', () => {
     circuit(
       [uno, component],
       [
-        ['UNO1.5v', 'a10'],
-        ['UNO1.a0', 'a11'],
-        ['UNO1.gnd', 'a12'],
+        ['UNO1.5v', 'BB1.a10'],
+        ['UNO1.a0', 'BB1.a11'],
+        ['UNO1.gnd', 'BB1.a12'],
       ],
     );
-  const pins = { vcc: 'c10', out: 'c11', gnd: 'c12' };
+  const pins = { vcc: 'BB1.c10', out: 'BB1.c11', gnd: 'BB1.c12' };
 
   it('temperature sensor gives 10 mV per degree', () => {
     const at = (celsius: number) =>
@@ -307,8 +310,8 @@ describe('three-pin sensor modules', () => {
     const unpowered = circuit(
       [uno, { id: 'TMP1', type: 'temperature', pins, props: { celsius: 60 } }],
       [
-        ['UNO1.a0', 'a11'],
-        ['UNO1.gnd', 'a12'],
+        ['UNO1.a0', 'BB1.a11'],
+        ['UNO1.gnd', 'BB1.a12'],
       ],
     );
     expect(simulate(unpowered).readings.TMP1!.voltage).toBeCloseTo(0, 6);
@@ -319,7 +322,7 @@ describe('relay', () => {
   const relay: CircuitComponent = {
     id: 'K1',
     type: 'relay',
-    pins: { coil1: 'a20', coil2: 'a21', com: 'a23', no: 'a24' },
+    pins: { coil1: 'BB1.a20', coil2: 'BB1.a21', com: 'BB1.a23', no: 'BB1.a24' },
     props: {},
   };
 
@@ -330,14 +333,14 @@ describe('relay', () => {
         { id: 'BAT1', type: 'battery', props: { voltage: coilVolts } },
         { id: 'BAT2', type: 'battery', props: { voltage: 6 } },
         relay,
-        resistor('R1', 'b24', 'b28', 220),
-        led('c28', 'c29'),
+        resistor('R1', 'BB1.b24', 'BB1.b28', 220),
+        led('BB1.c28', 'BB1.c29'),
       ],
       [
-        ['BAT1.pos', 'b20'],
-        ['b21', 'BAT1.neg'],
-        ['BAT2.pos', 'b23'],
-        ['d29', 'BAT2.neg'],
+        ['BAT1.pos', 'BB1.b20'],
+        ['BB1.b21', 'BAT1.neg'],
+        ['BAT2.pos', 'BB1.b23'],
+        ['BB1.d29', 'BAT2.neg'],
       ],
     );
 
@@ -361,7 +364,7 @@ describe('relay', () => {
     session.advance(10);
     expect(session.frame().result.readings.K1!.activity).toBe(1);
     // 1.5 V (21 mA) is above the drop-out level too; below it the contact opens.
-    session.update(circuit([relay, resistor('R1', 'b24', 'b28', 220)], []));
+    session.update(circuit([relay, resistor('R1', 'BB1.b24', 'BB1.b28', 220)], []));
     session.advance(10);
     expect(session.frame().result.readings.K1!.activity).toBe(0);
   });
@@ -371,8 +374,8 @@ describe('relay', () => {
       circuit(
         [uno, relay],
         [
-          ['UNO1.d13', 'b20'],
-          ['b21', 'UNO1.gnd'],
+          ['UNO1.d13', 'BB1.b20'],
+          ['BB1.b21', 'UNO1.gnd'],
         ],
       ),
     );
@@ -393,15 +396,15 @@ describe('relay', () => {
           {
             id: 'Q1',
             type: 'transistor',
-            pins: { collector: 'c21', base: 'c22', emitter: 'c23' },
+            pins: { collector: 'BB1.c21', base: 'BB1.c22', emitter: 'BB1.c23' },
             props: {},
           },
-          resistor('R1', 'd22', 'h22', 1000),
+          resistor('R1', 'BB1.d22', 'BB1.h22', 1000),
         ],
         [
-          ['UNO1.5v', 'b20'],
-          ['UNO1.d13', 'i22'],
-          ['d23', 'UNO1.gnd'],
+          ['UNO1.5v', 'BB1.b20'],
+          ['UNO1.d13', 'BB1.i22'],
+          ['BB1.d23', 'UNO1.gnd'],
         ],
       ),
     );
@@ -424,15 +427,15 @@ describe('servo', () => {
   const servo: CircuitComponent = {
     id: 'SRV1',
     type: 'servo',
-    pins: { gnd: 'c10', vcc: 'c11', signal: 'c12' },
+    pins: { gnd: 'BB1.c10', vcc: 'BB1.c11', signal: 'BB1.c12' },
     props: {},
   };
   const wired = circuit(
     [uno, servo],
     [
-      ['UNO1.gnd', 'a10'],
-      ['UNO1.5v', 'a11'],
-      ['UNO1.d9', 'a12'],
+      ['UNO1.gnd', 'BB1.a10'],
+      ['UNO1.5v', 'BB1.a11'],
+      ['UNO1.d9', 'BB1.a12'],
     ],
   );
 
@@ -457,7 +460,7 @@ describe('servo', () => {
   }, 30_000);
 
   it('does not move without power, and ignores a pin that is merely blinking', () => {
-    const unpowered = new SimulationSession(circuit([uno, servo], [['UNO1.d9', 'a12']]));
+    const unpowered = new SimulationSession(circuit([uno, servo], [['UNO1.d9', 'BB1.a12']]));
     unpowered.loadFirmware('UNO1', firmware('servo'));
     unpowered.advance(500);
     expect(unpowered.frame().result.readings.SRV1!.angle).toBeUndefined();
@@ -466,9 +469,9 @@ describe('servo', () => {
       circuit(
         [uno, servo],
         [
-          ['UNO1.gnd', 'a10'],
-          ['UNO1.5v', 'a11'],
-          ['UNO1.d13', 'a12'],
+          ['UNO1.gnd', 'BB1.a10'],
+          ['UNO1.5v', 'BB1.a11'],
+          ['UNO1.d13', 'BB1.a12'],
         ],
       ),
     );
@@ -482,17 +485,17 @@ describe('ultrasonic distance sensor', () => {
   const sensor = (distance: number): CircuitComponent => ({
     id: 'US1',
     type: 'ultrasonic',
-    pins: { vcc: 'c10', trig: 'c11', echo: 'c12', gnd: 'c13' },
+    pins: { vcc: 'BB1.c10', trig: 'BB1.c11', echo: 'BB1.c12', gnd: 'BB1.c13' },
     props: { distance },
   });
   const wired = (distance: number) =>
     circuit(
       [uno, sensor(distance)],
       [
-        ['UNO1.5v', 'a10'],
-        ['UNO1.d7', 'a11'],
-        ['UNO1.d6', 'a12'],
-        ['UNO1.gnd', 'a13'],
+        ['UNO1.5v', 'BB1.a10'],
+        ['UNO1.d7', 'BB1.a11'],
+        ['UNO1.d6', 'BB1.a12'],
+        ['UNO1.gnd', 'BB1.a13'],
       ],
     );
   /** Runs the distance sketch and returns the numbers it prints. */
@@ -547,8 +550,8 @@ describe('ultrasonic distance sensor', () => {
       circuit(
         [uno, sensor(50)],
         [
-          ['UNO1.d7', 'a11'],
-          ['UNO1.d6', 'a12'],
+          ['UNO1.d7', 'BB1.a11'],
+          ['UNO1.d6', 'BB1.a12'],
         ],
       ),
     );
@@ -577,21 +580,21 @@ describe('character LCD', () => {
       'd7',
       'a',
       'k',
-    ].map((pin, i) => [pin, `h${i + 5}`]),
+    ].map((pin, i) => [pin, `BB1.h${i + 5}`]),
   );
   const lcd = { id: 'LCD1', type: 'lcd', pins, props: {} } as CircuitComponent;
   /** The wiring from the LiquidCrystal tutorial: RS 12, E 11, D4-D7 on 5, 4, 3, 2. */
   const signalWires: [string, string][] = [
-    ['UNO1.d12', 'j8'],
-    ['UNO1.d11', 'j10'],
-    ['UNO1.d5', 'j15'],
-    ['UNO1.d4', 'j16'],
-    ['UNO1.d3', 'j17'],
-    ['UNO1.d2', 'j18'],
+    ['UNO1.d12', 'BB1.j8'],
+    ['UNO1.d11', 'BB1.j10'],
+    ['UNO1.d5', 'BB1.j15'],
+    ['UNO1.d4', 'BB1.j16'],
+    ['UNO1.d3', 'BB1.j17'],
+    ['UNO1.d2', 'BB1.j18'],
   ];
   const powerWires: [string, string][] = [
-    ['UNO1.gnd', 'j5'],
-    ['UNO1.5v', 'j6'],
+    ['UNO1.gnd', 'BB1.j5'],
+    ['UNO1.5v', 'BB1.j6'],
   ];
 
   it('shows what the LiquidCrystal library prints, and keeps updating', () => {

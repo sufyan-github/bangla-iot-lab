@@ -43,7 +43,14 @@ describe('local project storage', () => {
       name: 'পুরনো',
       createdAt: 1,
       updatedAt: 1,
-      circuit: { ...ledCircuitExample(), schemaVersion: 1 },
+      // Saved before breadboards were parts: no BB1, and holes without its name.
+      circuit: JSON.parse(
+        JSON.stringify({
+          ...ledCircuitExample(),
+          components: ledCircuitExample().components.filter((c) => c.type !== 'breadboard'),
+          schemaVersion: 1,
+        }).replaceAll('BB1.', ''),
+      ),
     });
     const opened = await projectStore.get('old-project');
     expect(opened!.circuit).toEqual(ledCircuitExample());

@@ -1,8 +1,19 @@
 import { partDefinition } from '@banglalab/parts';
-import { holeAt, holeCoordinates, holeDistance, isHole, type HoleId } from './breadboard';
+import {
+  BREADBOARD_SPECS,
+  boardOfHole,
+  isHole,
+  isRailHole,
+  rowOfHole,
+  type BreadboardSize,
+  type HoleId,
+} from './breadboard';
+import { layoutOf } from './layout';
 import {
   ComponentSchema,
   LCD_PINS,
+  breadboardSizes,
+  holeInCircuit,
   isProgrammable,
   WireSchema,
   componentHoles,
@@ -31,6 +42,7 @@ export type EditError =
   | 'battery-limit'
   | 'board-limit'
   | 'driver-limit'
+  | 'breadboard-limit'
   | 'invalid-value';
 
 export type EditResult =
@@ -180,6 +192,7 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
 export const MAX_BATTERIES = 2;
 export const MAX_BOARDS = 1;
 export const MAX_MOTOR_DRIVERS = 1;
+export const MAX_BREADBOARDS = 4;
 
 export const WIRE_COLORS = {
   red: '#d8342a',
@@ -203,7 +216,7 @@ function findBoardPart(circuit: CircuitDocument, id: string): BoardPart | undefi
 }
 
 function endpointExists(circuit: CircuitDocument, endpoint: string): boolean {
-  if (isHole(endpoint)) return true;
+  if (isHole(endpoint)) return layoutOf(circuit).has(endpoint);
   const terminal = parseTerminal(endpoint);
   if (!terminal) return false;
   const owner = circuit.components.find((c) => c.id === terminal.componentId);
@@ -253,6 +266,37 @@ function addBeside(
   };
 }
 
+/**
+ * Adds a breadboard with its top-left corner at `at`, in whole hole pitches.
+ * The editor chooses a place clear of everything else.
+ */
+export function addBreadboard(
+  circuit: CircuitDocument,
+  size: BreadboardSize,
+  at: Position,
+): EditResult {
+  const board = {
+    id: nextId(circuit, 'BB'),
+    type: 'breadboard',
+    props: { size },
+    at: { x: Math.round(at.x), y: Math.round(at.y) },
+  } as const;
+  if (!Value.Check(ComponentSchema, board)) return fail('no-room');
+  return addBeside(circuit, board, MAX_BREADBOARDS, 'breadboard-limit');
+}
+
+/** The parts with a leg in a breadboard, and the wires with an end in it. */
+export function onBreadboard(
+  circuit: CircuitDocument,
+  boardId: string,
+): { parts: string[]; wires: string[] } {
+  const on = (hole: string) => boardOfHole(hole) === boardId;
+  return {
+    parts: circuit.components.filter((c) => componentHoles(c).some(on)).map((c) => c.id),
+    wires: circuit.wires.filter((w) => on(w.from) || on(w.to)).map((w) => w.id),
+  };
+}
+
 export function addBattery(circuit: CircuitDocument, voltage = 9): EditResult {
   const battery = { id: nextId(circuit, 'BAT'), type: 'battery', props: { voltage } } as const;
   return addBeside(circuit, battery, MAX_BATTERIES, 'battery-limit');
@@ -283,20 +327,27 @@ export function addMotorDriver(circuit: CircuitDocument): EditResult {
  * go to the right if there is room, otherwise to the left.
  */
 export function placePart(circuit: CircuitDocument, type: BoardPartType, hole: HoleId): EditResult {
-  if (!isHole(hole)) return fail('unknown-endpoint');
+  const layout = layoutOf(circuit);
+  const at = layout.coordinates(hole);
+  const board = layout.board(boardOfHole(hole) ?? '');
+  if (!at || !board) return fail('unknown-endpoint');
   const taken = occupied(circuit);
   if (taken.has(hole)) return fail('hole-occupied');
 
   const shape = PART_SHAPES[type];
-  const { x, y } = holeCoordinates(hole);
+  const { x, y } = at;
+  const rowY = BREADBOARD_SPECS[board.size].rowY;
   // A chip across the gap goes where it must, at the tapped column; others start in the tapped row.
   const holeFor = (offset: number, i: number, direction: number) =>
     shape.rows
-      ? holeAt(x + offset, holeCoordinates(`${shape.rows[i]}1`).y)
-      : holeAt(x + direction * offset, y);
+      ? layout.holeAt(x + offset, board.y + (rowY[shape.rows[i] as keyof typeof rowY] ?? -1))
+      : layout.holeAt(x + direction * offset, y);
   for (const direction of shape.rows ? [1] : [1, -1]) {
     const holes = shape.offsets.map((offset, i) => holeFor(offset, i, direction));
-    if (holes.some((h) => h === undefined || taken.has(h))) continue;
+    // A new part goes all on the breadboard it was put on.
+    if (holes.some((h) => h === undefined || taken.has(h) || boardOfHole(h) !== board.id)) {
+      continue;
+    }
     const pins = Object.fromEntries(shape.pins.map((pin, i) => [pin, holes[i]]));
     const component = {
       id: nextId(circuit, shape.idPrefix),
@@ -327,13 +378,16 @@ function withPins(
 ): EditResult {
   const shape = PART_SHAPES[part.type];
   const holes = shape.pins.map((pin) => pins[pin]!);
-  if (holes.some((h) => !isHole(h))) return fail('no-room');
+  const layout = layoutOf(circuit);
+  if (holes.some((h) => !layout.has(h))) return fail('no-room');
   if (new Set(holes).size !== holes.length) return fail('same-point');
+  // A part sits on one breadboard: its legs do not reach across to another.
+  if (new Set(holes.map(boardOfHole)).size !== 1) return fail('no-room');
   // A chip only fits across the gap: each pin in its own row.
-  if (shape.rows && holes.some((h, i) => h[0] !== shape.rows![i])) return fail('no-room');
+  if (shape.rows && holes.some((h, i) => rowOfHole(h) !== shape.rows![i])) return fail('no-room');
   const taken = occupied(circuit, part.id);
   if (holes.some((h) => taken.has(h))) return fail('hole-occupied');
-  if (shape.maxSpan !== undefined && holeDistance(holes[0]!, holes.at(-1)!) > shape.maxSpan) {
+  if (shape.maxSpan !== undefined && layout.distance(holes[0]!, holes.at(-1)!) > shape.maxSpan) {
     return fail('lead-too-long');
   }
   const next = { ...part, pins } as BoardPart;
@@ -366,10 +420,12 @@ export function movePart(
 ): EditResult {
   const part = findBoardPart(circuit, componentId);
   if (!part) return fail('unknown-item');
+  const layout = layoutOf(circuit);
   const pins: Record<string, HoleId> = {};
   for (const [pin, hole] of Object.entries(part.pins)) {
-    const { x, y } = holeCoordinates(hole);
-    const target = holeAt(x + dx, y + dy);
+    const at = layout.coordinates(hole);
+    // On the shared grid a part can slide from one breadboard on to the next.
+    const target = at && layout.holeAt(at.x + dx, at.y + dy);
     if (!target) return fail('no-room');
     pins[pin] = target;
   }
@@ -416,8 +472,8 @@ export function suggestWireColor(circuit: CircuitDocument, from: string, to: str
   if (pins.some((pin) => pin === 'pos' || pin === '5v')) return WIRE_COLORS.red;
   if (pins.some((pin) => pin === 'neg' || pin === 'gnd' || pin === 'gnd2'))
     return WIRE_COLORS.black;
-  if ([from, to].some((e) => /^(tp|bp)\d/.test(e))) return WIRE_COLORS.red;
-  if ([from, to].some((e) => /^(tn|bn)\d/.test(e))) return WIRE_COLORS.black;
+  if ([from, to].some((e) => isRailHole(e, 'plus'))) return WIRE_COLORS.red;
+  if ([from, to].some((e) => isRailHole(e, 'minus'))) return WIRE_COLORS.black;
   const cycle = [WIRE_COLORS.yellow, WIRE_COLORS.blue, WIRE_COLORS.green];
   return cycle[circuit.wires.length % cycle.length] ?? WIRE_COLORS.yellow;
 }
@@ -480,21 +536,38 @@ export function updateProps(
   if (!component) return fail('unknown-item');
   const next = { ...component, props: { ...component.props, ...props } };
   if (!Value.Check(ComponentSchema, next)) return fail('invalid-value');
-  return { ok: true, id: componentId, circuit: replaceComponent(circuit, next) };
+  const changed = replaceComponent(circuit, next);
+  // A breadboard made smaller must still have every hole something is plugged into.
+  if (next.type === 'breadboard' && !holesAllThere(changed)) return fail('no-room');
+  return { ok: true, id: componentId, circuit: changed };
 }
 
-/** Removes a part or a wire. Removing a battery or board also removes the wires plugged into it. */
+/** True when every leg and wire end is in a hole one of the breadboards has. */
+function holesAllThere(circuit: CircuitDocument): boolean {
+  const sizes = breadboardSizes(circuit);
+  const there = (end: string) => !isHole(end) || holeInCircuit(sizes, end);
+  return (
+    circuit.components.every((c) => componentHoles(c).every(there)) &&
+    circuit.wires.every((w) => there(w.from) && there(w.to))
+  );
+}
+
+/**
+ * Removes a part or a wire. Removing a battery or board also removes the wires
+ * plugged into it; removing a breadboard removes the parts and wires in it too.
+ */
 export function removeItem(circuit: CircuitDocument, id: string): EditResult {
   const isWire = circuit.wires.some((w) => w.id === id);
   const isComponent = circuit.components.some((c) => c.id === id);
   if (!isWire && !isComponent) return fail('unknown-item');
   const attached = (endpoint: string) => parseTerminal(endpoint)?.componentId === id;
+  const riding = new Set(isComponent ? onBreadboard(circuit, id).parts : []);
   return {
     ok: true,
     id,
     circuit: {
       ...circuit,
-      components: circuit.components.filter((c) => c.id !== id),
+      components: circuit.components.filter((c) => c.id !== id && !riding.has(c.id)),
       wires: circuit.wires.filter((w) => w.id !== id && !attached(w.from) && !attached(w.to)),
     },
   };

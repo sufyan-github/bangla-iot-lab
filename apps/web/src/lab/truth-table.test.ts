@@ -18,7 +18,10 @@ const chip = (model: '74HC08' | '74HC00'): CircuitComponent => ({
   id: 'U1',
   type: 'logic',
   pins: Object.fromEntries(
-    Array.from({ length: 14 }, (_, i) => [`p${i + 1}`, i < 7 ? `f${10 + i}` : `e${23 - i}`]),
+    Array.from({ length: 14 }, (_, i) => [
+      `p${i + 1}`,
+      i < 7 ? `BB1.f${10 + i}` : `BB1.e${23 - i}`,
+    ]),
   ),
   props: { chip: model },
 });
@@ -31,21 +34,41 @@ const gateCircuit = (model: '74HC08' | '74HC00') =>
     [
       { id: 'BAT1', type: 'battery', props: { voltage: 4.5 } },
       chip(model),
-      { id: 'S1', type: 'switch', pins: { a: 'h10', b: 'h4' }, props: { closed: false } },
-      { id: 'S2', type: 'switch', pins: { a: 'i11', b: 'i5' }, props: { closed: false } },
-      { id: 'R1', type: 'resistor', pins: { a: 'g10', b: 'g2' }, props: { resistance: 10_000 } },
-      { id: 'R2', type: 'resistor', pins: { a: 'g11', b: 'g3' }, props: { resistance: 10_000 } },
-      { id: 'R3', type: 'resistor', pins: { a: 'h12', b: 'h20' }, props: { resistance: 330 } },
-      { id: 'LED1', type: 'led', pins: { anode: 'g20', cathode: 'g21' }, props: { color: 'red' } },
+      { id: 'S1', type: 'switch', pins: { a: 'BB1.h10', b: 'BB1.h4' }, props: { closed: false } },
+      { id: 'S2', type: 'switch', pins: { a: 'BB1.i11', b: 'BB1.i5' }, props: { closed: false } },
+      {
+        id: 'R1',
+        type: 'resistor',
+        pins: { a: 'BB1.g10', b: 'BB1.g2' },
+        props: { resistance: 10_000 },
+      },
+      {
+        id: 'R2',
+        type: 'resistor',
+        pins: { a: 'BB1.g11', b: 'BB1.g3' },
+        props: { resistance: 10_000 },
+      },
+      {
+        id: 'R3',
+        type: 'resistor',
+        pins: { a: 'BB1.h12', b: 'BB1.h20' },
+        props: { resistance: 330 },
+      },
+      {
+        id: 'LED1',
+        type: 'led',
+        pins: { anode: 'BB1.g20', cathode: 'BB1.g21' },
+        props: { color: 'red' },
+      },
     ],
     [
-      ['BAT1.pos', 'a10'], // pin 14
-      ['BAT1.neg', 'j16'], // pin 7
-      ['BAT1.pos', 'j4'],
-      ['BAT1.pos', 'j5'],
-      ['BAT1.neg', 'j2'],
-      ['BAT1.neg', 'j3'],
-      ['BAT1.neg', 'j21'],
+      ['BAT1.pos', 'BB1.a10'], // pin 14
+      ['BAT1.neg', 'BB1.j16'], // pin 7
+      ['BAT1.pos', 'BB1.j4'],
+      ['BAT1.pos', 'BB1.j5'],
+      ['BAT1.neg', 'BB1.j2'],
+      ['BAT1.neg', 'BB1.j3'],
+      ['BAT1.neg', 'BB1.j21'],
     ],
   );
 

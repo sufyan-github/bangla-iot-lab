@@ -44,7 +44,7 @@ describe('0–25 V voltage sensor module', () => {
   const module: CircuitComponent = {
     id: 'VS1',
     type: 'voltagesensor',
-    pins: { vin: 'a10', gnd: 'a11', s: 'a12' },
+    pins: { vin: 'BB1.a10', gnd: 'BB1.a11', s: 'BB1.a12' },
     props: {},
   };
 
@@ -52,8 +52,8 @@ describe('0–25 V voltage sensor module', () => {
     const measured = circuit(
       [battery('BAT1', 9), module],
       [
-        ['BAT1.pos', 'b10'],
-        ['BAT1.neg', 'b11'],
+        ['BAT1.pos', 'BB1.b10'],
+        ['BAT1.neg', 'BB1.b11'],
       ],
     );
     const reading = simulate(measured).readings.VS1!;
@@ -68,9 +68,9 @@ describe('0–25 V voltage sensor module', () => {
     const measured = circuit(
       [battery('BAT1', 15), battery('BAT2', 15), module],
       [
-        ['BAT1.pos', 'b10'],
+        ['BAT1.pos', 'BB1.b10'],
         ['BAT1.neg', 'BAT2.pos'],
-        ['BAT2.neg', 'b11'],
+        ['BAT2.neg', 'BB1.b11'],
       ],
     );
     expect(warnings(measured)).toMatchObject([
@@ -83,10 +83,10 @@ describe('0–25 V voltage sensor module', () => {
       circuit(
         [esp32, battery('BAT1', volts), module],
         [
-          ['BAT1.pos', 'b10'],
-          ['BAT1.neg', 'b11'],
-          ['ESP1.gnd1', 'c11'],
-          ['ESP1.d34', 'b12'],
+          ['BAT1.pos', 'BB1.b10'],
+          ['BAT1.neg', 'BB1.b11'],
+          ['ESP1.gnd1', 'BB1.c11'],
+          ['ESP1.d34', 'BB1.b12'],
         ],
       );
     expect(warnings(wired(12))).toEqual([]);
@@ -99,19 +99,19 @@ describe('ACS712 current sensor', () => {
   const sensor = (range: '5A' | '20A' | '30A' = '5A'): CircuitComponent => ({
     id: 'CS1',
     type: 'acs712',
-    pins: { ip1: 'a10', ip2: 'a11', vcc: 'a13', out: 'a14', gnd: 'a15' },
+    pins: { ip1: 'BB1.a10', ip2: 'BB1.a11', vcc: 'BB1.a13', out: 'BB1.a14', gnd: 'BB1.a15' },
     props: { range },
   });
   /** A battery driving a resistor through the sensor, and the sensor powered from the board's 5 V. */
   const measuring = (load: number, range: '5A' | '20A' | '30A' = '5A', reversed = false) =>
     circuit(
-      [uno, sensor(range), battery('BAT1', 12), resistor('R1', 'c20', 'c22', load)],
+      [uno, sensor(range), battery('BAT1', 12), resistor('R1', 'BB1.c20', 'BB1.c22', load)],
       [
-        ['UNO1.5v', 'b13'],
-        ['UNO1.gnd', 'b15'],
-        [reversed ? 'BAT1.neg' : 'BAT1.pos', 'b10'],
-        ['b11', 'a20'],
-        ['a22', reversed ? 'BAT1.pos' : 'BAT1.neg'],
+        ['UNO1.5v', 'BB1.b13'],
+        ['UNO1.gnd', 'BB1.b15'],
+        [reversed ? 'BAT1.neg' : 'BAT1.pos', 'BB1.b10'],
+        ['BB1.b11', 'BB1.a20'],
+        ['BB1.a22', reversed ? 'BAT1.pos' : 'BAT1.neg'],
       ],
     );
 
@@ -119,8 +119,8 @@ describe('ACS712 current sensor', () => {
     const idle = circuit(
       [uno, sensor()],
       [
-        ['UNO1.5v', 'b13'],
-        ['UNO1.gnd', 'b15'],
+        ['UNO1.5v', 'BB1.b13'],
+        ['UNO1.gnd', 'BB1.b15'],
       ],
     );
     const reading = simulate(idle).readings.CS1!;
@@ -166,8 +166,8 @@ describe('ACS712 current sensor', () => {
     const low = circuit(
       [esp32, sensor()],
       [
-        ['ESP1.3v3', 'b13'],
-        ['ESP1.gnd1', 'b15'],
+        ['ESP1.3v3', 'BB1.b13'],
+        ['ESP1.gnd1', 'BB1.b15'],
       ],
     );
     expect(warnings(low)).toMatchObject([
@@ -178,13 +178,13 @@ describe('ACS712 current sensor', () => {
   it('a running session follows the current as it changes', () => {
     // A board pin switches a load through the sensor; the session must see each state.
     const document = circuit(
-      [uno, sensor(), resistor('R1', 'c20', 'c22', 1000)],
+      [uno, sensor(), resistor('R1', 'BB1.c20', 'BB1.c22', 1000)],
       [
-        ['UNO1.5v', 'b13'],
-        ['UNO1.gnd', 'b15'],
-        ['UNO1.d7', 'b10'],
-        ['b11', 'a20'],
-        ['a22', 'UNO1.gnd2'],
+        ['UNO1.5v', 'BB1.b13'],
+        ['UNO1.gnd', 'BB1.b15'],
+        ['UNO1.d7', 'BB1.b10'],
+        ['BB1.b11', 'BB1.a20'],
+        ['BB1.a22', 'UNO1.gnd2'],
       ],
     );
     const session = new SimulationSession(document);
@@ -196,13 +196,13 @@ describe('ACS712 current sensor', () => {
 });
 
 describe('MQ-7 and pH modules', () => {
-  const pins = { vcc: 'a10', gnd: 'a11', do: 'a12', ao: 'a13' };
+  const pins = { vcc: 'BB1.a10', gnd: 'BB1.a11', do: 'BB1.a12', ao: 'BB1.a13' };
   const powered = (component: CircuitComponent) =>
     circuit(
       [uno, component],
       [
-        ['UNO1.5v', 'b10'],
-        ['UNO1.gnd', 'b11'],
+        ['UNO1.5v', 'BB1.b10'],
+        ['UNO1.gnd', 'BB1.b11'],
       ],
     );
 
@@ -234,7 +234,7 @@ describe('TDS meter', () => {
   const meter = (ppm: number): CircuitComponent => ({
     id: 'TDS1',
     type: 'tds',
-    pins: { out: 'a10', vcc: 'a11', gnd: 'a12' },
+    pins: { out: 'BB1.a10', vcc: 'BB1.a11', gnd: 'BB1.a12' },
     props: { ppm },
   });
 
@@ -249,8 +249,8 @@ describe('TDS meter', () => {
         circuit(
           [esp32, meter(500)],
           [
-            ...(supply ? ([[`ESP1.${supply}`, 'b11']] as [string, string][]) : []),
-            ['ESP1.gnd1', 'b12'],
+            ...(supply ? ([[`ESP1.${supply}`, 'BB1.b11']] as [string, string][]) : []),
+            ['ESP1.gnd1', 'BB1.b12'],
           ],
         ),
       ).readings.TDS1!.voltage;
@@ -263,9 +263,9 @@ describe('TDS meter', () => {
     const document = circuit(
       [esp32, meter(400)],
       [
-        ['ESP1.3v3', 'b11'],
-        ['ESP1.gnd1', 'b12'],
-        ['ESP1.d34', 'b10'],
+        ['ESP1.3v3', 'BB1.b11'],
+        ['ESP1.gnd1', 'BB1.b12'],
+        ['ESP1.d34', 'BB1.b10'],
       ],
     );
     const pin = simulate(document).sockets['ESP1.d34']!.voltage;
@@ -279,15 +279,15 @@ describe('Turbidity sensor', () => {
   const sensor = (ntu: number): CircuitComponent => ({
     id: 'TU1',
     type: 'turbidity',
-    pins: { out: 'a10', vcc: 'a11', gnd: 'a12' },
+    pins: { out: 'BB1.a10', vcc: 'BB1.a11', gnd: 'BB1.a12' },
     props: { ntu },
   });
   const on5v = (ntu: number) =>
     circuit(
       [uno, sensor(ntu)],
       [
-        ['UNO1.5v', 'b11'],
-        ['UNO1.gnd', 'b12'],
+        ['UNO1.5v', 'BB1.b11'],
+        ['UNO1.gnd', 'BB1.b12'],
       ],
     );
 
@@ -307,17 +307,17 @@ describe('Turbidity sensor', () => {
     const direct = circuit(
       [esp32, sensor(0)],
       [
-        ['ESP1.vin', 'b11'],
-        ['ESP1.gnd1', 'b12'],
-        ['ESP1.d34', 'b10'],
+        ['ESP1.vin', 'BB1.b11'],
+        ['ESP1.gnd1', 'BB1.b12'],
+        ['ESP1.d34', 'BB1.b10'],
       ],
     );
     expect(warnings(direct)).toMatchObject([{ code: 'pin-overvoltage', socket: 'd34' }]);
     const low = circuit(
       [esp32, sensor(0)],
       [
-        ['ESP1.3v3', 'b11'],
-        ['ESP1.gnd1', 'b12'],
+        ['ESP1.3v3', 'BB1.b11'],
+        ['ESP1.gnd1', 'BB1.b12'],
       ],
     );
     expect(warnings(low)).toMatchObject([

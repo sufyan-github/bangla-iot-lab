@@ -2,13 +2,14 @@ import {
   emptyCircuit,
   esp32CircuitExample,
   ledCircuitExample,
+  partsOf,
   type CircuitDocument,
   unoCircuitExample,
 } from '@banglalab/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
 import { useT } from '../i18n';
-import { CANVAS_WIDTH, canvasHeight } from '../lab/geometry';
+import { canvasHeight, canvasWidth } from '../lab/geometry';
 import { starterProgram } from '../lab/starters';
 import { Scene } from '../lab/Scene';
 import { projectStore, type ProjectContent, type ProjectRecord } from '../storage/projects';
@@ -17,7 +18,7 @@ function Thumbnail({ circuit }: { circuit: CircuitDocument }) {
   const { quantity } = useT();
   return (
     <svg
-      viewBox={`0 0 ${CANVAS_WIDTH} ${canvasHeight(circuit)}`}
+      viewBox={`0 0 ${canvasWidth(circuit)} ${canvasHeight(circuit)}`}
       className="block w-full rounded-lg"
       aria-hidden
     >
@@ -157,7 +158,7 @@ export function HomePage() {
               </Link>
               <div className="flex items-end justify-between gap-2 px-3 pt-1 pb-3">
                 <p className="text-sm text-ink-soft">
-                  {t('home.parts', { count: project.circuit.components.length })}
+                  {t('home.parts', { count: partsOf(project.circuit).length })}
                   <br />
                   {t('home.updated', { time: relativeTime(project.updatedAt) })}
                 </p>

@@ -22,24 +22,36 @@ const esp32: CircuitComponent = { id: 'ESP1', type: 'esp32', props: {} };
 const relay = (trigger: 'high' | 'low'): CircuitComponent => ({
   id: 'RLY1',
   type: 'relaymodule',
-  pins: { vcc: 'c10', gnd: 'c11', in: 'c12', com: 'c14', no: 'c15', nc: 'c16' },
+  pins: {
+    vcc: 'BB1.c10',
+    gnd: 'BB1.c11',
+    in: 'BB1.c12',
+    com: 'BB1.c14',
+    no: 'BB1.c15',
+    nc: 'BB1.c16',
+  },
   props: { trigger },
 });
 /** A lamp on the contact: battery + to COM, NO through 220 Ω and an LED back to −. */
 const lamp: CircuitComponent[] = [
   { id: 'BAT1', type: 'battery', props: { voltage: 6 } },
-  { id: 'R1', type: 'resistor', pins: { a: 'b15', b: 'b19' }, props: { resistance: 220 } },
-  { id: 'LED1', type: 'led', pins: { anode: 'd19', cathode: 'd20' }, props: { color: 'red' } },
+  { id: 'R1', type: 'resistor', pins: { a: 'BB1.b15', b: 'BB1.b19' }, props: { resistance: 220 } },
+  {
+    id: 'LED1',
+    type: 'led',
+    pins: { anode: 'BB1.d19', cathode: 'BB1.d20' },
+    props: { color: 'red' },
+  },
 ];
 const wired = (trigger: 'high' | 'low', supply = 'ESP1.vin') =>
   circuit(
     [esp32, relay(trigger), ...lamp],
     [
-      [supply, 'a10'],
-      ['ESP1.gnd1', 'a11'],
-      ['ESP1.d26', 'a12'],
-      ['BAT1.pos', 'a14'],
-      ['BAT1.neg', 'a20'],
+      [supply, 'BB1.a10'],
+      ['ESP1.gnd1', 'BB1.a11'],
+      ['ESP1.d26', 'BB1.a12'],
+      ['BAT1.pos', 'BB1.a14'],
+      ['BAT1.neg', 'BB1.a20'],
     ],
   );
 const drives = (level: 'high' | 'low') => ({
@@ -82,12 +94,12 @@ describe('relay module', () => {
     const ncLamp = circuit(
       [esp32, relay('high'), ...lamp],
       [
-        ['ESP1.vin', 'a10'],
-        ['ESP1.gnd1', 'a11'],
-        ['ESP1.d26', 'a12'],
-        ['BAT1.pos', 'a14'],
-        ['BAT1.neg', 'a20'],
-        ['a16', 'a15'],
+        ['ESP1.vin', 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a11'],
+        ['ESP1.d26', 'BB1.a12'],
+        ['BAT1.pos', 'BB1.a14'],
+        ['BAT1.neg', 'BB1.a20'],
+        ['BB1.a16', 'BB1.a15'],
       ],
     );
     // NO and NC both lead to the lamp here: it is lit either way.

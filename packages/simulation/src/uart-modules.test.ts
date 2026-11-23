@@ -198,12 +198,12 @@ describe(
     ) => ({ id, type, pins, props }) as unknown as CircuitComponent;
     /** The LED with its 220 Ω resistor, from D2. */
     const lamp = [
-      part('R1', 'resistor', { a: 'f20', b: 'f24' }, { resistance: 220 }),
-      part('LED1', 'led', { anode: 'g24', cathode: 'g25' }, { color: 'red' }),
+      part('R1', 'resistor', { a: 'BB1.f20', b: 'BB1.f24' }, { resistance: 220 }),
+      part('LED1', 'led', { anode: 'BB1.g24', cathode: 'BB1.g25' }, { color: 'red' }),
     ];
     const lampWires: [string, string][] = [
-      ['ESP1.d2', 'j20'],
-      ['ESP1.gnd2', 'j25'],
+      ['ESP1.d2', 'BB1.j20'],
+      ['ESP1.gnd2', 'BB1.j25'],
     ];
     function run(session: SimulationSession, milliseconds: number): string {
       let printed = '';
@@ -222,16 +222,16 @@ describe(
             part(
               'BT1',
               'bluetooth',
-              { vcc: 'c10', gnd: 'c11', tx: 'c12', rx: 'c13' },
+              { vcc: 'BB1.c10', gnd: 'BB1.c11', tx: 'BB1.c12', rx: 'BB1.c13' },
               { paired: true },
             ),
             ...lamp,
           ],
           [
-            ['ESP1.vin', 'a10'],
-            ['ESP1.gnd1', 'a11'],
-            ['ESP1.rx2', 'a12'],
-            ['ESP1.tx2', 'a13'],
+            ['ESP1.vin', 'BB1.a10'],
+            ['ESP1.gnd1', 'BB1.a11'],
+            ['ESP1.rx2', 'BB1.a12'],
+            ['ESP1.tx2', 'BB1.a13'],
             ...lampWires,
           ],
         ),
@@ -256,16 +256,21 @@ describe(
       const document = () =>
         circuit(
           [
-            part('MP1', 'mp3', { vcc: 'c10', rx: 'c11', tx: 'c12', gnd: 'c13' }, { tracks: 5 }),
-            part('SW1', 'button', { a: 'e20', b: 'e22' }, {}),
+            part(
+              'MP1',
+              'mp3',
+              { vcc: 'BB1.c10', rx: 'BB1.c11', tx: 'BB1.c12', gnd: 'BB1.c13' },
+              { tracks: 5 },
+            ),
+            part('SW1', 'button', { a: 'BB1.e20', b: 'BB1.e22' }, {}),
           ],
           [
-            ['ESP1.vin', 'a10'],
-            ['ESP1.tx2', 'a11'],
-            ['ESP1.rx2', 'a12'],
-            ['ESP1.gnd1', 'a13'],
-            ['ESP1.d4', 'a20'],
-            ['ESP1.gnd2', 'a22'],
+            ['ESP1.vin', 'BB1.a10'],
+            ['ESP1.tx2', 'BB1.a11'],
+            ['ESP1.rx2', 'BB1.a12'],
+            ['ESP1.gnd1', 'BB1.a13'],
+            ['ESP1.d4', 'BB1.a20'],
+            ['ESP1.gnd2', 'BB1.a22'],
           ],
         );
       const session = new SimulationSession(document());
@@ -287,12 +292,19 @@ describe(
     it('mp3: with TX wired to TX the program says the player does not answer', () => {
       const session = new SimulationSession(
         circuit(
-          [part('MP1', 'mp3', { vcc: 'c10', rx: 'c11', tx: 'c12', gnd: 'c13' }, { tracks: 5 })],
           [
-            ['ESP1.vin', 'a10'],
-            ['ESP1.rx2', 'a11'],
-            ['ESP1.tx2', 'a12'],
-            ['ESP1.gnd1', 'a13'],
+            part(
+              'MP1',
+              'mp3',
+              { vcc: 'BB1.c10', rx: 'BB1.c11', tx: 'BB1.c12', gnd: 'BB1.c13' },
+              { tracks: 5 },
+            ),
+          ],
+          [
+            ['ESP1.vin', 'BB1.a10'],
+            ['ESP1.rx2', 'BB1.a11'],
+            ['ESP1.tx2', 'BB1.a12'],
+            ['ESP1.gnd1', 'BB1.a13'],
           ],
         ),
       );
@@ -304,16 +316,21 @@ describe(
     const gsmCircuit = (signal: number, charge = 0.5) =>
       circuit(
         [
-          part('GSM1', 'gsm', { vcc: 'c10', rx: 'c11', tx: 'c12', gnd: 'c13' }, { signal }),
-          part('CELL1', 'cell', { pos: 'c3', neg: 'c5' }, { charge, capacity: 2000 }),
+          part(
+            'GSM1',
+            'gsm',
+            { vcc: 'BB1.c10', rx: 'BB1.c11', tx: 'BB1.c12', gnd: 'BB1.c13' },
+            { signal },
+          ),
+          part('CELL1', 'cell', { pos: 'BB1.c3', neg: 'BB1.c5' }, { charge, capacity: 2000 }),
           ...lamp,
         ],
         [
-          ['a3', 'a10'],
-          ['a5', 'a13'],
-          ['ESP1.tx2', 'a11'],
-          ['ESP1.rx2', 'a12'],
-          ['ESP1.gnd1', 'b13'],
+          ['BB1.a3', 'BB1.a10'],
+          ['BB1.a5', 'BB1.a13'],
+          ['ESP1.tx2', 'BB1.a11'],
+          ['ESP1.rx2', 'BB1.a12'],
+          ['ESP1.gnd1', 'BB1.b13'],
           ...lampWires,
         ],
       );
@@ -343,10 +360,17 @@ describe(
 
     it('a SIM800L on 5 V is being damaged, and the lab says so', () => {
       const document = circuit(
-        [part('GSM1', 'gsm', { vcc: 'c10', rx: 'c11', tx: 'c12', gnd: 'c13' }, { signal: 20 })],
         [
-          ['ESP1.vin', 'a10'],
-          ['ESP1.gnd1', 'a13'],
+          part(
+            'GSM1',
+            'gsm',
+            { vcc: 'BB1.c10', rx: 'BB1.c11', tx: 'BB1.c12', gnd: 'BB1.c13' },
+            { signal: 20 },
+          ),
+        ],
+        [
+          ['ESP1.vin', 'BB1.a10'],
+          ['ESP1.gnd1', 'BB1.a13'],
         ],
       );
       const session = new SimulationSession(document);

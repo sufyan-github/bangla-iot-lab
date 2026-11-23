@@ -1,6 +1,6 @@
 import { Type, type Static } from 'typebox';
 import { Value } from 'typebox/value';
-import { isHole } from './breadboard';
+import { holeExists, holeName, isHole, parseHole, type BreadboardSize } from './breadboard';
 
 /**
  * The saved form of a circuit. This is the contract between the editor, the
@@ -24,13 +24,19 @@ import { isHole } from './breadboard';
  * 11 — adds the L298N motor driver.
  * 12 — adds the relay module.
  * 13 — adds the 74HC logic chips.
- * Each version only adds part types or optional fields, so an older document
- * is valid in a newer version apart from the number.
+ * 14 to 20 — add further parts, each version some.
+ * 21 — the breadboard becomes a part: a circuit holds one or more, of three
+ *     sizes, and each hole is named after its breadboard ("BB1.a12").
+ * Up to version 20 each version only adds part types or optional fields, so an
+ * older document is valid in a newer version apart from the number. Version
+ * 21 renames every hole: `migrateCircuit` puts the one fixed breadboard of an
+ * older circuit in as BB1, where it was, and names its holes after it.
  */
-export const CIRCUIT_SCHEMA_VERSION = 20;
+export const CIRCUIT_SCHEMA_VERSION = 21;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
-const Hole = Type.String({ pattern: '^([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
+/** A breadboard hole: the breadboard's id, a dot and the hole, as "BB1.a12". */
+const Hole = Type.String({ pattern: '^BB[1-9][0-9]*\\.([a-j]|tp|tn|bp|bn)[1-9][0-9]?$' });
 /** A hole, or a terminal of an off-board part written "<componentId>.<pin>". */
 const Endpoint = Type.String({ maxLength: 60, pattern: '^[A-Za-z0-9_-]+(\\.[a-z0-9]+)?$' });
 
@@ -39,14 +45,32 @@ export type LedColor = (typeof LED_COLORS)[number];
 
 /**
  * Where an off-board part sits on the work surface: its top-left corner in hole
- * pitches, measured from the breadboard's origin. Absent until the part is
- * moved, and the editor then lays it out in its usual place.
+ * pitches, measured from the work surface's origin (where the first breadboard
+ * sits until it is moved). Absent until the part is moved, and the editor then
+ * lays it out in its usual place.
  */
 export const PositionSchema = Type.Object({
-  x: Type.Number({ minimum: -60, maximum: 120 }),
-  y: Type.Number({ minimum: -60, maximum: 120 }),
+  x: Type.Number({ minimum: -100, maximum: 400 }),
+  y: Type.Number({ minimum: -100, maximum: 400 }),
 });
 export type Position = Static<typeof PositionSchema>;
+
+/**
+ * A solderless breadboard: half (400 holes), full (830) or mini (170, no power
+ * rails). It sits at whole hole pitches, so the holes of every breadboard lie
+ * on one grid and a part can be lined up with any of them.
+ */
+export const BreadboardSchema = Type.Object({
+  id: Type.String({ pattern: '^BB[1-9][0-9]*$' }),
+  type: Type.Literal('breadboard'),
+  props: Type.Object({
+    size: Type.Union([Type.Literal('half'), Type.Literal('full'), Type.Literal('mini')]),
+  }),
+  at: Type.Object({
+    x: Type.Integer({ minimum: -100, maximum: 400 }),
+    y: Type.Integer({ minimum: -100, maximum: 400 }),
+  }),
+});
 
 export const BatterySchema = Type.Object({
   id: Id,
@@ -732,6 +756,7 @@ export const L298nSchema = Type.Object({
 });
 
 export const ComponentSchema = Type.Union([
+  BreadboardSchema,
   BatterySchema,
   ResistorSchema,
   LedSchema,
@@ -805,6 +830,7 @@ export const CircuitDocumentSchema = Type.Object({
   wires: Type.Array(WireSchema, { maxItems: 400 }),
 });
 
+export type Breadboard = Static<typeof BreadboardSchema>;
 export type Battery = Static<typeof BatterySchema>;
 export type Resistor = Static<typeof ResistorSchema>;
 export type Led = Static<typeof LedSchema>;
@@ -821,20 +847,87 @@ export type Wire = Static<typeof WireSchema>;
 export type CircuitDocument = Static<typeof CircuitDocumentSchema>;
 
 export function emptyCircuit(): CircuitDocument {
-  return { schemaVersion: CIRCUIT_SCHEMA_VERSION, components: [], wires: [] };
+  return { schemaVersion: CIRCUIT_SCHEMA_VERSION, components: [FIRST_BREADBOARD], wires: [] };
+}
+
+/** The breadboards of a circuit, by id, with their sizes. */
+export function breadboardSizes(circuit: CircuitDocument): Map<string, BreadboardSize> {
+  const sizes = new Map<string, BreadboardSize>();
+  for (const component of circuit.components) {
+    if (component.type === 'breadboard') sizes.set(component.id, component.props.size);
+  }
+  return sizes;
+}
+
+/** True when a hole is on one of the circuit's breadboards, which is big enough to have it. */
+export function holeInCircuit(sizes: ReadonlyMap<string, BreadboardSize>, id: string): boolean {
+  const hole = parseHole(id);
+  const size = hole ? sizes.get(hole.board) : undefined;
+  return hole !== null && size !== undefined && holeExists(hole, size);
 }
 
 /** True when `value` is a structurally valid circuit document. */
 export function isCircuitDocument(value: unknown): value is CircuitDocument {
   if (!Value.Check(CircuitDocumentSchema, value)) return false;
-  // The pattern for a hole's name also fits holes the board does not have (column 34,
-  // the gaps in a rail). A leg or wire in one of those would connect to nothing.
+  // The pattern for a hole's name also fits holes a breadboard does not have (column 34
+  // of a half board, the gaps in a rail) and breadboards that are not there. A leg or
+  // wire in one of those would connect to nothing.
+  const sizes = breadboardSizes(value);
+  const inCircuit = (id: string) => holeInCircuit(sizes, id);
   return (
-    value.components.every((component) => componentHoles(component).every(isHole)) &&
+    value.components.every((component) => componentHoles(component).every(inCircuit)) &&
     value.wires.every((wire) =>
-      [wire.from, wire.to].every((end) => end.includes('.') || isHole(end)),
+      [wire.from, wire.to].every((end) => (isHole(end) ? inCircuit(end) : end.includes('.'))),
     )
   );
+}
+
+/** The fixed breadboard of circuits before version 21: half size, at the work surface's origin. */
+export const FIRST_BREADBOARD: Breadboard = {
+  id: 'BB1',
+  type: 'breadboard',
+  props: { size: 'half' },
+  at: { x: 0, y: 0 },
+};
+
+/**
+ * Version 21 names every hole after its breadboard. An older circuit had one
+ * fixed half-size board: it becomes BB1, where it was, and "a12" becomes
+ * "BB1.a12" in every leg and wire.
+ */
+function nameHolesAfterFirstBoard(value: Record<string, unknown>): Record<string, unknown> {
+  const oldHole = /^([a-j]|tp|tn|bp|bn)([1-9][0-9]?)$/;
+  const rename = (end: unknown) => {
+    const match = typeof end === 'string' ? oldHole.exec(end) : null;
+    return match ? holeName('BB1', match[1] as 'a', Number(match[2])) : end;
+  };
+  const { components, wires } = value;
+  // Not a circuit at all: left as it is, to be refused.
+  if (!Array.isArray(components) || !Array.isArray(wires)) return value;
+  return {
+    ...value,
+    components: [
+      FIRST_BREADBOARD,
+      ...components.map((component: unknown) => {
+        if (typeof component !== 'object' || component === null) return component;
+        const pins = (component as { pins?: unknown }).pins;
+        if (typeof pins !== 'object' || pins === null) return component;
+        return {
+          ...component,
+          pins: Object.fromEntries(Object.entries(pins).map(([pin, hole]) => [pin, rename(hole)])),
+        };
+      }),
+    ],
+    wires: wires.map((wire: unknown) =>
+      typeof wire === 'object' && wire !== null
+        ? {
+            ...wire,
+            from: rename((wire as { from?: unknown }).from),
+            to: rename((wire as { to?: unknown }).to),
+          }
+        : wire,
+    ),
+  };
 }
 
 /**
@@ -845,8 +938,25 @@ export function migrateCircuit(value: unknown): CircuitDocument | null {
   if (typeof value !== 'object' || value === null) return null;
   const version = (value as { schemaVersion?: unknown }).schemaVersion;
   const older = typeof version === 'number' && version >= 1 && version < CIRCUIT_SCHEMA_VERSION;
-  const upgraded = older ? { ...value, schemaVersion: CIRCUIT_SCHEMA_VERSION } : value;
+  if (!older) return isCircuitDocument(value) ? value : null;
+  const renamed =
+    (version as number) < 21 ? nameHolesAfterFirstBoard(value as Record<string, unknown>) : value;
+  const upgraded = { ...renamed, schemaVersion: CIRCUIT_SCHEMA_VERSION };
   return isCircuitDocument(upgraded) ? upgraded : null;
+}
+
+/**
+ * The circuit without its breadboards. A breadboard has no electrical part of
+ * its own: the strips it joins follow from the names of the holes.
+ */
+export function withoutBreadboards(circuit: CircuitDocument): CircuitDocument {
+  if (!circuit.components.some((c) => c.type === 'breadboard')) return circuit;
+  return { ...circuit, components: circuit.components.filter((c) => c.type !== 'breadboard') };
+}
+
+/** The parts of a circuit that are not breadboards. */
+export function partsOf(circuit: CircuitDocument): CircuitComponent[] {
+  return circuit.components.filter((c) => c.type !== 'breadboard');
 }
 
 /** Terminals of the parts that sit beside the board and take wires directly. */

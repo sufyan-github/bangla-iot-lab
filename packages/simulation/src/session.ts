@@ -3,6 +3,7 @@ import { solveTimeStep, type Capacitor } from '@banglalab/circuit-engine';
 import {
   boardSocketOfPin,
   isProgrammable,
+  withoutBreadboards,
   type CircuitDocument,
   type ProgrammableType,
 } from '@banglalab/shared';
@@ -194,7 +195,7 @@ export class SimulationSession {
   private clock = 0;
 
   constructor(document: CircuitDocument, pressed: readonly string[] = []) {
-    this.document = document;
+    this.document = withoutBreadboards(document);
     this.pressed = pressed;
     this.update(document, pressed);
   }
@@ -209,7 +210,9 @@ export class SimulationSession {
   }
 
   /** Applies an edit or a button press. Running programs keep running; capacitors keep their charge. */
-  update(document: CircuitDocument, pressed: readonly string[] = []): void {
+  update(circuit: CircuitDocument, pressed: readonly string[] = []): void {
+    // Breadboards play no part in the electricity: the strips follow from the hole names.
+    const document = withoutBreadboards(circuit);
     this.document = document;
     this.pressed = pressed;
     this.solutions = new Map();

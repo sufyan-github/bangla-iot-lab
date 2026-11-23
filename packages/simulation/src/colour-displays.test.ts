@@ -160,15 +160,15 @@ describe('the ring program', () => {
       {
         id: 'POT1',
         type: 'potentiometer',
-        pins: { a: 'c20', wiper: 'c21', b: 'c22' },
+        pins: { a: 'BB1.c20', wiper: 'BB1.c21', b: 'BB1.c22' },
         props: { resistance: 10_000, position },
       },
     ];
     const wires: [string, string][] = [
       // Turned fully (position 1) the wiper is at B, on 3.3 V.
-      ['ESP1.gnd2', 'a20'],
-      ['ESP1.d34', 'a21'],
-      ['ESP1.3v3', 'a22'],
+      ['ESP1.gnd2', 'BB1.a20'],
+      ['ESP1.d34', 'BB1.a21'],
+      ['ESP1.3v3', 'BB1.a22'],
     ];
     const list = rings.length ? rings : [{ leds: 12, supply: 'ESP1.vin' }];
     list.forEach(({ leds, supply }, i) => {
@@ -177,13 +177,18 @@ describe('the ring program', () => {
       parts.push({
         id: `RING${i + 1}`,
         type: 'ledring',
-        pins: { vcc: `h${row}`, gnd: `h${row + 1}`, din: `h${row + 2}`, dout: `h${row + 3}` },
+        pins: {
+          vcc: `BB1.h${row}`,
+          gnd: `BB1.h${row + 1}`,
+          din: `BB1.h${row + 2}`,
+          dout: `BB1.h${row + 3}`,
+        },
         props: { leds },
       } as CircuitComponent);
-      wires.push([supply, `j${row}`], ['ESP1.gnd1', `j${row + 1}`]);
-      if (i > 0) wires.push([`j${row - 2}`, `j${row + 2}`]);
+      wires.push([supply, `BB1.j${row}`], ['ESP1.gnd1', `BB1.j${row + 1}`]);
+      if (i > 0) wires.push([`BB1.j${row - 2}`, `BB1.j${row + 2}`]);
     });
-    wires.push(['ESP1.d4', 'j4']);
+    wires.push(['ESP1.d4', 'BB1.j4']);
     return circuit(parts, wires);
   };
   const colours = (session: SimulationSession, id = 'RING1') =>
@@ -242,27 +247,27 @@ describe('the colour display program', () => {
           id: 'TFT1',
           type: 'tft',
           pins: {
-            gnd: 'c10',
-            vcc: 'c11',
-            scl: 'c12',
-            sda: 'c13',
-            res: 'c14',
-            dc: 'c15',
-            cs: 'c16',
-            blk: 'c17',
+            gnd: 'BB1.c10',
+            vcc: 'BB1.c11',
+            scl: 'BB1.c12',
+            sda: 'BB1.c13',
+            res: 'BB1.c14',
+            dc: 'BB1.c15',
+            cs: 'BB1.c16',
+            blk: 'BB1.c17',
           },
           props: {},
         },
       ],
       [
-        ['ESP1.gnd1', 'a10'],
-        ['ESP1.3v3', 'a11'],
-        ['ESP1.d18', 'a12'],
-        ['ESP1.d23', 'a13'],
-        ['ESP1.d4', 'a14'],
-        ['ESP1.d2', 'a15'],
-        ...(legs.cs === 'open' ? [] : [[legs.cs ?? 'ESP1.d5', 'a16'] as [string, string]]),
-        ...(legs.blk ? [[legs.blk, 'a17'] as [string, string]] : []),
+        ['ESP1.gnd1', 'BB1.a10'],
+        ['ESP1.3v3', 'BB1.a11'],
+        ['ESP1.d18', 'BB1.a12'],
+        ['ESP1.d23', 'BB1.a13'],
+        ['ESP1.d4', 'BB1.a14'],
+        ['ESP1.d2', 'BB1.a15'],
+        ...(legs.cs === 'open' ? [] : [[legs.cs ?? 'ESP1.d5', 'BB1.a16'] as [string, string]]),
+        ...(legs.blk ? [[legs.blk, 'BB1.a17'] as [string, string]] : []),
       ],
     );
   /** One pixel of the picture shown, as 0xRRGGBB. */

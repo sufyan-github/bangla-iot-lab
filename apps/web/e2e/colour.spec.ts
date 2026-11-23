@@ -40,11 +40,11 @@ test('the ring program lights all twelve LEDs, green to red, with its knob input
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'ledring', 'c10'); // VCC c10, GND c11, DIN c12, DOUT c13
+  await place(page, 'ledring', 'BB1.c10'); // VCC c10, GND c11, DIN c12, DOUT c13
   await wire(page, [
-    ['ESP1.vin', 'a10'],
-    ['ESP1.gnd1', 'a11'],
-    ['ESP1.d4', 'a12'],
+    ['ESP1.vin', 'BB1.a10'],
+    ['ESP1.gnd1', 'BB1.a11'],
+    ['ESP1.d4', 'BB1.a12'],
     // In place of the knob: the input it reads held at 3.3 V.
     ['ESP1.d34', 'ESP1.3v3'],
   ]);
@@ -68,15 +68,15 @@ test('the colour display shows what the program draws, and goes dark with BLK on
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'tft', 'c10'); // GND c10, VCC c11, SCL c12, SDA c13, RES c14, DC c15, CS c16, BLK c17
+  await place(page, 'tft', 'BB1.c10'); // GND c10, VCC c11, SCL c12, SDA c13, RES c14, DC c15, CS c16, BLK c17
   await wire(page, [
-    ['ESP1.gnd1', 'a10'],
-    ['ESP1.3v3', 'a11'],
-    ['ESP1.d18', 'a12'],
-    ['ESP1.d23', 'a13'],
-    ['ESP1.d4', 'a14'],
-    ['ESP1.d2', 'a15'],
-    ['ESP1.d5', 'a16'],
+    ['ESP1.gnd1', 'BB1.a10'],
+    ['ESP1.3v3', 'BB1.a11'],
+    ['ESP1.d18', 'BB1.a12'],
+    ['ESP1.d23', 'BB1.a13'],
+    ['ESP1.d4', 'BB1.a14'],
+    ['ESP1.d2', 'BB1.a15'],
+    ['ESP1.d5', 'BB1.a16'],
   ]);
   await chooseStarter(page, 'tft');
   await page.getByTestId('run').click();
@@ -87,7 +87,7 @@ test('the colour display shows what the program draws, and goes dark with BLK on
   await expect(page.getByTestId('tft-preview')).toHaveAttribute('data-lit', 'true');
 
   await page.getByTestId('run').click(); // stop
-  await wire(page, [['ESP1.gnd2', 'a17']]);
+  await wire(page, [['ESP1.gnd2', 'BB1.a17']]);
   await page.getByTestId('run').click();
   await page.waitForTimeout(2500);
   expect(await partAttribute(page, 'TFT1', 'data-tft')).toBe('dark');

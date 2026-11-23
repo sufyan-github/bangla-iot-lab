@@ -52,15 +52,15 @@ test('build an LED circuit, run it, save it and reopen it offline', async ({ pag
   // --- build: battery, resistor, LED and four wires, placed by tapping ---
   await page.getByTestId('tool-battery').click();
   await page.getByTestId('tool-resistor').click();
-  await tap(page, 'c5');
+  await tap(page, 'BB1.c5');
   await page.getByTestId('tool-led').click();
-  await tap(page, 'd9');
+  await tap(page, 'BB1.d9');
   await page.getByTestId('tool-wire').click();
   for (const [from, to] of [
-    ['BAT1.pos', 'tp1'],
-    ['BAT1.neg', 'tn1'],
-    ['tp4', 'a5'],
-    ['a10', 'tn8'],
+    ['BAT1.pos', 'BB1.tp1'],
+    ['BAT1.neg', 'BB1.tn1'],
+    ['BB1.tp4', 'BB1.a5'],
+    ['BB1.a10', 'BB1.tn8'],
   ]) {
     await tap(page, from);
     await tap(page, to);
@@ -135,7 +135,7 @@ test('explains common mistakes and keeps working after each fix', async ({ page 
 
   // A refused edit is explained and changes nothing.
   await page.getByTestId('tool-led').click();
-  await tap(page, 'c5');
+  await tap(page, 'BB1.c5');
   await expect(page.getByTestId('notice')).toBeVisible();
   await expect(page.locator('[data-part]')).toHaveCount(3);
 });

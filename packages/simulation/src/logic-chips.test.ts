@@ -27,9 +27,9 @@ function circuit(components: CircuitComponent[], wires: [string, string][]): Cir
 }
 const COLUMN = 10;
 /** The hole of a chip pin, for a chip whose pin 1 is at f10. */
-const hole = (n: number) => (n <= 7 ? `f${COLUMN + n - 1}` : `e${COLUMN + 14 - n}`);
+const hole = (n: number) => (n <= 7 ? `BB1.f${COLUMN + n - 1}` : `BB1.e${COLUMN + 14 - n}`);
 /** Another hole in the same strip as a pin, for wiring to it. */
-const beside = (n: number) => (n <= 7 ? `j${COLUMN + n - 1}` : `a${COLUMN + 14 - n}`);
+const beside = (n: number) => (n <= 7 ? `BB1.j${COLUMN + n - 1}` : `BB1.a${COLUMN + 14 - n}`);
 const chip = (model: LogicChip, id = 'U1'): CircuitComponent => ({
   id,
   type: 'logic',
@@ -54,7 +54,7 @@ const tie = (n: number, high: boolean): [string, string] => [
 const outputVolts = (document: CircuitDocument, n: number) =>
   simulate(document).readings.U1 &&
   simulate(document).nodeVoltages[
-    `strip:${COLUMN + (n <= 7 ? n - 1 : 14 - n)}:${n <= 7 ? 'bottom' : 'top'}`
+    `BB1:strip:${COLUMN + (n <= 7 ? n - 1 : 14 - n)}:${n <= 7 ? 'bottom' : 'top'}`
   ]!;
 
 describe('74HC logic chips', () => {
@@ -85,15 +85,20 @@ describe('74HC logic chips', () => {
       [
         battery(),
         chip('74HC08'),
-        { id: 'R1', type: 'resistor', pins: { a: 'h12', b: 'h20' }, props: { resistance: 330 } },
+        {
+          id: 'R1',
+          type: 'resistor',
+          pins: { a: 'BB1.h12', b: 'BB1.h20' },
+          props: { resistance: 330 },
+        },
         {
           id: 'LED1',
           type: 'led',
-          pins: { anode: 'g20', cathode: 'g21' },
+          pins: { anode: 'BB1.g20', cathode: 'BB1.g21' },
           props: { color: 'red' },
         },
       ],
-      [...power, tie(1, true), tie(2, true), ['BAT1.neg', 'j21']],
+      [...power, tie(1, true), tie(2, true), ['BAT1.neg', 'BB1.j21']],
     );
     const result = simulate(document);
     expect(result.readings.LED1!.led!.state).toBe('on');
@@ -146,23 +151,33 @@ describe('74HC logic chips', () => {
     const parts: CircuitComponent[] = [
       battery(),
       chip('74HC00'),
-      { id: 'R1', type: 'resistor', pins: { a: 'g10', b: 'g4' }, props: { resistance: 10_000 } },
-      { id: 'R2', type: 'resistor', pins: { a: 'h13', b: 'h4' }, props: { resistance: 10_000 } },
-      { id: 'S', type: 'button', pins: { a: 'i10', b: 'i7' }, props: {} },
-      { id: 'R', type: 'button', pins: { a: 'i13', b: 'i6' }, props: {} },
+      {
+        id: 'R1',
+        type: 'resistor',
+        pins: { a: 'BB1.g10', b: 'BB1.g4' },
+        props: { resistance: 10_000 },
+      },
+      {
+        id: 'R2',
+        type: 'resistor',
+        pins: { a: 'BB1.h13', b: 'BB1.h4' },
+        props: { resistance: 10_000 },
+      },
+      { id: 'S', type: 'button', pins: { a: 'BB1.i10', b: 'BB1.i7' }, props: {} },
+      { id: 'R', type: 'button', pins: { a: 'BB1.i13', b: 'BB1.i6' }, props: {} },
     ];
     const document = circuit(parts, [
       ...power,
-      ['BAT1.pos', 'j4'],
-      ['BAT1.neg', 'j7'],
-      ['BAT1.neg', 'j6'],
+      ['BAT1.pos', 'BB1.j4'],
+      ['BAT1.neg', 'BB1.j7'],
+      ['BAT1.neg', 'BB1.j6'],
       [beside(3), beside(5)],
-      [beside(6), 'g11'],
+      [beside(6), 'BB1.g11'],
     ]);
     const session = new SimulationSession(document);
     const q = () => {
       session.advance(10);
-      return session.frame().result.nodeVoltages['strip:12:bottom']! > 2.5;
+      return session.frame().result.nodeVoltages['BB1:strip:12:bottom']! > 2.5;
     };
     session.update(document, ['S']);
     expect(q()).toBe(true); // set

@@ -1,10 +1,15 @@
 import type { MessageKey } from '@banglalab/i18n';
 import {
+  BREADBOARD_SIZES,
+  BREADBOARD_SPECS,
   LED_COLORS,
   ACS712_RANGES,
   LOGIC_CHIPS,
   LOGIC_CHIP_GATES,
   LED_RING_SIZES,
+  onBreadboard,
+  updateProps,
+  type BreadboardSize,
   type CircuitComponent,
   type LedColor,
 } from '@banglalab/shared';
@@ -20,6 +25,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { simulation } from '../sim/client';
 import { useT } from '../i18n';
+import { fitsAt, partBox, type OffBoardPart } from './geometry';
 import { oledImage } from './oled-image';
 import { tftImage } from './tft-image';
 import { parseSettings } from './settings';
@@ -42,6 +48,7 @@ function Choice(props: {
   children: ReactNode;
   label?: string;
   testId?: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -50,8 +57,9 @@ function Choice(props: {
       aria-pressed={props.selected}
       aria-label={props.label}
       title={props.label}
+      disabled={props.disabled}
       onClick={props.onClick}
-      className={`min-h-11 min-w-11 rounded-lg border-2 px-3 text-sm font-medium ${
+      className={`min-h-11 min-w-11 rounded-lg border-2 px-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 ${
         props.selected
           ? 'border-amber bg-amber-soft'
           : 'border-line bg-surface hover:border-ink-soft'
@@ -338,9 +346,58 @@ function CellSettings({ part }: { part: Extract<CircuitComponent, { type: 'cell'
   );
 }
 
+/**
+ * A breadboard's size, and what removing it takes with it. A size it cannot
+ * change to (a leg would be left in a hole the smaller board lacks, or the
+ * bigger board would run into something) is not offered.
+ */
+function BreadboardSettings({ part }: { part: Extract<CircuitComponent, { type: 'breadboard' }> }) {
+  const circuit = useLab((s) => s.circuit);
+  const { setProps } = useLab.getState();
+  const { t, number } = useT();
+  const fits = (size: BreadboardSize) => {
+    if (size === part.props.size) return true;
+    const changed = updateProps(circuit, part.id, { size });
+    if (!changed.ok) return false;
+    const board = changed.circuit.components.find((c) => c.id === part.id) as OffBoardPart;
+    return fitsAt(changed.circuit, board, partBox(changed.circuit, board));
+  };
+  const riding = onBreadboard(circuit, part.id);
+  return (
+    <div className="space-y-3">
+      <fieldset>
+        <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.boardSize')}</legend>
+        <div className="flex flex-wrap gap-1.5" data-testid="breadboard-size">
+          {BREADBOARD_SIZES.map((size) => (
+            <Choice
+              key={size}
+              testId={`breadboard-${size}`}
+              selected={part.props.size === size}
+              disabled={!fits(size)}
+              onClick={() => setProps(part.id, { size })}
+            >
+              {t(`inspector.boardSize.${size}`, { holes: number(BREADBOARD_SPECS[size].holes) })}
+            </Choice>
+          ))}
+        </div>
+      </fieldset>
+      {(riding.parts.length > 0 || riding.wires.length > 0) && (
+        <p className="text-sm text-ink-soft" data-testid="breadboard-carries">
+          {t('inspector.breadboardCarries', {
+            parts: number(riding.parts.length),
+            wires: number(riding.wires.length),
+          })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function PartSettings({ part }: { part: CircuitComponent }) {
   const { setProps } = useLab.getState();
   const { t, quantity, number } = useT();
+
+  if (part.type === 'breadboard') return <BreadboardSettings part={part} />;
 
   if (part.type === 'battery') {
     return (

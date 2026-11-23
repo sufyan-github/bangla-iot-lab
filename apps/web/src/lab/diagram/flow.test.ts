@@ -99,11 +99,11 @@ describe('current flow in a board circuit', () => {
 
   it('splits at a branch so that what goes in comes out', () => {
     // A second resistor and LED from the same pin: the pin's wire carries both branches.
-    let two = ok(placePart(circuit, 'resistor', 'h1')); // R2: h1 to h5
-    two = ok(placePart(two, 'led', 'g8')); // LED2: anode g8, cathode g9
-    two = ok(addWire(two, 'b5', 'j1')); // pin 13's strip to R2
-    two = ok(addWire(two, 'j5', 'j8'));
-    two = ok(addWire(two, 'j9', 'tn3'));
+    let two = ok(placePart(circuit, 'resistor', 'BB1.h1')); // R2: h1 to h5
+    two = ok(placePart(two, 'led', 'BB1.g8')); // LED2: anode g8, cathode g9
+    two = ok(addWire(two, 'BB1.b5', 'BB1.j1')); // pin 13's strip to R2
+    two = ok(addWire(two, 'BB1.j5', 'BB1.j8'));
+    two = ok(addWire(two, 'BB1.j9', 'BB1.tn3'));
     const drawn = layoutDiagram(two);
     const solved = simulate(two, { pressed: [], boards: { UNO1: high } });
     const split = currentFlows(drawn, solved.legCurrents);

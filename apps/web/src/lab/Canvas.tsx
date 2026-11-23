@@ -29,8 +29,9 @@ import { useT } from '../i18n';
 import { describeEndpoint, joinedHoles } from './endpoints';
 import { meterReading, voltageAt } from './meter';
 import {
-  CANVAS_WIDTH,
-  HOLE_POINTS,
+  canvasWidth,
+  holePoints,
+  BREADBOARD_TAB,
   PITCH,
   BOARD_SOCKETS,
   canvasHeight,
@@ -174,6 +175,9 @@ export function Canvas() {
     clearMeter,
   } = useLab.getState();
   const height = canvasHeight(circuit);
+  const width = canvasWidth(circuit);
+  const widthRef = useRef(width);
+  widthRef.current = width;
   const { t, quantity, number } = useT();
 
   const frameRef = useRef<HTMLDivElement>(null);
@@ -200,14 +204,15 @@ export function Canvas() {
     if (!frame) return;
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     const measure = () => {
-      const fit = Math.min(1.6, frame.clientWidth / CANVAS_WIDTH);
+      const fit = Math.min(1.6, frame.clientWidth / widthRef.current);
       setFitZoom(Math.max(coarse ? 1 : 0.5, fit));
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(frame);
     return () => observer.disconnect();
-  }, []);
+    // Measured again when breadboards make the work surface wider or narrower.
+  }, [width]);
 
   // Ctrl or ⌘ with the wheel (and a trackpad pinch) zooms the board, not the whole page.
   useEffect(() => {
@@ -301,7 +306,10 @@ export function Canvas() {
       if (moved.ok) replaceCircuit(moved.circuit);
       return;
     }
-    const target = active.kind === 'pin' ? holeNear(carried) : endpointNear(active.origin, carried);
+    const target =
+      active.kind === 'pin'
+        ? holeNear(active.origin, carried)
+        : endpointNear(active.origin, carried);
     setFloating({
       id: active.id,
       key: active.kind === 'pin' ? active.pin : active.end,
@@ -563,8 +571,8 @@ export function Canvas() {
           ref={svgRef}
           role="img"
           aria-label={t('lab.canvasLabel')}
-          viewBox={`0 0 ${CANVAS_WIDTH} ${height}`}
-          width={CANVAS_WIDTH * zoom}
+          viewBox={`0 0 ${width} ${height}`}
+          width={width * zoom}
           height={height * zoom}
           className="mx-auto block select-none"
           style={{ cursor: selecting && !hoverIsFree ? 'default' : 'crosshair' }}
@@ -626,6 +634,29 @@ export function Canvas() {
               })}
 
               {circuit.components.map((component) => {
+                if (component.type === 'breadboard') {
+                  // A breadboard is picked up by its tab: its holes stay free for parts and wires.
+                  const box = partBox(circuit, component);
+                  return (
+                    <rect
+                      key={component.id}
+                      className="drag-handle part-hit"
+                      data-hit={component.id}
+                      x={box.x - 4}
+                      y={box.y - BREADBOARD_TAB.height - 4}
+                      width={BREADBOARD_TAB.width + 8}
+                      height={BREADBOARD_TAB.height + 6}
+                      rx={8}
+                      onPointerDown={(event) =>
+                        startDrag(event, {
+                          ...dragOf(component.id, event),
+                          kind: 'off-board',
+                          corner: { x: box.x, y: box.y },
+                        })
+                      }
+                    />
+                  );
+                }
                 if (!('pins' in component)) {
                   const box = partBox(circuit, component);
                   const reach = component.type === 'battery' ? 28 : 0;
@@ -655,7 +686,7 @@ export function Canvas() {
                     />
                   );
                 }
-                const leads = Object.values(component.pins).map(holePoint);
+                const leads = Object.values(component.pins).map((hole) => holePoint(circuit, hole));
                 const first = leads[0]!;
                 // A chip is held along its row of pins 1 to 7.
                 const second = (component.type === 'logic' ? leads[6] : leads.at(-1))!;
@@ -692,7 +723,9 @@ export function Canvas() {
                   const { type, id } = component;
                   if (type !== 'button' && type !== 'switch' && type !== 'ir' && type !== 'pir')
                     return null;
-                  const leads = Object.values(component.pins).map(holePoint);
+                  const leads = Object.values(component.pins).map((hole) =>
+                    holePoint(circuit, hole),
+                  );
                   const centre = {
                     x: (leads[0]!.x + leads.at(-1)!.x) / 2,
                     y:
@@ -741,14 +774,14 @@ export function Canvas() {
                     point={
                       floating?.id === selectedPart.id && floating.key === pin
                         ? floating.point
-                        : holePoint(hole)
+                        : holePoint(circuit, hole)
                     }
                     onPointerDown={(event) =>
                       startDrag(event, {
                         ...dragOf(selectedPart.id, event),
                         kind: 'pin',
                         pin,
-                        anchor: holePoint(hole),
+                        anchor: holePoint(circuit, hole),
                       })
                     }
                   />
@@ -791,7 +824,7 @@ export function Canvas() {
             {liftedPart &&
               'pins' in liftedPart &&
               Object.values(liftedPart.pins).map((hole) => (
-                <LandingRing key={hole} point={holePoint(hole)} />
+                <LandingRing key={hole} point={holePoint(circuit, hole)} />
               ))}
 
             {ghost?.part && (
@@ -802,12 +835,13 @@ export function Canvas() {
                   held={false}
                   selected={false}
                   formatNumber={number}
+                  pointOf={(hole) => holePoint(circuit, hole)}
                 />
               </g>
             )}
             {ghost?.part &&
               Object.values(ghost.part.pins).map((hole) => (
-                <LandingRing key={hole} point={holePoint(hole)} />
+                <LandingRing key={hole} point={holePoint(circuit, hole)} />
               ))}
 
             {startPoint && (
@@ -876,6 +910,8 @@ export function Canvas() {
 
             {hover && hoverPoint && hoverInfo && !lift && (
               <HoverMark
+                circuit={circuit}
+                width={width}
                 endpoint={hover}
                 point={hoverPoint}
                 lead={hoverInfo.lead}
@@ -1018,7 +1054,7 @@ const TapTargets = memo(function TapTargets(props: { circuit: CircuitDocument; w
   const { circuit, wiring } = props;
   return (
     <g>
-      {HOLE_POINTS.map(({ hole, point }) => (
+      {holePoints(circuit).map(({ hole, point }) => (
         <circle
           key={hole}
           className="tap-target"
@@ -1030,11 +1066,13 @@ const TapTargets = memo(function TapTargets(props: { circuit: CircuitDocument; w
       ))}
       {wiring &&
         offBoardParts(circuit).flatMap((part) =>
-          (part.type === 'battery'
-            ? ['pos', 'neg']
-            : part.type === 'l298n'
-              ? L298N_TERMINALS
-              : BOARD_SOCKETS[part.type].map((s) => s.terminal)
+          (part.type === 'breadboard'
+            ? []
+            : part.type === 'battery'
+              ? ['pos', 'neg']
+              : part.type === 'l298n'
+                ? L298N_TERMINALS
+                : BOARD_SOCKETS[part.type].map((s) => s.terminal)
           ).map((pin) => {
             const endpoint = `${part.id}.${pin}`;
             const point = endpointPoint(circuit, endpoint);
@@ -1074,6 +1112,9 @@ function LandingRing({ point }: { point: Point }) {
  * joined to it inside the board, and a label saying what it is.
  */
 const HoverMark = memo(function HoverMark(props: {
+  circuit: CircuitDocument;
+  /** The canvas's width, which the label stays inside. */
+  width: number;
   endpoint: string;
   point: Point;
   lead: string | undefined;
@@ -1085,10 +1126,11 @@ const HoverMark = memo(function HoverMark(props: {
   const { point, lead, name, detail, refused } = props;
   const color = refused ? DANGER : AMBER;
   // Holes in one strip are joined inside the board; the band shows which ones.
-  const joined = joinedHoles(props.endpoint);
+  const joined = joinedHoles(props.circuit, props.endpoint);
+  const at = (hole: string) => holePoint(props.circuit, hole);
   const text = [lead, name, detail].filter(Boolean).join('  ');
   const width = Math.max(30, text.length * 7.2 + 16);
-  const x = Math.min(CANVAS_WIDTH - width / 2 - 4, Math.max(width / 2 + 4, point.x));
+  const x = Math.min(props.width - width / 2 - 4, Math.max(width / 2 + 4, point.x));
   const y = point.y < 52 ? point.y + 30 : point.y - 24;
   return (
     <g
@@ -1099,10 +1141,10 @@ const HoverMark = memo(function HoverMark(props: {
     >
       {joined.length > 1 && (
         <line
-          x1={holePoint(joined[0]!).x}
-          y1={holePoint(joined[0]!).y}
-          x2={holePoint(joined.at(-1)!).x}
-          y2={holePoint(joined.at(-1)!).y}
+          x1={at(joined[0]!).x}
+          y1={at(joined[0]!).y}
+          x2={at(joined.at(-1)!).x}
+          y2={at(joined.at(-1)!).y}
           stroke={color}
           strokeWidth={15}
           strokeLinecap="round"

@@ -7,6 +7,7 @@ import {
   updateProps,
   type CircuitDocument,
   type EditResult,
+  FIRST_BREADBOARD,
 } from '@banglalab/shared';
 import { describe, expect, it } from 'vitest';
 import { SimulationSession } from './session';
@@ -109,7 +110,7 @@ describe('Button on pin 2', () => {
 /** The example with the LED moved from pin 13 to PWM pin 9. */
 function ledOnPin9(): CircuitDocument {
   const document = ok(removeItem(unoCircuitExample(), 'W3'));
-  return ok(addWire(document, 'UNO1.d9', 'a5'));
+  return ok(addWire(document, 'UNO1.d9', 'BB1.a5'));
 }
 
 describe('PWM on pin 9', () => {
@@ -178,12 +179,18 @@ describe('mistakes with a board', () => {
     let document: CircuitDocument = {
       ...emptyCircuit(),
       components: [
+        FIRST_BREADBOARD,
         { id: 'UNO1', type: 'uno', props: {} },
-        { id: 'LED1', type: 'led', pins: { anode: 'd9', cathode: 'd10' }, props: { color: 'red' } },
+        {
+          id: 'LED1',
+          type: 'led',
+          pins: { anode: 'BB1.d9', cathode: 'BB1.d10' },
+          props: { color: 'red' },
+        },
       ],
     };
-    document = ok(addWire(document, 'UNO1.d13', 'a9'));
-    document = ok(addWire(document, 'a10', 'UNO1.gnd'));
+    document = ok(addWire(document, 'UNO1.d13', 'BB1.a9'));
+    document = ok(addWire(document, 'BB1.a10', 'UNO1.gnd'));
     const session = new SimulationSession(document);
     session.loadFirmware('UNO1', firmware('blink'));
     const frame = run(session, 300).find((f) => f.boards.UNO1!.drives[13] === 'high')!;
@@ -194,7 +201,7 @@ describe('mistakes with a board', () => {
   });
 
   it('5 V wired straight to GND is a short circuit', () => {
-    const document = ok(addWire(unoCircuitExample(), 'tp10', 'tn10'));
+    const document = ok(addWire(unoCircuitExample(), 'BB1.tp10', 'BB1.tn10'));
     expect(simulate(document).diagnostics.map((d) => d.code)).toContain('supply-short');
   });
 
@@ -228,13 +235,24 @@ describe('capacitors charge and discharge over time', () => {
   const rcCircuit = (): CircuitDocument => ({
     ...emptyCircuit(),
     components: [
+      FIRST_BREADBOARD,
       { id: 'BAT1', type: 'battery', props: { voltage: 9 } },
-      { id: 'R1', type: 'resistor', pins: { a: 'a1', b: 'a5' }, props: { resistance: 1000 } },
-      { id: 'C1', type: 'capacitor', pins: { a: 'b5', b: 'b7' }, props: { capacitance: 100e-6 } },
+      {
+        id: 'R1',
+        type: 'resistor',
+        pins: { a: 'BB1.a1', b: 'BB1.a5' },
+        props: { resistance: 1000 },
+      },
+      {
+        id: 'C1',
+        type: 'capacitor',
+        pins: { a: 'BB1.b5', b: 'BB1.b7' },
+        props: { capacitance: 100e-6 },
+      },
     ],
     wires: [
-      { id: 'W1', from: 'BAT1.pos', to: 'b1', color: '#000000' },
-      { id: 'W2', from: 'c7', to: 'BAT1.neg', color: '#000000' },
+      { id: 'W1', from: 'BAT1.pos', to: 'BB1.b1', color: '#000000' },
+      { id: 'W2', from: 'BB1.c7', to: 'BAT1.neg', color: '#000000' },
     ],
   });
 
@@ -270,16 +288,21 @@ describe('capacitors charge and discharge over time', () => {
       ...document,
       components: [
         ...document.components,
-        { id: 'R2', type: 'resistor', pins: { a: 'c5', b: 'c12' }, props: { resistance: 330 } },
+        {
+          id: 'R2',
+          type: 'resistor',
+          pins: { a: 'BB1.c5', b: 'BB1.c12' },
+          props: { resistance: 330 },
+        },
         {
           id: 'LED1',
           type: 'led',
-          pins: { anode: 'd12', cathode: 'd13' },
+          pins: { anode: 'BB1.d12', cathode: 'BB1.d13' },
           props: { color: 'red' },
         },
       ],
     };
-    document = ok(addWire(document, 'e13', 'd7'));
+    document = ok(addWire(document, 'BB1.e13', 'BB1.d7'));
     session.update(document);
 
     session.advance(5);
@@ -300,13 +323,24 @@ describe('capacitors charge and discharge over time', () => {
     let document: CircuitDocument = {
       ...emptyCircuit(),
       components: [
+        FIRST_BREADBOARD,
         { id: 'UNO1', type: 'uno', props: {} },
-        { id: 'R1', type: 'resistor', pins: { a: 'a1', b: 'a5' }, props: { resistance: 1000 } },
-        { id: 'C1', type: 'capacitor', pins: { a: 'b5', b: 'b7' }, props: { capacitance: 100e-6 } },
+        {
+          id: 'R1',
+          type: 'resistor',
+          pins: { a: 'BB1.a1', b: 'BB1.a5' },
+          props: { resistance: 1000 },
+        },
+        {
+          id: 'C1',
+          type: 'capacitor',
+          pins: { a: 'BB1.b5', b: 'BB1.b7' },
+          props: { capacitance: 100e-6 },
+        },
       ],
     };
-    document = ok(addWire(document, 'UNO1.d13', 'b1'));
-    document = ok(addWire(document, 'c7', 'UNO1.gnd'));
+    document = ok(addWire(document, 'UNO1.d13', 'BB1.b1'));
+    document = ok(addWire(document, 'BB1.c7', 'UNO1.gnd'));
     const session = new SimulationSession(document);
     session.loadFirmware('UNO1', firmware('blink'));
     const voltages = run(session, 2000, 20).map((f) => f.result.readings.C1!.voltage);
@@ -367,13 +401,24 @@ describe('signal recording for the oscilloscope and logic analyser', () => {
     const document: CircuitDocument = {
       ...emptyCircuit(),
       components: [
+        FIRST_BREADBOARD,
         { id: 'BAT1', type: 'battery', props: { voltage: 9 } },
-        { id: 'R1', type: 'resistor', pins: { a: 'a1', b: 'a5' }, props: { resistance: 1000 } },
-        { id: 'C1', type: 'capacitor', pins: { a: 'b5', b: 'b7' }, props: { capacitance: 100e-6 } },
+        {
+          id: 'R1',
+          type: 'resistor',
+          pins: { a: 'BB1.a1', b: 'BB1.a5' },
+          props: { resistance: 1000 },
+        },
+        {
+          id: 'C1',
+          type: 'capacitor',
+          pins: { a: 'BB1.b5', b: 'BB1.b7' },
+          props: { capacitance: 100e-6 },
+        },
       ],
       wires: [
-        { id: 'W1', from: 'BAT1.pos', to: 'b1', color: '#000000' },
-        { id: 'W2', from: 'c7', to: 'BAT1.neg', color: '#000000' },
+        { id: 'W1', from: 'BAT1.pos', to: 'BB1.b1', color: '#000000' },
+        { id: 'W2', from: 'BB1.c7', to: 'BAT1.neg', color: '#000000' },
       ],
     };
     const session = new SimulationSession(document);

@@ -312,11 +312,11 @@ async function newEsp32Circuit(page: Page) {
 
 test('a DHT11 on the ESP32 is read by the program and follows its sliders', async ({ page }) => {
   await newEsp32Circuit(page);
-  await place(page, 'dht11', 'c10'); // legs: c10 supply, c11 data, c12 ground
+  await place(page, 'dht11', 'BB1.c10'); // legs: c10 supply, c11 data, c12 ground
   await wire(page, [
-    ['ESP1.3v3', 'a10'],
-    ['ESP1.d4', 'a11'],
-    ['ESP1.gnd1', 'a12'],
+    ['ESP1.3v3', 'BB1.a10'],
+    ['ESP1.d4', 'BB1.a11'],
+    ['ESP1.gnd1', 'BB1.a12'],
   ]);
   await chooseStarter(page, 'dht');
   await page.getByTestId('run').click();
@@ -336,11 +336,11 @@ test('a DHT11 on the ESP32 is read by the program and follows its sliders', asyn
 test('a servo on the ESP32 sweeps when it is powered from VIN', async ({ page }) => {
   test.setTimeout(90_000);
   await newEsp32Circuit(page);
-  await place(page, 'servo', 'c10'); // legs: c10 ground, c11 supply, c12 signal
+  await place(page, 'servo', 'BB1.c10'); // legs: c10 ground, c11 supply, c12 signal
   await wire(page, [
-    ['ESP1.gnd1', 'a10'],
-    ['ESP1.vin', 'a11'],
-    ['ESP1.d13', 'a12'],
+    ['ESP1.gnd1', 'BB1.a10'],
+    ['ESP1.vin', 'BB1.a11'],
+    ['ESP1.d13', 'BB1.a12'],
   ]);
   await chooseStarter(page, 'servo');
   await page.getByTestId('run').click();
@@ -354,12 +354,12 @@ test('the lab warns when the ultrasonic sensor’s 5 V echo goes straight into a
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'ultrasonic', 'c10'); // legs: c10 supply, c11 trig, c12 echo, c13 ground
+  await place(page, 'ultrasonic', 'BB1.c10'); // legs: c10 supply, c11 trig, c12 echo, c13 ground
   await wire(page, [
-    ['ESP1.vin', 'a10'],
-    ['ESP1.d5', 'a11'],
-    ['ESP1.d18', 'a12'],
-    ['ESP1.gnd1', 'a13'],
+    ['ESP1.vin', 'BB1.a10'],
+    ['ESP1.d5', 'BB1.a11'],
+    ['ESP1.d18', 'BB1.a12'],
+    ['ESP1.gnd1', 'BB1.a13'],
   ]);
   await chooseStarter(page, 'distance');
   await page.getByTestId('run').click();
@@ -375,11 +375,11 @@ const partAttribute = (page: Page, id: string, name: string) =>
 test('the kit’s five new parts can be placed and are kept', async ({ page }) => {
   await newEsp32Circuit(page);
   const tools = [
-    ['ldrmodule', 'a1'],
-    ['rain', 'a6'],
-    ['mq135', 'a11'],
-    ['pir', 'a16'],
-    ['rgbled', 'a20'],
+    ['ldrmodule', 'BB1.a1'],
+    ['rain', 'BB1.a6'],
+    ['mq135', 'BB1.a11'],
+    ['pir', 'BB1.a16'],
+    ['rgbled', 'BB1.a20'],
   ] as const;
   for (const [tool, hole] of tools) await place(page, tool, hole);
   await expect(page.locator('[data-part]')).toHaveCount(tools.length + 1);
@@ -392,16 +392,16 @@ test('an LDR module lights the LED in the dark, and its own light when it is bri
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'ldrmodule', 'c10'); // legs: c10 VCC, c11 GND, c12 DO, c13 AO
-  await place(page, 'resistor', 'c20'); // c20 – c24
-  await place(page, 'led', 'e24'); // e24 – e25
+  await place(page, 'ldrmodule', 'BB1.c10'); // legs: c10 VCC, c11 GND, c12 DO, c13 AO
+  await place(page, 'resistor', 'BB1.c20'); // c20 – c24
+  await place(page, 'led', 'BB1.e24'); // e24 – e25
   await wire(page, [
-    ['ESP1.3v3', 'a10'],
-    ['ESP1.gnd1', 'a11'],
-    ['ESP1.d27', 'a12'],
-    ['ESP1.d34', 'a13'],
-    ['ESP1.d2', 'a20'],
-    ['ESP1.gnd2', 'a25'],
+    ['ESP1.3v3', 'BB1.a10'],
+    ['ESP1.gnd1', 'BB1.a11'],
+    ['ESP1.d27', 'BB1.a12'],
+    ['ESP1.d34', 'BB1.a13'],
+    ['ESP1.d2', 'BB1.a20'],
+    ['ESP1.gnd2', 'BB1.a25'],
   ]);
   await chooseStarter(page, 'light');
   await page.getByTestId('run').click();
@@ -421,11 +421,11 @@ test('an LDR module lights the LED in the dark, and its own light when it is bri
 
 test('a motion sensor holds its output after the movement stops', async ({ page }) => {
   await newEsp32Circuit(page);
-  await place(page, 'pir', 'c10'); // legs: c10 VCC, c11 OUT, c12 GND
+  await place(page, 'pir', 'BB1.c10'); // legs: c10 VCC, c11 OUT, c12 GND
   await wire(page, [
-    ['ESP1.vin', 'a10'],
-    ['ESP1.d27', 'a11'],
-    ['ESP1.gnd1', 'a12'],
+    ['ESP1.vin', 'BB1.a10'],
+    ['ESP1.d27', 'BB1.a11'],
+    ['ESP1.gnd1', 'BB1.a12'],
   ]);
   await page.getByTestId('run').click();
   const high = () => partAttribute(page, 'PIR1', 'data-activity');
@@ -443,10 +443,10 @@ test('a motion sensor holds its output after the movement stops', async ({ page 
 
 test('a motion sensor on 3.3 V does nothing, and the lab says why', async ({ page }) => {
   await newEsp32Circuit(page);
-  await place(page, 'pir', 'c10');
+  await place(page, 'pir', 'BB1.c10');
   await wire(page, [
-    ['ESP1.3v3', 'a10'],
-    ['ESP1.gnd1', 'a12'],
+    ['ESP1.3v3', 'BB1.a10'],
+    ['ESP1.gnd1', 'BB1.a12'],
   ]);
   await page.getByTestId('run').click();
   await page.locator('[data-press="PIR1"]').click();
@@ -456,16 +456,16 @@ test('a motion sensor on 3.3 V does nothing, and the lab says why', async ({ pag
 
 test('the RGB LED shows the colours the program mixes', async ({ page }) => {
   await newEsp32Circuit(page);
-  await place(page, 'rgbled', 'e10'); // legs: e10 R, e11 G, e12 B, e13 −
+  await place(page, 'rgbled', 'BB1.e10'); // legs: e10 R, e11 G, e12 B, e13 −
   // A resistor for each colour, each ending in that colour's column.
-  await place(page, 'resistor', 'c6'); // c6 – c10
-  await place(page, 'resistor', 'd7'); // d7 – d11
-  await place(page, 'resistor', 'b8'); // b8 – b12
+  await place(page, 'resistor', 'BB1.c6'); // c6 – c10
+  await place(page, 'resistor', 'BB1.d7'); // d7 – d11
+  await place(page, 'resistor', 'BB1.b8'); // b8 – b12
   await wire(page, [
-    ['ESP1.d25', 'a6'],
-    ['ESP1.d26', 'a7'],
-    ['ESP1.d27', 'a8'],
-    ['ESP1.gnd1', 'a13'],
+    ['ESP1.d25', 'BB1.a6'],
+    ['ESP1.d26', 'BB1.a7'],
+    ['ESP1.d27', 'BB1.a8'],
+    ['ESP1.gnd1', 'BB1.a13'],
   ]);
   await chooseStarter(page, 'rgb');
   await page.getByTestId('run').click();
@@ -481,12 +481,12 @@ test('the OLED display shows what the program draws, and stays dark with its wir
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'oled', 'c10'); // legs: c10 GND, c11 VCC, c12 SCL, c13 SDA
+  await place(page, 'oled', 'BB1.c10'); // legs: c10 GND, c11 VCC, c12 SCL, c13 SDA
   await wire(page, [
-    ['ESP1.gnd1', 'a10'],
-    ['ESP1.3v3', 'a11'],
-    ['ESP1.d22', 'a12'],
-    ['ESP1.d21', 'a13'],
+    ['ESP1.gnd1', 'BB1.a10'],
+    ['ESP1.3v3', 'BB1.a11'],
+    ['ESP1.d22', 'BB1.a12'],
+    ['ESP1.d21', 'BB1.a13'],
   ]);
   await chooseStarter(page, 'oled');
   await page.getByTestId('run').click();
@@ -503,12 +503,12 @@ test('the OLED display shows what the program draws, and stays dark with its wir
 
 test('an OLED display with SCL and SDA swapped shows nothing', async ({ page }) => {
   await newEsp32Circuit(page);
-  await place(page, 'oled', 'c10');
+  await place(page, 'oled', 'BB1.c10');
   await wire(page, [
-    ['ESP1.gnd1', 'a10'],
-    ['ESP1.3v3', 'a11'],
-    ['ESP1.d21', 'a12'],
-    ['ESP1.d22', 'a13'],
+    ['ESP1.gnd1', 'BB1.a10'],
+    ['ESP1.3v3', 'BB1.a11'],
+    ['ESP1.d21', 'BB1.a12'],
+    ['ESP1.d22', 'BB1.a13'],
   ]);
   await chooseStarter(page, 'oled');
   await page.getByTestId('run').click();
@@ -528,7 +528,7 @@ test('the motor program runs a motor both ways through the L298N driver', async 
   await expect(page.locator('[data-part="DRV1"]')).toBeVisible();
   // Speed comes from the program, so the ENA jumper is taken off.
   await page.getByTestId('jumper-enaJumper').getByRole('button').nth(1).click();
-  await place(page, 'motor', 'c10'); // legs: c10 and c13
+  await place(page, 'motor', 'BB1.c10'); // legs: c10 and c13
   await wire(page, [
     ['BAT1.pos', 'DRV1.vs'],
     ['BAT1.neg', 'DRV1.gnd'],
@@ -536,8 +536,8 @@ test('the motor program runs a motor both ways through the L298N driver', async 
     ['ESP1.d25', 'DRV1.ena'],
     ['ESP1.d26', 'DRV1.in1'],
     ['ESP1.d27', 'DRV1.in2'],
-    ['DRV1.out1', 'a10'],
-    ['DRV1.out2', 'a13'],
+    ['DRV1.out1', 'BB1.a10'],
+    ['DRV1.out2', 'BB1.a13'],
   ]);
   await chooseStarter(page, 'motor');
   await page.getByTestId('run').click();

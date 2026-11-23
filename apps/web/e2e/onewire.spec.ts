@@ -25,11 +25,11 @@ async function newEsp32Circuit(page: Page) {
 
 test('the thermometer program reads a DS18B20 once it has its pull-up', async ({ page }) => {
   await newEsp32Circuit(page);
-  await place(page, 'ds18b20', 'c10'); // GND c10, DQ c11, VDD c12
+  await place(page, 'ds18b20', 'BB1.c10'); // GND c10, DQ c11, VDD c12
   await wire(page, [
-    ['ESP1.gnd1', 'a10'],
-    ['ESP1.d4', 'a11'],
-    ['ESP1.3v3', 'a12'],
+    ['ESP1.gnd1', 'BB1.a10'],
+    ['ESP1.d4', 'BB1.a11'],
+    ['ESP1.3v3', 'BB1.a12'],
   ]);
   await page.getByTestId('tab-code').click();
   await page.getByTestId('starter').selectOption('thermo');
@@ -43,8 +43,8 @@ test('the thermometer program reads a DS18B20 once it has its pull-up', async ({
   await expect(page.locator('[data-diag^="onewire-no-pullup"]')).toBeVisible();
   await page.getByTestId('run').click(); // stop
 
-  await place(page, 'resistor', 'd11'); // d11 – d15
-  await wire(page, [['b12', 'b15']]);
+  await place(page, 'resistor', 'BB1.d11'); // d11 – d15
+  await wire(page, [['BB1.b12', 'BB1.b15']]);
   await page.locator('[data-hit="R1"]').click();
   await page.getByTestId('resistance').selectOption('4700');
   await page.getByTestId('run').click();
@@ -58,9 +58,9 @@ test('the waterproof sensor, line sensor and siren can be placed and are kept', 
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'jsnsr04t', 'a1');
-  await place(page, 'linesensor', 'a7');
-  await place(page, 'siren', 'a17');
+  await place(page, 'jsnsr04t', 'BB1.a1');
+  await place(page, 'linesensor', 'BB1.a7');
+  await place(page, 'siren', 'BB1.a17');
   await page.getByTestId('tool-select').click();
   await expect(page.locator('[data-part]')).toHaveCount(4);
   await page.locator('[data-hit="LINE1"]').click();

@@ -12,6 +12,7 @@ import {
   updateProps,
   type CircuitDocument,
   type EditResult,
+  FIRST_BREADBOARD,
 } from '@banglalab/shared';
 import { describe, expect, it } from 'vitest';
 import { LED_FORWARD_VOLTAGE, LED_RATED_CURRENT } from './library';
@@ -72,12 +73,12 @@ describe('what a probe and a current arrow can read', () => {
     expect(at('BAT1.neg')).toBe(0);
     expect(at('BAT1.pos')).toBeCloseTo(9, 1);
     // Along the loop: nearly 9 V before the resistor, the LED's 1.8 V after it, 0 V at the end.
-    expect(at('c5')).toBeCloseTo(9, 1);
-    expect(at('c9')! - at('d10')!).toBeCloseTo(result.readings.LED1!.voltage, 6);
-    expect(at('c5')! - at('c9')!).toBeCloseTo(result.readings.R1!.voltage, 6);
+    expect(at('BB1.c5')).toBeCloseTo(9, 1);
+    expect(at('BB1.c9')! - at('BB1.d10')!).toBeCloseTo(result.readings.LED1!.voltage, 6);
+    expect(at('BB1.c5')! - at('BB1.c9')!).toBeCloseTo(result.readings.R1!.voltage, 6);
     // A hole in the same strip reads the same; a strip nothing touches has no reading.
-    expect(at('e9')).toBe(at('c9'));
-    expect(at('h20')).toBeUndefined();
+    expect(at('BB1.e9')).toBe(at('BB1.c9'));
+    expect(at('BB1.h20')).toBeUndefined();
   });
 
   it('reports the current into each leg, and every part passes on what it takes in', () => {
@@ -93,12 +94,12 @@ describe('what a probe and a current arrow can read', () => {
 
   it('balances the legs of three-leg parts and of the board', () => {
     let board = unoCircuitExample();
-    board = ok(placePart(board, 'transistor', 'h8')); // C h8, B h9, E h10
-    board = ok(placePart(board, 'resistor', 'j1')); // R2: j1 to j5
-    board = ok(addWire(board, 'UNO1.d5', 'i1'));
-    board = ok(addWire(board, 'i5', 'i9')); // resistor to the base
-    board = ok(addWire(board, 'tp2', 'i8')); // 5 V straight to the collector
-    board = ok(addWire(board, 'i10', 'tn2')); // emitter to ground
+    board = ok(placePart(board, 'transistor', 'BB1.h8')); // C h8, B h9, E h10
+    board = ok(placePart(board, 'resistor', 'BB1.j1')); // R2: j1 to j5
+    board = ok(addWire(board, 'UNO1.d5', 'BB1.i1'));
+    board = ok(addWire(board, 'BB1.i5', 'BB1.i9')); // resistor to the base
+    board = ok(addWire(board, 'BB1.tp2', 'BB1.i8')); // 5 V straight to the collector
+    board = ok(addWire(board, 'BB1.i10', 'BB1.tn2')); // emitter to ground
     const drives = Array<'input' | 'high'>(20).fill('input');
     drives[5] = 'high';
     const on = simulate(board, { pressed: [], boards: { UNO1: drives } });
@@ -172,7 +173,7 @@ describe('diagnostics for common mistakes', () => {
   });
 
   it('short circuit across the power rails', () => {
-    const document = ok(addWire(ledCircuitExample(), 'tp10', 'tn10'));
+    const document = ok(addWire(ledCircuitExample(), 'BB1.tp10', 'BB1.tn10'));
     const result = simulate(document);
     expect(result.diagnostics.map((d) => d.code)).toContain('short-circuit');
     expect(result.readings.BAT1!.current).toBeGreaterThan(10);
@@ -181,14 +182,14 @@ describe('diagnostics for common mistakes', () => {
 
   it('both legs in the same strip', () => {
     // Column 9 already holds R1.b (c9) and LED1.anode (d9); put the cathode there too.
-    const document = ok(movePin(ledCircuitExample(), 'LED1', 'cathode', 'e9'));
+    const document = ok(movePin(ledCircuitExample(), 'LED1', 'cathode', 'BB1.e9'));
     expect(buildNetlist(document).bridgedParts).toEqual(['LED1']);
     expect(codes(document)).toEqual(['legs-in-same-strip', 'open-circuit']);
   });
 
   it('LED bypassed by a wire that returns from the wrong column', () => {
     // The return wire leaves column 9 (before the LED) instead of column 10 (after it).
-    const document = ok(moveWireEnd(ledCircuitExample(), 'W4', 'from', 'a9'));
+    const document = ok(moveWireEnd(ledCircuitExample(), 'W4', 'from', 'BB1.a9'));
     const result = simulate(document);
     expect(result.readings.R1!.current).toBeGreaterThan(0.025);
     expect(result.readings.LED1!.led!.state).toBe('off');
@@ -223,7 +224,7 @@ describe('diagnostics for common mistakes', () => {
     expect(simulate(emptyCircuit())).toMatchObject({ ok: true, diagnostics: [], readings: {} });
     const lone: CircuitDocument = {
       ...emptyCircuit(),
-      components: [{ id: 'BAT1', type: 'battery', props: { voltage: 9 } }],
+      components: [FIRST_BREADBOARD, { id: 'BAT1', type: 'battery', props: { voltage: 9 } }],
     };
     expect(simulate(lone).diagnostics).toEqual([]);
     expect(simulate(lone).readings.BAT1!.voltage).toBeCloseTo(9, 6);
@@ -233,7 +234,7 @@ describe('diagnostics for common mistakes', () => {
 describe('breadboard connectivity', () => {
   it('does not connect across the centre trench', () => {
     // Move the return wire from the top half of column 10 to the bottom half.
-    const document = ok(addWire(ok(removeItem(ledCircuitExample(), 'W4')), 'f10', 'tn8'));
+    const document = ok(addWire(ok(removeItem(ledCircuitExample(), 'W4')), 'BB1.f10', 'BB1.tn8'));
     expect(codes(document)).toEqual(['open-circuit']);
   });
 
@@ -241,14 +242,20 @@ describe('breadboard connectivity', () => {
     const document: CircuitDocument = {
       ...emptyCircuit(),
       components: [
+        FIRST_BREADBOARD,
         { id: 'BAT1', type: 'battery', props: { voltage: 1.5 } },
         { id: 'BAT2', type: 'battery', props: { voltage: 1.5 } },
-        { id: 'R1', type: 'resistor', pins: { a: 'a1', b: 'a5' }, props: { resistance: 1000 } },
+        {
+          id: 'R1',
+          type: 'resistor',
+          pins: { a: 'BB1.a1', b: 'BB1.a5' },
+          props: { resistance: 1000 },
+        },
       ],
       wires: [
         { id: 'W1', from: 'BAT1.pos', to: 'BAT2.neg', color: '#000000' },
-        { id: 'W2', from: 'BAT2.pos', to: 'b1', color: '#000000' },
-        { id: 'W3', from: 'b5', to: 'BAT1.neg', color: '#000000' },
+        { id: 'W2', from: 'BAT2.pos', to: 'BB1.b1', color: '#000000' },
+        { id: 'W3', from: 'BB1.b5', to: 'BAT1.neg', color: '#000000' },
       ],
     };
     const result = simulate(document);
@@ -262,17 +269,22 @@ describe('breadboard connectivity', () => {
       ...document,
       components: [
         ...document.components,
-        { id: 'R2', type: 'resistor', pins: { a: 'h5', b: 'h9' }, props: { resistance: 1000 } },
+        {
+          id: 'R2',
+          type: 'resistor',
+          pins: { a: 'BB1.h5', b: 'BB1.h9' },
+          props: { resistance: 1000 },
+        },
         {
           id: 'LED2',
           type: 'led',
-          pins: { anode: 'i9', cathode: 'i10' },
+          pins: { anode: 'BB1.i9', cathode: 'BB1.i10' },
           props: { color: 'green' },
         },
       ],
     };
-    document = ok(addWire(document, 'tp5', 'j5'));
-    document = ok(addWire(document, 'j10', 'tn9'));
+    document = ok(addWire(document, 'BB1.tp5', 'BB1.j5'));
+    document = ok(addWire(document, 'BB1.j10', 'BB1.tn9'));
     const { readings, diagnostics } = simulate(document);
     expect(diagnostics).toEqual([]);
     expect(readings.LED1!.current).toBeGreaterThan(0.02);

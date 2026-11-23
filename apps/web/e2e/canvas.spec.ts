@@ -76,21 +76,21 @@ async function openExample(page: Page, example: 'open-example' | 'open-example-u
 
 test('pointing at a hole names it and shows the holes joined to it', async ({ page }) => {
   await openExample(page, 'open-example');
-  const at = await places(page, ['h20', 'd9', 'tp13', 'BAT1.pos']);
+  const at = await places(page, ['BB1.h20', 'BB1.d9', 'BB1.tp13', 'BAT1.pos']);
 
-  await pointAt(page, at.h20!);
-  await expect(hoverMark(page)).toHaveAttribute('data-hover', 'h20');
+  await pointAt(page, at['BB1.h20']!);
+  await expect(hoverMark(page)).toHaveAttribute('data-hover', 'BB1.h20');
   await expect(hoverMark(page).locator('text')).toHaveText('h20');
   // The five holes of column 20's lower strip are joined.
   await expect(hoverMark(page)).toHaveAttribute('data-joined', '5');
 
   // A hole holding a leg says whose leg it is.
-  await pointAt(page, at.d9!);
-  await expect(hoverMark(page)).toHaveAttribute('data-hover', 'd9');
+  await pointAt(page, at['BB1.d9']!);
+  await expect(hoverMark(page)).toHaveAttribute('data-hover', 'BB1.d9');
   await expect(hoverMark(page).locator('text')).toContainText('LED1 +');
 
   // A power rail is one long strip.
-  await pointAt(page, at.tp13!);
+  await pointAt(page, at['BB1.tp13']!);
   await expect(hoverMark(page)).toHaveAttribute('data-joined', '25');
 
   await pointAt(page, at['BAT1.pos']!);
@@ -99,12 +99,12 @@ test('pointing at a hole names it and shows the holes joined to it', async ({ pa
 
 test('a wire can be dragged from one hole to another', async ({ page }) => {
   await openExample(page, 'open-example');
-  const at = await places(page, ['h12', 'h20', 'f14', 'f22', 'f10', 'c9']);
+  const at = await places(page, ['BB1.h12', 'BB1.h20', 'BB1.f14', 'BB1.f22', 'BB1.f10', 'BB1.c9']);
   await expect(wires(page)).toHaveCount(4);
 
   // With the wire tool: press on one hole, let go on another.
   await page.getByTestId('tool-wire').click();
-  const [from, to] = await onScreen(page, [at.h12!, at.h20!]);
+  const [from, to] = await onScreen(page, [at['BB1.h12']!, at['BB1.h20']!]);
   await page.mouse.move(from!.x, from!.y);
   await page.mouse.down();
   await page.mouse.move(to!.x - 30, to!.y + 10, { steps: 4 });
@@ -116,12 +116,12 @@ test('a wire can be dragged from one hole to another', async ({ page }) => {
 
   // With the select tool: dragging away from a free hole pulls a wire out of it.
   await page.getByTestId('tool-select').click();
-  await drag(page, at.f14!, at.f22!);
+  await drag(page, at['BB1.f14']!, at['BB1.f22']!);
   await expect(wires(page)).toHaveCount(6);
   await expect(page.getByTestId('tool-select')).toHaveAttribute('aria-pressed', 'true');
 
   // Let go on a hole that is taken: no wire, and the reason is shown.
-  await drag(page, at.f10!, at.c9!);
+  await drag(page, at['BB1.f10']!, at['BB1.c9']!);
   await expect(wires(page)).toHaveCount(6);
   await expect(page.getByTestId('notice')).toBeVisible();
   await expect(page.getByTestId('wire-preview')).toHaveCount(0);
@@ -134,10 +134,10 @@ test('a wire picked up by its end moves to another hole', async ({ page }) => {
   await expect(led).toHaveAttribute('data-led-state', 'on');
 
   // W3 joins the + rail (tp4) to the resistor's column. Carried to column 20 it feeds nothing.
-  const at = await places(page, ['a5', 'a20']);
-  await drag(page, at.a5!, at.a20!);
+  const at = await places(page, ['BB1.a5', 'BB1.a20']);
+  await drag(page, at['BB1.a5']!, at['BB1.a20']!);
   await expect(led).toHaveAttribute('data-led-state', 'off');
-  await drag(page, at.a20!, at.a5!);
+  await drag(page, at['BB1.a20']!, at['BB1.a5']!);
   await expect(led).toHaveAttribute('data-led-state', 'on');
   await expect(wires(page)).toHaveCount(4);
 });
@@ -145,13 +145,13 @@ test('a wire picked up by its end moves to another hole', async ({ page }) => {
 test('a part tool shows where the part will go before it is placed', async ({ page }) => {
   await openExample(page, 'open-example');
   await page.getByTestId('tool-resistor').click();
-  const free = page.locator('[data-endpoint="h15"]');
+  const free = page.locator('[data-endpoint="BB1.h15"]');
   await free.hover();
   await expect(page.getByTestId('ghost')).toHaveAttribute('data-ghost', 'resistor');
   await expect(page.locator('[data-part]')).toHaveCount(3);
 
   // Over a hole that is taken there is nothing to show, and the mark turns red.
-  await page.locator('[data-endpoint="c5"]').hover();
+  await page.locator('[data-endpoint="BB1.c5"]').hover();
   await expect(page.getByTestId('ghost')).toHaveCount(0);
   await expect(hoverMark(page)).toHaveAttribute('data-refused', 'true');
 
@@ -257,7 +257,7 @@ test('undo and redo step through edits, drags and removals', async ({ page }) =>
 
   // Place a part, then take it back.
   await page.getByTestId('tool-resistor').click();
-  await page.locator('[data-endpoint="h15"]').click();
+  await page.locator('[data-endpoint="BB1.h15"]').click();
   await expect(parts).toHaveCount(6);
   await undo.click();
   await expect(parts).toHaveCount(5);
@@ -298,8 +298,11 @@ test('undo and redo step through edits, drags and removals', async ({ page }) =>
 test('a wire can be bent around parts and straightened again', async ({ page }) => {
   await openExample(page, 'open-example');
   // W3 runs from the + rail (tp4) to a5. Select it by a point away from its ends.
-  const at = await places(page, ['tp4', 'a5']);
-  const middle = { x: (at.tp4!.x + at.a5!.x) / 2, y: (at.tp4!.y + at.a5!.y) / 2 + 4 };
+  const at = await places(page, ['BB1.tp4', 'BB1.a5']);
+  const middle = {
+    x: (at['BB1.tp4']!.x + at['BB1.a5']!.x) / 2,
+    y: (at['BB1.tp4']!.y + at['BB1.a5']!.y) / 2 + 4,
+  };
   const [spot] = await onScreen(page, [middle]);
   await page.mouse.click(spot!.x, spot!.y);
   await expect(page.getByTestId('quick-remove')).toBeVisible();
@@ -360,8 +363,8 @@ test('the multimeter probes read the voltage between two points', async ({ page 
   expect(Number(await reading.getAttribute('data-volts'))).toBeCloseTo(9, 1);
 
   // Black probe after the resistor: the meter now shows the drop across the resistor.
-  await page.locator('[data-endpoint="e9"]').click();
-  await expect(page.getByTestId('probe-black')).toHaveAttribute('data-probe', 'e9');
+  await page.locator('[data-endpoint="BB1.e9"]').click();
+  await expect(page.getByTestId('probe-black')).toHaveAttribute('data-probe', 'BB1.e9');
   await expect(reading).toHaveAttribute('data-volts', /^7\.\d+$/);
   const drop = Number(await reading.getAttribute('data-volts'));
   expect(drop).toBeCloseTo(
@@ -370,8 +373,8 @@ test('the multimeter probes read the voltage between two points', async ({ page 
   );
 
   // A probe on a strip nothing is connected to reads nothing.
-  await page.locator('[data-endpoint="h20"]').click();
-  await expect(page.getByTestId('probe-red')).toHaveAttribute('data-probe', 'h20');
+  await page.locator('[data-endpoint="BB1.h20"]').click();
+  await expect(page.getByTestId('probe-red')).toHaveAttribute('data-probe', 'BB1.h20');
   await expect(reading).toHaveAttribute('data-state', 'open');
 
   // The probes stay while other tools are used, until they are taken off.
@@ -384,13 +387,13 @@ test('the multimeter probes read the voltage between two points', async ({ page 
 
 test('pointing at a hole while the circuit runs shows its voltage', async ({ page }) => {
   await openExample(page, 'open-example');
-  const at = await places(page, ['a5', 'j12']);
+  const at = await places(page, ['BB1.a5', 'BB1.j12']);
   await page.getByTestId('run').click();
   await expect(page.locator('[data-part="LED1"]')).toHaveAttribute('data-led-state', 'on');
-  await pointAt(page, at.a5!);
+  await pointAt(page, at['BB1.a5']!);
   await expect(hoverMark(page).locator('text')).toContainText('V');
   // A strip nothing is joined to has a name but no voltage.
-  await pointAt(page, at.j12!);
-  await expect(hoverMark(page)).toHaveAttribute('data-hover', 'j12');
+  await pointAt(page, at['BB1.j12']!);
+  await expect(hoverMark(page)).toHaveAttribute('data-hover', 'BB1.j12');
   await expect(hoverMark(page).locator('text')).not.toContainText('V');
 });

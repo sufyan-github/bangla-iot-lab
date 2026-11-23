@@ -31,12 +31,12 @@ test('the GPS program prints the position over RX2, and waits when the sky is hi
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'gps', 'c10'); // VCC c10, RX c11, TX c12, GND c13
+  await place(page, 'gps', 'BB1.c10'); // VCC c10, RX c11, TX c12, GND c13
   await wire(page, [
-    ['ESP1.3v3', 'a10'],
-    ['ESP1.tx2', 'a11'],
-    ['ESP1.rx2', 'a12'],
-    ['ESP1.gnd1', 'a13'],
+    ['ESP1.3v3', 'BB1.a10'],
+    ['ESP1.tx2', 'BB1.a11'],
+    ['ESP1.rx2', 'BB1.a12'],
+    ['ESP1.gnd1', 'BB1.a13'],
   ]);
   await page.getByTestId('tab-code').click();
   await page.getByTestId('starter').selectOption('gps');
@@ -59,12 +59,12 @@ test('the air program reads the PMS5003 and follows its slider; both parts are k
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'pms5003', 'c10'); // VCC c10, GND c11, RX c12, TX c13
+  await place(page, 'pms5003', 'BB1.c10'); // VCC c10, GND c11, RX c12, TX c13
   await wire(page, [
-    ['ESP1.vin', 'a10'],
-    ['ESP1.gnd1', 'a11'],
-    ['ESP1.tx2', 'a12'],
-    ['ESP1.rx2', 'a13'],
+    ['ESP1.vin', 'BB1.a10'],
+    ['ESP1.gnd1', 'BB1.a11'],
+    ['ESP1.tx2', 'BB1.a12'],
+    ['ESP1.rx2', 'BB1.a13'],
   ]);
   await page.getByTestId('tab-code').click();
   await page.getByTestId('starter').selectOption('air');
@@ -87,16 +87,16 @@ test('the phone switches the LED over Bluetooth, and reads the board’s answers
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'bluetooth', 'c10'); // VCC c10, GND c11, TXD c12, RXD c13
-  await place(page, 'resistor', 'f20'); // f20 – f24
-  await place(page, 'led', 'g24'); // anode g24, cathode g25
+  await place(page, 'bluetooth', 'BB1.c10'); // VCC c10, GND c11, TXD c12, RXD c13
+  await place(page, 'resistor', 'BB1.f20'); // f20 – f24
+  await place(page, 'led', 'BB1.g24'); // anode g24, cathode g25
   await wire(page, [
-    ['ESP1.vin', 'a10'],
-    ['ESP1.gnd1', 'a11'],
-    ['ESP1.rx2', 'a12'],
-    ['ESP1.tx2', 'a13'],
-    ['ESP1.d2', 'j20'],
-    ['ESP1.gnd2', 'j25'],
+    ['ESP1.vin', 'BB1.a10'],
+    ['ESP1.gnd1', 'BB1.a11'],
+    ['ESP1.rx2', 'BB1.a12'],
+    ['ESP1.tx2', 'BB1.a13'],
+    ['ESP1.d2', 'BB1.j20'],
+    ['ESP1.gnd2', 'BB1.j25'],
   ]);
   await page.locator('[data-hit="R1"]').click();
   await page.getByTestId('resistance').selectOption('220');
@@ -120,15 +120,15 @@ test('the MP3 program finds the player and plays; a SIM800L on 5 V is flagged', 
   page,
 }) => {
   await newEsp32Circuit(page);
-  await place(page, 'mp3', 'c10'); // VCC c10, RX c11, TX c12, GND c13
-  await place(page, 'gsm', 'c20'); // VCC c20, RXD c21, TXD c22, GND c23
+  await place(page, 'mp3', 'BB1.c10'); // VCC c10, RX c11, TX c12, GND c13
+  await place(page, 'gsm', 'BB1.c20'); // VCC c20, RXD c21, TXD c22, GND c23
   await wire(page, [
-    ['ESP1.vin', 'a10'],
-    ['ESP1.tx2', 'a11'],
-    ['ESP1.rx2', 'a12'],
-    ['ESP1.gnd1', 'a13'],
-    ['b10', 'a20'],
-    ['b13', 'a23'],
+    ['ESP1.vin', 'BB1.a10'],
+    ['ESP1.tx2', 'BB1.a11'],
+    ['ESP1.rx2', 'BB1.a12'],
+    ['ESP1.gnd1', 'BB1.a13'],
+    ['BB1.b10', 'BB1.a20'],
+    ['BB1.b13', 'BB1.a23'],
   ]);
   await page.getByTestId('tab-code').click();
   await page.getByTestId('starter').selectOption('mp3');

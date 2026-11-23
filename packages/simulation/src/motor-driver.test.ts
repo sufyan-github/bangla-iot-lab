@@ -38,8 +38,8 @@ const esp32: CircuitComponent = { id: 'ESP1', type: 'esp32', props: {} };
 const power: [string, string][] = [
   ['BAT1.pos', 'DRV1.vs'],
   ['BAT1.neg', 'DRV1.gnd'],
-  ['DRV1.out1', 'a10'],
-  ['DRV1.out2', 'a13'],
+  ['DRV1.out1', 'BB1.a10'],
+  ['DRV1.out2', 'BB1.a13'],
 ];
 const warnings = (document: CircuitDocument) =>
   simulate(document).diagnostics.filter((d) => d.severity !== 'info');
@@ -48,7 +48,7 @@ describe('L298N motor driver, by itself', () => {
   /** IN1 and IN2 held by hand: to the module's own 5 V for HIGH, to its ground for LOW. */
   const held = (in1: boolean, in2: boolean, jumpers?: Parameters<typeof driver>[0]) =>
     circuit(
-      [pack, driver(jumpers), motor('M1', 'c10', 'c13')],
+      [pack, driver(jumpers), motor('M1', 'BB1.c10', 'BB1.c13')],
       [
         ...power,
         [in1 ? 'DRV1.5v' : 'DRV1.gnd', 'DRV1.in1'],
@@ -103,11 +103,11 @@ describe('L298N motor driver, by itself', () => {
 
   it('runs two motors, each from its own pair of inputs', () => {
     const both = circuit(
-      [pack, driver(), motor('M1', 'c10', 'c13'), motor('M2', 'c20', 'c23')],
+      [pack, driver(), motor('M1', 'BB1.c10', 'BB1.c13'), motor('M2', 'BB1.c20', 'BB1.c23')],
       [
         ...power,
-        ['DRV1.out3', 'a20'],
-        ['DRV1.out4', 'a23'],
+        ['DRV1.out3', 'BB1.a20'],
+        ['DRV1.out4', 'BB1.a23'],
         ['DRV1.5v', 'DRV1.in1'],
         ['DRV1.5v', 'DRV1.in4'],
       ],
@@ -128,7 +128,7 @@ describe('L298N motor driver, by itself', () => {
       [
         { ...pack, props: { voltage: 4.5 } } as CircuitComponent,
         driver(),
-        motor('M1', 'c10', 'c13'),
+        motor('M1', 'BB1.c10', 'BB1.c13'),
       ],
       [...power, ['DRV1.5v', 'DRV1.in1']],
     );
@@ -159,7 +159,7 @@ describe('L298N motor driver with the ESP32 board', () => {
   /** Direction from D26 and D27; the enable pin as the jumper or D25 decides. */
   const wired = (extra: [string, string][] = [], jumpers?: Parameters<typeof driver>[0]) =>
     circuit(
-      [esp32, pack, driver(jumpers), motor('M1', 'c10', 'c13')],
+      [esp32, pack, driver(jumpers), motor('M1', 'BB1.c10', 'BB1.c13')],
       [...power, ['ESP1.d26', 'DRV1.in1'], ['ESP1.d27', 'DRV1.in2'], ...extra],
     );
   const ground: [string, string] = ['ESP1.gnd1', 'DRV1.gnd'];
@@ -221,18 +221,23 @@ describe("the ESP32 board's VIN pin", () => {
     const probe = circuit(
       [
         esp32,
-        { id: 'R1', type: 'resistor', pins: { a: 'c1', b: 'c5' }, props: { resistance: 47_000 } },
+        {
+          id: 'R1',
+          type: 'resistor',
+          pins: { a: 'BB1.c1', b: 'BB1.c5' },
+          props: { resistance: 47_000 },
+        },
       ],
       [
-        ['ESP1.vin', 'a1'],
-        ['ESP1.gnd1', 'a5'],
+        ['ESP1.vin', 'BB1.a1'],
+        ['ESP1.gnd1', 'BB1.a5'],
       ],
     );
     expect(simulate(probe).sockets['ESP1.vin']!.voltage).toBeCloseTo(4.64, 1);
     const loaded = { ...probe };
     loaded.components = [
       esp32,
-      { id: 'R1', type: 'resistor', pins: { a: 'c1', b: 'c5' }, props: { resistance: 47 } },
+      { id: 'R1', type: 'resistor', pins: { a: 'BB1.c1', b: 'BB1.c5' }, props: { resistance: 47 } },
     ];
     const result = simulate(loaded);
     expect(result.sockets['ESP1.vin']!.voltage).toBeGreaterThan(4.55);
@@ -253,7 +258,7 @@ describe('the ready-made motor program', () => {
   );
   /** As the program's first lines say: speed on D25 with the jumper off, direction on D26 and D27. */
   const document = circuit(
-    [esp32, pack, driver({ enaJumper: false, enbJumper: true }), motor('M1', 'c10', 'c13')],
+    [esp32, pack, driver({ enaJumper: false, enbJumper: true }), motor('M1', 'BB1.c10', 'BB1.c13')],
     [
       ...power,
       ['ESP1.gnd1', 'DRV1.gnd'],

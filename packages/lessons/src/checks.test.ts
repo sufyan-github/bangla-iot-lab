@@ -20,13 +20,13 @@ const esp32: CircuitComponent = { id: 'ESP1', type: 'esp32', props: {} };
 const resistor = (ohms: number): CircuitComponent => ({
   id: 'R1',
   type: 'resistor',
-  pins: { a: 'f20', b: 'f24' },
+  pins: { a: 'BB1.f20', b: 'BB1.f24' },
   props: { resistance: ohms },
 });
 const led: CircuitComponent = {
   id: 'LED1',
   type: 'led',
-  pins: { anode: 'g24', cathode: 'g25' },
+  pins: { anode: 'BB1.g24', cathode: 'BB1.g25' },
   props: { color: 'red' },
 };
 const world = (document: CircuitDocument, more: Partial<LessonWorld> = {}): LessonWorld => ({
@@ -49,8 +49,8 @@ describe('lesson checks about the circuit', () => {
   const wired = circuit(
     [esp32, resistor(220), led],
     [
-      ['ESP1.d2', 'j20'],
-      ['ESP1.gnd2', 'j25'],
+      ['ESP1.d2', 'BB1.j20'],
+      ['ESP1.gnd2', 'BB1.j25'],
     ],
   );
 
@@ -71,10 +71,10 @@ describe('lesson checks about the circuit', () => {
       wires: wired.wires.map((w) => ({ ...w, from: w.from.replace('d2', 'd4') })),
     };
     expect(evaluate(throughResistor, world(otherPin))).toBe(false);
-    const big = circuit([esp32, resistor(10_000), led], [['ESP1.d2', 'j20']]);
+    const big = circuit([esp32, resistor(10_000), led], [['ESP1.d2', 'BB1.j20']]);
     expect(evaluate(throughResistor, world(big))).toBe(false);
     // The LED straight on the pin: joined, but not through a resistor.
-    const direct = circuit([esp32, led], [['ESP1.d2', 'j24']]);
+    const direct = circuit([esp32, led], [['ESP1.d2', 'BB1.j24']]);
     expect(evaluate(throughResistor, world(direct))).toBe(false);
     expect(
       evaluate(
@@ -92,8 +92,8 @@ describe('lesson checks about the circuit', () => {
       props: {},
     });
     const wires: [string, string][] = [
-      ['ESP1.d4', 'a10'],
-      ['ESP1.gnd1', 'a12'],
+      ['ESP1.d4', 'BB1.a10'],
+      ['ESP1.gnd1', 'BB1.a12'],
     ];
     const toPin: Check = {
       kind: 'connected',
@@ -106,8 +106,8 @@ describe('lesson checks about the circuit', () => {
       to: { board: 'gnd' },
     };
     for (const [a, b] of [
-      ['e10', 'e12'],
-      ['e12', 'e10'],
+      ['BB1.e10', 'BB1.e12'],
+      ['BB1.e12', 'BB1.e10'],
     ] as const) {
       const document = circuit([esp32, button(a, b)], wires);
       expect(evaluate(toPin, world(document))).toBe(true);
@@ -173,8 +173,8 @@ describe('lesson checks about what happened', () => {
   const lit = circuit(
     [esp32, resistor(220), led],
     [
-      ['ESP1.3v3', 'j20'],
-      ['ESP1.gnd2', 'j25'],
+      ['ESP1.3v3', 'BB1.j20'],
+      ['ESP1.gnd2', 'BB1.j25'],
     ],
   );
 
@@ -196,8 +196,8 @@ describe('lesson checks about what happened', () => {
     const burned = circuit(
       [esp32, led],
       [
-        ['ESP1.3v3', 'j24'],
-        ['ESP1.gnd2', 'j25'],
+        ['ESP1.3v3', 'BB1.j24'],
+        ['ESP1.gnd2', 'BB1.j25'],
       ],
     );
     expect(
