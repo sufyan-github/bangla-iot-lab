@@ -1208,3 +1208,41 @@ name parts and board pins, never holes, so none needed changing.
 
 **Simplified.** Power rails are joined along their whole length; some real
 full-size boards split them in the middle (noted in the part definition).
+
+## D-070 — Two programmable boards in one circuit, and serial between ESP32 boards
+
+Decided with the owner on 24 November 2026: a circuit may hold **two**
+programmable boards, of either kind or one of each, and two ESP32 boards can
+talk over a serial wire. Two is enough for a sender and a receiver (and for
+LoRa, which comes next) and keeps two programs running smoothly on a school
+phone. Serial between UNO-compatible boards is left for later.
+
+**Each board runs its own program** on the session's one clock, as before for a
+single board: the session already kept its running boards by id, and every
+module already knew which board it was wired to. Each board keeps its own
+program, upload, serial monitor and saved settings. The code view shows a tab
+for each board when there are two; choosing a board on the canvas also chooses
+its tab. With one board nothing changes, so lessons and older projects are as
+they were. A second board is put beside the first, on the same level.
+
+**Grounds.** The solver measures everything against the first board's GND. A
+second board not joined to it is solved against its own GND (or a separate
+battery against its own negative), so a meter held on that board reads as it
+would on the bench. Board pins are always read against their own board's GND.
+When a pin of one board is wired to a pin of the other but their GNDs are not
+joined, the lab warns (`no-common-ground`): on real boards such a signal works
+by chance or not at all.
+
+**Serial between boards.** Bytes a board writes on a UART's TX pin reach the
+other board's UART whose RX pin is on the same wire, one byte time after
+another at the sender's baud rate (as bytes from a module do). At a different
+baud rate they arrive garbled; TX wired to TX carries nothing. Editing the
+wiring empties a line of the bytes still on their way. Not modelled: the line's
+voltage levels (both ESP32 boards use 3.3 V), and serial between an ESP32 and an
+UNO-compatible board, whose 5 V TX would need a level shifter.
+
+**The diagram** draws the first board's tree with the second board as a part in
+it, joined by its wires.
+
+Ready-made programs `sender` and `receiver`; hardware test E24 is written, not
+run.

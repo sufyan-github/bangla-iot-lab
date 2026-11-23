@@ -2,6 +2,7 @@ import { solveDc, type Device, type NpnTransistor, type Solution } from '@bangla
 import type { PhoneMessage } from './uart-devices';
 import {
   LOGIC_CHIP_GATES,
+  boardPinNumber,
   boardTerminals,
   gateOutput,
   isProgrammable,
@@ -167,6 +168,7 @@ export type DiagnosticCode =
   | 'module-overvoltage'
   | 'gsm-overvoltage'
   | 'ring-overvoltage'
+  | 'no-common-ground'
   | 'onewire-no-pullup'
   | 'solver-failed';
 
@@ -1094,6 +1096,9 @@ export class Observation {
       (c) => c.type === 'battery' || c.type === 'cell' || c.type === 'solar' || isProgrammable(c),
     );
     if (sources.length === 0) result.diagnostics.push({ code: 'no-battery', severity: 'info' });
+    for (const componentId of boardsWithoutCommonGround(document)) {
+      result.diagnostics.push({ code: 'no-common-ground', severity: 'warning', componentId });
+    }
 
     const shorted = new Set(states.flatMap(([s]) => s.shorted));
     for (const componentId of shorted) {
@@ -1537,6 +1542,45 @@ export class Observation {
     }
     return result;
   }
+}
+
+/**
+ * Boards joined by a wire between their pins whose grounds are not joined. A
+ * signal from one board means nothing to the other without a shared ground:
+ * on real boards it works by chance, or not at all. Returns the second board
+ * of each such pair.
+ */
+function boardsWithoutCommonGround(document: CircuitDocument): string[] {
+  const boards = document.components.filter(isProgrammable);
+  if (boards.length < 2) return [];
+  const parent = new Map<string, string>();
+  const find = (net: string): string => {
+    let root = net;
+    while (parent.has(root)) root = parent.get(root)!;
+    return root;
+  };
+  for (const wire of document.wires) {
+    const a = find(netName(wire.from));
+    const b = find(netName(wire.to));
+    if (a !== b) parent.set(a, b);
+  }
+  const netOf = (endpoint: string) => find(netName(endpoint));
+  const signalNets = (board: (typeof boards)[number]) =>
+    new Set(
+      boardTerminals(board.type)
+        .filter((pin) => boardPinNumber(board.type, pin) !== null)
+        .map((pin) => netOf(`${board.id}.${pin}`)),
+    );
+  const flagged: string[] = [];
+  for (let i = 0; i < boards.length; i++) {
+    for (let j = i + 1; j < boards.length; j++) {
+      const [a, b] = [boards[i]!, boards[j]!];
+      if (netOf(`${a.id}.gnd`) === netOf(`${b.id}.gnd`)) continue;
+      const fromA = signalNets(a);
+      if ([...signalNets(b)].some((net) => fromA.has(net))) flagged.push(b.id);
+    }
+  }
+  return flagged;
 }
 
 /**

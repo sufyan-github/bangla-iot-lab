@@ -30,7 +30,14 @@ import {
 import { netName } from './netlist';
 import { Bme280, Ina219, type I2cDevice, type Ina219Inputs } from './i2c-sensors';
 import { Ds18b20 } from './onewire-sensors';
-import { Neo6m, Pms5003, garbled, type UartDevice, type UartModuleStatus } from './uart-devices';
+import {
+  Neo6m,
+  Outbox,
+  Pms5003,
+  garbled,
+  type UartDevice,
+  type UartModuleStatus,
+} from './uart-devices';
 import { Hc05, Mp3Player, Sim800l } from './uart-modules';
 import { Ssd1306 } from './ssd1306';
 import { LedRing } from './led-ring';
@@ -143,6 +150,13 @@ export class Peripherals {
   /** Modules on serial lines: the board pin their RX leg hears, and the one their TX leg drives. */
   private serialModules: { id: string; rx?: PinKey; tx?: PinKey }[] = [];
   private readonly serialChips = new Map<string, UartDevice>();
+  /** The net each board pin is on, for lines from one board straight to another. */
+  private boardPinNet = new Map<PinKey, string>();
+  /**
+   * Bytes one board has sent on a TX pin wired to another board's pin, on their
+   * way at the sender's baud rate. Keyed by the sending pin.
+   */
+  private readonly boardLines = new Map<PinKey, { baud: number; outbox: Outbox }>();
   /** Thermometers on 1-Wire buses, by the board pin their DQ line is on. */
   private oneWires: { id: string; dq?: PinKey }[] = [];
   private readonly thermometers = new Map<string, Ds18b20>();
@@ -205,6 +219,18 @@ export class Peripherals {
     this.i2cSensors = [];
     this.oneWires = [];
     this.serialModules = [];
+    this.boardPinNet = new Map();
+    // A rewired line starts empty: bytes on their way along an old wire are lost.
+    this.boardLines.clear();
+    for (const component of document.components) {
+      if (!isProgrammable(component)) continue;
+      for (const terminal of boardTerminals(component.type)) {
+        const pin = boardPinNumber(component.type, terminal);
+        if (pin !== null) {
+          this.boardPinNet.set(pinKey(component.id, pin), pinOf.net(`${component.id}.${terminal}`));
+        }
+      }
+    }
     this.rings = [];
     this.tfts = [];
     this.sensorInputs.clear();
@@ -443,6 +469,18 @@ export class Peripherals {
       if (module.rx !== key || !this.powered(module.id)) continue;
       this.serialChips.get(module.id)!.receive(bytes, port.baud, port.timeMs);
     }
+    // Another board's pin on the same wire hears them too, once they have crossed it.
+    const net = this.boardPinNet.get(key);
+    const heard = [...this.boardPinNet].some(
+      ([other, otherNet]) => otherNet === net && !other.startsWith(`${boardId}:`),
+    );
+    if (!heard) return;
+    let line = this.boardLines.get(key);
+    if (!line || line.baud !== port.baud) {
+      line = { baud: port.baud, outbox: new Outbox(port.baud) };
+      this.boardLines.set(key, line);
+    }
+    line.outbox.send(bytes, port.timeMs);
   }
 
   /**
@@ -451,11 +489,21 @@ export class Peripherals {
    */
   uartReceive(boardId: string, port: UartPort): number[] {
     const key = pinKey(boardId, port.rx);
+    const received: number[] = [];
     const module = this.serialModules.find((m) => m.tx === key && this.powered(m.id));
-    if (!module) return [];
-    const chip = this.serialChips.get(module.id)!;
-    const bytes = chip.transmit(port.timeMs);
-    return chip.baud === port.baud ? bytes : garbled(bytes);
+    if (module) {
+      const chip = this.serialChips.get(module.id)!;
+      const bytes = chip.transmit(port.timeMs);
+      received.push(...(chip.baud === port.baud ? bytes : garbled(bytes)));
+    }
+    // From another board whose TX pin is on this RX pin's wire.
+    const net = this.boardPinNet.get(key);
+    for (const [sender, line] of this.boardLines) {
+      if (sender.startsWith(`${boardId}:`) || this.boardPinNet.get(sender) !== net) continue;
+      const bytes = line.outbox.take(port.timeMs);
+      received.push(...(line.baud === port.baud ? bytes : garbled(bytes)));
+    }
+    return received;
   }
 
   /** Sets how the board each module is wired to tells the time: its program's clock. */

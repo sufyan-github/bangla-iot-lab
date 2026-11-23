@@ -22,7 +22,7 @@ import {
 import type { BoardStatus, Probe, SimulationFrame, SimulationResult } from '@banglalab/simulation';
 import { create } from 'zustand';
 import type { BoardProgram, ProjectContent } from '../storage/projects';
-import { freeBreadboardPlace, settleOffBoardPart } from './geometry';
+import { freeBreadboardPlace, placeBesideOtherBoard, settleOffBoardPart } from './geometry';
 import { signals } from './signals';
 import { starterProgram } from './starters';
 
@@ -300,7 +300,7 @@ export const useLab = create<LabState>((set, get) => {
     addUno() {
       const id = apply(addUno(get().circuit));
       if (!id) return;
-      set({ circuit: settleOffBoardPart(get().circuit, id) });
+      set({ circuit: placeBesideOtherBoard(get().circuit, id) });
       // A new board arrives with Blink already on it, as a real UNO does.
       set({ tool: 'select', selectedId: id, wireStart: null });
       void starterProgram('blink').then((program) => {
@@ -320,7 +320,7 @@ export const useLab = create<LabState>((set, get) => {
     addEsp32() {
       const id = apply(addEsp32(get().circuit));
       if (!id) return;
-      set({ circuit: settleOffBoardPart(get().circuit, id) });
+      set({ circuit: placeBesideOtherBoard(get().circuit, id) });
       set({ tool: 'select', selectedId: id, wireStart: null });
       // Like the UNO-compatible board, it arrives with Blink on it.
       void starterProgram('blink', 'esp32').then((program) => {

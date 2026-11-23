@@ -575,3 +575,22 @@ describe('diagram of a logic chip', () => {
     expectSound(layout);
   });
 });
+
+describe('diagram of two boards', () => {
+  it('draws both boards, with the serial line and the shared ground between them', () => {
+    let circuit = ok(addEsp32(ok(addEsp32(emptyCircuit()))));
+    circuit = ok(placePart(circuit, 'led', 'BB1.d9'));
+    circuit = ok(addWire(circuit, 'ESP2.d2', 'BB1.a9'));
+    circuit = ok(addWire(circuit, 'ESP2.gnd2', 'BB1.a10'));
+    circuit = ok(addWire(circuit, 'ESP1.tx2', 'ESP2.rx2'));
+    circuit = ok(addWire(circuit, 'ESP1.gnd1', 'ESP2.gnd1'));
+    const layout = layoutDiagram(circuit);
+    const ids = layout.parts.map((part) => part.id);
+    expect(ids).toContain('ESP1');
+    expect(ids).toContain('ESP2');
+    expect(ids).toContain('LED1');
+    const serial = layout.nets.find((net) => net.legs.includes('ESP1.tx2'))!;
+    expect(serial.legs).toContain('ESP2.rx2');
+    expectSound(layout);
+  });
+});

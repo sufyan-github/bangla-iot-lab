@@ -289,6 +289,16 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
   if (reference) {
     nodes.set(netName(`${reference.id}.${reference.type === 'battery' ? 'neg' : 'gnd'}`), 0);
   }
+  // A part of the circuit not joined to the reference is solved against the lowest-numbered
+  // node it has. Numbering every board's ground, then every battery's negative, first makes
+  // that node the second board's GND (or its battery's −), so its voltages read as they would
+  // on a meter held against its own ground.
+  for (const component of document.components) {
+    if (isProgrammable(component)) node(`${component.id}.gnd`);
+  }
+  for (const component of document.components) {
+    if (component.type === 'battery') node(`${component.id}.neg`);
+  }
 
   const wired = new Set(document.wires.flatMap((w) => [w.from, w.to]).map(netName));
   const devices: Device[] = [];

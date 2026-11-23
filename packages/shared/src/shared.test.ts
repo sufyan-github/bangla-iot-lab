@@ -220,12 +220,14 @@ describe('ESP32 development board', () => {
     expect(ok(removeItem(wired, 'ESP1')).wires).toEqual([]);
   });
 
-  it('shares the one-board limit with the UNO-compatible board', () => {
-    const withEsp = ok(addEsp32(emptyCircuit()));
-    expect(addUno(withEsp)).toEqual({ ok: false, error: 'board-limit' });
-    expect(addEsp32(withEsp)).toEqual({ ok: false, error: 'board-limit' });
-    const withUno = ok(addUno(emptyCircuit()));
-    expect(addEsp32(withUno)).toEqual({ ok: false, error: 'board-limit' });
+  it('shares the two-board limit with the UNO-compatible board, and mixes the kinds', () => {
+    const mixed = ok(addUno(ok(addEsp32(emptyCircuit()))));
+    expect(mixed.components.map((c) => c.id)).toEqual(['BB1', 'ESP1', 'UNO1']);
+    expect(addUno(mixed)).toEqual({ ok: false, error: 'board-limit' });
+    expect(addEsp32(mixed)).toEqual({ ok: false, error: 'board-limit' });
+    const two = ok(addEsp32(ok(addEsp32(emptyCircuit()))));
+    expect(two.components.map((c) => c.id)).toEqual(['BB1', 'ESP1', 'ESP2']);
+    expect(addUno(two)).toEqual({ ok: false, error: 'board-limit' });
   });
 
   it('can be moved, like the other parts beside the breadboard', () => {
@@ -251,9 +253,9 @@ describe('UNO board, button and potentiometer', () => {
     expect(unoPinNumber('gnd')).toBeNull();
   });
 
-  it('allows one board, with one wire per socket', () => {
+  it('allows two boards, with one wire per socket', () => {
     const circuit = ok(addUno(emptyCircuit()));
-    expect(addUno(circuit)).toEqual({ ok: false, error: 'board-limit' });
+    expect(addUno(ok(addUno(circuit)))).toEqual({ ok: false, error: 'board-limit' });
     const wired = ok(addWire(circuit, 'UNO1.d13', 'BB1.a1'));
     expect(addWire(wired, 'UNO1.d13', 'BB1.a2')).toEqual({ ok: false, error: 'hole-occupied' });
     expect(addWire(wired, 'UNO1.d99', 'BB1.a2')).toEqual({ ok: false, error: 'unknown-endpoint' });

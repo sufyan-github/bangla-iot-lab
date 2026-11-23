@@ -224,6 +224,24 @@ export function freeBreadboardPlace(
 }
 
 /**
+ * Puts a newly added board beside the circuit's other board, to its right on
+ * the same level, when there is room; otherwise anywhere it fits.
+ */
+export function placeBesideOtherBoard(circuit: CircuitDocument, id: string): CircuitDocument {
+  const other = offBoardParts(circuit).find(
+    (part) => part.id !== id && (part.type === 'uno' || part.type === 'esp32'),
+  );
+  if (other) {
+    const box = partBox(circuit, other);
+    for (let gap = 40; gap < 400; gap += PITCH) {
+      const moved = moveOffBoardTo(circuit, id, { x: box.x + box.width + gap, y: box.y });
+      if (moved.ok) return moved.circuit;
+    }
+  }
+  return settleOffBoardPart(circuit, id);
+}
+
+/**
  * Finds room for a part whose usual place is taken, as happens when another
  * part was moved there. Returns the circuit unchanged when the part already fits.
  */

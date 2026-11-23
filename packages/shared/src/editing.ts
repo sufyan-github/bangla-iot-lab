@@ -190,7 +190,8 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
 };
 
 export const MAX_BATTERIES = 2;
-export const MAX_BOARDS = 1;
+/** Programmable boards in one circuit, of either kind: two, for a sender and a receiver. */
+export const MAX_BOARDS = 2;
 export const MAX_MOTOR_DRIVERS = 1;
 export const MAX_BREADBOARDS = 4;
 
@@ -255,7 +256,7 @@ function addBeside(
   limit: number,
   limitError: EditError,
 ): EditResult {
-  // The two kinds of board share one limit: a circuit has one board to program.
+  // The two kinds of board share one limit: a circuit holds that many boards to program.
   const sameKind = (other: CircuitComponent) =>
     isProgrammable(component) ? isProgrammable(other) : other.type === component.type;
   if (circuit.components.filter(sameKind).length >= limit) return fail(limitError);

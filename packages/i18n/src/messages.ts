@@ -314,6 +314,8 @@ export const bn = {
   'code.starter.esp32.sms': 'SMS দিয়ে বাতি (SIM800L: RX2, TX2; LED: D2)',
   'code.starter.esp32.ring': 'LED রিংয়ে মিটার (রিং: D4; নব: D34)',
   'code.starter.esp32.tft': 'রঙিন ডিসপ্লে (SPI: D18, D23; CS: D5, DC: D2, RES: D4)',
+  'code.starter.esp32.sender': 'দুই বোর্ডের কথা: পাঠানো (TX2 → অন্য বোর্ডের RX2)',
+  'code.starter.esp32.receiver': 'দুই বোর্ডের কথা: শোনা (RX2 ← অন্য বোর্ডের TX2; LED: D2)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -461,6 +463,8 @@ export const bn = {
   'inspector.phone.send': 'পাঠাও',
   'diag.gsm-overvoltage':
     '{id} পাচ্ছে {volts}, কিন্তু এটা সর্বোচ্চ {limit}-এর জন্য বানানো। আসল মডিউল নষ্ট হতে পারে: একটা 18650 সেল বা ৪ V-এ সেট করা রেগুলেটর দাও।',
+  'diag.no-common-ground':
+    '{id}-এর একটা পিন অন্য বোর্ডের পিনে জোড়া, কিন্তু দুই বোর্ডের GND জোড়া নয়। সংকেত বোঝার জন্য দুই বোর্ডের GND একটা তার দিয়ে জুড়ে দাও।',
   'tool.ledring': 'LED রিং',
   'part.ledring': 'WS2812B RGB LED রিং',
   'part.ledring.about':
@@ -593,7 +597,7 @@ export const bn = {
   'edit.lead-too-long': 'পা এত দূর পৌঁছায় না।',
   'edit.same-point': 'দুই মাথা আলাদা জায়গায় বসাও।',
   'edit.battery-limit': 'সর্বোচ্চ দুটো ব্যাটারি রাখা যায়।',
-  'edit.board-limit': 'একটাই UNO বোর্ড রাখা যায়।',
+  'edit.board-limit': 'একটা সার্কিটে দুটোর বেশি প্রোগ্রাম করার বোর্ড রাখা যায় না।',
   'edit.other': 'এটা করা গেল না।',
 
   'code.tabCircuit': 'সার্কিট',
@@ -701,6 +705,7 @@ export const bn = {
   'code.line': 'লাইন {line}: ',
   'code.tooLarge': 'প্রোগ্রামটা UNO-র মেমরিতে আঁটছে না।',
   'code.timeout': 'কম্পাইল করতে বেশি সময় লাগছে। প্রোগ্রাম ছোট করে আবার চেষ্টা করো।',
+  'code.boards': 'কোন বোর্ডের প্রোগ্রাম',
   'code.serial': 'সিরিয়াল মনিটর',
   'code.serialEmpty': 'প্রোগ্রাম Serial.print() দিয়ে যা পাঠাবে, চালু অবস্থায় এখানে দেখাবে।',
   'code.clear': 'মুছে ফেলো',
@@ -1023,6 +1028,9 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.sms': 'Light by SMS (SIM800L: RX2, TX2; LED: D2)',
   'code.starter.esp32.ring': 'Meter on an LED ring (ring: D4; knob: D34)',
   'code.starter.esp32.tft': 'Colour display (SPI: D18, D23; CS: D5, DC: D2, RES: D4)',
+  'code.starter.esp32.sender': 'Two boards talk: sending (TX2 to the other board’s RX2)',
+  'code.starter.esp32.receiver':
+    'Two boards talk: receiving (RX2 from the other board’s TX2; LED: D2)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -1170,6 +1178,8 @@ export const en: Record<MessageKey, string> = {
   'inspector.phone.send': 'Send',
   'diag.gsm-overvoltage':
     '{id} is getting {volts}, but it is made for at most {limit}. A real module could be damaged: use an 18650 cell or a regulator set to 4 V.',
+  'diag.no-common-ground':
+    'A pin of {id} is wired to a pin of the other board, but the two boards’ GND are not joined. Join their GND with a wire, so each can make sense of the other’s signals.',
   'tool.ledring': 'LED ring',
   'part.ledring': 'WS2812B RGB LED ring',
   'part.ledring.about':
@@ -1302,7 +1312,7 @@ export const en: Record<MessageKey, string> = {
   'edit.lead-too-long': 'The leg cannot reach that far.',
   'edit.same-point': 'Put the two ends in different places.',
   'edit.battery-limit': 'You can have at most two batteries.',
-  'edit.board-limit': 'Only one UNO board can be used.',
+  'edit.board-limit': 'A circuit can hold at most two boards to program.',
   'edit.other': 'That could not be done.',
 
   'code.tabCircuit': 'Circuit',
@@ -1418,6 +1428,7 @@ export const en: Record<MessageKey, string> = {
   'code.line': 'Line {line}: ',
   'code.tooLarge': 'The program does not fit in the UNO’s memory.',
   'code.timeout': 'Compiling is taking too long. Make the program smaller and try again.',
+  'code.boards': 'Which board’s program',
   'code.serial': 'Serial monitor',
   'code.serialEmpty': 'Whatever the program sends with Serial.print() appears here while it runs.',
   'code.clear': 'Clear',

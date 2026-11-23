@@ -257,7 +257,22 @@ export function LabPage() {
   const name = useLab((s) => s.name);
   const running = useLab((s) => s.running);
   const saveState = useLab((s) => s.saveState);
-  const boardId = useLab((s) => s.circuit.components.find(isProgrammable)?.id);
+  // Joined into text, so the list only counts as changed when the boards do.
+  const boardList = useLab((s) =>
+    s.circuit.components
+      .filter(isProgrammable)
+      .map((c) => c.id)
+      .join(','),
+  );
+  const boardIds = boardList ? boardList.split(',') : [];
+  const selectedId = useLab((s) => s.selectedId);
+  /** The board whose program the code tab shows: the last one picked, here or on the canvas. */
+  const [chosenBoard, setChosenBoard] = useState<string | null>(null);
+  useEffect(() => {
+    if (selectedId && boardList.split(',').includes(selectedId)) setChosenBoard(selectedId);
+  }, [selectedId, boardList]);
+  const boardId =
+    chosenBoard !== null && boardIds.includes(chosenBoard) ? chosenBoard : boardIds[0];
   const hasBuzzer = useLab((s) =>
     s.circuit.components.some((c) => c.type === 'buzzer' || c.type === 'siren'),
   );
@@ -420,7 +435,34 @@ export function LabPage() {
         {tab === 'lesson' && hasLesson ? (
           <LessonPanel />
         ) : showCode ? (
-          <CodePanel boardId={boardId} />
+          <>
+            {boardIds.length > 1 && (
+              <div
+                role="tablist"
+                aria-label={t('code.boards')}
+                className="flex gap-1.5 border-b border-line px-4 pt-3 pb-2"
+              >
+                {boardIds.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    data-testid={`code-board-${id}`}
+                    aria-selected={id === boardId}
+                    onClick={() => setChosenBoard(id)}
+                    className={`min-h-11 rounded-lg border-2 px-4 text-sm font-semibold ${
+                      id === boardId
+                        ? 'border-amber bg-amber-soft text-ink'
+                        : 'border-line text-ink-soft hover:border-ink-soft'
+                    }`}
+                  >
+                    {id}
+                  </button>
+                ))}
+              </div>
+            )}
+            <CodePanel key={boardId} boardId={boardId!} />
+          </>
         ) : tab === 'signals' ? (
           <SignalsPanel />
         ) : (

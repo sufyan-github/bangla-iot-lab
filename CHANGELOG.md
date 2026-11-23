@@ -8,6 +8,11 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Two boards in one circuit**: two programmable boards, of either kind or one
+  of each. Each runs its own program, with its own tab in the code view and its
+  own serial monitor. Two ESP32 boards can talk over a serial wire (TX of one
+  to RX of the other); a signal wire without a shared GND is flagged.
+- Ready-made programs `sender` and `receiver`, and hardware test E24.
 - **Breadboards are parts** (circuit format version 21). A circuit starts with
   one half breadboard as before, and up to four can be used, in half (400
   holes), full (830) and mini (170, no power rails) sizes. Each is moved by the

@@ -176,10 +176,10 @@ measured.
 
 ## Section E: sensor modules outside the kit
 
-Twenty-three modules and power parts modelled for projects beyond the school kit. Each needs the module
+Twenty-four modules, power parts and board set-ups modelled for projects beyond the school kit. Each needs the module
 itself, a 5 V bench supply or the board's VIN, and a multimeter; E4 to E6 need
 water samples (see each row). Every figure the simulator uses is reported by a
-maker or seller, or estimated (decisions D-062 to D-068); none is measured.
+maker or seller, or estimated (decisions D-062 to D-070); none is measured.
 
 | Test | Module                   | Set-up                                                                                           | Record                                                                                                                |
 | ---- | ------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
@@ -206,6 +206,7 @@ maker or seller, or estimated (decisions D-062 to D-068); none is measured.
 | E21  | SIM800L                  | An 18650 cell, shared ground, TXD to GPIO16, a SIM card; the `sms` program; a real phone         | Time to register; time to send an SMS; whether ON and OFF work; whether it restarts on a weaker supply                |
 | E22  | WS2812B ring (12 LEDs)   | VIN, DIN to GPIO4, a knob on GPIO34; the `ring` program; then a second ring on DOUT; then 3.3 V  | Colours in order; whether a 3.3 V data line works on 5 V; current at full white; whether it lights on 3.3 V           |
 | E23  | 1.54″ ST7789 display     | 3.3 V, SCL to GPIO18, SDA to GPIO23, RES GPIO4, DC GPIO2, CS GPIO5; the `tft` program            | Whether the picture is upright and its colours right; with BLK on GND; supply current                                 |
+| E24  | Two ESP32 boards         | ESP1 TX2 (GPIO17) to ESP2 RX2 (GPIO16), GNDs joined; `sender` on ESP1, `receiver` on ESP2        | Whether every line arrives; what arrives with the GNDs not joined; what arrives at different baud rates               |
 
 **What the simulator assumes today.**
 
@@ -234,6 +235,7 @@ maker or seller, or estimated (decisions D-062 to D-068); none is measured.
 | E21  | Registered about 3 s after power; an SMS takes about 3 s; works from 3.4 V to 4.4 V with no restarts                                                                        |
 | E22  | Green, red, blue order; any 3.3 V data line accepted; about 1 mA an LED dark and 20 mA a colour at full; dark below 3.5 V. **Please note whether it lights on 3.3 V**       |
 | E23  | Rotation 0 upright with the pins along the top; colours right only with inversion on; dark with BLK on GND; about 30 mA at 3.3 V                                            |
+| E24  | Every line arrives once a second; nothing reliable without the shared GND; garbled bytes at a different baud rate                                                           |
 
 ## Section D: systems (later)
 

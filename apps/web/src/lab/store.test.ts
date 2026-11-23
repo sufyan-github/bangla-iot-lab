@@ -74,7 +74,10 @@ describe('lab editor state', () => {
     expect(program.hex).toMatch(/^:/);
     expect(program.hexSource).toBe(program.source);
     lab().addUno();
+    lab().addUno();
     expect(lab().notice).toBe('board-limit');
+    lab().select('UNO2');
+    lab().removeSelected();
     lab().select('UNO1');
     lab().removeSelected();
     expect(lab().programs).toEqual({});

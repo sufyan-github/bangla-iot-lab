@@ -52,6 +52,8 @@ import esp32Mp3Source from '@banglalab/board-emulators/fixtures/esp32-starters/m
 import esp32SmsSource from '@banglalab/board-emulators/fixtures/esp32-starters/sms.ino?raw';
 import esp32RingSource from '@banglalab/board-emulators/fixtures/esp32-starters/ring.ino?raw';
 import esp32TftSource from '@banglalab/board-emulators/fixtures/esp32-starters/tft.ino?raw';
+import esp32SenderSource from '@banglalab/board-emulators/fixtures/esp32-starters/sender.ino?raw';
+import esp32ReceiverSource from '@banglalab/board-emulators/fixtures/esp32-starters/receiver.ino?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -117,6 +119,8 @@ export const ESP32_STARTERS = {
   sms: { source: esp32SmsSource },
   ring: { source: esp32RingSource },
   tft: { source: esp32TftSource },
+  sender: { source: esp32SenderSource },
+  receiver: { source: esp32ReceiverSource },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;
