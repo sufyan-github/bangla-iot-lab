@@ -5,6 +5,8 @@ import Fastify from 'fastify';
 import type { ApiConfig } from './config';
 import type { Database } from './db/client';
 import { authRoutes } from './routes/auth';
+import { classRoutes } from './routes/classes';
+import { learnerRoutes } from './routes/learners';
 import { compileRoutes } from './routes/compile';
 import { registerHealthRoutes } from './routes/health';
 
@@ -51,5 +53,7 @@ export async function buildApp(deps: AppDependencies) {
   registerHealthRoutes(app, deps);
   await app.register(compileRoutes(deps));
   await app.register(authRoutes(deps));
+  await app.register(classRoutes(deps));
+  await app.register(learnerRoutes(deps));
   return app;
 }

@@ -4,7 +4,7 @@ import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import type { AppDependencies } from '../app';
 import { DUMMY_HASH, hashPassword, verifyPassword } from '../auth/password';
 import { audit, clearSessionCookie, endSession, signedIn, startSession } from '../auth/session';
-import { schoolMemberships, schools, users } from '../db/schema';
+import { classEnrollments, classes, schoolMemberships, schools, users } from '../db/schema';
 
 const Email = Type.String({
   minLength: 3,
@@ -121,9 +121,21 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
         .from(schoolMemberships)
         .innerJoin(schools, eq(schools.id, schoolMemberships.schoolId))
         .where(and(eq(schoolMemberships.userId, who.userId), isNull(schoolMemberships.endedAt)));
+      // A learner's classes, under the nickname they have in each.
+      const enrolled = await database.db
+        .select({
+          classId: classes.id,
+          className: classes.name,
+          grade: classes.grade,
+          pseudonym: classEnrollments.pseudonym,
+        })
+        .from(classEnrollments)
+        .innerJoin(classes, eq(classes.id, classEnrollments.classId))
+        .where(and(eq(classEnrollments.learnerId, who.userId), isNull(classEnrollments.revokedAt)));
       return {
         user: { id: who.userId, kind: who.kind, displayName: who.displayName, locale: who.locale },
         schools: roles,
+        classes: enrolled,
       };
     });
   };

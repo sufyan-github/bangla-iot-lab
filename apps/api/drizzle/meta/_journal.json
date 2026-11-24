@@ -15,6 +15,13 @@
       "when": 1795508181475,
       "tag": "0001_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795508334397,
+      "tag": "0002_learner_keys",
+      "breakpoints": true
     }
   ]
 }

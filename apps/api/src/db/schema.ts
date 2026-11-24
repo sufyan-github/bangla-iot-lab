@@ -60,6 +60,11 @@ export const users = pgTable(
     displayName: text('display_name').notNull(),
     email: text('email'),
     passwordHash: text('password_hash'),
+    /**
+     * A learner signs in with a key the lab gave them (long and random), kept as
+     * its SHA-256 so that it can be found; adults have none.
+     */
+    signInKeyHash: text('sign_in_key_hash').unique(),
     platformRole: platformRole('platform_role'),
     locale: text('locale').notNull().default('bn'),
     createdAt: createdAt(),
