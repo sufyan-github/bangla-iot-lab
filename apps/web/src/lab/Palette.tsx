@@ -211,6 +211,27 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M3 20h18" {...stroke} strokeWidth={1.6} />
     </>
   ),
+  logic16: (
+    <>
+      <rect x="5" y="4" width="14" height="16" rx="1.5" {...stroke} />
+      <path
+        d="M2 7h3M2 10h3M2 13h3M2 16h3M19 7h3M19 10h3M19 13h3M19 16h3"
+        {...stroke}
+        strokeWidth={1.4}
+      />
+      <path d="M10 9h4v6h-4z" {...stroke} strokeWidth={1.4} />
+    </>
+  ),
+  sevenseg: (
+    <>
+      <rect x="5" y="2.5" width="14" height="19" rx="1.5" {...stroke} />
+      <path
+        d="M9.5 6.5h5M15 7.5v3.5M14.5 12h-5M15 13v3.5M14.5 17.5h-5M9 13v3.5M9 7.5v3.5"
+        {...stroke}
+        strokeWidth={1.6}
+      />
+    </>
+  ),
   pir: (
     <>
       <path d="M5 16a7 7 0 0 1 14 0z" {...stroke} />
@@ -435,7 +456,7 @@ const GROUPS: PaletteItem[][] = [
   ['breadboard', 'battery', 'uno', 'esp32'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
   ['buzzer', 'motor', 'l298n', 'relay', 'relaymodule', 'servo', 'rgbled', 'lcd', 'oled'],
-  ['logic', 'clock'],
+  ['logic', 'logic16', 'clock', 'sevenseg'],
   ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
   ['voltagesensor', 'acs712', 'mq7', 'ph', 'tds', 'turbidity'],
   ['cell', 'tp4056', 'lm2596', 'solar'],

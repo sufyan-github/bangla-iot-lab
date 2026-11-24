@@ -13,6 +13,7 @@ import {
 import {
   L298N_TERMINALS,
   CHIP_MODELS,
+  SEVEN_SEGMENTS,
   chipInputs,
   chipOutputs,
   boardPinNumber,
@@ -574,7 +575,8 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         }
         break;
       }
-      case 'logic': {
+      case 'logic':
+      case 'logic16': {
         // Inputs take almost nothing; a powered chip's outputs are its supply or its
         // ground through a small resistance, so what they give is taken from its supply.
         const chip = state.chips?.[id] ?? CHIP_IDLE;
@@ -953,6 +955,22 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
             CLOCK_OUTPUT_RESISTANCE,
           ),
         );
+        break;
+      }
+      case 'sevenseg': {
+        // Eight red LEDs sharing one leg: their negative in a common-cathode display,
+        // their positive in a common-anode one. The two COM legs are joined inside.
+        const common = node(component.pins.com);
+        add(resistor(`${id}:com`, common, node(component.pins.com2), WIRE_RESISTANCE));
+        for (const segment of SEVEN_SEGMENTS) {
+          const leg = node(component.pins[segment]);
+          const device = add(
+            component.props.kind === 'cathode'
+              ? diode(`${id}:${segment}`, leg, common, ledDiodeModel('red'))
+              : diode(`${id}:${segment}`, common, leg, ledDiodeModel('red')),
+          );
+          if (segment === 'a') partDevice.set(id, device);
+        }
         break;
       }
       case 'rgbled': {

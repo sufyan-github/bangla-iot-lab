@@ -1,0 +1,121 @@
+{
+  "formatVersion": 1,
+  "id": "74hc161",
+  "simulates": "logic16",
+  "status": "simulated",
+  "family": "logic",
+  "tier": 2,
+  "name": {
+    "bn": "74HC161 (৪-বিট কাউন্টার)",
+    "en": "74HC161 4-bit counter"
+  },
+  "summary": {
+    "bn": "সিনক্রোনাস বাইনারি কাউন্টার: ক্লকের উঠতি ধারে গোনে, সংখ্যা বসানো যায়, আর ১৫-র পর ক্যারি দেয়",
+    "en": "Synchronous binary counter: counts on the clock's rising edge, can be loaded with a number, and carries after 15"
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": [
+      "The counter answers at once: the few nanoseconds a real one takes, and its set-up and hold times, are left out.",
+      "On the clock's rising edge it loads D0 to D3 when PE̅ is LOW, or else counts up when CEP and CET are both HIGH. MR̅ LOW clears it at once. TC is HIGH when CET is HIGH and the count is 15.",
+      "Without power it forgets its count and starts at 0. A real chip may start anywhere until it is cleared.",
+      "An input is HIGH above 70 % of the supply and LOW below 30 %; in between it keeps its last level. An output is the supply or ground through about 50 Ω. These are typical datasheet figures, not measured.",
+      "It is placed across the centre gap with pin 1 at the bottom left, and cannot be turned round."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "p1",
+      "label": "1",
+      "role": "input"
+    },
+    {
+      "id": "p2",
+      "label": "2",
+      "role": "input"
+    },
+    {
+      "id": "p3",
+      "label": "3",
+      "role": "input"
+    },
+    {
+      "id": "p4",
+      "label": "4",
+      "role": "input"
+    },
+    {
+      "id": "p5",
+      "label": "5",
+      "role": "input"
+    },
+    {
+      "id": "p6",
+      "label": "6",
+      "role": "input"
+    },
+    {
+      "id": "p7",
+      "label": "7",
+      "role": "input"
+    },
+    {
+      "id": "p8",
+      "label": "8",
+      "role": "ground"
+    },
+    {
+      "id": "p9",
+      "label": "9",
+      "role": "input"
+    },
+    {
+      "id": "p10",
+      "label": "10",
+      "role": "input"
+    },
+    {
+      "id": "p11",
+      "label": "11",
+      "role": "output"
+    },
+    {
+      "id": "p12",
+      "label": "12",
+      "role": "output"
+    },
+    {
+      "id": "p13",
+      "label": "13",
+      "role": "output"
+    },
+    {
+      "id": "p14",
+      "label": "14",
+      "role": "output"
+    },
+    {
+      "id": "p15",
+      "label": "15",
+      "role": "output"
+    },
+    {
+      "id": "p16",
+      "label": "16",
+      "role": "power"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["74hc161"]
+  },
+  "placement": {
+    "idPrefix": "U",
+    "offsets": [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0],
+    "rows": ["f", "f", "f", "f", "f", "f", "f", "f", "e", "e", "e", "e", "e", "e", "e", "e"]
+  }
+}

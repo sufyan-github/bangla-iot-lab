@@ -80,7 +80,7 @@ export interface PartShape {
   offsets: readonly number[];
   maxSpan?: number;
   /** For a chip across the centre gap: the row each pin must be in. */
-  rows?: readonly ('e' | 'f')[];
+  rows?: readonly string[];
 }
 
 export const PART_SHAPES: Record<BoardPartType, PartShape> = {
@@ -135,6 +135,8 @@ export const PART_SHAPES: Record<BoardPartType, PartShape> = {
   lora: shapeOf('lora-ra-02'),
   relaymodule: shapeOf('relay-module-1ch'),
   logic: shapeOf('74hc08'),
+  logic16: shapeOf('74hc161'),
+  sevenseg: shapeOf('seven-segment-056'),
   lcd: { idPrefix: 'LCD', pins: LCD_PINS, offsets: LCD_PINS.map((_, i) => i) },
 };
 
@@ -189,6 +191,8 @@ const DEFAULT_PROPS: { [T in BoardPartType]: Extract<BoardPart, { type: T }>['pr
   lora: { km: 0 },
   relaymodule: { trigger: 'high' },
   logic: { chip: '74HC08' },
+  logic16: { chip: '74HC161' },
+  sevenseg: { kind: 'cathode' },
   ultrasonic: { distance: 50 },
   lcd: {},
 };

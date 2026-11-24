@@ -97,6 +97,7 @@ test('the code tab says the ESP32 is experimental and offers only ESP32 programs
     'lora-send',
     'lora-receive',
     'deepsleep',
+    'shift',
     'custom',
   ]);
 });

@@ -149,6 +149,10 @@ void randomSeed(unsigned long seed);
 void pinMode(uint8_t pin, uint8_t mode);
 void digitalWrite(uint8_t pin, uint8_t level);
 int digitalRead(uint8_t pin);
+// A byte sent or read one bit at a time on a data pin, with a pulse on a clock pin for each
+// bit, as for a 74HC595 shift register.
+void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val);
+uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder);
 uint16_t analogRead(uint8_t pin);
 uint32_t analogReadMilliVolts(uint8_t pin);
 void analogReadResolution(uint8_t bits);

@@ -1,5 +1,6 @@
 import {
   boardTerminals,
+  isLogicChipPart,
   isProgrammable,
   type CircuitComponent,
   type CircuitDocument,
@@ -450,7 +451,7 @@ export function layoutTree(
     const boxTop = -LANE;
     const boxBottom = Math.max(
       Math.max(LANE * (left.length - 1), rightY.at(-1) ?? 0, 0) + LANE,
-      component.type === 'logic' ? boxTop + LOGIC_BOX_HEIGHT : 0,
+      isLogicChipPart(component) ? boxTop + LOGIC_BOX_HEIGHT : 0,
     );
     const gates = gatesInUse(component, (name) => netOfLeg(component, name) !== null).length;
     const width = Math.max(

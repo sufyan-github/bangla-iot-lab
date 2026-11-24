@@ -1381,6 +1381,92 @@ Tests: the flip-flop divides a button's presses by two and stays cleared while
 CLR is LOW; the clock module ticks at 1 Hz and the flip-flop halves it. A
 browser test picks the chip and sets the clock's frequency.
 
+## D-075 — Counters, a seven-segment decoder and a display
+
+The second logic segment (L2), built on the chip model of D-074.
+
+**Chips.** The 74HC393 (two 4-bit counters that count on the clock's falling
+edge, with an active-HIGH reset) fits the 14-pin shape and joins that list. The
+74HC161 counter and the CD4511 decoder have 16 pins, so they are a part type of
+their own (`logic16`), placed across the gap the same way: pins 1 to 8 in row f,
+16 to 9 in row e. All three follow their datasheets' function tables:
+
+- **74HC161**: MR̅ LOW clears at once; on the clock's rising edge PE̅ LOW loads
+  D0 to D3, otherwise it counts when CEP and CET are both HIGH; TC is HIGH when
+  CET is HIGH and the count is 15.
+- **CD4511**: LT̅ LOW lights every segment, BL̅ LOW none; LE HIGH keeps the
+  number held when it went HIGH; 10 to 15 light nothing; 6 has no top bar and
+  9 no bottom bar, as its datasheet draws them.
+
+Each chip model now carries its supply range: 2 to 6 V for the 74HC family, 3
+to 18 V for the CD4511 (REPORTED, from the datasheets). A chip below its lowest
+is unpowered; above its highest the lab says it is being damaged. The message
+no longer assumes a 74HC chip.
+
+**Display.** A single-digit 0.56 inch display: eight red LEDs (the lab's red
+LED model) sharing one leg, common cathode or common anode as chosen in the
+inspector. Its rows of legs are 0.6 inch apart, so it stands across the gap in
+rows d and h, in the common 10-pin order (bottom e, d, COM, c, DP; top g, f,
+COM, a, b). The two COM legs are joined inside. Each segment is judged like an
+LED, so too much current shows as damage.
+
+**Not modelled.** The CD4511's real HIGH, which is a little below its supply
+(its outputs are modelled like the 74HC chips'), propagation delays, and
+multiplexed displays (several digits sharing segment lines).
+
+Tests: each counter counts on the right edge, wraps, resets and (for the
+74HC161) loads and carries; the decoder lights the datasheet's segments for
+every code and obeys LT̅ and BL̅; the display lights the segment fed, in either
+kind, and stays dark when wired for the other kind; both new parts land where
+they should. Two browser tests place them.
+
+## D-076 — The 74HC595 shift register, and shiftOut() on the ESP32
+
+The third logic segment (L3). The 74HC595 joins the 16-pin chips (circuit
+format version 25), following its datasheet's function table: on SHCP's rising
+edge the bits move up and DS comes in at Q0; MR̅ LOW clears the shift register
+at once; on STCP's rising edge the storage register takes the shift register;
+OE̅ HIGH lets Q0 to Q7 go; Q7S gives bit 7 to feed a second chip. With both
+clocks joined, the storage register gets the bits from before the shift.
+
+**shiftOut() and shiftIn() on the ESP32.** The lab's own board library gains
+both, written from the Arduino reference's description (each bit on the data
+pin, then a clock pulse; MSBFIRST starts with bit 7). The ESP32 core's own
+version is LGPL and is not used. On the UNO the Arduino core's real
+`shiftOut()` already runs. Each library call costs 2 µs of simulated time, so
+every clock edge reaches the circuit as its own moment and none is lost.
+
+**Power-on.** A chip that powers up with its clock already HIGH sees no rising
+edge until the clock has gone LOW and HIGH again, as on a real chip.
+
+Ready-made program `shift` (a running light on eight LEDs, from three pins).
+Tests: by hand, three SHCP pulses with DS HIGH show nothing until STCP, then
+0b111, and a LOW shifts in at Q0; on the ESP32 the program lights Q0 to Q7 in
+turn, 300 ms each, and starts again.
+
+## D-077 — Four logic lessons
+
+The fourth logic segment (L4): lessons 44 to 47, written for the lab (CC BY 4.0
+like the other lessons) and each walked through against the real simulation.
+
+1. **Logic gates: AND and OR.** A 74HC08 with two switches, each with a 10 kΩ
+   pull-down, and an LED on the output; then the chip swapped for a 74HC32
+   without moving a wire, and the truth-table tool.
+2. **The flip-flop.** A 74HC74 with Q̅ wired to D and a button on the clock:
+   one press lights the LED, the next puts it out. The text says that a real
+   button bounces and the lab's does not.
+3. **Counting by itself** (a project). A 555 clock module, a 74HC393, a
+   CD4511 and a common-cathode display on a full breadboard, powered from the
+   board's VIN, with no program; at 5 Hz the display goes dark for 10 to 15.
+4. **The shift register.** A 74HC595 on three ESP32 pins with the ready-made
+   program `shift`.
+
+The board only gives power in the first three. The lesson format did not need
+to change: a lesson still starts with the ESP32 board, which is the supply.
+
+**Not checked.** That the lessons read well to students; that is for the team's
+classroom trials, like the other lessons.
+
 ## D-081 — Accounts, classes, cloud projects and class progress
 
 The owner asked (24 November 2026) for classes and accounts next. Built on the

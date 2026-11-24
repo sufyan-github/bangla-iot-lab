@@ -50,6 +50,28 @@ int digitalRead(uint8_t pin) {
   return host_digital_read(pin) ? HIGH : LOW;
 }
 
+// As the Arduino reference describes them: shiftOut() puts each bit on the data
+// pin, then takes the clock pin HIGH and LOW again; shiftIn() takes the clock pin
+// HIGH, reads the data pin, and takes the clock LOW. MSBFIRST starts with bit 7.
+void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val) {
+  for (int i = 0; i < 8; i++) {
+    int bit = bitOrder == LSBFIRST ? i : 7 - i;
+    digitalWrite(dataPin, (val >> bit) & 1);
+    digitalWrite(clockPin, HIGH);
+    digitalWrite(clockPin, LOW);
+  }
+}
+uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) {
+  uint8_t value = 0;
+  for (int i = 0; i < 8; i++) {
+    int bit = bitOrder == LSBFIRST ? i : 7 - i;
+    digitalWrite(clockPin, HIGH);
+    if (digitalRead(dataPin)) value |= 1 << bit;
+    digitalWrite(clockPin, LOW);
+  }
+  return value;
+}
+
 // The converter is not ideal (it is blind near 0 V and compresses near the top),
 // and how it behaves belongs to the chip, so the world answers: the library only
 // passes on the resolution and attenuation the sketch chose.

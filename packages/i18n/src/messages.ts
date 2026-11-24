@@ -398,6 +398,7 @@ export const bn = {
   'code.starter.esp32.lora-send': 'LoRa: বার্তা পাঠানো (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.lora-receive': 'LoRa: বার্তা শোনা (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.deepsleep': 'ডিপ স্লিপ: ঘুমিয়ে আবার জাগা (LED: D2)',
+  'code.starter.esp32.shift': 'চলন্ত আলো: 74HC595 দিয়ে আটটা LED (D23, D18, D5)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -576,9 +577,23 @@ export const bn = {
   'tool.logic': 'লজিক চিপ',
   'part.logic': 'লজিক চিপ (74HC)',
   'part.logic.about':
-    'এক চিপে কয়েকটা লজিক গেট। চিপটা বোর্ডের মাঝের খাঁজের ওপর বসে: খাঁজের নিচে ১ থেকে ৭ নম্বর পা, ওপরে ১৪ থেকে ৮। ১৪ নম্বর পা VCC (২ থেকে ৬ V), ৭ নম্বর GND। চিপের যে মাথায় খাঁজ (নচ) আছে, ১ নম্বর পা সেই দিকে। ব্যবহার করা গেটের কোনো ইনপুট খালি রেখো না: ঠিক করে HIGH বা LOW-তে লাগাও। 74HC74-এ দুটো D ফ্লিপ-ফ্লপ: ঘড়ির (CLK) পা LOW থেকে HIGH হওয়ার মুহূর্তে Q নেয় D-র মান, আর পরের সেই মুহূর্ত পর্যন্ত মনে রাখে। CLR LOW করলে Q LOW, PRE LOW করলে Q HIGH; ব্যবহার না করলে দুটোকেই HIGH-এ লাগাও।',
+    'এক চিপে কয়েকটা লজিক গেট। চিপটা বোর্ডের মাঝের খাঁজের ওপর বসে: খাঁজের নিচে ১ থেকে ৭ নম্বর পা, ওপরে ১৪ থেকে ৮। ১৪ নম্বর পা VCC (২ থেকে ৬ V), ৭ নম্বর GND। চিপের যে মাথায় খাঁজ (নচ) আছে, ১ নম্বর পা সেই দিকে। ব্যবহার করা গেটের কোনো ইনপুট খালি রেখো না: ঠিক করে HIGH বা LOW-তে লাগাও। 74HC74-এ দুটো D ফ্লিপ-ফ্লপ: ঘড়ির (CLK) পা LOW থেকে HIGH হওয়ার মুহূর্তে Q নেয় D-র মান, আর পরের সেই মুহূর্ত পর্যন্ত মনে রাখে। CLR LOW করলে Q LOW, PRE LOW করলে Q HIGH; ব্যবহার না করলে দুটোকেই HIGH-এ লাগাও। 74HC393-এ দুটো ৪-বিট কাউন্টার: ঘড়ির (CP) পা HIGH থেকে LOW হলে এক করে বাড়ে, ০ থেকে ১৫; MR HIGH করলে ০-তে আটকে থাকে, তাই গোনার সময় MR LOW-তে লাগাও।',
   'inspector.chip': 'কোন চিপ',
   'chip.flipflop': 'D ফ্লিপ-ফ্লপ',
+  'chip.counter': 'কাউন্টার',
+  'chip.decoder': '৭-সেগমেন্ট ডিকোডার',
+  'chip.shift': 'শিফট রেজিস্টার',
+  'tool.logic16': '১৬ পায়ের চিপ',
+  'part.logic16': '১৬ পায়ের চিপ (কাউন্টার, ডিকোডার)',
+  'part.logic16.about':
+    '১৬ পায়ের চিপও বোর্ডের মাঝের খাঁজের ওপর বসে: খাঁজের নিচে ১ থেকে ৮ নম্বর পা, ওপরে ১৬ থেকে ৯। ১৬ নম্বর পা সাপ্লাই, ৮ নম্বর GND। 74HC161 একটা ৪-বিট কাউন্টার: ঘড়ির (CP) পা LOW থেকে HIGH হলে এক করে বাড়ে, যদি CEP আর CET দুটোই HIGH থাকে; PE̅ LOW থাকলে বাড়ার বদলে D0–D3-এর সংখ্যাটা বসায়; MR̅ LOW করলে সঙ্গে সঙ্গে ০। ১৫-র পর আবার ০, আর ১৫-তে TC HIGH হয়। এর ২ থেকে ৬ V লাগে। CD4511 চার বিটের একটা সংখ্যা (A সবচেয়ে ছোট বিট, তারপর B, C, D) নিয়ে ৭-সেগমেন্ট ডিসপ্লের ঠিক সেগমেন্টগুলো জ্বালায়; ১০ থেকে ১৫ হলে কিছুই না। LT̅ আর BL̅ HIGH-এ লাগাও (LOW করলে সব জ্বলে বা সব নেভে), আর LE LOW-তে (HIGH করলে শেষ সংখ্যাটা ধরে রাখে)। এটা ৩ থেকে ১৮ V-এ চলে, আর কমন-ক্যাথোড ডিসপ্লেতে কারেন্ট দেয়; প্রতিটা সেগমেন্টে আলাদা রেজিস্টর লাগবে। 74HC595 একটা শিফট রেজিস্টার: মাত্র তিনটা পিন দিয়ে আটটা আউটপুট চালানো যায়। SHCP LOW থেকে HIGH হলে DS-এর বিট ঢোকে আর বাকিরা এক ঘর সরে; STCP LOW থেকে HIGH হলে জমানো আটটা বিট Q0–Q7-এ বেরোয়। OE̅ LOW আর MR̅ HIGH-এ লাগাও। বোর্ডে shiftOut() এই কাজটাই করে। Q7S পরের 74HC595-এর DS-এ লাগালে ষোলোটা আউটপুট হয়।',
+  'tool.sevenseg': '৭-সেগমেন্ট ডিসপ্লে',
+  'part.sevenseg': '৭-সেগমেন্ট ডিসপ্লে',
+  'part.sevenseg.about':
+    'একটা অঙ্ক দেখানোর জন্য আটটা লাল LED: a থেকে g সেগমেন্ট আর দশমিক বিন্দু (DP), সবার একটা পা এক জায়গায় (COM) জোড়া। কমন-ক্যাথোড ডিসপ্লেতে COM যায় GND-তে, আর কোনো সেগমেন্টের পা HIGH করলে সেটা জ্বলে; কমন-অ্যানোডে COM যায় সাপ্লাইয়ে, আর সেগমেন্টের পা LOW করলে জ্বলে। কোনটা, তা ডানের প্যানেলে বেছে নাও। প্রতিটা সেগমেন্টে আলাদা রেজিস্টর দাও (২২০ Ω থেকে ১ kΩ)। এটা খাঁজের ওপর দাঁড়ায়, পা d আর h সারিতে: নিচের সারিতে বাঁ থেকে e, d, COM, c, DP; ওপরের সারিতে g, f, COM, a, b। দুটো COM ভেতরে জোড়া।',
+  'inspector.displayKind': 'ডিসপ্লের ধরন',
+  'inspector.common.cathode': 'কমন ক্যাথোড',
+  'inspector.common.anode': 'কমন অ্যানোড',
   'tool.clock': 'ঘড়ি (ক্লক)',
   'part.clock': '555 ক্লক মডিউল',
   'part.clock.about':
@@ -592,7 +607,7 @@ export const bn = {
   'gate.OR': 'OR',
   'gate.XOR': 'XOR',
   'diag.chip-overvoltage':
-    '{id} পাচ্ছে {volts}; 74HC চিপ সর্বোচ্চ {limit} সইতে পারে। আসল চিপ এতে নষ্ট হয়ে যেতে পারে: ৫ V বা কম দাও।',
+    '{id} পাচ্ছে {volts}; এই চিপ সর্বোচ্চ {limit} সইতে পারে। আসল চিপ এতে নষ্ট হয়ে যেতে পারে: {limit}-এর কম দাও (74HC চিপে ৫ V)।',
   'diag.chip-output-overcurrent':
     '{id}-র {socket} পিন থেকে বেশি কারেন্ট যাচ্ছে: একটা আউটপুট সর্বোচ্চ ২৫ mA দিতে পারে। LED হলে সাথে রেজিস্টর দাও, আর আউটপুট সরাসরি VCC বা GND-তে লাগিও না।',
   'diag.logic-input-floating':
@@ -1226,6 +1241,7 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.lora-send': 'LoRa: sending (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.lora-receive': 'LoRa: listening (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.deepsleep': 'Deep sleep: sleeping and waking again (LED: D2)',
+  'code.starter.esp32.shift': 'Running light: eight LEDs through a 74HC595 (D23, D18, D5)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -1404,9 +1420,23 @@ export const en: Record<MessageKey, string> = {
   'tool.logic': 'Logic chip',
   'part.logic': 'Logic chip (74HC)',
   'part.logic.about':
-    'Several logic gates in one chip. It sits across the centre gap: pins 1 to 7 below the gap, 14 to 8 above it. Pin 14 is VCC (2 to 6 V), pin 7 is GND. Pin 1 is at the notched end. Leave no input of a gate in use unconnected: tie it HIGH or LOW. The 74HC74 holds two D flip-flops: at the moment its clock (CLK) pin goes from LOW to HIGH, Q takes the level on D and keeps it until the next such moment. CLR LOW makes Q LOW, PRE LOW makes Q HIGH; when you do not use them, tie both HIGH.',
+    'Several logic gates in one chip. It sits across the centre gap: pins 1 to 7 below the gap, 14 to 8 above it. Pin 14 is VCC (2 to 6 V), pin 7 is GND. Pin 1 is at the notched end. Leave no input of a gate in use unconnected: tie it HIGH or LOW. The 74HC74 holds two D flip-flops: at the moment its clock (CLK) pin goes from LOW to HIGH, Q takes the level on D and keeps it until the next such moment. CLR LOW makes Q LOW, PRE LOW makes Q HIGH; when you do not use them, tie both HIGH. The 74HC393 holds two 4-bit counters: each counts up by one when its clock (CP) goes from HIGH to LOW, from 0 to 15; MR HIGH holds it at 0, so tie MR LOW to count.',
   'inspector.chip': 'Which chip',
   'chip.flipflop': 'D flip-flop',
+  'chip.counter': 'counter',
+  'chip.decoder': 'seven-segment decoder',
+  'chip.shift': 'shift register',
+  'tool.logic16': '16-pin chip',
+  'part.logic16': '16-pin chip (counter, decoder)',
+  'part.logic16.about':
+    'A 16-pin chip sits across the centre gap too: pins 1 to 8 below the gap, 16 to 9 above it. Pin 16 is the supply, pin 8 GND. The 74HC161 is a 4-bit counter: when its clock (CP) goes from LOW to HIGH it counts up by one, provided CEP and CET are both HIGH; while PE̅ is LOW it loads the number on D0 to D3 instead; MR̅ LOW clears it to 0 at once. After 15 it goes back to 0, and at 15 TC is HIGH. It needs 2 to 6 V. The CD4511 takes a four-bit number (A the smallest bit, then B, C, D) and lights the right segments of a seven-segment display; for 10 to 15 it lights none. Tie LT̅ and BL̅ HIGH (LOW lights every segment or none) and LE LOW (HIGH keeps the last number). It works from 3 to 18 V and gives current to a common-cathode display; each segment needs its own resistor. The 74HC595 is a shift register: three pins drive eight outputs. When SHCP goes from LOW to HIGH the bit on DS comes in and the others move up one place; when STCP goes from LOW to HIGH the eight bits held appear on Q0 to Q7. Tie OE̅ LOW and MR̅ HIGH. On a board, shiftOut() does exactly this. Q7S to the DS of a second 74HC595 gives sixteen outputs.',
+  'tool.sevenseg': '7-segment display',
+  'part.sevenseg': 'Seven-segment display',
+  'part.sevenseg.about':
+    'Eight red LEDs that show one digit: the segments a to g and the decimal point (DP), all sharing one leg (COM). In a common-cathode display COM goes to GND and a segment lights when its leg is taken HIGH; in a common-anode one COM goes to the supply and a segment lights when its leg is taken LOW. Choose which in the panel on the right. Give each segment its own resistor (220 Ω to 1 kΩ). It stands across the gap with its legs in rows d and h: the bottom row is e, d, COM, c, DP from the left, the top row g, f, COM, a, b. The two COM legs are joined inside.',
+  'inspector.displayKind': 'Kind of display',
+  'inspector.common.cathode': 'Common cathode',
+  'inspector.common.anode': 'Common anode',
   'tool.clock': 'Clock',
   'part.clock': '555 clock module',
   'part.clock.about':
@@ -1420,7 +1450,7 @@ export const en: Record<MessageKey, string> = {
   'gate.OR': 'OR',
   'gate.XOR': 'XOR',
   'diag.chip-overvoltage':
-    '{id} is getting {volts}; a 74HC chip can stand {limit} at most. A real chip may be destroyed: use 5 V or less.',
+    '{id} is getting {volts}; this chip can stand {limit} at most. A real chip may be destroyed: use less than {limit} (5 V for a 74HC chip).',
   'diag.chip-output-overcurrent':
     'Too much current from pin {socket} of {id}: one output can give 25 mA at most. Put a resistor with an LED, and never join an output straight to VCC or GND.',
   'diag.logic-input-floating':
