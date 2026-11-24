@@ -64,6 +64,13 @@
       "when": 1795538639279,
       "tag": "0008_adults_confirmed",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795541602936,
+      "tag": "0009_close_account",
+      "breakpoints": true
     }
   ]
 }

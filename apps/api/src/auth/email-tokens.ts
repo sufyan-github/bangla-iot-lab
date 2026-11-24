@@ -8,13 +8,15 @@ import { emailTokens } from '../db/schema';
  * is stored. A new link for the same account and purpose cancels the older
  * ones, and a link works once, before it expires.
  */
-export type EmailTokenPurpose = 'verify-email' | 'approve-learner' | 'reset-password';
+export type EmailTokenPurpose =
+  'verify-email' | 'approve-learner' | 'reset-password' | 'close-account';
 
 /** How long each kind of link works. */
 export const TOKEN_LIFETIME_MS: Record<EmailTokenPurpose, number> = {
   'verify-email': 48 * 60 * 60 * 1000,
   'approve-learner': 7 * 24 * 60 * 60 * 1000,
   'reset-password': 60 * 60 * 1000,
+  'close-account': 24 * 60 * 60 * 1000,
 };
 
 const hash = (token: string) => createHash('sha256').update(token).digest('base64url');

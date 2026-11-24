@@ -106,6 +106,8 @@ export function accountEmails(origin: string) {
         link('approve', token),
         '',
         'আপনি এই শিক্ষার্থীকে না চিনলে এই ইমেইল উপেক্ষা করুন; অ্যাকাউন্ট চালু হবে না। / If you do not know this learner, ignore this email; the account stays closed.',
+        '',
+        `যেকোনো সময় অ্যাকাউন্টটি বন্ধ করতে: ${origin}/account/guardian / To close the account at any time: ${origin}/account/guardian`,
       ].join('\n'),
     }),
     reset: (to: string, name: string, token: string, forLearner: boolean): MailMessage => ({
@@ -123,6 +125,19 @@ export function accountEmails(origin: string) {
         link('reset', token),
         '',
         'আপনি না চাইলে কিছু করতে হবে না; পুরোনো পাসওয়ার্ড কাজ করবে। / If you did not ask, there is nothing to do; the old password still works.',
+      ].join('\n'),
+    }),
+    close: (to: string, nickname: string, username: string, token: string): MailMessage => ({
+      to,
+      subject: `বাংলা IoT ল্যাব: ${nickname}-এর অ্যাকাউন্ট বন্ধ করা / Close ${nickname}'s account`,
+      text: [
+        `"${nickname}" (সাইন-ইন নাম ${username})-এর অ্যাকাউন্ট বন্ধ করতে এই লিংক খুলুন (২৪ ঘণ্টা কাজ করবে)। বন্ধ করলে আর সাইন ইন করা যাবে না।`,
+        link('close', token),
+        '',
+        `To close the account of "${nickname}" (sign-in name ${username}), open this link (it works for 24 hours). Once closed, no one can sign in to it.`,
+        link('close', token),
+        '',
+        'আপনি না চাইলে কিছু করতে হবে না। / If you did not ask, there is nothing to do.',
       ].join('\n'),
     }),
   };

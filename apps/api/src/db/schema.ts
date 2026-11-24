@@ -366,6 +366,7 @@ export const emailTokenPurpose = pgEnum('email_token_purpose', [
   'verify-email',
   'approve-learner',
   'reset-password',
+  'close-account',
 ]);
 
 /** A one-time link sent by email: only its SHA-256 is kept. */
