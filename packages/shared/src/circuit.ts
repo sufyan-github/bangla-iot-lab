@@ -77,12 +77,50 @@ export const BreadboardSchema = Type.Object({
   }),
 });
 
+export const WAVE_SHAPES = ['square', 'sine', 'triangle'] as const;
+export type WaveShape = (typeof WAVE_SHAPES)[number];
+
+/**
+ * A source of voltage beside the breadboard, between its + and − terminals: a
+ * battery; a bench power supply (`source: 'supply'`), whose voltage is turned
+ * by a knob; or a function generator (`source: 'generator'`), whose output is
+ * `offset` plus a wave of peak `voltage`, `hz` times a second.
+ */
 export const BatterySchema = Type.Object({
   id: Id,
   type: Type.Literal('battery'),
-  props: Type.Object({ voltage: Type.Number({ minimum: 0.1, maximum: 24 }) }),
+  props: Type.Object({
+    voltage: Type.Number({ minimum: 0.1, maximum: 24 }),
+    source: Type.Optional(Type.Union([Type.Literal('supply'), Type.Literal('generator')])),
+    wave: Type.Optional(
+      Type.Union([Type.Literal('square'), Type.Literal('sine'), Type.Literal('triangle')]),
+    ),
+    hz: Type.Optional(Type.Number({ minimum: 0.1, maximum: 100 })),
+    offset: Type.Optional(Type.Number({ minimum: -12, maximum: 12 })),
+  }),
   at: Type.Optional(PositionSchema),
 });
+
+/** A function generator's output at a moment, in volts. */
+export function generatorVolts(
+  props: { voltage: number; wave?: WaveShape; hz?: number; offset?: number },
+  timeMs: number,
+): number {
+  const phase = ((((timeMs / 1000) * (props.hz ?? 1)) % 1) + 1) % 1;
+  const shape =
+    props.wave === 'sine'
+      ? Math.sin(2 * Math.PI * phase)
+      : props.wave === 'triangle'
+        ? phase < 0.25
+          ? 4 * phase
+          : phase < 0.75
+            ? 2 - 4 * phase
+            : 4 * phase - 4
+        : phase < 0.5
+          ? 1
+          : -1;
+  return (props.offset ?? 0) + props.voltage * shape;
+}
 
 export const ResistorSchema = Type.Object({
   id: Id,

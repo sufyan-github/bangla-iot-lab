@@ -7,6 +7,7 @@ import {
 import { solveTimeStep, type Capacitor } from '@banglalab/circuit-engine';
 import {
   boardSocketOfPin,
+  generatorVolts,
   isProgrammable,
   withoutBreadboards,
   type CircuitDocument,
@@ -17,6 +18,9 @@ import { Esp32SimBoard, esp32Emulator, parseEsp32Firmware } from './esp32-sim-bo
 import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
 import { MqttBroker, type MqttMessage } from './mqtt';
+
+/** How many steps a sine or triangle wave from a function generator is drawn in, each period. */
+const GENERATOR_STEPS = 32;
 import {
   buildNetlist,
   netName,
@@ -230,12 +234,52 @@ export class SimulationSession {
     return (
       this.boards.size > 0 ||
       this.hasCapacitors ||
-      this.document.components.some((c) => c.type === 'clock' || c.type === 'pir')
+      this.document.components.some(
+        (c) =>
+          c.type === 'clock' ||
+          c.type === 'pir' ||
+          (c.type === 'battery' && c.props.source === 'generator'),
+      )
     );
   }
 
   /** Clock modules whose output is HIGH now. */
   private clocks: Record<string, boolean> = {};
+  /** Each function generator's output now, in volts. */
+  private sources: Record<string, number> = {};
+
+  /** The function generators' outputs at this moment. */
+  private stepSources(): void {
+    const next: Record<string, number> = {};
+    let changed = false;
+    for (const c of this.document.components) {
+      if (c.type !== 'battery' || c.props.source !== 'generator') continue;
+      // Kept to the millivolt, so that one value is one solution to reuse.
+      next[c.id] = Math.round(generatorVolts(c.props, this.time) * 1000) / 1000;
+      changed ||= next[c.id] !== this.sources[c.id];
+    }
+    if (!changed && Object.keys(next).length === Object.keys(this.sources).length) return;
+    this.sources = next;
+    this.feedInputs();
+  }
+
+  /**
+   * The next moment a generator's output changes: each half period for a square
+   * wave, and 32 times a period for the others, so that they are drawn smoothly.
+   */
+  private sourceDeadline(): number {
+    let soonest = Infinity;
+    for (const c of this.document.components) {
+      if (c.type !== 'battery' || c.props.source !== 'generator') continue;
+      const period = 1000 / (c.props.hz ?? 1);
+      const step =
+        c.props.wave === 'square' || c.props.wave === undefined
+          ? period / 2
+          : period / GENERATOR_STEPS;
+      soonest = Math.min(soonest, (Math.floor(this.time / step + 1e-9) + 1) * step);
+    }
+    return soonest;
+  }
 
   /** Each clock module's output at this moment: HIGH in the second half of each period. */
   private stepClocks(): void {
@@ -473,6 +517,7 @@ export class SimulationSession {
       echo: this.echo,
       motion: this.motion,
       clocks: this.clocks,
+      sources: this.sources,
       drivers: this.drivers,
       chips: this.chips,
       sensing: this.sensing,
@@ -488,6 +533,7 @@ export class SimulationSession {
     for (const [id, high] of Object.entries(this.echo)) if (high) key += `${id}^;`;
     for (const [id, high] of Object.entries(this.motion)) if (high) key += `${id}~;`;
     for (const [id, high] of Object.entries(this.clocks)) if (high) key += `${id}^^;`;
+    for (const [id, volts] of Object.entries(this.sources)) key += `${id}~${volts};`;
     // A latch made of gates remembers: the same pin levels can leave it either way.
     // A charger's protection remembers that it cut off.
     for (const [id, charger] of Object.entries(this.chargers)) {
@@ -783,13 +829,20 @@ export class SimulationSession {
     for (;;) {
       this.stepMotion();
       this.stepClocks();
-      const until = Math.min(end, this.motionDeadline(), this.clockDeadline());
+      this.stepSources();
+      const until = Math.min(
+        end,
+        this.motionDeadline(),
+        this.clockDeadline(),
+        this.sourceDeadline(),
+      );
       if (until > this.time) this.run(until - this.time);
       if (this.time >= end - 1e-9) break;
     }
     this.time = end;
     this.stepMotion();
     this.stepClocks();
+    this.stepSources();
   }
 
   private run(milliseconds: number): void {

@@ -485,6 +485,8 @@ export const LORA_SUPPLY_RESISTANCE = 275;
  * NE555 datasheet: a supply of 4.5 V to 16 V, and an output a little below the
  * supply when HIGH. ESTIMATE: about 5 mA at 5 V, and 100 Ω of output resistance.
  */
+/** A function generator's output resistance: 50 Ω, as bench generators have. */
+export const GENERATOR_OUTPUT_RESISTANCE = 50;
 export const CLOCK_SUPPLY_RESISTANCE = 1000;
 export const CLOCK_OUTPUT_RESISTANCE = 100;
 

@@ -1522,6 +1522,7 @@ and a hex digit that shows its four inputs. Undo and redo on the sheet (up to
 the switches called A to D: the prime implicants by Quine–McCluskey, then the
 smallest cover found by trying every set of them, which is exact for up to four
 inputs. A bar over a letter means NOT.
+
 ## D-080 — Wi-Fi and the board's own web page
 
 The owner chose (24 November 2026) the board's own web page, with no real
@@ -1578,6 +1579,7 @@ The dashboard lists every topic with its latest value, who sent it, and a small
 chart of its recent numbers, and sends messages (optionally retained) with
 quick "on" and "off" buttons. Ready-made program `mqtt`: the knob's reading to
 `lab/knob` every two seconds, and the LED from `lab/led`.
+
 ## D-081 — Accounts, classes, cloud projects and class progress
 
 The owner asked (24 November 2026) for classes and accounts next. Built on the
@@ -1624,3 +1626,19 @@ the consent wording and process, the retention periods in database.md, and
 whether a school's confirmation is enough for learners under 18 under the
 PDPO. **Not done:** password reset by email, school admins adding teachers,
 moving a learner between classes, the retention job, and deployment.
+
+## D-084 — A bench power supply and a function generator
+
+Two bench instruments beside the breadboard, as variants of the battery part
+(its `source` is `supply` or `generator`), so they wire, move and draw in the
+diagram as a DC source does. Older circuits are unchanged.
+
+- **Power supply:** any voltage from 0.1 to 24 V in 0.1 V steps, turned by a
+  slider; its display shows the voltage set and the current drawn. **Not
+  modelled:** a current limit (a real bench supply would lower its voltage).
+- **Function generator:** a square, sine or triangle wave from 0.1 to 100 Hz,
+  with a peak amplitude up to 12 V and an offset of −12 to 12 V, through a 50 Ω
+  output as bench generators have. The session stops at each half period of a
+  square wave and 32 times a period for the others, so the oscilloscope draws
+  them; a sine is therefore drawn in 32 straight steps. New ones start as a
+  0 to 5 V square wave at 1 Hz.

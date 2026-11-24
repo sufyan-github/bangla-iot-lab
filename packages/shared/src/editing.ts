@@ -306,8 +306,19 @@ export function onBreadboard(
   };
 }
 
-export function addBattery(circuit: CircuitDocument, voltage = 9): EditResult {
-  const battery = { id: nextId(circuit, 'BAT'), type: 'battery', props: { voltage } } as const;
+export function addBattery(
+  circuit: CircuitDocument,
+  voltage = 9,
+  source?: 'supply' | 'generator',
+): EditResult {
+  const props =
+    source === 'generator'
+      ? { voltage: 2.5, source, wave: 'square' as const, hz: 1, offset: 2.5 }
+      : source === 'supply'
+        ? { voltage: 5, source }
+        : { voltage };
+  const prefix = source === 'generator' ? 'FG' : source === 'supply' ? 'PSU' : 'BAT';
+  const battery = { id: nextId(circuit, prefix), type: 'battery', props } as const;
   return addBeside(circuit, battery, MAX_BATTERIES, 'battery-limit');
 }
 

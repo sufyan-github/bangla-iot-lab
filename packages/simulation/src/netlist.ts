@@ -93,6 +93,7 @@ import {
   PIR_OUTPUT_VOLTS,
   PIR_SUPPLY_RESISTANCE,
   CLOCK_SUPPLY_RESISTANCE,
+  GENERATOR_OUTPUT_RESISTANCE,
   CLOCK_OUTPUT_RESISTANCE,
   RGB_CHANNELS,
   RGB_FORWARD_VOLTAGE,
@@ -142,6 +143,8 @@ export interface CircuitState {
   motion?: Readonly<Record<string, boolean>>;
   /** Clock modules whose output is HIGH at the moment. Absent, every clock's output is LOW. */
   clocks?: Readonly<Record<string, boolean>>;
+  /** Each function generator's output now, in volts. */
+  sources?: Readonly<Record<string, number>>;
   /**
    * What each motor driver is doing. It follows from the circuit's own voltages
    * (the driver's supply and the levels on its inputs), so whoever solves the
@@ -328,7 +331,9 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
       if (new Set(pinNodes).size === 1) bridgedParts.push(id);
     }
     switch (component.type) {
-      case 'battery':
+      case 'battery': {
+        // A function generator gives its wave's value now, through its 50 Ω output.
+        const generator = component.props.source === 'generator';
         partDevice.set(
           id,
           add(
@@ -336,12 +341,13 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
               id,
               node(`${id}.pos`),
               node(`${id}.neg`),
-              component.props.voltage,
-              BATTERY_INTERNAL_RESISTANCE,
+              generator ? (state.sources?.[id] ?? 0) : component.props.voltage,
+              generator ? GENERATOR_OUTPUT_RESISTANCE : BATTERY_INTERNAL_RESISTANCE,
             ),
           ),
         );
         break;
+      }
       case 'resistor':
         partDevice.set(
           id,

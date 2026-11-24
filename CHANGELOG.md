@@ -37,6 +37,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 - **74HC595 shift register** (circuit format version 25), with `shiftOut()`
   and `shiftIn()` in the ESP32 board library, so three pins drive eight LEDs.
   Ready-made program `shift`.
+- **Bench power supply and function generator**: a supply turned to any voltage
+  from 0.1 to 24 V, showing its current, and a generator of square, sine and
+  triangle waves from 0.1 to 100 Hz with amplitude and offset.
 - **Counters, a decoder and a seven-segment display** (circuit format version
   24): the 74HC393 (two 4-bit counters) joins the 14-pin chips; a new 16-pin
   chip can be the 74HC161 counter (count, load, clear and carry) or the CD4511
