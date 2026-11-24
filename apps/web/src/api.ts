@@ -12,7 +12,7 @@ export async function hasChipEmulator(): Promise<boolean> {
 }
 
 /** Base URL of the API. Only compiling needs it; everything else works offline. */
-const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
+export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
 export type CompileResult =
   | { ok: true; hex: string; flashBytes: number }

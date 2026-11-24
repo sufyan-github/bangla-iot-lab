@@ -33,6 +33,15 @@ Migrations: `apps/api/drizzle/` (SQL, checked in).
 
 Enums: `account_kind`, `platform_role`, `school_role`, `consent_scope`, `consent_grantor`.
 
+## Added with accounts (migrations `0001` to `0003`)
+
+| Table / column           | Purpose                                 | Keys and constraints                                                 |
+| ------------------------ | --------------------------------------- | -------------------------------------------------------------------- |
+| `sessions`               | A signed-in device                      | unique `token_hash` (SHA-256 of the cookie's token); index `user_id` |
+| `users.sign_in_key_hash` | A learner's sign-in key, as its SHA-256 | unique                                                               |
+| `lesson_assignments`     | A lesson set for a class                | index `class_id`; removed by `removed_at`                            |
+| `progress_events`        | A learner's finished step or lesson     | unique `client_event_id` (offline resends kept once); `step >= 0`    |
+
 ## Designed, to be migrated with the feature that uses it
 
 Tables are added when their first consumer is built, so the schema never holds
@@ -43,7 +52,6 @@ untested guesses.
 | `lessons`, `lesson_versions`                | 2     | Stable lesson id; versioned content reference (object storage key + hash), status draft → reviewed → published, author and reviewer                                 |
 | `curriculum_tags`, `lesson_curriculum_tags` | 2     | NCTB class, subject, chapter; many-to-many with lessons                                                                                                             |
 | `components`                                | 2     | Catalogue of part types and their content status, for the authoring tools                                                                                           |
-| `lesson_assignments`                        | 2     | `(class_id, lesson_id, due_at)`                                                                                                                                     |
 | `progress_events`                           | 2     | Append-only `(learner_id, lesson_id, step, outcome, client_event_id, occurred_at)`; unique `client_event_id` makes offline replays idempotent; partitioned by month |
 | `class_summaries`                           | 2     | Materialised aggregates per class and lesson                                                                                                                        |
 | `gallery_submissions`, `moderation_reports` | 2     | Submission → teacher review → approved/rejected; reports with resolution                                                                                            |

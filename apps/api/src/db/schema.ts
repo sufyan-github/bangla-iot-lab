@@ -60,6 +60,11 @@ export const users = pgTable(
     displayName: text('display_name').notNull(),
     email: text('email'),
     passwordHash: text('password_hash'),
+    /**
+     * A learner signs in with a key the lab gave them (long and random), kept as
+     * its SHA-256 so that it can be found; adults have none.
+     */
+    signInKeyHash: text('sign_in_key_hash').unique(),
     platformRole: platformRole('platform_role'),
     locale: text('locale').notNull().default('bn'),
     createdAt: createdAt(),
@@ -217,5 +222,68 @@ export const auditLogs = pgTable(
   (t) => [
     index('audit_logs_time_idx').on(t.occurredAt),
     index('audit_logs_actor_idx').on(t.actorId, t.occurredAt),
+  ],
+);
+
+/**
+ * A signed-in device. The token itself lives only in the browser's cookie; the
+ * database keeps its SHA-256, so a copy of the database cannot sign anyone in.
+ */
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    tokenHash: text('token_hash').notNull().unique(),
+    createdAt: createdAt(),
+    expiresAt: at('expires_at').notNull(),
+    revokedAt: at('revoked_at'),
+  },
+  (t) => [index('sessions_user_idx').on(t.userId)],
+);
+
+/** A lesson a teacher has set for a class, with a date to finish it by if they gave one. */
+export const lessonAssignments = pgTable(
+  'lesson_assignments',
+  {
+    id: id(),
+    classId: uuid('class_id')
+      .notNull()
+      .references(() => classes.id, { onDelete: 'restrict' }),
+    /** The lesson's id, as in packages/lessons (e.g. "push-button"). */
+    lessonId: text('lesson_id').notNull(),
+    dueAt: at('due_at'),
+    createdAt: createdAt(),
+    removedAt: at('removed_at'),
+  },
+  (t) => [index('lesson_assignments_class_idx').on(t.classId)],
+);
+
+export const progressOutcome = pgEnum('progress_outcome', ['step-done', 'lesson-done']);
+
+/**
+ * What a learner did in a lesson, as the lab reported it. Append-only. The
+ * event's id is made on the device, so an event sent twice (after being
+ * offline) is kept once.
+ */
+export const progressEvents = pgTable(
+  'progress_events',
+  {
+    id: id(),
+    learnerId: uuid('learner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    lessonId: text('lesson_id').notNull(),
+    step: integer('step').notNull(),
+    outcome: progressOutcome('outcome').notNull(),
+    clientEventId: uuid('client_event_id').notNull().unique(),
+    occurredAt: at('occurred_at').notNull(),
+    receivedAt: createdAt(),
+  },
+  (t) => [
+    index('progress_events_learner_idx').on(t.learnerId, t.lessonId),
+    check('progress_events_step_positive', sql`${t.step} >= 0`),
   ],
 );

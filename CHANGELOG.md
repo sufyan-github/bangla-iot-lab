@@ -26,6 +26,11 @@ make no promise of compatibility, except that saved circuits are always migrated
   ESP32 board library, on a made-up network with no real internet, and a
   "Web page" panel that asks the board for its pages and shows them safely
   (no scripts, nothing reaches outside). Ready-made program `webserver`.
+- **Classes and accounts**: teachers sign up and make classes for Class 6 to
+  12 with join codes; learners join with a code and a nickname only (no
+  email, phone or real name) and get a key to sign in elsewhere. Teachers
+  manage the roster, set lessons and see class totals of progress. Projects
+  can be saved to the cloud and opened on another device.
 - **Four logic lessons**, each checked step by step by the lab: AND and OR
   gates, the flip-flop, counting by itself with a seven-segment display, and
   the shift register.

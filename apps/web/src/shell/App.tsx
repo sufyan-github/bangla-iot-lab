@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
 import { NavLink, Route, Routes } from 'react-router';
+import { AccountPage } from '../account/AccountPage';
+import { useAccount } from '../account/client';
 import { HomePage } from '../home/HomePage';
 import { useLocale, useT } from '../i18n';
 import { LabPage } from '../lab/LabPage';
@@ -11,6 +14,9 @@ function Header() {
   const { t, locale } = useT();
   const setLocale = useLocale((s) => s.setLocale);
   const online = useOnline();
+  const me = useAccount((s) => s.me);
+  const refresh = useAccount((s) => s.refresh);
+  useEffect(() => void refresh(), [refresh]);
   const link = ({ isActive }: { isActive: boolean }) =>
     `rounded-lg px-3 py-2 font-medium ${isActive ? 'bg-paper/15 text-paper' : 'text-paper/80 hover:text-paper'}`;
 
@@ -30,6 +36,9 @@ function Header() {
           </NavLink>
           <NavLink to="/licences" className={link} data-testid="nav-licences">
             {t('nav.licences')}
+          </NavLink>
+          <NavLink to="/account" className={link} data-testid="nav-account">
+            {me ? me.user.displayName : t('nav.account')}
           </NavLink>
         </nav>
         <button
@@ -66,6 +75,7 @@ export function App() {
           <Route path="/lessons" element={<LessonsPage />} />
           <Route path="/licences" element={<LicencesPage />} />
           <Route path="/esp32" element={<Esp32Page />} />
+          <Route path="/account" element={<AccountPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </div>

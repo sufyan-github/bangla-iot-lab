@@ -9,6 +9,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
 import { useT } from '../i18n';
+import { listCloud, openFromCloud, saveToCloud } from '../account/cloud';
+import { useAccount } from '../account/client';
 import { canvasHeight, canvasWidth } from '../lab/geometry';
 import { starterProgram } from '../lab/starters';
 import { Scene } from '../lab/Scene';
@@ -49,6 +51,38 @@ export function HomePage() {
     mutationFn: projectStore.remove,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
   });
+
+  const me = useAccount((s) => s.me);
+  const cloud = useQuery({
+    queryKey: ['cloud', me?.user.id],
+    queryFn: async () => {
+      const answer = await listCloud();
+      return answer.ok ? answer.value.projects : [];
+    },
+    enabled: !!me,
+  });
+  const save = useMutation({
+    mutationFn: async (project: ProjectRecord) => {
+      const answer = await saveToCloud(project);
+      if (!answer.ok) throw new Error(answer.error);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ['cloud'] });
+    },
+  });
+  const bring = useMutation({
+    mutationFn: async (id: string) => {
+      const answer = await openFromCloud(id);
+      if (!answer.ok) throw new Error(answer.error);
+      return answer.value;
+    },
+    onSuccess: (project) => navigate(`/lab/${project.id}`),
+  });
+  /** Cloud projects with no copy on this device. */
+  const onlyInCloud = (cloud.data ?? []).filter(
+    (item) => !projects.data?.some((project) => project.cloudId === item.id),
+  );
 
   const confirmRemove = (project: ProjectRecord) => {
     if (window.confirm(t('home.deleteConfirm', { name: project.name }))) remove.mutate(project.id);
@@ -144,6 +178,31 @@ export function HomePage() {
             <p className="mt-1 text-ink-soft">{t('home.empty.body')}</p>
           </div>
         )}
+        {save.isError && (
+          <p role="alert" className="mb-3 font-medium text-danger" data-testid="cloud-problem">
+            {t('cloud.failed')}
+          </p>
+        )}
+        {me && onlyInCloud.length > 0 && (
+          <section className="mb-6" data-testid="cloud-list">
+            <h2 className="mb-2 text-lg font-semibold">{t('cloud.title')}</h2>
+            <ul className="flex flex-wrap gap-2">
+              {onlyInCloud.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    data-testid="open-cloud"
+                    disabled={bring.isPending}
+                    onClick={() => bring.mutate(item.id)}
+                    className="min-h-11 rounded-lg border-2 border-line bg-surface px-3 font-medium hover:border-ink-soft"
+                  >
+                    {item.title} · {t('cloud.openHere')}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="project-list">
           {projects.data?.map((project) => (
             <li
@@ -162,6 +221,22 @@ export function HomePage() {
                   <br />
                   {t('home.updated', { time: relativeTime(project.updatedAt) })}
                 </p>
+                {me && (
+                  <button
+                    type="button"
+                    data-testid="save-cloud"
+                    disabled={save.isPending}
+                    onClick={() => save.mutate(project)}
+                    className="min-h-11 rounded-lg px-3 text-sm font-medium text-mat hover:bg-paper"
+                    title={
+                      project.cloudVersion
+                        ? t('cloud.savedVersion', { version: project.cloudVersion })
+                        : undefined
+                    }
+                  >
+                    {t(project.cloudId ? 'cloud.update' : 'cloud.save')}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => confirmRemove(project)}

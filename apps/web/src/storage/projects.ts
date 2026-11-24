@@ -79,6 +79,9 @@ export interface ProjectRecord {
   settings?: Record<string, string>;
   /** The logic sheet, when the project has one. */
   sheet?: LogicSheet;
+  /** The project's id in the cloud, and the version last saved there or taken from there. */
+  cloudId?: string;
+  cloudVersion?: number;
 }
 
 export type ProjectContent = Pick<
@@ -143,6 +146,11 @@ export const projectStore = {
     }
     const updated = await database.projects.update(id, { ...content, updatedAt: Date.now() });
     if (updated === 0) throw new Error(`Project ${id} no longer exists`);
+  },
+
+  /** Notes which cloud project and version this one matches. */
+  async setCloud(id: string, cloudId: string, cloudVersion: number): Promise<void> {
+    await database.projects.update(id, { cloudId, cloudVersion });
   },
 
   /** Saves how far the student has got in the project's lesson. */
