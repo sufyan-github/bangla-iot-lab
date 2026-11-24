@@ -24,6 +24,10 @@ export function timingSignals(sheet: LogicSheet): TimingSignal[] {
     else if (element.kind === 'input') groups[1]!.push({ port: `${element.id}.q`, label: name });
     else if (memory.includes(element.kind))
       groups[2]!.push({ port: `${element.id}.q`, label: `${name}.Q` });
+    // A counter's or register's bits, Q0 the smallest, as a textbook draws a counter.
+    else if (element.kind === 'CNT' || element.kind === 'REG')
+      for (let bit = 0; bit < 4; bit++)
+        groups[2]!.push({ port: `${element.id}.q${bit}`, label: `${name}.Q${bit}` });
     else if (element.kind === 'output') groups[3]!.push({ port: `${element.id}.a`, label: name });
   }
   // In the order the elements were placed (IN2 before IN10), whatever they are called.

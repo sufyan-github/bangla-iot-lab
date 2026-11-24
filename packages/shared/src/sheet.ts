@@ -21,9 +21,17 @@ export const SHEET_KINDS = [
   'JKFF',
   'TFF',
   'HEX',
+  'DEC',
+  'CNT',
+  'REG',
+  'RAM',
 ] as const;
-/** Elements that remember: their outputs change only on their clock's rising edge. */
+/** Flip-flops: their outputs change only on their clock's rising edge. */
 export const SHEET_MEMORY_KINDS = ['DFF', 'JKFF', 'TFF'] as const;
+/** Blocks that hold a number (a count, a register's value, a memory's words), changed on a clock edge. */
+export const SHEET_STORE_KINDS = ['CNT', 'REG', 'RAM'] as const;
+/** How many 4-bit words the RAM block holds. */
+export const RAM_WORDS = 16;
 export type SheetKind = (typeof SHEET_KINDS)[number];
 
 /** Each kind's input and output ports, in the order they are drawn, with a gate's usual two inputs. */
@@ -49,7 +57,35 @@ export const SHEET_PORTS: Record<
   TFF: { inputs: ['t', 'clk'], outputs: ['q', 'nq'] },
   /** Shows its four inputs (D0 the smallest) as one hexadecimal digit. */
   HEX: { inputs: ['d0', 'd1', 'd2', 'd3'], outputs: [] },
+  /** A 2-to-4 decoder: the output whose number A1 A0 gives is HIGH, the others LOW. */
+  DEC: { inputs: ['a0', 'a1'], outputs: ['y0', 'y1', 'y2', 'y3'] },
+  /** A 4-bit counter: one more on each rising clock edge, 0 again with CLR HIGH; CO HIGH at 15. */
+  CNT: { inputs: ['clk', 'clr'], outputs: ['q0', 'q1', 'q2', 'q3', 'co'] },
+  /** A 4-bit register: takes D0 to D3 on each rising clock edge, and holds them. */
+  REG: { inputs: ['d0', 'd1', 'd2', 'd3', 'clk'], outputs: ['q0', 'q1', 'q2', 'q3'] },
+  /**
+   * 16 words of 4 bits: Q shows the word at address A0 to A3 at once; with WE
+   * HIGH, a rising clock edge writes D0 to D3 there.
+   */
+  RAM: {
+    inputs: ['a0', 'a1', 'a2', 'a3', 'd0', 'd1', 'd2', 'd3', 'we', 'clk'],
+    outputs: ['q0', 'q1', 'q2', 'q3'],
+  },
 };
+
+/** How much of the grid each kind takes, wide by high: most take 3 × 3; blocks with many ports are taller. */
+const SIZES: Partial<Record<SheetKind, { w: number; h: number }>> = {
+  DEC: { w: 3, h: 4 },
+  CNT: { w: 3, h: 5 },
+  REG: { w: 3, h: 5 },
+  RAM: { w: 4, h: 9 },
+};
+export function sheetSize(element: Pick<SheetElement, 'kind'>): { w: number; h: number } {
+  return SIZES[element.kind] ?? { w: SIZE, h: SIZE };
+}
+
+/** Most elements take a 3 × 3 block of the grid. */
+const SIZE = 3;
 
 /** Gates that may have three or four inputs instead of two. */
 const WIDE_GATES: readonly SheetKind[] = ['AND', 'OR', 'NAND', 'NOR', 'XOR'];
@@ -99,6 +135,10 @@ export const SheetElementSchema = Type.Object({
     Type.Literal('JKFF'),
     Type.Literal('TFF'),
     Type.Literal('HEX'),
+    Type.Literal('DEC'),
+    Type.Literal('CNT'),
+    Type.Literal('REG'),
+    Type.Literal('RAM'),
   ]),
   /** Where its top-left corner is, in grid steps. */
   x: Type.Integer({ minimum: 0, maximum: SHEET_WIDTH - 1 }),
@@ -190,6 +230,10 @@ const PREFIX: Record<SheetKind, string> = {
   JKFF: 'FF',
   TFF: 'FF',
   HEX: 'HEX',
+  DEC: 'DEC',
+  CNT: 'CNT',
+  REG: 'REG',
+  RAM: 'RAM',
 };
 
 export type SheetEdit =
@@ -201,10 +245,20 @@ function nextId(sheet: LogicSheet, prefix: string): string {
   for (let n = 1; ; n++) if (!used.has(`${prefix}${n}`)) return `${prefix}${n}`;
 }
 
-/** Each element takes a 3 × 3 block of the grid. */
-const SIZE = 3;
-const overlaps = (a: { x: number; y: number }, b: { x: number; y: number }) =>
-  Math.abs(a.x - b.x) < SIZE && Math.abs(a.y - b.y) < SIZE;
+type Placed = Pick<SheetElement, 'kind' | 'x' | 'y'>;
+/** True when two elements' blocks of the grid share any square. */
+const overlaps = (a: Placed, b: Placed) => {
+  const [sa, sb] = [sheetSize(a), sheetSize(b)];
+  return a.x < b.x + sb.w && b.x < a.x + sa.w && a.y < b.y + sb.h && b.y < a.y + sa.h;
+};
+/** The nearest place to (x, y) where the element lies wholly on the sheet. */
+const onSheet = (kind: SheetKind, x: number, y: number) => {
+  const { w, h } = sheetSize({ kind });
+  return {
+    x: Math.max(0, Math.min(SHEET_WIDTH - w, Math.round(x))),
+    y: Math.max(0, Math.min(SHEET_HEIGHT - h, Math.round(y))),
+  };
+};
 
 /** Puts a new element with its top-left corner at (x, y). */
 export function addSheetElement(
@@ -214,11 +268,9 @@ export function addSheetElement(
   y: number,
 ): SheetEdit {
   if (sheet.elements.length >= MAX_SHEET_ELEMENTS) return { ok: false, error: 'full' };
-  const at = {
-    x: Math.max(0, Math.min(SHEET_WIDTH - SIZE, Math.round(x))),
-    y: Math.max(0, Math.min(SHEET_HEIGHT - SIZE, Math.round(y))),
-  };
-  if (sheet.elements.some((e) => overlaps(e, at))) return { ok: false, error: 'taken' };
+  const at = onSheet(kind, x, y);
+  if (sheet.elements.some((e) => overlaps(e, { kind, ...at })))
+    return { ok: false, error: 'taken' };
   const id = nextId(sheet, PREFIX[kind]);
   const element: SheetElement = {
     id,
@@ -234,11 +286,8 @@ export function addSheetElement(
 export function moveSheetElement(sheet: LogicSheet, id: string, x: number, y: number): SheetEdit {
   const element = sheet.elements.find((e) => e.id === id);
   if (!element) return { ok: false, error: 'missing' };
-  const at = {
-    x: Math.max(0, Math.min(SHEET_WIDTH - SIZE, Math.round(x))),
-    y: Math.max(0, Math.min(SHEET_HEIGHT - SIZE, Math.round(y))),
-  };
-  if (sheet.elements.some((e) => e.id !== id && overlaps(e, at)))
+  const at = onSheet(element.kind, x, y);
+  if (sheet.elements.some((e) => e.id !== id && overlaps(e, { kind: element.kind, ...at })))
     return { ok: false, error: 'taken' };
   return {
     ok: true,
@@ -343,8 +392,10 @@ export function copyFromSheet(sheet: LogicSheet, ids: readonly string[]): SheetC
   };
 }
 
-const inside = (e: { x: number; y: number }) =>
-  e.x >= 0 && e.y >= 0 && e.x <= SHEET_WIDTH - SIZE && e.y <= SHEET_HEIGHT - SIZE;
+const inside = (e: Placed) => {
+  const { w, h } = sheetSize(e);
+  return e.x >= 0 && e.y >= 0 && e.x + w <= SHEET_WIDTH && e.y + h <= SHEET_HEIGHT;
+};
 
 /**
  * Puts a copy of copied elements on the sheet, with new ids and the wires

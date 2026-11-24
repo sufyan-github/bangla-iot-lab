@@ -362,3 +362,129 @@ describe('logic sheet, part 3: several at once', () => {
     expect(moveSheetElements(sheet, ['IN1'], -1, 0)).toEqual({ ok: false, error: 'taken' });
   });
 });
+
+describe('logic sheet, part 3: blocks that decode, count and store', () => {
+  /** Turns switches on or off by id, then works the sheet out from the state before. */
+  const step = (sheet: LogicSheet, before: SheetState | undefined, on: Record<string, boolean>) => {
+    let next = sheet;
+    for (const [id, value] of Object.entries(on))
+      next = ok(setSheetElement(next, id, { on: value }));
+    return { sheet: next, state: evaluateSheet(next, 0, before) };
+  };
+  /** A rising clock edge from switch `clk`: LOW, then HIGH. */
+  const pulse = (
+    sheet: LogicSheet,
+    state: SheetState,
+    clk: string,
+    on: Record<string, boolean> = {},
+  ) => {
+    const low = step(sheet, state, { ...on, [clk]: false });
+    return step(low.sheet, low.state, { [clk]: true });
+  };
+  const word = (state: SheetState, id: string) =>
+    [0, 1, 2, 3].reduce((sum, bit) => sum + (state.levels[`${id}.q${bit}`] ? 1 << bit : 0), 0);
+
+  it('a decoder lights the one output its address names, and has a truth table', () => {
+    const sheet = build(
+      ['input', 'input', 'DEC', 'output', 'output', 'output', 'output'],
+      [
+        ['IN1.q', 'DEC1.a0'],
+        ['IN2.q', 'DEC1.a1'],
+        ['DEC1.y0', 'OUT1.a'],
+        ['DEC1.y1', 'OUT2.a'],
+        ['DEC1.y2', 'OUT3.a'],
+        ['DEC1.y3', 'OUT4.a'],
+      ],
+    );
+    expect(isLogicSheet(sheet)).toBe(true);
+    const table = sheetTruthTable(sheet)!;
+    // Rows in the order IN1 IN2 = 00, 01, 10, 11; IN1 is A0, IN2 is A1.
+    expect(table.rows.map((row) => row.outputs.map(Number).join(''))).toEqual([
+      '1000',
+      '0010',
+      '0100',
+      '0001',
+    ]);
+  });
+
+  it('a counter counts rising edges, wraps after 15 with CO high at 15, and clears', () => {
+    const sheet = build(
+      ['input', 'input', 'CNT'],
+      [
+        ['IN1.q', 'CNT1.clk'],
+        ['IN2.q', 'CNT1.clr'],
+      ],
+    );
+    let { sheet: s, state } = step(sheet, undefined, {});
+    for (let n = 1; n <= 15; n++) ({ sheet: s, state } = pulse(s, state, 'IN1'));
+    expect(word(state, 'CNT1')).toBe(15);
+    expect(state.levels['CNT1.co']).toBe(true);
+    ({ sheet: s, state } = pulse(s, state, 'IN1'));
+    expect(word(state, 'CNT1')).toBe(0);
+    expect(state.levels['CNT1.co']).toBe(false);
+    ({ sheet: s, state } = pulse(s, state, 'IN1'));
+    ({ sheet: s, state } = pulse(s, state, 'IN1'));
+    expect(word(state, 'CNT1')).toBe(2);
+    // CLR is taken at the edge, not before.
+    ({ sheet: s, state } = step(s, state, { IN2: true }));
+    expect(word(state, 'CNT1')).toBe(2);
+    ({ sheet: s, state } = pulse(s, state, 'IN1'));
+    expect(word(state, 'CNT1')).toBe(0);
+    // A sheet with a counter has no truth table: what it shows depends on before.
+    expect(sheetTruthTable(s)).toBeNull();
+  });
+
+  it('a register takes its inputs on the edge and holds them after', () => {
+    const sheet = build(
+      ['input', 'input', 'input', 'REG'],
+      [
+        ['IN1.q', 'REG1.d0'],
+        ['IN2.q', 'REG1.d2'],
+        ['IN3.q', 'REG1.clk'],
+      ],
+    );
+    let { sheet: s, state } = step(sheet, undefined, { IN1: true, IN2: true });
+    expect(word(state, 'REG1')).toBe(0);
+    ({ sheet: s, state } = pulse(s, state, 'IN3'));
+    expect(word(state, 'REG1')).toBe(5);
+    ({ sheet: s, state } = step(s, state, { IN1: false, IN2: false }));
+    expect(word(state, 'REG1')).toBe(5);
+  });
+
+  it('a RAM shows the word at its address, and writes only with WE high on an edge', () => {
+    // A0 from IN1, D1 from IN2, WE from IN3, the clock from IN4; the rest LOW.
+    const sheet = build(
+      ['input', 'input', 'input', 'input', 'RAM'],
+      [
+        ['IN1.q', 'RAM1.a0'],
+        ['IN2.q', 'RAM1.d1'],
+        ['IN3.q', 'RAM1.we'],
+        ['IN4.q', 'RAM1.clk'],
+      ],
+    );
+    let { sheet: s, state } = step(sheet, undefined, { IN2: true });
+    // WE LOW: the edge writes nothing.
+    ({ sheet: s, state } = pulse(s, state, 'IN4'));
+    expect(state.store.RAM1).toEqual(new Array(16).fill(0));
+    // WE HIGH at address 1: 2 is written there.
+    ({ sheet: s, state } = pulse(s, state, 'IN4', { IN1: true, IN3: true }));
+    expect(state.store.RAM1![1]).toBe(2);
+    expect(word(state, 'RAM1')).toBe(2);
+    // Address 0 still holds 0; back at 1 the word is still there.
+    ({ sheet: s, state } = step(s, state, { IN1: false, IN3: false }));
+    expect(word(state, 'RAM1')).toBe(0);
+    ({ sheet: s, state } = step(s, state, { IN1: true }));
+    expect(word(state, 'RAM1')).toBe(2);
+  });
+
+  it('blocks take more room than gates, and nothing may sit on them', () => {
+    let sheet = ok(addSheetElement(emptySheet(), 'RAM', 0, 0));
+    expect(sheet.elements[0]).toMatchObject({ id: 'RAM1', x: 0, y: 0 });
+    // The RAM is 4 wide and 9 high: a gate at (2, 6) would sit on it, one at (4, 6) does not.
+    expect(addSheetElement(sheet, 'AND', 2, 6)).toEqual({ ok: false, error: 'taken' });
+    sheet = ok(addSheetElement(sheet, 'AND', 4, 6));
+    // Near the bottom edge it is moved up to fit.
+    const low = ok(addSheetElement(emptySheet(), 'RAM', 10, 23));
+    expect(low.elements[0]!.y).toBe(15);
+  });
+});

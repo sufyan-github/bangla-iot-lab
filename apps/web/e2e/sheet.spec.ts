@@ -156,3 +156,29 @@ test('a box chooses several; they are copied with their wire, pasted and removed
   await page.getByTestId('sheet-undo').click();
   await expect(page.locator('[data-element]')).toHaveCount(4);
 });
+
+test('a clock drives a counter, whose bits show on a hex digit', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await page.getByTestId('view-sheet').click();
+  await place(page, 'clock', 3, 4);
+  await place(page, 'CNT', 10, 3);
+  await place(page, 'HEX', 18, 4);
+  await page.getByTestId('sheet-tool-select').click();
+  await port(page, 'CLK1.q');
+  await port(page, 'CNT1.clk');
+  for (let bit = 0; bit < 4; bit++) {
+    await port(page, `CNT1.q${bit}`);
+    await port(page, `HEX1.d${bit}`);
+  }
+  await expect(page.locator('[data-wire]')).toHaveCount(5);
+  // At 1 Hz the digit counts up once a second, as the counter does.
+  const digit = page.locator('[data-element="HEX1"] [data-value]');
+  const counter = page.locator('[data-element="CNT1"] [data-value]');
+  await expect(digit).toHaveAttribute('data-value', '2', { timeout: 4000 });
+  await expect(counter).toHaveAttribute('data-value', /^[23]$/);
+
+  // Its bits are lines on the timing diagram.
+  await page.getByTestId('sheet-timing').click();
+  await expect(page.locator('[data-testid="timing-row"][data-signal="CNT1.Q0"]')).toBeVisible();
+});

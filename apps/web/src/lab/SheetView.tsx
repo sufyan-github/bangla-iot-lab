@@ -14,6 +14,7 @@ import {
   setSheetElement,
   sheetName,
   sheetPorts,
+  sheetSize,
   type LogicSheet,
   type SheetElement,
   type SheetError,
@@ -51,8 +52,9 @@ function portPoint(element: SheetElement, port: string): { x: number; y: number 
   const side = inputs.includes(port) ? inputs : outputs;
   const index = side.indexOf(port);
   // Spread evenly down the side: one in the middle, two at the thirds, and so on.
-  const y = element.y + (SIZE * (index + 1)) / (side.length + 1);
-  return { x: inputs.includes(port) ? element.x : element.x + SIZE, y };
+  const { w, h } = sheetSize(element);
+  const y = element.y + (h * (index + 1)) / (side.length + 1);
+  return { x: inputs.includes(port) ? element.x : element.x + w, y };
 }
 
 /**
@@ -104,8 +106,8 @@ const TOOL_GROUPS: { id: string; items: SheetTool[] }[] = [
   { id: 'select', items: ['select'] },
   { id: 'io', items: ['input', 'output', 'clock'] },
   { id: 'gates', items: ['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'] },
-  { id: 'blocks', items: ['MUX', 'FA', 'HEX'] },
-  { id: 'memory', items: ['DFF', 'JKFF', 'TFF'] },
+  { id: 'blocks', items: ['MUX', 'DEC', 'FA', 'HEX'] },
+  { id: 'memory', items: ['DFF', 'JKFF', 'TFF', 'CNT', 'REG', 'RAM'] },
 ];
 
 /** A small drawing of each tool, a gate's symbol as a textbook draws it. */
@@ -143,6 +145,21 @@ function ToolGlyph({ id }: { id: SheetTool }) {
       <path d="M5 6l10 6-10 6z" {...common} />
     ) : id === 'MUX' ? (
       <path d="M7 4l10 4v8l-10 4z" {...common} />
+    ) : id === 'DEC' || id === 'CNT' || id === 'REG' || id === 'RAM' ? (
+      <>
+        <rect x="5" y="3" width="14" height="18" rx="1.5" {...common} />
+        <text
+          x="12"
+          y="14.5"
+          textAnchor="middle"
+          fontSize={id === 'RAM' ? 6 : 7}
+          fontWeight={700}
+          fill="currentColor"
+          stroke="none"
+        >
+          {{ DEC: '2→4', CNT: '+1', REG: 'R', RAM: 'RAM' }[id]}
+        </text>
+      </>
     ) : id === 'HEX' ? (
       <>
         <rect x="6" y="3" width="12" height="18" rx="2" {...common} />
@@ -339,6 +356,90 @@ function ElementBody({
               textAnchor="end"
             >
               {pinName[port]}
+            </text>
+          ))}
+        </g>
+      );
+    }
+    case 'DEC':
+    case 'CNT':
+    case 'REG':
+    case 'RAM': {
+      const { w: across, h: down } = sheetSize(element);
+      const [width, height] = [across * CELL, down * CELL];
+      const ports = sheetPorts(element);
+      const at = (index: number, count: number) => (height * (index + 1)) / (count + 1);
+      const words = state.store[element.id] ?? [0];
+      const address = [0, 1, 2, 3].reduce((sum, bit) => sum + (level(`a${bit}`) ? 1 << bit : 0), 0);
+      // What the block holds, shown inside it: the count, the value, or the word at the address.
+      const shown =
+        element.kind === 'DEC'
+          ? '2→4'
+          : element.kind === 'RAM'
+            ? `[${address.toString(16).toUpperCase()}]=${words[address]!.toString(16).toUpperCase()}`
+            : String(words[0]);
+      return (
+        <g
+          data-value={
+            element.kind === 'DEC' ? undefined : words[element.kind === 'RAM' ? address : 0]
+          }
+        >
+          <rect
+            x={8}
+            y={4}
+            width={width - 16}
+            height={height - 8}
+            rx={3}
+            fill="var(--color-surface)"
+            stroke="currentColor"
+            strokeWidth={1.6}
+          />
+          <text x={width / 2} y={18} {...text} fontSize={10} fill="var(--color-ink-soft)">
+            {element.kind === 'RAM' ? 'RAM 16×4' : element.kind}
+          </text>
+          <text
+            x={width / 2}
+            y={height / 2 + 5}
+            {...text}
+            fontSize={element.kind === 'RAM' ? 11 : 15}
+            fill="currentColor"
+            fontFamily="monospace"
+          >
+            {shown}
+          </text>
+          {ports.inputs.map((port, i) =>
+            port === 'clk' ? (
+              <path
+                key={port}
+                d={`M8 ${at(i, ports.inputs.length) - 5}L14 ${at(i, ports.inputs.length)}L8 ${at(i, ports.inputs.length) + 5}`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.4}
+              />
+            ) : (
+              <text
+                key={port}
+                x={15}
+                y={at(i, ports.inputs.length) + 3}
+                fontSize={8}
+                fill="currentColor"
+                stroke="none"
+              >
+                {port.toUpperCase()}
+              </text>
+            ),
+          )}
+          {ports.outputs.map((port, i) => (
+            <text
+              key={port}
+              x={width - 14}
+              y={at(i, ports.outputs.length) + 3}
+              fontSize={8}
+              fill="currentColor"
+              stroke="none"
+              textAnchor="end"
+            >
+              {port.toUpperCase()}
             </text>
           ))}
         </g>
@@ -658,7 +759,11 @@ export function SheetView() {
               if (right - left > 0.3 || bottom - top > 0.3) {
                 const inBox = sheet.elements
                   .filter(
-                    (e) => e.x < right && e.x + SIZE > left && e.y < bottom && e.y + SIZE > top,
+                    (e) =>
+                      e.x < right &&
+                      e.x + sheetSize(e).w > left &&
+                      e.y < bottom &&
+                      e.y + sheetSize(e).h > top,
                   )
                   .map((e) => e.id);
                 setSelection(box.adding ? [...new Set([...chosen, ...inBox])] : inBox);
@@ -738,8 +843,8 @@ export function SheetView() {
                 transform={`translate(${at.x * CELL} ${at.y * CELL})`}
               >
                 <rect
-                  width={SIZE * CELL}
-                  height={SIZE * CELL}
+                  width={sheetSize(element).w * CELL}
+                  height={sheetSize(element).h * CELL}
                   rx={6}
                   data-selected={selection.includes(element.id) ? 'true' : undefined}
                   fill={selection.includes(element.id) ? 'var(--color-amber-soft)' : 'transparent'}
@@ -776,7 +881,7 @@ export function SheetView() {
                 <g pointerEvents="none">
                   <ElementBody element={element} state={state} label={sheetName(element)} />
                   <text
-                    x={SIZE * CELL - 3}
+                    x={sheetSize(element).w * CELL - 3}
                     y={9}
                     fontSize={8}
                     textAnchor="end"

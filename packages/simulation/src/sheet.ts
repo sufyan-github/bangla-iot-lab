@@ -1,6 +1,8 @@
 import {
+  RAM_WORDS,
   SHEET_GATES,
   SHEET_MEMORY_KINDS,
+  SHEET_STORE_KINDS,
   sheetGateOutput,
   sheetPorts,
   type LogicSheet,
@@ -19,6 +21,11 @@ export interface SheetState {
   levels: Record<string, boolean>;
   /** Each flip-flop's Q, by element id. */
   memory: Record<string, boolean>;
+  /**
+   * What each counter, register and RAM holds, by element id: a counter's
+   * count and a register's value as one number, a RAM's sixteen words.
+   */
+  store: Record<string, number[]>;
   /** The clock level each flip-flop saw last. */
   clocks: Record<string, boolean>;
   /** Inputs of elements joined to nothing; they are read as LOW. */
@@ -30,6 +37,10 @@ export interface SheetState {
 const isGate = (kind: string): kind is (typeof SHEET_GATES)[number] =>
   (SHEET_GATES as readonly string[]).includes(kind);
 const remembers = (kind: string) => (SHEET_MEMORY_KINDS as readonly string[]).includes(kind);
+const stores = (kind: string) => (SHEET_STORE_KINDS as readonly string[]).includes(kind);
+/** The number on four ports named with a letter and 0 to 3, the 0 port the smallest bit. */
+const nibble = (bit: (port: string) => boolean, letter: string) =>
+  [0, 1, 2, 3].reduce((sum, i) => sum + (bit(`${letter}${i}`) ? 1 << i : 0), 0);
 
 /** A clock is LOW for the first half of each period and HIGH for the second. */
 export function sheetClockLevel(element: SheetElement, timeMs: number): boolean {
@@ -52,12 +63,18 @@ export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetS
   const source = new Map(sheet.wires.map((wire) => [wire.to, wire.from]));
   const levels: Record<string, boolean> = { ...(before?.levels ?? {}) };
   const memory: Record<string, boolean> = {};
+  const store: Record<string, number[]> = {};
   const clocks: Record<string, boolean> = {};
   const floating: string[] = [];
   for (const element of sheet.elements) {
-    if (remembers(element.kind)) {
-      memory[element.id] = before?.memory[element.id] ?? false;
-      // At power-on a flip-flop has seen no clock yet, so it waits for a LOW before an edge.
+    if (remembers(element.kind) || stores(element.kind)) {
+      if (remembers(element.kind)) memory[element.id] = before?.memory[element.id] ?? false;
+      else {
+        const size = element.kind === 'RAM' ? RAM_WORDS : 1;
+        const kept = before?.store?.[element.id];
+        store[element.id] = kept?.length === size ? [...kept] : new Array<number>(size).fill(0);
+      }
+      // At power-on it has seen no clock yet, so it waits for a LOW before an edge.
       clocks[element.id] = before?.clocks[element.id] ?? true;
     }
     for (const port of sheetPorts(element).inputs) {
@@ -87,6 +104,16 @@ export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetS
         else if (remembers(kind)) {
           put(`${id}.q`, memory[id]!);
           put(`${id}.nq`, !memory[id]!);
+        } else if (kind === 'DEC') {
+          const address = (input(element, 'a1') ? 2 : 0) + (input(element, 'a0') ? 1 : 0);
+          for (let n = 0; n < 4; n++) put(`${id}.y${n}`, address === n);
+        } else if (stores(kind)) {
+          const word =
+            kind === 'RAM'
+              ? store[id]![nibble((port) => input(element, port), 'a')]!
+              : store[id]![0]!;
+          for (let bit = 0; bit < 4; bit++) put(`${id}.q${bit}`, ((word >> bit) & 1) === 1);
+          if (kind === 'CNT') put(`${id}.co`, word === 15);
         } else if (kind === 'MUX') {
           put(`${id}.y`, input(element, 'sel') ? input(element, 'b') : input(element, 'a'));
         } else if (kind === 'FA') {
@@ -104,12 +131,30 @@ export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetS
   };
 
   let settled = settle();
-  const flipFlops = sheet.elements.filter((e) => remembers(e.kind));
+  const flipFlops = sheet.elements.filter((e) => remembers(e.kind) || stores(e.kind));
   for (let pass = 0; pass <= flipFlops.length; pass++) {
     let changed = false;
     for (const element of flipFlops) {
       const clock = input(element, 'clk');
-      if (!clocks[element.id] && clock) {
+      if (!clocks[element.id] && clock && stores(element.kind)) {
+        const words = store[element.id]!;
+        const read = (port: string) => input(element, port);
+        if (element.kind === 'CNT') {
+          // CLR HIGH at the edge starts the count again (a synchronous clear).
+          const next = read('clr') ? 0 : (words[0]! + 1) & 15;
+          if (next !== words[0]) changed = true;
+          words[0] = next;
+        } else if (element.kind === 'REG') {
+          const next = nibble(read, 'd');
+          if (next !== words[0]) changed = true;
+          words[0] = next;
+        } else if (read('we')) {
+          const address = nibble(read, 'a');
+          const next = nibble(read, 'd');
+          if (next !== words[address]) changed = true;
+          words[address] = next;
+        }
+      } else if (!clocks[element.id] && clock) {
         const q = memory[element.id]!;
         let next: boolean;
         if (element.kind === 'DFF') next = input(element, 'd');
@@ -128,7 +173,7 @@ export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetS
     if (!changed) break;
     settled = settle() && settled;
   }
-  return { levels, memory, clocks, floating, unsettled: !settled };
+  return { levels, memory, store, clocks, floating, unsettled: !settled };
 }
 
 export interface SheetTruthTable {
@@ -146,7 +191,8 @@ export function sheetTruthTable(sheet: LogicSheet): SheetTruthTable | null {
   const inputs = sheet.elements.filter((e) => e.kind === 'input').map((e) => e.id);
   const outputs = sheet.elements.filter((e) => e.kind === 'output').map((e) => e.id);
   if (inputs.length === 0 || outputs.length === 0 || inputs.length > 4) return null;
-  if (sheet.elements.some((e) => remembers(e.kind) || e.kind === 'clock')) return null;
+  if (sheet.elements.some((e) => remembers(e.kind) || stores(e.kind) || e.kind === 'clock'))
+    return null;
   const rows = Array.from({ length: 1 << inputs.length }, (_, row) => {
     const levels = inputs.map((_, i) => ((row >> (inputs.length - 1 - i)) & 1) === 1);
     const set: LogicSheet = {
