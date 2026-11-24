@@ -21,6 +21,11 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **A quiz for every lesson**: all 50 lessons end with questions, marked at
+  once with the reason.
+- **Lessons on the logic sheet**: the half adder, a binary counter on a hex
+  digit, and a majority vote from its K-map, each checked step by step by the
+  lab on the sheet itself.
 - **Bluetooth Low Energy for the ESP32**: `BLEDevice.h` and its companions in
   the board library, and a BLE phone in the network panel that connects, reads,
   writes and receives notifications. Ready-made program `ble`.

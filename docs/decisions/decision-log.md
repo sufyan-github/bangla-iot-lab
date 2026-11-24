@@ -1828,3 +1828,30 @@ Built on 24 November 2026 at the owner's request, in segments, each tested.
   for other devices, the board as a BLE client, pairing and security, more than
   one phone, and the phone switching notifications on (it receives them as soon
   as it connects).
+
+## D-090 — A quiz for every lesson, and lessons on the logic sheet
+
+Built on 24 November 2026, after IoT part 3, as the next segment of the
+remaining work.
+
+- **Quizzes for every lesson.** The 40 lessons without one get two questions
+  each, in Bangla and English, written for this project from what each lesson
+  teaches (its pins, values and reasons). All 50 lessons now end with a quiz;
+  the right answer's place is spread across the choices. They are marked on
+  the device and nothing is sent, as in D-086.
+- **Lessons on the logic sheet.** A lesson may be marked `sheet`: it opens on
+  the sheet, sits in the logic track and needs no breadboard part. Five checks
+  look at the sheet: an element kind is there (`sheet-part`), a wire runs from
+  one kind's port to another's (`sheet-wired`), the truth table has a lamp
+  column such as `0110` (`sheet-column`), a block was made (`sheet-block`), and
+  a hex digit, counter, register or lamp showed a number while it ran
+  (`sheet-value`, counted once seen). A sheet check in a lesson not on the
+  sheet, or naming an element that does not exist, is refused when lessons are
+  loaded.
+- **Three new lessons**, written for this project: the half adder (made into a
+  block), a binary counter on a hex digit joined by a bus (with the timing
+  diagram), and a majority vote designed from its Karnaugh map. Each has a
+  walkthrough that edits the sheet and runs it over time, so the lab proves the
+  lesson can be finished, as for every other lesson.
+- **Corrected:** the relay module already had a lesson; the "Not done" note in
+  D-056 is out of date on that point.
