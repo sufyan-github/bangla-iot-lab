@@ -26,14 +26,14 @@ Migrations: `apps/api/drizzle/` (SQL, checked in).
 | `school_memberships` | Role of a user in a school             | unique `(school_id, user_id, role)`; index `user_id`                               |
 | `classes`            | A teacher's class                      | FK school, teacher; `grade` between 6 and 12; unique `join_code_hash`              |
 | `class_enrollments`  | Pseudonymous learner access to a class | unique `(class_id, learner_id)`; unique `(class_id, pseudonym)`                    |
-| `consent_records`    | Guardian or school consent per scope   | index `(learner_id, scope)`; revocable                                             |
+| `consent_records`    | Guardian or school consent per scope   | index `(learner_id, scope)`; revocable; no school only for a guardian's consent    |
 | `projects`           | A saved circuit                        | index `(owner_id, updated_at)`; soft delete                                        |
 | `project_versions`   | Immutable snapshots for sync           | unique `(project_id, version)`; `version > 0`; cascades with project               |
 | `audit_logs`         | Security-relevant actions              | index `occurred_at`, `(actor_id, occurred_at)`; actor set null on delete           |
 
 Enums: `account_kind`, `platform_role`, `school_role`, `consent_scope`, `consent_grantor`.
 
-## Added with accounts (migrations `0001` to `0003`)
+## Added with accounts (migrations `0001` to `0005`)
 
 | Table / column           | Purpose                                 | Keys and constraints                                                 |
 | ------------------------ | --------------------------------------- | -------------------------------------------------------------------- |
@@ -41,6 +41,7 @@ Enums: `account_kind`, `platform_role`, `school_role`, `consent_scope`, `consent
 | `users.sign_in_key_hash` | A learner's sign-in key, as its SHA-256 | unique                                                               |
 | `lesson_assignments`     | A lesson set for a class                | index `class_id`; removed by `removed_at`                            |
 | `progress_events`        | A learner's finished step or lesson     | unique `client_event_id` (offline resends kept once); `step >= 0`    |
+| `teacher_invites`        | A one-use code to join a school (0004)  | unique `code_hash`; works once, for 7 days; index `school_id`        |
 
 ## Designed, to be migrated with the feature that uses it
 

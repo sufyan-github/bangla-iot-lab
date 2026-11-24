@@ -6,6 +6,11 @@ export interface ApiConfig {
   compileWorkerUrl: string;
   /** How many compiles one address may ask for in a minute. */
   compilesPerMinute: number;
+  /**
+   * How many times one address may try to sign up, sign in or use a code in a
+   * minute, on each of those routes: few, against guessing.
+   */
+  signInsPerMinute: number;
   logLevel: string;
 }
 
@@ -22,6 +27,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     webOrigin: env.WEB_ORIGIN ?? 'http://localhost:5173',
     compileWorkerUrl: env.COMPILE_WORKER_URL ?? 'http://127.0.0.1:4100',
     compilesPerMinute: Number(env.COMPILES_PER_MINUTE ?? 20),
+    signInsPerMinute: Number(env.SIGN_INS_PER_MINUTE ?? 10),
     logLevel: env.LOG_LEVEL ?? 'info',
   };
 }

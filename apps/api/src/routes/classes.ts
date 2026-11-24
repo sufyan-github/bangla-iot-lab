@@ -1,11 +1,17 @@
 import { Type, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
-import { and, count, eq, isNull } from 'drizzle-orm';
+import { and, count, eq, isNull, or } from 'drizzle-orm';
 import type { AppDependencies } from '../app';
-import { ownClass, requireUser, teachesIn } from '../auth/access';
+import { onOwnAccount, ownClass, requireUser, teachesIn } from '../auth/access';
 import { hashCode, makeCode } from '../auth/codes';
 import { sessions, users } from '../db/schema';
 import { audit } from '../auth/session';
 import { classEnrollments, classes } from '../db/schema';
+
+/**
+ * A nickname, not a name: 2 to 24 letters (any script), digits, spaces, dots,
+ * dashes or underscores.
+ */
+export const Pseudonym = Type.String({ pattern: '^[\\p{L}\\p{M}\\p{N} ._-]{2,24}$' });
 
 /** How long a join code works, and the policy a school agrees to for its learners. */
 export const JOIN_CODE_DAYS = 14;
@@ -183,7 +189,8 @@ export function classRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
           .where(
             and(eq(classEnrollments.learnerId, row.learnerId), isNull(classEnrollments.revokedAt)),
           );
-        if (others === 0) {
+        // A learner on their own account keeps it; one who came only through classes is signed out.
+        if (others === 0 && !(await onOwnAccount(database, row.learnerId))) {
           await database.db
             .update(users)
             .set({ deactivatedAt: new Date(), signInKeyHash: null })
@@ -198,6 +205,78 @@ export function classRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
           targetId: row.id,
         });
         return { ok: true };
+      },
+    );
+
+    /**
+     * Moves a learner to another of the teacher's classes in the same school,
+     * under the same nickname unless another is given. Their account, key and
+     * progress stay as they are.
+     */
+    app.post(
+      '/v1/classes/:id/learners/:enrolment/move',
+      {
+        schema: {
+          params: Enrolment,
+          body: Type.Object(
+            { to: Type.String({ format: 'uuid' }), pseudonym: Type.Optional(Pseudonym) },
+            { additionalProperties: false },
+          ),
+        },
+      },
+      async (request, reply) => {
+        const who = await requireUser(database, request, reply);
+        if (!who) return;
+        const found = await enrolmentIn(who.userId, request.params.id, request.params.enrolment);
+        if (!found) return reply.code(404).send({ error: 'no-such-learner' });
+        const { own, row } = found;
+        const target = await ownClass(database, who.userId, request.body.to);
+        if (!target || target.id === own.id || target.schoolId !== own.schoolId) {
+          return reply.code(404).send({ error: 'no-such-class' });
+        }
+        const pseudonym = (request.body.pseudonym ?? row.pseudonym).trim();
+        const moved = await database.db.transaction(async (tx) => {
+          const there = await tx
+            .select({ id: classEnrollments.id, learnerId: classEnrollments.learnerId })
+            .from(classEnrollments)
+            .where(
+              and(
+                eq(classEnrollments.classId, target.id),
+                isNull(classEnrollments.revokedAt),
+                or(
+                  eq(classEnrollments.pseudonym, pseudonym),
+                  eq(classEnrollments.learnerId, row.learnerId),
+                ),
+              ),
+            );
+          if (there.some((other) => other.learnerId === row.learnerId)) return 'already-there';
+          if (there.length > 0) return 'pseudonym-taken';
+          await tx
+            .update(classEnrollments)
+            .set({ revokedAt: new Date() })
+            .where(eq(classEnrollments.id, row.id));
+          // A learner who was in that class before comes back on the same enrolment.
+          const [enrolment] = await tx
+            .insert(classEnrollments)
+            .values({ classId: target.id, learnerId: row.learnerId, pseudonym })
+            .onConflictDoUpdate({
+              target: [classEnrollments.classId, classEnrollments.learnerId],
+              set: { pseudonym, revokedAt: null },
+            })
+            .returning({ id: classEnrollments.id });
+          return enrolment!.id;
+        });
+        if (moved === 'already-there' || moved === 'pseudonym-taken') {
+          return reply.code(409).send({ error: moved });
+        }
+        await audit(database, {
+          actorId: who.userId,
+          schoolId: own.schoolId,
+          action: 'class.move-learner',
+          targetType: 'enrolment',
+          targetId: moved,
+        });
+        return { enrolment: moved };
       },
     );
 

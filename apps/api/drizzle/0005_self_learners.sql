@@ -1,0 +1,2 @@
+ALTER TABLE "consent_records" ALTER COLUMN "school_id" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "consent_records" ADD CONSTRAINT "consent_records_school_or_guardian" CHECK ("consent_records"."granted_by" = 'guardian' OR "consent_records"."school_id" IS NOT NULL);

@@ -25,6 +25,11 @@ make no promise of compatibility, except that saved circuits are always migrated
   and copy, paste, move and remove together; a decoder, counter, register and
   16 × 4 RAM; a Karnaugh map for each lamp; blocks of your own made from part
   of a sheet (sub-circuits); and buses between groups of pins.
+- **Learning on your own**: any learner can sign up with a nickname and a
+  guardian's permission, follow the lessons, build projects and see their
+  progress, and join a class later on the same account.
+- **Running a school**: a school's admin removes teachers and hands on the
+  admin role; a teacher moves a learner between classes.
 - **HTTPClient for the ESP32**: `HTTPClient.h` in the board library and three
   made-up web services in the lab (`echo.lab`, `weather.lab`, `log.lab`); the
   web panel lists the requests a program made. Ready-made program `webclient`.

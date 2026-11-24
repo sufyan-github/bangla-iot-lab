@@ -6,6 +6,7 @@ import { DUMMY_HASH, hashPassword, verifyPassword } from '../auth/password';
 import { audit, clearSessionCookie, endSession, signedIn, startSession } from '../auth/session';
 import { classEnrollments, classes, schoolMemberships, schools, users } from '../db/schema';
 import { acceptInvite } from './schools';
+import { onOwnAccount } from '../auth/access';
 
 /** Thrown inside the sign-up transaction to undo it when the invitation does not work. */
 class NoSuchInvite extends Error {}
@@ -28,7 +29,9 @@ const Name = Type.String({ minLength: 1, maxLength: 80 });
 export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
   const { database, config } = deps;
   const secure = config.webOrigin.startsWith('https:');
-  const strict = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } };
+  const strict = {
+    config: { rateLimit: { max: deps.config.signInsPerMinute, timeWindow: '1 minute' } },
+  };
 
   return async (app) => {
     app.post(
@@ -154,7 +157,14 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
         .innerJoin(classes, eq(classes.id, classEnrollments.classId))
         .where(and(eq(classEnrollments.learnerId, who.userId), isNull(classEnrollments.revokedAt)));
       return {
-        user: { id: who.userId, kind: who.kind, displayName: who.displayName, locale: who.locale },
+        user: {
+          id: who.userId,
+          kind: who.kind,
+          displayName: who.displayName,
+          locale: who.locale,
+          // A learner who signed up on their own, rather than only through a class.
+          ownAccount: who.kind === 'learner' && (await onOwnAccount(database, who.userId)),
+        },
         schools: roles,
         classes: enrolled,
       };

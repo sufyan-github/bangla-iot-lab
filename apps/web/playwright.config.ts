@@ -43,6 +43,8 @@ export default defineConfig({
         LOG_LEVEL: 'warn',
         WEB_ORIGIN: `http://localhost:${WEB_PORT}`,
         COMPILES_PER_MINUTE: '600',
+        // Each test signs up afresh, on two screen sizes at once.
+        SIGN_INS_PER_MINUTE: '200',
       },
     },
   ],

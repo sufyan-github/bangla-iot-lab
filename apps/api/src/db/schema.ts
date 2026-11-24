@@ -154,10 +154,9 @@ export const consentRecords = pgTable(
     learnerId: uuid('learner_id')
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
-    schoolId: uuid('school_id')
-      .notNull()
-      .references(() => schools.id, { onDelete: 'restrict' }),
+    schoolId: uuid('school_id').references(() => schools.id, { onDelete: 'restrict' }),
     scope: consentScope('scope').notNull(),
+    // schoolId is null for a learner on their own, whose guardian gave the permission.
     grantedBy: consentGrantor('granted_by').notNull(),
     /** Version of the policy text that was agreed to. */
     policyVersion: text('policy_version').notNull(),
@@ -168,7 +167,13 @@ export const consentRecords = pgTable(
     grantedAt: at('granted_at').notNull().defaultNow(),
     revokedAt: at('revoked_at'),
   },
-  (t) => [index('consent_records_learner_idx').on(t.learnerId, t.scope)],
+  (t) => [
+    index('consent_records_learner_idx').on(t.learnerId, t.scope),
+    check(
+      'consent_records_school_or_guardian',
+      sql`${t.grantedBy} = 'guardian' OR ${t.schoolId} IS NOT NULL`,
+    ),
+  ],
 );
 
 export const projects = pgTable(
