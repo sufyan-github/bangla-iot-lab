@@ -1,4 +1,9 @@
-import { UnoBoard, type PinDrive, type ProgrammableBoard } from '@banglalab/board-emulators';
+import {
+  UnoBoard,
+  type HttpResponse,
+  type PinDrive,
+  type ProgrammableBoard,
+} from '@banglalab/board-emulators';
 import { solveTimeStep, type Capacitor } from '@banglalab/circuit-engine';
 import {
   boardSocketOfPin,
@@ -11,6 +16,7 @@ import { BOARD_MODELS, type BoardModel } from './boards';
 import { Esp32SimBoard, esp32Emulator, parseEsp32Firmware } from './esp32-sim-board';
 import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
+import { MqttBroker, type MqttMessage } from './mqtt';
 import {
   buildNetlist,
   netName,
@@ -61,6 +67,8 @@ export interface BoardStatus {
   serial: string;
   /** All of the board's saved settings, present when the program changed them since the last frame. */
   settings?: string;
+  /** Answers the board's web server gave since the last frame, when there were any. */
+  http?: HttpResponse[];
 }
 
 /**
@@ -89,6 +97,8 @@ export interface SimulationFrame {
   speed?: number;
   result: SimulationResult;
   boards: Record<string, BoardStatus>;
+  /** MQTT messages sent since the last frame, by the boards or the dashboard. */
+  mqtt?: MqttMessage[];
   /** Present only while probes are set. */
   trace?: SignalTrace;
 }
@@ -102,6 +112,8 @@ interface RunningBoard {
   drives: PinDrive[];
   highTime: number[];
   serial: string;
+  /** Web server answers not yet reported. */
+  http: HttpResponse[];
   /** Level last presented to each input, for hysteresis and to avoid redundant updates. */
   inputLevel: (boolean | undefined)[];
   /** Pins the board was last told the circuit does not decide (see `releaseInput`). */
@@ -371,6 +383,7 @@ export class SimulationSession {
       drives: Array.from({ length: model.pinCount }, (_, pin) => emulator.pinDrive(pin)),
       highTime: new Array<number>(model.pinCount).fill(0),
       serial: '',
+      http: [],
       inputLevel: [],
       inputReleased: [],
       events: [],
@@ -395,6 +408,20 @@ export class SimulationSession {
       }
     });
     emulator.onSerial((text) => (board.serial += text));
+    emulator.onHttpResponse?.((response) => board.http.push(response));
+    emulator.onMqtt?.({
+      connect: (_clientId, deliver) => {
+        this.broker.connect(boardId, (message) => deliver(message.topic, message.payload));
+        return true;
+      },
+      disconnect: () => this.broker.disconnect(boardId),
+      publish: (topic, payload, retained) =>
+        this.broker.publish({ topic, payload, from: boardId, timeMs: this.clock }, retained),
+      subscribe: (filter, subscribe) =>
+        subscribe
+          ? this.broker.subscribe(boardId, filter)
+          : this.broker.unsubscribe(boardId, filter),
+    });
     emulator.onSettingsSaved?.((settings) => {
       this.settings.set(boardId, settings);
       this.settingsChanged.add(boardId);
@@ -838,6 +865,24 @@ export class SimulationSession {
     this.time = end;
   }
 
+  /** The lab's MQTT broker, shared by the boards and the dashboard panel. */
+  private readonly broker = new MqttBroker();
+
+  /** A message from the dashboard panel. False when the topic is not one a client may publish to. */
+  publishMqtt(topic: string, payload: string, retained = false): boolean {
+    return this.broker.publish({ topic, payload, from: 'dashboard', timeMs: this.time }, retained);
+  }
+
+  /**
+   * A request from the lab's browser panel to a board's web server. Returns its
+   * number, to find the answer by in a later frame, or why it was not sent.
+   */
+  request(boardId: string, path: string): number | 'no-board' | 'no-wifi' | 'no-server' | 'busy' {
+    const board = this.boards.get(boardId);
+    if (!board?.emulator.request) return 'no-board';
+    return board.emulator.request(path);
+  }
+
   /**
    * Text typed on the phone panel of a Bluetooth or GSM module: it reaches the
    * module now, and the board as fast as the serial line carries it.
@@ -877,12 +922,16 @@ export class SimulationSession {
         ),
         serial: board.serial,
         ...(this.settingsChanged.has(id) ? { settings: this.settings.get(id) ?? '' } : {}),
+        ...(board.http.length > 0 ? { http: board.http } : {}),
       };
       board.highTime.fill(0);
       board.serial = '';
+      board.http = [];
       this.settingsChanged.delete(id);
     }
     const frame: SimulationFrame = { timeMs: this.time, result, boards };
+    const messages = this.broker.takeLog();
+    if (messages.length > 0) frame.mqtt = messages;
     if (this.probes.length > 0) {
       frame.trace = this.trace;
       this.trace = { probes: this.probes, times: [], values: this.probes.map(() => []) };

@@ -13,6 +13,8 @@ import { Palette } from './Palette';
 import { SheetView } from './SheetView';
 import { Inspector, Messages, Meter, TruthTablePanel } from './panels';
 import { SignalsPanel } from './SignalsPanel';
+import { IotPanel } from './IotPanel';
+import { WebPanel } from './WebPanel';
 import { checkStep } from '@banglalab/lessons';
 import { LessonPanel } from '../lessons/LessonPanel';
 import { useLessonState } from '../lessons/progress';
@@ -253,6 +255,8 @@ const TAB_LABELS = {
   circuit: 'code.tabCircuit',
   code: 'code.tabCode',
   signals: 'code.tabSignals',
+  web: 'web.tab',
+  iot: 'iot.tab',
 } as const;
 
 export function LabPage() {
@@ -275,6 +279,13 @@ export function LabPage() {
       .join(','),
   );
   const boardIds = boardList ? boardList.split(',') : [];
+  /** The ESP32 whose web page the browser panel opens: the one picked for the code tab, or the first. */
+  const esp32List = useLab((s) =>
+    s.circuit.components
+      .filter((c) => c.type === 'esp32')
+      .map((c) => c.id)
+      .join(','),
+  );
   const selectedId = useLab((s) => s.selectedId);
   /** The board whose program the code tab shows: the last one picked, here or on the canvas. */
   const [chosenBoard, setChosenBoard] = useState<string | null>(null);
@@ -283,6 +294,8 @@ export function LabPage() {
   }, [selectedId, boardList]);
   const boardId =
     chosenBoard !== null && boardIds.includes(chosenBoard) ? chosenBoard : boardIds[0];
+  const esp32Ids = esp32List ? esp32List.split(',') : [];
+  const esp32Id = boardId && esp32Ids.includes(boardId) ? boardId : esp32Ids[0];
   const hasBuzzer = useLab((s) =>
     s.circuit.components.some((c) => c.type === 'buzzer' || c.type === 'siren'),
   );
@@ -302,7 +315,9 @@ export function LabPage() {
       // Private mode: the choice lasts for this visit.
     }
   };
-  const [tab, setTab] = useState<'lesson' | 'circuit' | 'code' | 'signals'>('circuit');
+  const [tab, setTab] = useState<'lesson' | 'circuit' | 'code' | 'signals' | 'web' | 'iot'>(
+    'circuit',
+  );
   // A project made from a lesson opens at its lesson.
   useEffect(() => setTab(hasLesson ? 'lesson' : 'circuit'), [hasLesson]);
   /** The breadboard is where the circuit is built; the diagram is the same circuit as a schematic. */
@@ -433,8 +448,9 @@ export function LabPage() {
         className={`w-full shrink-0 overflow-y-auto border-line bg-surface lg:border-l ${showCode ? 'lg:w-[34rem]' : 'lg:w-[21rem]'}`}
       >
         <div role="tablist" className="flex border-b border-line">
-          {(['lesson', 'circuit', 'code', 'signals'] as const)
+          {(['lesson', 'circuit', 'code', 'signals', 'web', 'iot'] as const)
             .filter((id) => id !== 'code' || boardId !== undefined)
+            .filter((id) => (id !== 'web' && id !== 'iot') || esp32Id !== undefined)
             .filter((id) => id !== 'lesson' || hasLesson)
             .map((id) => (
               <button
@@ -487,6 +503,10 @@ export function LabPage() {
           </>
         ) : tab === 'signals' ? (
           <SignalsPanel />
+        ) : tab === 'web' && esp32Id !== undefined ? (
+          <WebPanel boardId={esp32Id} />
+        ) : tab === 'iot' ? (
+          <IotPanel />
         ) : (
           <>
             <Messages />

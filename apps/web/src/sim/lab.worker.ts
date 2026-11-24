@@ -149,6 +149,16 @@ const api = {
     return loaded;
   },
 
+  /** A request from the browser panel to a board's web server; the answer comes in a frame. */
+  request(boardId: string, path: string): number | string {
+    return session?.request(boardId, path) ?? 'no-board';
+  },
+
+  /** A message from the IoT dashboard to the lab's MQTT broker. */
+  publishMqtt(topic: string, payload: string, retained: boolean): boolean {
+    return session?.publishMqtt(topic, payload, retained) ?? false;
+  },
+
   /** Text typed on a module's phone panel: a Bluetooth message or an SMS. */
   phone(partId: string, text: string): void {
     session?.phone(partId, text);

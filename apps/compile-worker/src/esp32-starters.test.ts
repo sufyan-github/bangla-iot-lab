@@ -33,6 +33,7 @@ describe('shipped ESP32 starter programs', () => {
       'motion.ino',
       'motor.ino',
       'mp3.ino',
+      'mqtt.ino',
       'obstacle.ino',
       'oled.ino',
       'parking.ino',
@@ -57,6 +58,7 @@ describe('shipped ESP32 starter programs', () => {
       'water.ino',
       'watering.ino',
       'weather.ino',
+      'webserver.ino',
     ]);
     for (const sketch of sketches) {
       const name = sketch.replace(/\.ino$/, '');

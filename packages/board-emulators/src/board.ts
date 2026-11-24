@@ -141,6 +141,40 @@ export interface ProgrammableBoard {
    * this takes the settings to start from when it is made.
    */
   onSettingsSaved?(listener: (settings: string) => void): void;
+  /**
+   * Optional. A request from the lab's browser panel to the board's own web
+   * server, for a path such as "/led?on=1". Returns the request's number, or
+   * why it cannot be sent: the board is not on Wi-Fi, or serves no pages.
+   */
+  request?(path: string): number | 'no-wifi' | 'no-server' | 'busy';
+  /**
+   * Optional. Gives the board the lab's MQTT broker. A board that does not offer
+   * this cannot use MQTT.
+   */
+  onMqtt?(handler: MqttHandler): void;
+  /** Optional. Called with each answer the board's web server gives. */
+  onHttpResponse?(listener: (response: HttpResponse) => void): void;
   /** Optional. Frees what the board holds, when it is taken out of a circuit. */
   dispose?(): void;
+}
+
+/** An answer from a board's web server. Status 0 means the program sent none. */
+export interface HttpResponse {
+  /** The request it answers. */
+  id: number;
+  path: string;
+  status: number;
+  type: string;
+  /** Headers the program set, such as Location. */
+  headers: Record<string, string>;
+  body: string;
+}
+
+/** What a board asks of the lab's MQTT broker. Messages for the board come through `deliver`. */
+export interface MqttHandler {
+  /** False when the broker cannot be reached (the board is not on Wi-Fi). */
+  connect(clientId: string, deliver: (topic: string, payload: string) => void): boolean;
+  disconnect(): void;
+  publish(topic: string, payload: string, retained: boolean): boolean;
+  subscribe(filter: string, subscribe: boolean): boolean;
 }

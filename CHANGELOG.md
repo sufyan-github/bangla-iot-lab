@@ -18,6 +18,14 @@ make no promise of compatibility, except that saved circuits are always migrated
 - **The logic analyser reads chip legs**: every joined leg of a logic chip or
   clock module gets a row, named as in its datasheet, so a circuit of chips
   with no board can be watched too. Any of them can be an oscilloscope channel.
+- **MQTT and an IoT dashboard**: a made-up MQTT broker in the lab shared by the
+  boards, `PubSubClient.h` in the ESP32 library, and an IoT panel that shows
+  each topic's latest value with a small chart and sends messages. Ready-made
+  program `mqtt`.
+- **Wi-Fi and the board's own web page**: `WiFi.h` and `WebServer.h` in the
+  ESP32 board library, on a made-up network with no real internet, and a
+  "Web page" panel that asks the board for its pages and shows them safely
+  (no scripts, nothing reaches outside). Ready-made program `webserver`.
 - **Four logic lessons**, each checked step by step by the lab: AND and OR
   gates, the flip-flop, counting by itself with a seven-segment display, and
   the shift register.

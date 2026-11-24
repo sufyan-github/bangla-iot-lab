@@ -1,4 +1,6 @@
 import type {
+  HttpResponse,
+  MqttHandler,
   I2cHandler,
   LedStripHandler,
   OneWireHandler,
@@ -47,6 +49,19 @@ const CHANGE = 3;
 const PINS = 40;
 /** Board time charged for one library call, microseconds. */
 const CALL_COST_US = 2;
+/** ESTIMATE: how long a station takes to join a network, from WiFi.begin(). */
+const WIFI_JOIN_US = 1_500_000;
+const WL_CONNECTED = 3;
+const WL_DISCONNECTED = 6;
+/** The addresses the lab gives: on the lab's made-up network, and as an access point. */
+const STATION_ADDRESS = 192 | (168 << 8) | (1 << 16) | (50 << 24);
+const AP_ADDRESS = 192 | (168 << 8) | (4 << 16) | (1 << 24);
+/** Requests that may wait for the program, and the longest answer kept. */
+const MAX_HTTP_QUEUE = 4;
+const MAX_HTTP_BODY = 64 * 1024;
+/** PubSubClient's state for a failed connection, and how many messages may wait for loop(). */
+const MQTT_CONNECT_FAILED = -2;
+const MAX_MQTT_INBOX = 64;
 /** Bytes a UART's receive buffer holds, as Espressif's core sets it by default. */
 const UART_BUFFER_BYTES = 256;
 /** Fastest switching shown for a PWM output, hertz. Its duty is kept whatever the frequency. */
@@ -146,6 +161,23 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   } | null = null;
   /** Why the board last started: ESP-IDF's numbers, 0 at power-on, 4 a timer, 2 a pin (ext0). */
   private wakeCause = 0;
+
+  /**
+   * Wi-Fi as the lab models it: mode 1 a station on a network, 2 the board's own
+   * access point; the time the station started joining, in microseconds.
+   */
+  private wifi = { mode: 0, ssid: '', since: 0 };
+  /** The web server's port once it listens, its waiting requests, and the one taken last. */
+  private httpPort: number | null = null;
+  private readonly httpQueue: { id: number; path: string }[] = [];
+  private httpCurrent: { id: number; path: string } | null = null;
+  private nextHttpId = 1;
+  private readonly httpListeners = new Set<(response: HttpResponse) => void>();
+
+  /** The lab's MQTT broker, whether the program is connected, and messages waiting for it. */
+  private mqtt: MqttHandler | null = null;
+  private mqttConnected = false;
+  private readonly mqttInbox: { topic: string; payload: string }[] = [];
 
   /** The saved settings (Preferences), as UTF-8 text, and who wants to hear of changes. */
   private settings: Uint8Array;
@@ -295,6 +327,114 @@ export class Esp32SketchBoard implements ProgrammableBoard {
         throw new DeepSleep();
       },
       host_wakeup_cause: () => this.wakeCause,
+      host_wifi_begin: (mode: number, pointer: number, length: number) => {
+        const ssid = new TextDecoder().decode(
+          new Uint8Array(this.exports.memory.buffer, pointer, length >>> 0),
+        );
+        this.wifi = { mode, ssid, since: this.now };
+      },
+      host_wifi_status: () => this.wifiStatus(),
+      host_wifi_address: () =>
+        this.wifi.mode === 2
+          ? AP_ADDRESS
+          : this.wifiStatus() === WL_CONNECTED
+            ? STATION_ADDRESS
+            : 0,
+      host_mqtt_connect: (pointer: number, length: number) => {
+        const reachable = this.wifi.mode === 2 || this.wifiStatus() === WL_CONNECTED;
+        if (!this.mqtt || !reachable) return MQTT_CONNECT_FAILED;
+        const id = this.text(pointer, length);
+        this.mqttConnected = this.mqtt.connect(id, (topic, payload) => {
+          if (this.mqttInbox.length < MAX_MQTT_INBOX) this.mqttInbox.push({ topic, payload });
+        });
+        return this.mqttConnected ? 0 : MQTT_CONNECT_FAILED;
+      },
+      host_mqtt_disconnect: () => {
+        this.mqtt?.disconnect();
+        this.mqttConnected = false;
+        this.mqttInbox.length = 0;
+      },
+      host_mqtt_connected: () => {
+        // Leaving Wi-Fi ends the connection.
+        if (this.mqttConnected && this.wifi.mode !== 2 && this.wifiStatus() !== WL_CONNECTED) {
+          this.mqtt?.disconnect();
+          this.mqttConnected = false;
+        }
+        return this.mqttConnected ? 1 : 0;
+      },
+      host_mqtt_publish: (
+        topicPointer: number,
+        topicLength: number,
+        payloadPointer: number,
+        payloadLength: number,
+        retained: number,
+      ) =>
+        this.mqttConnected && this.mqtt
+          ? Number(
+              this.mqtt.publish(
+                this.text(topicPointer, topicLength),
+                this.text(payloadPointer, payloadLength),
+                retained !== 0,
+              ),
+            )
+          : 0,
+      host_mqtt_subscribe: (pointer: number, length: number, subscribe: number) =>
+        this.mqttConnected && this.mqtt
+          ? Number(this.mqtt.subscribe(this.text(pointer, length), subscribe !== 0))
+          : 0,
+      host_mqtt_next: (pointer: number, capacity: number) => {
+        const next = this.mqttInbox[0];
+        if (!next) return 0;
+        const topic = new TextEncoder().encode(next.topic);
+        const payload = new TextEncoder().encode(next.payload);
+        const length = topic.length + 1 + payload.length;
+        if (pointer && capacity >>> 0 >= length) {
+          const memory = new Uint8Array(this.exports.memory.buffer, pointer, length);
+          memory.set(topic);
+          memory[topic.length] = 0;
+          memory.set(payload, topic.length + 1);
+          this.mqttInbox.shift();
+        }
+        return length;
+      },
+      host_http_listen: (port: number) => {
+        this.httpPort = port;
+      },
+      host_http_next: (pointer: number, capacity: number) => {
+        const next = this.httpQueue[0];
+        if (!next || this.httpPort === null) return 0;
+        const bytes = new TextEncoder().encode(`GET ${next.path}`);
+        if (pointer && capacity >>> 0 >= bytes.length) {
+          new Uint8Array(this.exports.memory.buffer, pointer, bytes.length).set(bytes);
+          this.httpQueue.shift();
+          this.httpCurrent = next;
+        }
+        return bytes.length;
+      },
+      host_http_respond: (
+        status: number,
+        typePointer: number,
+        typeLength: number,
+        bodyPointer: number,
+        bodyLength: number,
+      ) => {
+        const request = this.httpCurrent;
+        this.httpCurrent = null;
+        if (!request) return;
+        const text = (pointer: number, length: number) =>
+          new TextDecoder().decode(
+            new Uint8Array(this.exports.memory.buffer, pointer, length >>> 0),
+          );
+        const [type = '', ...headerLines] = text(typePointer, typeLength).split('\n');
+        const headers: Record<string, string> = {};
+        for (const line of headerLines) {
+          const colon = line.indexOf(':');
+          if (colon > 0) headers[line.slice(0, colon).trim()] = line.slice(colon + 1).trim();
+        }
+        const body = text(bodyPointer, Math.min(bodyLength >>> 0, MAX_HTTP_BODY));
+        const response = { id: request.id, path: request.path, status, type, headers, body };
+        for (const listener of this.httpListeners) listener(response);
+      },
       host_micros: () => BigInt(Math.floor(this.now)),
       host_delay_micros: (microseconds: bigint) => this.wait(Number(microseconds)),
       host_tick: () => this.wait(CALL_COST_US),
@@ -452,6 +592,37 @@ export class Esp32SketchBoard implements ProgrammableBoard {
         if (uart.buffer.length < UART_BUFFER_BYTES) uart.buffer.push(byte);
     }
     return uart.buffer;
+  }
+
+  /** The Arduino status: connected once a station has had time to join; disconnected otherwise. */
+  private wifiStatus(): number {
+    if (this.wifi.mode === 1 && this.now - this.wifi.since >= WIFI_JOIN_US) return WL_CONNECTED;
+    return WL_DISCONNECTED;
+  }
+
+  request(path: string): number | 'no-wifi' | 'no-server' | 'busy' {
+    const reachable = this.wifi.mode === 2 || this.wifiStatus() === WL_CONNECTED;
+    if (!reachable) return 'no-wifi';
+    if (this.httpPort === null) return 'no-server';
+    if (this.httpQueue.length >= MAX_HTTP_QUEUE) return 'busy';
+    const id = this.nextHttpId++;
+    this.httpQueue.push({ id, path: path.startsWith('/') ? path : `/${path}` });
+    return id;
+  }
+
+  onMqtt(handler: MqttHandler): void {
+    this.mqtt = handler;
+  }
+
+  /** Text the program holds in its memory. */
+  private text(pointer: number, length: number): string {
+    return new TextDecoder().decode(
+      new Uint8Array(this.exports.memory.buffer, pointer, length >>> 0),
+    );
+  }
+
+  onHttpResponse(listener: (response: HttpResponse) => void): void {
+    this.httpListeners.add(listener);
   }
 
   onSerial(listener: (text: string) => void): () => void {

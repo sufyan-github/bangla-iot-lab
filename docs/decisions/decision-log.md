@@ -1522,3 +1522,59 @@ and a hex digit that shows its four inputs. Undo and redo on the sheet (up to
 the switches called A to D: the prime implicants by Quine–McCluskey, then the
 smallest cover found by trying every set of them, which is exact for up to four
 inputs. A bar over a letter means NOT.
+## D-080 — Wi-Fi and the board's own web page
+
+The owner chose (24 November 2026) the board's own web page, with no real
+internet (E3). The lab's ESP32 library gains `WiFi.h` and `WebServer.h`,
+written for the lab from the Arduino ESP32 core's documented API (the core's
+own code is LGPL and is not used):
+
+- `WiFi.begin()` joins any network after 1.5 s (ESTIMATE) and gives the board
+  192.168.1.50 on the lab's made-up network; `WiFi.softAP()` starts the
+  board's own access point at 192.168.4.1. `status()`, `localIP()`,
+  `softAPIP()`, `RSSI()` (−55 dBm, ESTIMATE) and `disconnect()` are there.
+- `WebServer`: `on()` with or without a method, `onNotFound()`, `begin()`,
+  `handleClient()`, `send()`, `sendHeader()`, and the request's `uri()`,
+  `method()`, `arg()`, `hasArg()`, `args()` and `argName()`, with the query
+  decoded as a browser encodes it.
+
+**The browser panel.** A "Web page" tab beside the others, when there is an
+ESP32. A request goes to the board's program, which answers it in
+`handleClient()`; up to four may wait. The panel says why a board cannot be
+reached (not on Wi-Fi yet, no server started, requests piling up because
+`handleClient()` is not called) and when the program sent no answer. A redirect
+to the board's own path is followed once.
+
+**Safety.** The page is shown in a sandboxed frame with no scripts, and a
+content policy that lets nothing in it reach any address: a student's page
+could name any site, and a lab for children must not send their requests
+anywhere. Links and GET forms on the page are read without running anything
+and offered as buttons beneath it.
+
+**Not modelled.** Real networks, scanning, other boards' Wi-Fi, HTTPS, the
+internet, POST bodies, and the time a request takes on air.
+
+Ready-made program `webserver`: an LED switched from the board's page.
+
+## D-083 — MQTT and an IoT dashboard
+
+The second IoT segment, on the Wi-Fi of D-080. The lab has one made-up MQTT
+broker per circuit, shared by every board and a new **IoT** dashboard panel;
+there is still no real internet, and any server name reaches it. The lab's
+ESP32 library gains `PubSubClient.h`, written for the lab from the documented
+API of Nick O'Leary's PubSubClient (MIT): the real library needs a TCP socket,
+which the lab does not model. `setServer`, `setCallback`, `connect`,
+`connected`, `state`, `publish` (with retain), `subscribe`, `unsubscribe` and
+`loop` are there, and a `WiFiClient` to hand it.
+
+The broker matches `+` and `#` as MQTT does, keeps the last retained message on
+each topic (an empty one clears it), refuses wildcards in a published topic,
+and keeps topics to 256 characters and payloads to 4 KB. Messages arrive at
+once and in order; up to 64 may wait for a board's `loop()`. QoS, persistent
+sessions, last will and authentication are not modelled. Leaving Wi-Fi ends a
+board's connection.
+
+The dashboard lists every topic with its latest value, who sent it, and a small
+chart of its recent numbers, and sends messages (optionally retained) with
+quick "on" and "off" buttons. Ready-made program `mqtt`: the knob's reading to
+`lab/knob` every two seconds, and the LED from `lab/led`.
