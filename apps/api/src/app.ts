@@ -6,6 +6,7 @@ import type { ApiConfig } from './config';
 import type { Database } from './db/client';
 import { LocalMailbox, type Mailer } from './mail';
 import { authRoutes } from './routes/auth';
+import { closingRoutes } from './routes/closing';
 import { individualRoutes } from './routes/individuals';
 import { ownerRoutes } from './routes/owner';
 import { classRoutes } from './routes/classes';
@@ -73,6 +74,7 @@ export async function buildApp(options: Omit<AppDependencies, 'mailer'> & { mail
   await app.register(compileRoutes(deps));
   await app.register(authRoutes(deps));
   await app.register(individualRoutes(deps));
+  await app.register(closingRoutes(deps));
   await app.register(ownerRoutes(deps));
   // Development and browser tests only: the local mailbox, so a test can follow a link.
   if (deps.config.devMailbox && deps.mailer instanceof LocalMailbox) {

@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { useT } from '../i18n';
 import { useAccount } from './client';
 import { LabPass } from './LabPass';
@@ -59,6 +60,13 @@ export function SignedOut() {
             onClick={() => go('class')}
           />
         </div>
+        <Link
+          to="/account/guardian"
+          data-testid="entry-guardian"
+          className="btn btn-quiet -ml-2.5 text-sm"
+        >
+          {t('account.entry.guardian')}
+        </Link>
       </div>
     );
   }

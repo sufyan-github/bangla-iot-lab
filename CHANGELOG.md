@@ -31,6 +31,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Closing accounts**: anyone can close their own account from My account; a
+  parent or guardian can close a learner's own account by a link sent to the
+  email that approved it.
 - **The lab office in Kumo**: the owner's dashboard is rebuilt with Cloudflare's
   Kumo components (tables, dialogs, badges, a copy box), loaded only for owners.
 - **Schools that apply**: a new school waits for the lab owner's approval;

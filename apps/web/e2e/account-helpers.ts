@@ -45,7 +45,11 @@ export async function makeClass(page: Page, className: string) {
  * The newest link the API's local mailbox holds for an address: the path and
  * token, to open on the web page. Needs the API started with DEV_MAILBOX=1.
  */
-export async function emailedLink(page: Page, to: string, kind: 'verify' | 'approve' | 'reset') {
+export async function emailedLink(
+  page: Page,
+  to: string,
+  kind: 'verify' | 'approve' | 'reset' | 'close',
+) {
   const api = process.env.E2E_API_URL ?? 'http://127.0.0.1:4000';
   let link = '';
   await expect

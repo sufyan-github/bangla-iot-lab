@@ -137,6 +137,30 @@ export const bn = {
   'network.label': 'বোর্ডের নেটওয়ার্ক',
   'nav.account': 'সাইন ইন',
   'account.title': 'ক্লাস আর অ্যাকাউন্ট',
+  'account.close.title': 'অ্যাকাউন্ট বন্ধ করো',
+  'account.close.about':
+    'বন্ধ করলে আর কেউ এই অ্যাকাউন্টে সাইন ইন করতে পারবে না; তোমার অগ্রগতি আর ক্লাউডের সার্কিট ল্যাবের নিয়মিত পরিষ্কারের সময় মুছে যাবে। এটা ফেরানো যায় না।',
+  'account.close.teacherNote': 'তোমার ক্লাসগুলো বিদ্যালয়ের অ্যাডমিনের কাছে যাবে।',
+  'account.close.ask': 'অ্যাকাউন্ট বন্ধ করো…',
+  'account.close.confirm': 'হ্যাঁ, চিরতরে বন্ধ করো',
+  'account.closed': 'অ্যাকাউন্ট বন্ধ হয়েছে।',
+  'account.error.admin-stays': 'আগে বিদ্যালয়ের অ্যাডমিনের দায়িত্ব অন্য শিক্ষককে দাও (বিদ্যালয় ট্যাবে)।',
+  'account.error.owner-stays':
+    'ল্যাবের মালিকের অ্যাকাউন্ট এখান থেকে বন্ধ হয় না; আগে সার্ভারে মালিকের ভূমিকা ফেরত নাও।',
+  'account.entry.guardian': 'মা-বাবা বা অভিভাবক? সন্তানের অ্যাকাউন্ট বন্ধ করুন',
+  'guardian.title': 'অভিভাবকদের জন্য',
+  'guardian.about':
+    'আপনার সন্তানের নিজের অ্যাকাউন্ট বন্ধ করতে চাইলে তার সাইন-ইন নাম আর আপনার ইমেইল লিখুন, যেটা দিয়ে অনুমোদন দিয়েছিলেন। মিললে সেই ইমেইলে একটা লিংক যাবে।',
+  'guardian.yourEmail': 'আপনার ইমেইল',
+  'guardian.send': 'বন্ধ করার লিংক পাঠাও',
+  'guardian.sent': 'মিলে গেলে লিংক পাঠানো হয়েছে। ইমেইল দেখুন।',
+  'guardian.classNote':
+    'সন্তান কোনো বিদ্যালয়ের ক্লাসে থাকলে, তাকে ক্লাস থেকে সরাতে শিক্ষকের সঙ্গে কথা বলুন।',
+  'link.closeTitle': 'অ্যাকাউন্ট বন্ধ করা',
+  'link.closeAbout':
+    '“{name}” (সাইন-ইন নাম {username})-এর অ্যাকাউন্ট বন্ধ হবে; আর কেউ এতে সাইন ইন করতে পারবে না। এটা ফেরানো যায় না।',
+  'link.close': 'অ্যাকাউন্ট বন্ধ করুন',
+  'link.closed': '“{name}”-এর অ্যাকাউন্ট বন্ধ হয়েছে।',
   'account.tab.classes': 'ক্লাস',
   'account.tab.school': 'বিদ্যালয়',
   'account.tab.account': 'আমার অ্যাকাউন্ট',
@@ -1393,6 +1417,31 @@ export const en: Record<MessageKey, string> = {
   'network.label': 'The board’s network',
   'nav.account': 'Sign in',
   'account.title': 'Classes and accounts',
+  'account.close.title': 'Close my account',
+  'account.close.about':
+    'Once closed, no one can sign in to this account; your progress and cloud circuits are removed at the lab’s regular clean-up. This cannot be undone.',
+  'account.close.teacherNote': 'Your classes pass to your school’s admin.',
+  'account.close.ask': 'Close my account…',
+  'account.close.confirm': 'Yes, close it for good',
+  'account.closed': 'The account is closed.',
+  'account.error.admin-stays':
+    'Hand the school’s admin role to another teacher first (on the School tab).',
+  'account.error.owner-stays':
+    'An owner’s account is not closed here; take the owner role back on the server first.',
+  'account.entry.guardian': 'A parent or guardian? Close your child’s account',
+  'guardian.title': 'For parents and guardians',
+  'guardian.about':
+    'To close your child’s own account, write their sign-in name and your email, the one you approved with. If they match, a link goes to that email.',
+  'guardian.yourEmail': 'Your email',
+  'guardian.send': 'Send the closing link',
+  'guardian.sent': 'If they match, the link is on its way. Check your email.',
+  'guardian.classNote':
+    'If your child is in a school’s class, ask the teacher to take them out of it.',
+  'link.closeTitle': 'Close an account',
+  'link.closeAbout':
+    'The account of “{name}” (sign-in name {username}) will be closed; no one can sign in to it again. This cannot be undone.',
+  'link.close': 'Close the account',
+  'link.closed': 'The account of “{name}” is closed.',
   'account.tab.classes': 'Classes',
   'account.tab.school': 'School',
   'account.tab.account': 'My account',

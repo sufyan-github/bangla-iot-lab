@@ -892,7 +892,77 @@ function MyAccount() {
           {t('account.signOutEverywhere')}
         </button>
       </div>
+      <CloseAccount withPassword />
     </section>
+  );
+}
+
+/**
+ * Closing one's own account, for good. A password, if the account has one,
+ * confirms it; a second press says what will happen.
+ */
+function CloseAccount({ withPassword }: { withPassword: boolean }) {
+  const { t } = useT();
+  const me = useAccount((s) => s.me)!;
+  const refresh = useAccount((s) => s.refresh);
+  const [asking, setAsking] = useState(false);
+  const [password, setPassword] = useState('');
+  const close = useSubmit();
+  const teaching = me.schools.some((s) => s.role === 'teacher');
+  return (
+    <div className="space-y-3 border-t border-line pt-5" data-testid="close-account">
+      <h2 className="text-lg font-semibold">{t('account.close.title')}</h2>
+      <p className="text-sm text-ink-soft">{t('account.close.about')}</p>
+      {teaching && <p className="text-sm text-ink-soft">{t('account.close.teacherNote')}</p>}
+      {!asking ? (
+        <button
+          type="button"
+          data-testid="close-account-ask"
+          className="btn btn-danger"
+          onClick={() => setAsking(true)}
+        >
+          {t('account.close.ask')}
+        </button>
+      ) : (
+        <form
+          className="space-y-3"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (await close.submit('/v1/me/close', withPassword ? { password } : {})) {
+              await refresh();
+            }
+          }}
+        >
+          {withPassword && (
+            <Field label={t('account.currentPassword')}>
+              <input
+                data-testid="close-account-password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className={input}
+              />
+            </Field>
+          )}
+          <Problem error={close.error} />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="submit"
+              data-testid="close-account-confirm"
+              disabled={close.busy}
+              className="btn bg-danger px-4 text-paper"
+            >
+              {t('account.close.confirm')}
+            </button>
+            <button type="button" className="btn btn-quiet" onClick={() => setAsking(false)}>
+              {t('owner.confirm.no')}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }
 
@@ -1108,6 +1178,8 @@ function LearnerHome() {
 
       {me.user.account === 'individual' && me.user.kind === 'adult' && <MyAccount />}
       {me.user.username && <MyAccount />}
+
+      {me.user.account === 'class' && <CloseAccount withPassword={false} />}
 
       {/* A key is how a class learner signs in; others have a password. */}
       {me.user.account === 'class' && (
