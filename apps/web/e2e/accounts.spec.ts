@@ -28,7 +28,9 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
   await page.getByTestId('class-lessons-open').click();
   await page.getByTestId('assign-lesson').selectOption('push-button');
   await page.getByTestId('assign-submit').click();
-  await expect(page.locator('[data-testid="class-lesson"][data-lesson="push-button"]')).toBeVisible();
+  await expect(
+    page.locator('[data-testid="class-lesson"][data-lesson="push-button"]'),
+  ).toBeVisible();
 
   await page.getByTestId('sign-out').click();
   await page.getByTestId('join-code').fill(code.toLowerCase());
