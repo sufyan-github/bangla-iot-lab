@@ -2109,6 +2109,33 @@ Built on 24 November 2026, the third step of D-096.
 - **Not done:** account closing by the user or a guardian, and the retention
   job; a check that a school is real (the owner decides, by any means).
 
+## D-099 — The lab office in Cloudflare's Kumo
+
+Decided by the owner on 24 November 2026: the owner's dashboard uses Kumo
+(`@cloudflare/kumo` 2.18.0, MIT), Cloudflare's React components on Base UI and
+Tailwind CSS v4, with its icon set (`@phosphor-icons/react` 2.1.10, MIT). Both
+pinned to the newest release at least two weeks old.
+
+- **Only for the office.** The office page loads on demand, with its own
+  stylesheet built from Kumo's theme; students never download either. The main
+  bundle did not grow (it shrank slightly, as the office moved out of it); the
+  office's own code is about 390 kB and its styles 154 kB (23 kB compressed).
+- **The rest of the lab stays as it is.** Kumo's stand-alone stylesheet was not
+  used: it resets the whole page and sets its own typeface. Tailwind's defaults
+  and Kumo's theme would also change page-wide settings once loaded (the Bangla
+  typeface, text sizes, the transition speed and the root colour scheme), so
+  the office's stylesheet restates the lab's values. A browser test checks, in
+  light and dark mode, that the page's typeface, colour scheme and text sizes
+  are the same before and after the office has loaded.
+- **What it uses.** Cards for the counts, tabs, tables that scroll sideways on
+  a phone, status badges, a dialog to confirm each change, a copy box for
+  reset links, paging, empty and loading states. Kumo's built-in English labels
+  (paging, copying, tab scrolling) are given in Bangla and English. Kumo's dark
+  mode follows the lab's.
+- **Licences.** Kumo brings 70 packages, all permissive; the third-party list is
+  regenerated and the licence check passes. Kumo's optional chart and form
+  extras are not added.
+
 ## D-100 — Closing accounts
 
 Built on 24 November 2026, chosen by the owner as the next step.

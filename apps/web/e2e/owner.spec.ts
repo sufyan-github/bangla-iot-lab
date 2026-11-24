@@ -42,19 +42,23 @@ test('the owner suspends and restarts a school, and makes a reset link for a tea
   await page.getByTestId('owner-search').fill(school);
   const row = page.getByTestId('owner-school').filter({ hasText: school });
   await expect(row.getByTestId('owner-status')).toHaveText(/চালু|Working/);
+  // Each change asks first, in a dialog.
   await row.getByTestId('school-suspend').click();
-  await row.getByTestId('school-suspend-yes').click();
+  await page.getByTestId('confirm-yes').click();
   await expect(row.getByTestId('owner-status')).toHaveText(/স্থগিত|Suspended/);
   await row.getByTestId('school-activate').click();
-  await row.getByTestId('school-activate-yes').click();
+  await page.getByTestId('confirm-yes').click();
   await expect(row.getByTestId('owner-status')).toHaveText(/চালু|Working/);
 
   // A reset link for the teacher, to hand on.
-  await page.getByTestId('owner-tab-people').click();
+  await page.getByRole('tab', { name: /মানুষ|People/ }).click();
   await page.getByTestId('owner-search').fill(teacherEmail);
   const person = page.getByTestId('owner-person').filter({ hasText: teacherEmail });
   await person.getByTestId('person-reset-link').click();
-  await expect(person.getByTestId('reset-link-value')).toHaveText(/\/account\/reset#[\w-]+$/);
+  await expect(page.getByTestId('reset-link-value')).toHaveAttribute(
+    'data-link',
+    /\/account\/reset#[\w-]+$/,
+  );
 
   // The owner's own row offers no way to suspend or close it.
   await page.getByTestId('owner-search').fill(email);
@@ -63,6 +67,49 @@ test('the owner suspends and restarts a school, and makes a reset link for a tea
   await expect(own.getByTestId('person-suspend')).toHaveCount(0);
   await expect(own.getByTestId('person-close')).toHaveCount(0);
 
-  await page.getByTestId('owner-tab-activity').click();
+  await page.getByRole('tab', { name: /কার্যকলাপ|Activity/ }).click();
   await expect(page.getByTestId('owner-activity')).toContainText('owner.reset-link');
 });
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`the office’s styles change nothing elsewhere in the lab, ${scheme}`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    const look = () =>
+      page.evaluate(() => {
+        const root = getComputedStyle(document.documentElement);
+        return {
+          font: root.fontFamily,
+          scheme: root.colorScheme,
+          sizes: [
+            '--text-xs',
+            '--text-sm',
+            '--text-base',
+            '--text-lg',
+            '--text-xl',
+            '--text-3xl',
+          ].map((name) => root.getPropertyValue(name).trim()),
+        };
+      });
+    await page.goto('/lessons');
+    const before = await look();
+    expect(before.font).toContain('Anek Bangla');
+    // Opening the office loads its code and styles (even signed out, which shows
+    // only a notice); Back returns within the app, without reloading the page.
+    await page.goto('/lessons');
+    await page.evaluate(() => {
+      history.pushState(null, '', '/owner');
+      dispatchEvent(new PopStateEvent('popstate'));
+    });
+    await expect(page.getByTestId('owner-only')).toBeVisible();
+    expect(
+      await page.evaluate(() =>
+        [...document.styleSheets].some((sheet) =>
+          [...sheet.cssRules].some((rule) => rule.cssText.includes('kumo')),
+        ),
+      ),
+    ).toBe(true);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/lessons$/);
+    expect(await look()).toEqual(before);
+  });
+}
