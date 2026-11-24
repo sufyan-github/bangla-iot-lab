@@ -92,6 +92,7 @@ function FormAction({ action, onSend }: { action: PageAction; onSend: (path: str
 export function WebPanel({ boardId }: { boardId: string }) {
   const running = useLab((s) => s.running);
   const page = useLab((s) => s.pages[boardId]);
+  const calls = useLab((s) => s.webCalls);
   const { t } = useT();
   const [path, setPath] = useState('/');
   const [waiting, setWaiting] = useState<number | null>(null);
@@ -123,6 +124,7 @@ export function WebPanel({ boardId }: { boardId: string }) {
   const actions = useMemo(() => (page ? actionsOf(page) : []), [page]);
 
   if (!running) return <p className="px-4 py-4 text-sm text-ink-soft">{t('web.idle')}</p>;
+  const outgoing = calls.filter((call) => call.from === boardId);
 
   return (
     <div className="space-y-3 px-4 py-4" data-testid="web-panel">
@@ -215,6 +217,31 @@ export function WebPanel({ boardId }: { boardId: string }) {
                 ))}
             </div>
           )}
+        </section>
+      )}
+      {outgoing.length > 0 && (
+        <section data-testid="web-calls" className="space-y-1.5">
+          <h3 className="section-title">{t('web.calls')}</h3>
+          <p className="text-sm text-ink-soft">{t('web.callsAbout')}</p>
+          <ol className="divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface font-mono text-xs">
+            {outgoing
+              .slice(-8)
+              .reverse()
+              .map((call, i) => (
+                <li
+                  key={`${call.timeMs}-${i}`}
+                  data-testid="web-call"
+                  data-status={call.status}
+                  className="flex items-center gap-2 px-3 py-1.5"
+                >
+                  <span className="w-11 shrink-0 font-semibold">{call.method}</span>
+                  <span className="min-w-0 flex-1 truncate">{call.url}</span>
+                  <span className={call.status < 0 || call.status >= 400 ? 'text-danger' : ''}>
+                    {call.status < 0 ? t('web.nobody') : call.status}
+                  </span>
+                </li>
+              ))}
+          </ol>
         </section>
       )}
     </div>

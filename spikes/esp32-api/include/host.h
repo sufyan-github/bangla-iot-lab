@@ -152,6 +152,18 @@ int host_mqtt_publish(const char* topic, size_t topic_length, const uint8_t* pay
 int host_mqtt_subscribe(const char* filter, size_t filter_length, int subscribe);
 size_t host_mqtt_next(char* buffer, size_t capacity);
 
+/**
+ * HTTP requests from the program (HTTPClient), as the lab models them: there
+ * is no real internet, and only the lab's made-up services answer (echo.lab,
+ * weather.lab, log.lab). `host_http_fetch` sends a request and waits for the
+ * answer; it returns the status, or -1 when nothing answered (no Wi-Fi, or no
+ * such service). `host_http_fetched` copies the answer's body into `buffer`
+ * when it fits, and returns its whole length.
+ */
+int host_http_fetch(const char* method, size_t method_length, const char* url, size_t url_length,
+                    const char* body, size_t body_length);
+size_t host_http_fetched(char* buffer, size_t capacity);
+
 uint64_t host_micros(void);
 /** Lets time pass. This is where the world moves on and scripted inputs arrive. */
 void host_delay_micros(uint64_t microseconds);

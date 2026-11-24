@@ -502,6 +502,7 @@ export const bn = {
   'code.starter.esp32.shift': 'চলন্ত আলো: 74HC595 দিয়ে আটটা LED (D23, D18, D5)',
   'code.starter.esp32.webserver': 'ওয়েব পেজ: ব্রাউজার থেকে LED (LED: D2)',
   'code.starter.esp32.mqtt': 'MQTT: নবের মান পাঠাও, বার্তায় LED (নব: D34, LED: D2)',
+  'code.starter.esp32.webclient': 'ওয়েব থেকে আবহাওয়া আনো, গরমে LED (LED: D2)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -838,6 +839,10 @@ export const bn = {
   'web.tab': 'ওয়েব পেজ',
   'web.about':
     'বোর্ডের নিজের ওয়েব সার্ভার থেকে পেজ চাও। আসল ইন্টারনেট নেই: অনুরোধ যায় বোর্ডের প্রোগ্রামের কাছে, আর পেজের কোনো স্ক্রিপ্ট চলে না।',
+  'web.calls': 'প্রোগ্রামের পাঠানো অনুরোধ',
+  'web.callsAbout':
+    'বোর্ডের প্রোগ্রাম HTTPClient দিয়ে যা চেয়েছে। ল্যাবে আসল ইন্টারনেট নেই: echo.lab, weather.lab আর log.lab ল্যাবের বানানো সেবা।',
+  'web.nobody': 'কেউ নেই',
   'web.idle':
     'সার্কিট চালু করো, আর বোর্ডে এমন প্রোগ্রাম তোলো যা Wi-Fi-তে যোগ দিয়ে ওয়েব সার্ভার চালু করে (যেমন তৈরি প্রোগ্রাম "ওয়েব পেজ")।',
   'web.address': 'পেজের ঠিকানা',
@@ -1493,6 +1498,7 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.shift': 'Running light: eight LEDs through a 74HC595 (D23, D18, D5)',
   'code.starter.esp32.webserver': 'Web page: an LED from the browser (LED: D2)',
   'code.starter.esp32.mqtt': 'MQTT: send the knob, an LED by message (knob: D34, LED: D2)',
+  'code.starter.esp32.webclient': 'Weather from the web, an LED when hot (LED: D2)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -1829,6 +1835,10 @@ export const en: Record<MessageKey, string> = {
   'web.tab': 'Web page',
   'web.about':
     'Ask the board’s own web server for a page. There is no real internet: the request goes to the board’s program, and no script on the page runs.',
+  'web.calls': 'Requests the program made',
+  'web.callsAbout':
+    'What the board’s program asked for with HTTPClient. There is no real internet in the lab: echo.lab, weather.lab and log.lab are the lab’s made-up services.',
+  'web.nobody': 'nobody',
   'web.idle':
     'Run the circuit, with a program on the board that joins Wi-Fi and starts a web server (such as the ready-made “Web page”).',
   'web.address': 'Page address',

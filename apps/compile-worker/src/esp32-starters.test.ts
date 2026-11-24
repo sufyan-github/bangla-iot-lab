@@ -58,6 +58,7 @@ describe('shipped ESP32 starter programs', () => {
       'water.ino',
       'watering.ino',
       'weather.ino',
+      'webclient.ino',
       'webserver.ino',
     ]);
     for (const sketch of sketches) {

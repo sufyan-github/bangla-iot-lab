@@ -30,6 +30,7 @@ import type {
   Probe,
   SimulationFrame,
   SimulationResult,
+  WebCall,
 } from '@banglalab/simulation';
 import { create } from 'zustand';
 import type { BoardProgram, ProjectContent, SketchTab } from '../storage/projects';
@@ -52,6 +53,8 @@ export type SaveState = 'saved' | 'saving' | 'error';
 const SERIAL_LIMIT = 8_000;
 /** How many recent numbers each MQTT topic keeps for its little chart. */
 const TOPIC_HISTORY = 60;
+/** How many of the boards' web requests the panel keeps. */
+const WEB_CALLS_KEPT = 30;
 
 export interface MqttTopic extends MqttMessage {
   /** Its recent numeric payloads, oldest first. */
@@ -94,6 +97,8 @@ interface LabState {
   pages: Record<string, HttpResponse>;
   /** Each MQTT topic seen while running: its latest message and its recent numbers. */
   topics: Record<string, MqttTopic>;
+  /** The latest requests the boards' programs made to the lab's web services, oldest first. */
+  webCalls: WebCall[];
   /** How fast the simulation is running against real time; 1 when it keeps up. */
   speed: number;
   /** Counts uploads per board, so a running circuit knows when to restart a program. */
@@ -172,6 +177,7 @@ const STOPPED = {
   boards: {},
   pages: {} as Record<string, HttpResponse>,
   topics: {} as Record<string, MqttTopic>,
+  webCalls: [] as WebCall[],
   serial: {},
   pressed: [] as string[],
   speed: 1,
@@ -506,12 +512,16 @@ export const useLab = create<LabState>((set, get) => {
           [message.topic]: { ...message, history, count: (before?.count ?? 0) + 1 },
         };
       }
+      const webCalls = frame.web
+        ? [...get().webCalls, ...frame.web].slice(-WEB_CALLS_KEPT)
+        : get().webCalls;
       signals.append(frame.trace, frame.timeMs);
       set({
         result: frame.result,
         boards: frame.boards,
         pages,
         topics,
+        webCalls,
         serial,
         settings,
         speed: frame.speed ?? 1,

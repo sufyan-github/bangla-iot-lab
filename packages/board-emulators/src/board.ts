@@ -152,6 +152,11 @@ export interface ProgrammableBoard {
    * this cannot use MQTT.
    */
   onMqtt?(handler: MqttHandler): void;
+  /**
+   * Optional. Gives the board the lab's made-up web services, for the
+   * program's own HTTP requests. A board that does not offer this cannot make any.
+   */
+  onWeb?(handler: WebHandler): void;
   /** Optional. Called with each answer the board's web server gives. */
   onHttpResponse?(listener: (response: HttpResponse) => void): void;
   /** Optional. Frees what the board holds, when it is taken out of a circuit. */
@@ -169,6 +174,16 @@ export interface HttpResponse {
   headers: Record<string, string>;
   body: string;
 }
+
+/**
+ * A request the board's program makes, answered by the lab: the status and
+ * body, or null when nothing answers at that address.
+ */
+export type WebHandler = (
+  method: string,
+  url: string,
+  body: string,
+) => { status: number; type: string; body: string } | null;
 
 /** What a board asks of the lab's MQTT broker. Messages for the board come through `deliver`. */
 export interface MqttHandler {

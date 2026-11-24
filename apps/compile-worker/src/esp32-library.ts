@@ -32,6 +32,7 @@ const LIBRARY_SOURCES = [
   'src/sleep.cpp',
   'src/wifi.cpp',
   'src/mqtt.cpp',
+  'src/httpclient.cpp',
   'wasm/entry.cpp',
 ];
 

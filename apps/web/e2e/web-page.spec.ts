@@ -37,6 +37,27 @@ test('the web page program joins Wi-Fi and its page switches the LED', async ({ 
     .toBe('on');
 });
 
+test('a program asks the lab’s made-up web services, and the panel lists its requests', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByTestId('open-example-esp32').click();
+  await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
+  await page.getByTestId('tab-code').click();
+  await page.getByTestId('starter').selectOption('webclient');
+  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
+  await page.getByTestId('run').click();
+
+  await page.getByTestId('tab-network').click();
+  await page.getByTestId('tab-web').click();
+  const calls = page.getByTestId('web-call');
+  // Newest first: the reading kept in log.lab, after the weather it asked for.
+  await expect(calls.first()).toContainText('log.lab', { timeout: 15_000 });
+  await expect(calls.first()).toHaveAttribute('data-status', '201');
+  await expect(calls.nth(1)).toContainText('http://weather.lab/now?city=Dhaka');
+  await expect(calls.nth(1)).toHaveAttribute('data-status', '200');
+});
+
 test('the browser panel says why a board without Wi-Fi cannot be reached', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('open-example-esp32').click();

@@ -33,3 +33,4 @@ export type { RadioStatus } from './lora';
 export * from './sheet';
 export type { HttpResponse } from '@banglalab/board-emulators';
 export { topicMatches, type MqttMessage } from './mqtt';
+export { LAB_SERVICES, type WebCall } from './web-services';

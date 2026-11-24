@@ -18,6 +18,7 @@ import { Esp32SimBoard, esp32Emulator, parseEsp32Firmware } from './esp32-sim-bo
 import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
 import { MqttBroker, type MqttMessage } from './mqtt';
+import { LabWebServices, type WebCall } from './web-services';
 
 /** How many steps a sine or triangle wave from a function generator is drawn in, each period. */
 const GENERATOR_STEPS = 32;
@@ -103,6 +104,8 @@ export interface SimulationFrame {
   boards: Record<string, BoardStatus>;
   /** MQTT messages sent since the last frame, by the boards or the dashboard. */
   mqtt?: MqttMessage[];
+  /** Requests the boards' programs made to the lab's web services since the last frame. */
+  web?: WebCall[];
   /** Present only while probes are set. */
   trace?: SignalTrace;
 }
@@ -469,6 +472,9 @@ export class SimulationSession {
           ? this.broker.subscribe(boardId, filter)
           : this.broker.unsubscribe(boardId, filter),
     });
+    emulator.onWeb?.((method, url, body) =>
+      this.webServices.handle({ from: boardId, method, url, body, timeMs: this.clock }),
+    );
     emulator.onSettingsSaved?.((settings) => {
       this.settings.set(boardId, settings);
       this.settingsChanged.add(boardId);
@@ -926,6 +932,8 @@ export class SimulationSession {
 
   /** The lab's MQTT broker, shared by the boards and the dashboard panel. */
   private readonly broker = new MqttBroker();
+  /** The lab's made-up web services, shared by the boards. */
+  private readonly webServices = new LabWebServices();
 
   /** A message from the dashboard panel. False when the topic is not one a client may publish to. */
   publishMqtt(topic: string, payload: string, retained = false): boolean {
@@ -991,6 +999,8 @@ export class SimulationSession {
     const frame: SimulationFrame = { timeMs: this.time, result, boards };
     const messages = this.broker.takeLog();
     if (messages.length > 0) frame.mqtt = messages;
+    const calls = this.webServices.takeLog();
+    if (calls.length > 0) frame.web = calls;
     if (this.probes.length > 0) {
       frame.trace = this.trace;
       this.trace = { probes: this.probes, times: [], values: this.probes.map(() => []) };

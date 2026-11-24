@@ -1,6 +1,7 @@
 import type {
   HttpResponse,
   MqttHandler,
+  WebHandler,
   I2cHandler,
   LedStripHandler,
   OneWireHandler,
@@ -173,6 +174,10 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   private httpCurrent: { id: number; path: string } | null = null;
   private nextHttpId = 1;
   private readonly httpListeners = new Set<(response: HttpResponse) => void>();
+
+  /** The lab's made-up web services, and the body of the answer the program got last. */
+  private web: WebHandler | null = null;
+  private fetched = new Uint8Array(0);
 
   /** The lab's MQTT broker, whether the program is connected, and messages waiting for it. */
   private mqtt: MqttHandler | null = null;
@@ -397,6 +402,35 @@ export class Esp32SketchBoard implements ProgrammableBoard {
         }
         return length;
       },
+      host_http_fetch: (
+        methodPointer: number,
+        methodLength: number,
+        urlPointer: number,
+        urlLength: number,
+        bodyPointer: number,
+        bodyLength: number,
+      ) => {
+        this.fetched = new Uint8Array(0);
+        const reachable = this.wifi.mode === 2 || this.wifiStatus() === WL_CONNECTED;
+        // A board that is its own access point is on a network of its own, with no services.
+        if (!this.web || !reachable || this.wifi.mode === 2) return -1;
+        const answer = this.web(
+          this.text(methodPointer, methodLength),
+          this.text(urlPointer, urlLength),
+          this.text(bodyPointer, Math.min(bodyLength >>> 0, MAX_HTTP_BODY)),
+        );
+        if (!answer) return -1;
+        this.fetched = new TextEncoder().encode(answer.body.slice(0, MAX_HTTP_BODY));
+        return answer.status;
+      },
+      host_http_fetched: (pointer: number, capacity: number) => {
+        if (pointer && capacity >>> 0 >= this.fetched.length) {
+          new Uint8Array(this.exports.memory.buffer, pointer, this.fetched.length).set(
+            this.fetched,
+          );
+        }
+        return this.fetched.length;
+      },
       host_http_listen: (port: number) => {
         this.httpPort = port;
       },
@@ -608,6 +642,10 @@ export class Esp32SketchBoard implements ProgrammableBoard {
     const id = this.nextHttpId++;
     this.httpQueue.push({ id, path: path.startsWith('/') ? path : `/${path}` });
     return id;
+  }
+
+  onWeb(handler: WebHandler): void {
+    this.web = handler;
   }
 
   onMqtt(handler: MqttHandler): void {

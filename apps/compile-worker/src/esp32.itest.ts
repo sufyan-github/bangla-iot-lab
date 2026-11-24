@@ -144,10 +144,10 @@ int twice(int n) { return n * 2; }
 
   it('says so when a sketch uses something the board library does not have yet', async () => {
     const missingHeader = (
-      await compile('#include <HTTPClient.h>\nvoid setup() {}\nvoid loop() {}\n')
+      await compile('#include <WiFiClientSecure.h>\nvoid setup() {}\nvoid loop() {}\n')
     ).json();
     expect(missingHeader.ok).toBe(false);
-    expect(missingHeader.diagnostics[0].message).toMatch(/HTTPClient\.h/);
+    expect(missingHeader.diagnostics[0].message).toMatch(/WiFiClientSecure\.h/);
     const missingFunction = (
       await compile('void setup() { esp_sleep_enable_ext1_wakeup(1, 0); }\nvoid loop() {}\n')
     ).json();
@@ -306,7 +306,7 @@ void loop() { delay(100); }
 
   it('every shipped starter still builds and runs', async () => {
     const sketches = (await readdir(startersDir)).filter((file) => file.endsWith('.ino'));
-    expect(sketches.length).toBe(48);
+    expect(sketches.length).toBe(49);
     for (const sketch of sketches) {
       const { board } = await run(await readFile(new URL(sketch, startersDir), 'utf8'), 200);
       expect(board.stopped, sketch).toBeNull();
