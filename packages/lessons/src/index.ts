@@ -60,6 +60,11 @@ export function lessonProblems(value: unknown): string[] {
       problems.push(`the check for the lab's "${check.code}" explanation needs a label`);
     }
   }
+  for (const [i, question] of (lesson.quiz ?? []).entries()) {
+    if (question.answer >= question.choices.length) {
+      problems.push(`quiz question ${i + 1} gives an answer it does not offer`);
+    }
+  }
   if (lesson.learned.bn.length !== lesson.learned.en.length || lesson.learned.bn.length === 0) {
     problems.push('"learned" needs the same number of points in both languages');
   }

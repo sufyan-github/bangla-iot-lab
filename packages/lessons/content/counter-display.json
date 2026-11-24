@@ -402,5 +402,57 @@
   "tryNext": {
     "bn": "কাউন্টারকে ৯-এর পরে ০-তে ফেরাও: ১০ মানে Q1 আর Q3 দুটোই HIGH। একটা 74HC08 (AND) দিয়ে Q1 আর Q3 মিলিয়ে তার আউটপুট 1MR-এ দাও (আর 1MR থেকে GND-এর তারটা সরাও)।",
     "en": "Make the counter go back to 0 after 9: 10 means Q1 and Q3 are both HIGH. Join Q1 and Q3 through a 74HC08 (AND) and give its output to 1MR (and take away 1MR’s wire to GND)."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "৪-বিট কাউন্টার সবচেয়ে বেশি কত পর্যন্ত গোনে?",
+        "en": "What is the largest number a 4-bit counter holds?"
+      },
+      "choices": [
+        {
+          "bn": "৯",
+          "en": "9"
+        },
+        {
+          "bn": "১৫",
+          "en": "15"
+        },
+        {
+          "bn": "১৬",
+          "en": "16"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "চার বিটে ১৬টা সংখ্যা রাখা যায়, ০ থেকে ১৫।",
+        "en": "Four bits hold 16 numbers, from 0 to 15."
+      }
+    },
+    {
+      "question": {
+        "bn": "কাউন্টার ১২ গুনলে CD4511 ডিসপ্লেতে কী দেখায়?",
+        "en": "What does the CD4511 show when the counter is at 12?"
+      },
+      "choices": [
+        {
+          "bn": "১২",
+          "en": "12"
+        },
+        {
+          "bn": "২",
+          "en": "2"
+        },
+        {
+          "bn": "কিছুই না",
+          "en": "Nothing"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "CD4511 শুধু ০ থেকে ৯ দেখাতে পারে; ১০ থেকে ১৫-তে সব সেগমেন্ট নেভা থাকে।",
+        "en": "The CD4511 can only show 0 to 9; for 10 to 15 it lights no segment."
+      }
+    }
+  ]
 }

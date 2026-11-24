@@ -245,5 +245,53 @@
   "tryNext": {
     "bn": "চিপটা **74HC86 (XOR)** করে দেখো: দুটো সুইচ চালু থাকলে LED জ্বলে কি? সারণি বানিয়ে মিলিয়ে নাও।",
     "en": "Try the **74HC86 (XOR)**: does the LED light with both switches on? Check with the truth table."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "AND গেটের আউটপুট HIGH হয় কখন?",
+        "en": "When is an AND gate’s output HIGH?"
+      },
+      "choices": [
+        {
+          "bn": "যেকোনো একটা ইনপুট HIGH হলে",
+          "en": "When either input is HIGH"
+        },
+        {
+          "bn": "দুটো ইনপুটই HIGH হলে",
+          "en": "When both inputs are HIGH"
+        },
+        {
+          "bn": "দুটো ইনপুটই LOW হলে",
+          "en": "When both inputs are LOW"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "AND চায় সবগুলো ইনপুট HIGH; একটাও LOW হলে আউটপুট LOW।",
+        "en": "AND wants every input HIGH; one LOW input makes the output LOW."
+      }
+    },
+    {
+      "question": {
+        "bn": "XOR গেটে দুটো ইনপুটই HIGH হলে আউটপুট কী?",
+        "en": "What is an XOR gate’s output when both inputs are HIGH?"
+      },
+      "choices": [
+        {
+          "bn": "HIGH",
+          "en": "HIGH"
+        },
+        {
+          "bn": "LOW",
+          "en": "LOW"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "XOR HIGH দেয় শুধু তখন, যখন ইনপুট দুটো আলাদা; দুটোই HIGH হলে আউটপুট LOW।",
+        "en": "XOR gives HIGH only when the inputs differ; with both HIGH its output is LOW."
+      }
+    }
+  ]
 }

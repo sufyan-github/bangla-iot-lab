@@ -234,5 +234,57 @@
   "tryNext": {
     "bn": "দ্বিতীয় ফ্লিপ-ফ্লপটাও একইভাবে বানাও, আর তার ঘড়ি দাও প্রথমটার Q̅ থেকে। দুটো LED মিলে ০ থেকে ৩ গোনে কি না দেখো।",
     "en": "Build the second flip-flop the same way, and clock it from the first one’s Q̅. See whether the two LEDs together count from 0 to 3."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "D ফ্লিপ-ফ্লপ D-র মান নেয় কখন?",
+        "en": "When does a D flip-flop take the value on D?"
+      },
+      "choices": [
+        {
+          "bn": "সবসময়",
+          "en": "All the time"
+        },
+        {
+          "bn": "ঘড়ি LOW থেকে HIGH হওয়ার মুহূর্তে",
+          "en": "At the moment the clock goes from LOW to HIGH"
+        },
+        {
+          "bn": "ঘড়ি HIGH থাকার পুরো সময়",
+          "en": "All the while the clock is HIGH"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "74HC74 শুধু ঘড়ির উঠতি ধারে D দেখে; বাকি সময় Q আগের মানই ধরে রাখে।",
+        "en": "The 74HC74 looks at D only on the clock’s rising edge; the rest of the time Q keeps what it had."
+      }
+    },
+    {
+      "question": {
+        "bn": "Q̅ থেকে D-তে তার দিলে প্রতি চাপে কী হয়?",
+        "en": "With Q̅ wired to D, what does each press do?"
+      },
+      "choices": [
+        {
+          "bn": "Q উল্টে যায়",
+          "en": "Q turns over"
+        },
+        {
+          "bn": "Q সবসময় HIGH থাকে",
+          "en": "Q stays HIGH"
+        },
+        {
+          "bn": "কিছুই না",
+          "en": "Nothing"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "Q̅ সবসময় Q-এর উল্টো, তাই প্রতি ধারে Q নিজের উল্টো মান নেয়: এটাই ২ দিয়ে ভাগ।",
+        "en": "Q̅ is always the opposite of Q, so on each edge Q takes its own opposite: that is dividing by two."
+      }
+    }
+  ]
 }

@@ -137,5 +137,57 @@
   "tryNext": {
     "bn": "প্রোগ্রাম বদলাও যাতে বোতাম চাপলে LED নেভে, আর ছাড়লে জ্বলে।",
     "en": "Change the program so the LED goes out while the button is pressed and lights when it is let go."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "INPUT_PULLUP দিলে বোতাম না চাপলে পিন কী পড়ে?",
+        "en": "With INPUT_PULLUP, what does the pin read while the button is not pressed?"
+      },
+      "choices": [
+        {
+          "bn": "HIGH",
+          "en": "HIGH"
+        },
+        {
+          "bn": "LOW",
+          "en": "LOW"
+        },
+        {
+          "bn": "কখনো HIGH, কখনো LOW",
+          "en": "Sometimes HIGH, sometimes LOW"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "ভেতরের পুল-আপ রেজিস্টর পিনকে HIGH-এ টেনে রাখে; বোতাম চাপলে পিন GND-তে যায়, তখন LOW।",
+        "en": "The built-in pull-up resistor holds the pin HIGH; pressing joins it to GND, and then it reads LOW."
+      }
+    },
+    {
+      "question": {
+        "bn": "পুল-আপ বা পুল-ডাউন ছাড়া খালি পিন পড়লে কী হয়?",
+        "en": "What happens when a pin joined to nothing is read, with no pull-up or pull-down?"
+      },
+      "choices": [
+        {
+          "bn": "সবসময় LOW পড়ে",
+          "en": "It always reads LOW"
+        },
+        {
+          "bn": "যা খুশি পড়তে পারে",
+          "en": "It can read anything"
+        },
+        {
+          "bn": "বোর্ড বন্ধ হয়ে যায়",
+          "en": "The board switches off"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "খালি পিন আশেপাশের বৈদ্যুতিক গোলমাল ধরে, তাই তার মান ভরসার নয়।",
+        "en": "A pin joined to nothing picks up electrical noise, so its value cannot be trusted."
+      }
+    }
+  ]
 }

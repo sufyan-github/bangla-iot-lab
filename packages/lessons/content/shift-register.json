@@ -225,5 +225,57 @@
   "tryNext": {
     "bn": "প্রোগ্রাম বদলাও: `show(1 << i)`-এর বদলে `show((1 << (i + 1)) - 1)` লিখলে কী হয়? আলো কি এবার ভরে উঠতে থাকে?",
     "en": "Change the program: what happens if `show(1 << i)` becomes `show((1 << (i + 1)) - 1)`? Does the light now fill up?"
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "74HC595-এর আউটপুটে নতুন বিটগুলো কখন দেখা যায়?",
+        "en": "When do new bits appear on the 74HC595’s outputs?"
+      },
+      "choices": [
+        {
+          "bn": "প্রতি SHCP পালসে",
+          "en": "On every SHCP pulse"
+        },
+        {
+          "bn": "STCP LOW থেকে HIGH হলে",
+          "en": "When STCP goes from LOW to HIGH"
+        },
+        {
+          "bn": "DS বদলালেই",
+          "en": "As soon as DS changes"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "বিট ঢোকে SHCP-তে, কিন্তু আউটপুটে যায় শুধু STCP-র উঠতি ধারে, সব একসঙ্গে।",
+        "en": "Bits go in on SHCP, but reach the outputs only on STCP’s rising edge, all together."
+      }
+    },
+    {
+      "question": {
+        "bn": "আটটা LED চালাতে বোর্ডের কয়টা পিন লাগল?",
+        "en": "How many of the board’s pins did eight LEDs need?"
+      },
+      "choices": [
+        {
+          "bn": "তিনটা",
+          "en": "Three"
+        },
+        {
+          "bn": "আটটা",
+          "en": "Eight"
+        },
+        {
+          "bn": "একটা",
+          "en": "One"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "DS, SHCP আর STCP: তিনটা পিনেই আটটা আউটপুট।",
+        "en": "DS, SHCP and STCP: eight outputs from three pins."
+      }
+    }
+  ]
 }

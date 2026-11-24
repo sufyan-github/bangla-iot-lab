@@ -115,5 +115,57 @@
   "tryNext": {
     "bn": "কোড ট্যাবে `delay(1000)` বদলে `delay(200)` করো আর আবার আপলোড করো। কী হলো?",
     "en": "In the Code tab, change `delay(1000)` to `delay(200)` and upload again. What happens?"
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "delay(500) লিখলে প্রোগ্রাম কতক্ষণ থামে?",
+        "en": "How long does delay(500) pause the program?"
+      },
+      "choices": [
+        {
+          "bn": "৫০০ সেকেন্ড",
+          "en": "500 seconds"
+        },
+        {
+          "bn": "আধা সেকেন্ড",
+          "en": "Half a second"
+        },
+        {
+          "bn": "৫ সেকেন্ড",
+          "en": "5 seconds"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "delay() মিলিসেকেন্ডে গোনে: ৫০০ মিলিসেকেন্ড মানে আধা সেকেন্ড।",
+        "en": "delay() counts in milliseconds: 500 milliseconds is half a second."
+      }
+    },
+    {
+      "question": {
+        "bn": "LED-এর সঙ্গে রেজিস্টর কেন লাগে?",
+        "en": "Why does the LED need a resistor?"
+      },
+      "choices": [
+        {
+          "bn": "LED আরও উজ্জ্বল করতে",
+          "en": "To make the LED brighter"
+        },
+        {
+          "bn": "কারেন্ট সীমিত রাখতে, যাতে LED না পোড়ে",
+          "en": "To limit the current, so the LED does not burn"
+        },
+        {
+          "bn": "ভোল্টেজ বাড়াতে",
+          "en": "To raise the voltage"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "রেজিস্টর ছাড়া LED দিয়ে অনেক বেশি কারেন্ট যায়; রেজিস্টর সেটা নিরাপদ মাত্রায় রাখে।",
+        "en": "Without a resistor far too much current flows through the LED; the resistor keeps it to a safe amount."
+      }
+    }
+  ]
 }

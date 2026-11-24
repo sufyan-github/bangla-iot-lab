@@ -7,6 +7,7 @@ import { useLab } from '../lab/store';
 import { describeCheck } from './describe';
 import { useHandbook } from './handbook';
 import { useLessonState } from './progress';
+import { Quiz } from './Quiz';
 import { Rich } from './Rich';
 import { startLesson } from './start';
 
@@ -188,6 +189,7 @@ export function LessonPanel() {
             <p className="mb-1 text-sm font-semibold text-ink-soft">{t('lesson.tryNext')}</p>
             <Rich text={lesson.tryNext[locale]} />
           </div>
+          {lesson.quiz && <Quiz quiz={lesson.quiz} />}
           {next && (
             <button
               type="button"

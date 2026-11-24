@@ -126,5 +126,57 @@
   "tryNext": {
     "bn": "সবুজ বা নীল LED দিয়ে একই কাজ করো। নীল LED প্রায় 3 V নেয়: 3.3 V থেকে তাকে কতটা কারেন্ট দেওয়া যায়?",
     "en": "Try a green or blue LED. A blue LED takes about 3 V: how much current can 3.3 V give it?"
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "৩.৩ V থেকে ২২০ Ω হয়ে একটা লাল LED (প্রায় ১.৮ V) জ্বললে কারেন্ট প্রায় কত?",
+        "en": "About how much current flows from 3.3 V through 220 Ω into a red LED (about 1.8 V)?"
+      },
+      "choices": [
+        {
+          "bn": "প্রায় ৭ mA",
+          "en": "About 7 mA"
+        },
+        {
+          "bn": "প্রায় ১৫ mA",
+          "en": "About 15 mA"
+        },
+        {
+          "bn": "প্রায় ৭০ mA",
+          "en": "About 70 mA"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "রেজিস্টরে পড়ে ৩.৩ − ১.৮ = ১.৫ V; ওহমের সূত্রে I = ১.৫ ÷ ২২০ ≈ ০.০০৭ A, মানে প্রায় ৭ mA।",
+        "en": "The resistor takes 3.3 − 1.8 = 1.5 V; by Ohm’s law I = 1.5 ÷ 220 ≈ 0.007 A, about 7 mA."
+      }
+    },
+    {
+      "question": {
+        "bn": "রেজিস্টর বড় (যেমন ১ kΩ) করলে LED-এর কী হয়?",
+        "en": "What happens to the LED with a bigger resistor (say 1 kΩ)?"
+      },
+      "choices": [
+        {
+          "bn": "আরও উজ্জ্বল হয়",
+          "en": "It gets brighter"
+        },
+        {
+          "bn": "কম উজ্জ্বল হয়",
+          "en": "It gets dimmer"
+        },
+        {
+          "bn": "একই থাকে",
+          "en": "It stays the same"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "রোধ বাড়লে কারেন্ট কমে, তাই LED কম উজ্জ্বল হয়।",
+        "en": "More resistance means less current, so the LED is dimmer."
+      }
+    }
+  ]
 }

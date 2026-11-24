@@ -149,5 +149,20 @@ export const LessonSchema = Type.Object({
   learned: Type.Object({ bn: Type.Array(Type.String()), en: Type.Array(Type.String()) }),
   /** Something to try on one's own afterwards. */
   tryNext: Text,
+  /**
+   * A few questions after the last step, to check what was understood. Each has
+   * two to four choices, the index of the right one, and why it is right.
+   */
+  quiz: Type.Optional(
+    Type.Array(
+      Type.Object({
+        question: Text,
+        choices: Type.Array(Text, { minItems: 2, maxItems: 4 }),
+        answer: Type.Integer({ minimum: 0, maximum: 3 }),
+        why: Text,
+      }),
+      { minItems: 1, maxItems: 5 },
+    ),
+  ),
 });
 export type Lesson = Static<typeof LessonSchema>;
