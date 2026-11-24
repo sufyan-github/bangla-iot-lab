@@ -11,7 +11,7 @@ import {
   type SheetKind,
 } from '@banglalab/shared';
 import { describe, expect, it } from 'vitest';
-import { evaluateSheet, sheetTruthTable, type SheetState } from './sheet';
+import { evaluateSheet, sheetTruthTable, simplestSum, type SheetState } from './sheet';
 
 /** Applies edits that must succeed. */
 const ok = (edit: SheetEdit): LogicSheet => {
@@ -148,5 +148,136 @@ describe('working out a logic sheet', () => {
 
   it('has no truth table while it has flip-flops or a clock', () => {
     expect(sheetTruthTable(build(['input', 'DFF', 'output'], [['IN1.q', 'FF1.d']]))).toBeNull();
+  });
+});
+
+describe('logic sheet, part 2', () => {
+  const outputsOf = (sheet: LogicSheet) => sheetTruthTable(sheet)!.rows.map((row) => row.outputs);
+
+  it('a gate takes three or four inputs, and its spare wires go when it takes fewer', () => {
+    let sheet = build(['input', 'input', 'input', 'AND', 'output'], []);
+    sheet = ok(setSheetElement(sheet, 'G1', { inputs: 3 }));
+    for (const [a, b] of [
+      ['IN1.q', 'G1.a'],
+      ['IN2.q', 'G1.b'],
+      ['IN3.q', 'G1.c'],
+      ['G1.y', 'OUT1.a'],
+    ] as const)
+      sheet = ok(connectSheet(sheet, a, b));
+    expect(outputsOf(sheet).map(([y]) => y)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+    ]);
+    sheet = ok(setSheetElement(sheet, 'G1', { inputs: 2 }));
+    expect(sheet.wires.some((w) => w.to === 'G1.c')).toBe(false);
+  });
+
+  it('a multiplexer passes A, or B when SEL is HIGH; a full adder adds three bits', () => {
+    const mux = build(
+      ['input', 'input', 'input', 'MUX', 'output'],
+      [
+        ['IN1.q', 'MX1.a'],
+        ['IN2.q', 'MX1.b'],
+        ['IN3.q', 'MX1.sel'],
+        ['MX1.y', 'OUT1.a'],
+      ],
+    );
+    // Rows are A, B, SEL from the most significant.
+    expect(outputsOf(mux).map(([y]) => y)).toEqual([
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+    ]);
+    const adder = build(
+      ['input', 'input', 'input', 'FA', 'output', 'output'],
+      [
+        ['IN1.q', 'FA1.a'],
+        ['IN2.q', 'FA1.b'],
+        ['IN3.q', 'FA1.cin'],
+        ['FA1.s', 'OUT1.a'],
+        ['FA1.cout', 'OUT2.a'],
+      ],
+    );
+    outputsOf(adder).forEach(([sum, carry], row) => {
+      const total = (row & 1) + ((row >> 1) & 1) + ((row >> 2) & 1);
+      expect([sum, carry]).toEqual([total % 2 === 1, total >= 2]);
+    });
+  });
+
+  it('JK and T flip-flops follow their function tables', () => {
+    // J and K from switches; the clock from a third switch, turned on and off by hand.
+    let sheet = build(
+      ['input', 'input', 'input', 'JKFF'],
+      [
+        ['IN1.q', 'FF1.j'],
+        ['IN2.q', 'FF1.clk'],
+        ['IN3.q', 'FF1.k'],
+      ],
+    );
+    let state = evaluateSheet(sheet, 0);
+    const pulse = (j: boolean, k: boolean) => {
+      sheet = ok(setSheetElement(sheet, 'IN1', { on: j }));
+      sheet = ok(setSheetElement(sheet, 'IN3', { on: k }));
+      state = evaluateSheet(ok(setSheetElement(sheet, 'IN2', { on: true })), 0, state);
+      state = evaluateSheet(ok(setSheetElement(sheet, 'IN2', { on: false })), 0, state);
+      return state.memory.FF1;
+    };
+    expect(pulse(true, false)).toBe(true); // set
+    expect(pulse(false, false)).toBe(true); // keep
+    expect(pulse(true, true)).toBe(false); // turn over
+    expect(pulse(true, true)).toBe(true);
+    expect(pulse(false, true)).toBe(false); // clear
+
+    let t = build(
+      ['input', 'input', 'TFF'],
+      [
+        ['IN1.q', 'FF1.t'],
+        ['IN2.q', 'FF1.clk'],
+      ],
+    );
+    let tState = evaluateSheet(t, 0);
+    const tick = () => {
+      tState = evaluateSheet(ok(setSheetElement(t, 'IN2', { on: true })), 0, tState);
+      tState = evaluateSheet(ok(setSheetElement(t, 'IN2', { on: false })), 0, tState);
+      return tState.memory.FF1;
+    };
+    expect(tick()).toBe(false); // T LOW: keeps
+    t = ok(setSheetElement(t, 'IN1', { on: true }));
+    expect(tick()).toBe(true);
+    expect(tick()).toBe(false);
+  });
+
+  it('finds the simplest sum of products', () => {
+    const table = (f: (a: boolean, b: boolean, c: boolean) => boolean) =>
+      Array.from({ length: 8 }, (_, row) => f((row & 4) > 0, (row & 2) > 0, (row & 1) > 0));
+    expect(simplestSum(2, [false, false, false, true])).toBe('A·B');
+    expect(simplestSum(2, [false, true, true, true])).toMatch(/^(A \+ B|B \+ A)$/);
+    expect(simplestSum(2, [false, true, true, false])).toMatch(/A̅·B|A·B̅/);
+    expect(simplestSum(2, [false, false, false, false])).toBe('0');
+    expect(simplestSum(2, [true, true, true, true])).toBe('1');
+    // The full adder's carry: the majority of three.
+    const carry = simplestSum(
+      3,
+      table((a, b, c) => (a && b) || (a && c) || (b && c)),
+    );
+    expect(carry.split(' + ').sort()).toEqual(['A·B', 'A·C', 'B·C']);
+    // A·B + A·B̄ is just A.
+    expect(
+      simplestSum(
+        3,
+        table((a) => a),
+      ),
+    ).toBe('A');
   });
 });

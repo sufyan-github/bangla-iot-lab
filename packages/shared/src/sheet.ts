@@ -10,10 +10,23 @@ import { gateOutput, type GateKind } from './circuit';
  */
 
 export const SHEET_GATES = ['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'] as const;
-export const SHEET_KINDS = ['input', 'output', 'clock', ...SHEET_GATES, 'DFF'] as const;
+export const SHEET_KINDS = [
+  'input',
+  'output',
+  'clock',
+  ...SHEET_GATES,
+  'MUX',
+  'FA',
+  'DFF',
+  'JKFF',
+  'TFF',
+  'HEX',
+] as const;
+/** Elements that remember: their outputs change only on their clock's rising edge. */
+export const SHEET_MEMORY_KINDS = ['DFF', 'JKFF', 'TFF'] as const;
 export type SheetKind = (typeof SHEET_KINDS)[number];
 
-/** Each kind's input and output ports, in the order they are drawn. */
+/** Each kind's input and output ports, in the order they are drawn, with a gate's usual two inputs. */
 export const SHEET_PORTS: Record<
   SheetKind,
   { inputs: readonly string[]; outputs: readonly string[] }
@@ -27,8 +40,32 @@ export const SHEET_PORTS: Record<
   NAND: { inputs: ['a', 'b'], outputs: ['y'] },
   NOR: { inputs: ['a', 'b'], outputs: ['y'] },
   XOR: { inputs: ['a', 'b'], outputs: ['y'] },
+  /** Two data inputs and the select: Y is A while SEL is LOW, B while it is HIGH. */
+  MUX: { inputs: ['a', 'b', 'sel'], outputs: ['y'] },
+  /** A full adder: S and the carry out of A + B + Cin. */
+  FA: { inputs: ['a', 'b', 'cin'], outputs: ['s', 'cout'] },
   DFF: { inputs: ['d', 'clk'], outputs: ['q', 'nq'] },
+  JKFF: { inputs: ['j', 'clk', 'k'], outputs: ['q', 'nq'] },
+  TFF: { inputs: ['t', 'clk'], outputs: ['q', 'nq'] },
+  /** Shows its four inputs (D0 the smallest) as one hexadecimal digit. */
+  HEX: { inputs: ['d0', 'd1', 'd2', 'd3'], outputs: [] },
 };
+
+/** Gates that may have three or four inputs instead of two. */
+const WIDE_GATES: readonly SheetKind[] = ['AND', 'OR', 'NAND', 'NOR', 'XOR'];
+const GATE_INPUTS = ['a', 'b', 'c', 'd'];
+
+/** An element's ports: a gate has as many inputs as it was given. */
+export function sheetPorts(element: Pick<SheetElement, 'kind' | 'inputs'>): {
+  inputs: readonly string[];
+  outputs: readonly string[];
+} {
+  const base = SHEET_PORTS[element.kind];
+  if (WIDE_GATES.includes(element.kind) && element.inputs) {
+    return { inputs: GATE_INPUTS.slice(0, element.inputs), outputs: base.outputs };
+  }
+  return base;
+}
 
 /** How many elements and wires a sheet may hold. */
 export const MAX_SHEET_ELEMENTS = 60;
@@ -52,13 +89,20 @@ export const SheetElementSchema = Type.Object({
     Type.Literal('NAND'),
     Type.Literal('NOR'),
     Type.Literal('XOR'),
+    Type.Literal('MUX'),
+    Type.Literal('FA'),
     Type.Literal('DFF'),
+    Type.Literal('JKFF'),
+    Type.Literal('TFF'),
+    Type.Literal('HEX'),
   ]),
   /** Where its top-left corner is, in grid steps. */
   x: Type.Integer({ minimum: 0, maximum: SHEET_WIDTH - 1 }),
   y: Type.Integer({ minimum: 0, maximum: SHEET_HEIGHT - 1 }),
   /** A switch: whether it is on (HIGH). */
   on: Type.Optional(Type.Boolean()),
+  /** A gate: how many inputs it has, 2 (the default) to 4. */
+  inputs: Type.Optional(Type.Integer({ minimum: 2, maximum: 4 })),
   /** A clock: how many times a second it ticks. */
   hz: Type.Optional(Type.Number({ minimum: 0.2, maximum: 10 })),
 });
@@ -115,7 +159,7 @@ export function portOf(
   const [id, name] = port.split('.');
   const element = sheet.elements.find((e) => e.id === id);
   if (!element || !name) return null;
-  const ports = SHEET_PORTS[element.kind];
+  const ports = sheetPorts(element);
   if (ports.inputs.includes(name)) return { element, side: 'input' };
   if (ports.outputs.includes(name)) return { element, side: 'output' };
   return null;
@@ -132,7 +176,12 @@ const PREFIX: Record<SheetKind, string> = {
   NAND: 'G',
   NOR: 'G',
   XOR: 'G',
+  MUX: 'MX',
+  FA: 'FA',
   DFF: 'FF',
+  JKFF: 'FF',
+  TFF: 'FF',
+  HEX: 'HEX',
 };
 
 export type SheetEdit =
@@ -194,7 +243,7 @@ export function moveSheetElement(sheet: LogicSheet, id: string, x: number, y: nu
 export function setSheetElement(
   sheet: LogicSheet,
   id: string,
-  change: { on?: boolean; hz?: number },
+  change: { on?: boolean; hz?: number; inputs?: number },
 ): SheetEdit {
   const element = sheet.elements.find((e) => e.id === id);
   if (!element) return { ok: false, error: 'missing' };
@@ -202,10 +251,17 @@ export function setSheetElement(
   if (change.on !== undefined && element.kind === 'input') next.on = change.on;
   if (change.hz !== undefined && element.kind === 'clock')
     next.hz = Math.max(0.2, Math.min(10, change.hz));
+  let wires = sheet.wires;
+  if (change.inputs !== undefined && WIDE_GATES.includes(element.kind)) {
+    next.inputs = Math.max(2, Math.min(4, Math.round(change.inputs)));
+    // Wires to inputs the gate no longer has go with them.
+    const kept = new Set(sheetPorts(next).inputs.map((port) => `${id}.${port}`));
+    wires = wires.filter((w) => !w.to.startsWith(`${id}.`) || kept.has(w.to));
+  }
   return {
     ok: true,
     id,
-    sheet: { ...sheet, elements: sheet.elements.map((e) => (e.id === id ? next : e)) },
+    sheet: { ...sheet, elements: sheet.elements.map((e) => (e.id === id ? next : e)), wires },
   };
 }
 

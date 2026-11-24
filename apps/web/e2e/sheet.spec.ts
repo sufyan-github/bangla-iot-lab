@@ -45,6 +45,14 @@ test('two switches, an AND gate and a lamp: the lamp lights only with both on', 
   await page.getByTestId('sheet-table').click();
   await expect(page.getByTestId('sheet-row')).toHaveCount(4);
   await expect(page.getByTestId('sheet-row').last()).toHaveText(/1\s*1\s*1/);
+  // And its expression, in the simplest form.
+  await expect(page.getByTestId('sheet-expression')).toHaveText('OUT1 = A·B');
+
+  // Undo turns IN2 back off, so the lamp goes out; redo turns it on again.
+  await page.getByTestId('sheet-undo').click();
+  await expect(lamp).toHaveAttribute('data-high', 'false');
+  await page.getByTestId('sheet-redo').click();
+  await expect(lamp).toHaveAttribute('data-high', 'true');
 
   // Two outputs cannot be joined.
   await port(page, 'IN1.q');

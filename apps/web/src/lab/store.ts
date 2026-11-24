@@ -97,6 +97,11 @@ interface LabState {
   setName(name: string): void;
   /** Applies an edit to the logic sheet; returns it, so a refusal can be shown. */
   editSheet(edit: (sheet: LogicSheet) => SheetEdit): SheetEdit;
+  /** Earlier and undone states of the logic sheet, for undo and redo. */
+  sheetPast: LogicSheet[];
+  sheetFuture: LogicSheet[];
+  undoSheet(): void;
+  redoSheet(): void;
   setTool(tool: Tool): void;
   select(id: string | null): void;
   /** A tap on a hole, battery terminal or board socket; what it does depends on the tool. */
@@ -241,6 +246,8 @@ export const useLab = create<LabState>((set, get) => {
         programs: project.programs,
         settings: project.settings ?? {},
         sheet: isLogicSheet(project.sheet) ? project.sheet : emptySheet(),
+        sheetPast: [],
+        sheetFuture: [],
         selectedId: null,
         tool: 'select',
         wireStart: null,
@@ -254,9 +261,32 @@ export const useLab = create<LabState>((set, get) => {
     },
     setName: (name) => set({ name }),
     editSheet(edit) {
-      const result = edit(get().sheet);
-      if (result.ok) set({ sheet: result.sheet });
+      const before = get().sheet;
+      const result = edit(before);
+      if (result.ok && result.sheet !== before) {
+        set({
+          sheet: result.sheet,
+          sheetPast: [...get().sheetPast, before].slice(-HISTORY_LIMIT),
+          sheetFuture: [],
+        });
+      }
       return result;
+    },
+    sheetPast: [],
+    sheetFuture: [],
+    undoSheet() {
+      const past = get().sheetPast;
+      if (past.length === 0) return;
+      set({
+        sheet: past.at(-1)!,
+        sheetPast: past.slice(0, -1),
+        sheetFuture: [get().sheet, ...get().sheetFuture],
+      });
+    },
+    redoSheet() {
+      const [next, ...rest] = get().sheetFuture;
+      if (!next) return;
+      set({ sheet: next, sheetPast: [...get().sheetPast, get().sheet], sheetFuture: rest });
     },
     setTool: (tool) => set({ tool, wireStart: null, selectedId: null, notice: null }),
     select: (selectedId) => set({ selectedId }),

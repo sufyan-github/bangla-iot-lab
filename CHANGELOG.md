@@ -8,6 +8,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Logic sheet, part 2**: gates with up to four inputs, a multiplexer, a full
+  adder, JK and T flip-flops and a hex digit; undo and redo; and the simplest
+  Boolean expression for each lamp under the truth table.
 - **The logic sheet**: a third view where a circuit is drawn with logic
   symbols (switches, lamps, a clock, the six gates and a D flip-flop) and
   wired port to port, worked out as pure logic, with its truth table. It is

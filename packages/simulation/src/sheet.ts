@@ -1,7 +1,8 @@
 import {
   SHEET_GATES,
-  SHEET_PORTS,
+  SHEET_MEMORY_KINDS,
   sheetGateOutput,
+  sheetPorts,
   type LogicSheet,
   type SheetElement,
 } from '@banglalab/shared';
@@ -28,6 +29,7 @@ export interface SheetState {
 
 const isGate = (kind: string): kind is (typeof SHEET_GATES)[number] =>
   (SHEET_GATES as readonly string[]).includes(kind);
+const remembers = (kind: string) => (SHEET_MEMORY_KINDS as readonly string[]).includes(kind);
 
 /** A clock is LOW for the first half of each period and HIGH for the second. */
 export function sheetClockLevel(element: SheetElement, timeMs: number): boolean {
@@ -53,12 +55,12 @@ export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetS
   const clocks: Record<string, boolean> = {};
   const floating: string[] = [];
   for (const element of sheet.elements) {
-    if (element.kind === 'DFF') {
+    if (remembers(element.kind)) {
       memory[element.id] = before?.memory[element.id] ?? false;
       // At power-on a flip-flop has seen no clock yet, so it waits for a LOW before an edge.
       clocks[element.id] = before?.clocks[element.id] ?? true;
     }
-    for (const port of SHEET_PORTS[element.kind].inputs) {
+    for (const port of sheetPorts(element).inputs) {
       if (!source.has(`${element.id}.${port}`)) floating.push(`${element.id}.${port}`);
     }
   }
@@ -77,16 +79,22 @@ export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetS
         levels[port] = level;
       };
       for (const element of sheet.elements) {
-        for (const port of SHEET_PORTS[element.kind].inputs)
+        for (const port of sheetPorts(element).inputs)
           put(`${element.id}.${port}`, input(element, port));
         const { id, kind } = element;
         if (kind === 'input') put(`${id}.q`, element.on === true);
         else if (kind === 'clock') put(`${id}.q`, sheetClockLevel(element, timeMs));
-        else if (kind === 'DFF') {
+        else if (remembers(kind)) {
           put(`${id}.q`, memory[id]!);
           put(`${id}.nq`, !memory[id]!);
+        } else if (kind === 'MUX') {
+          put(`${id}.y`, input(element, 'sel') ? input(element, 'b') : input(element, 'a'));
+        } else if (kind === 'FA') {
+          const [a, b, c] = ['a', 'b', 'cin'].map((port) => input(element, port));
+          put(`${id}.s`, (a !== b) !== c);
+          put(`${id}.cout`, (a && b) || (a && c) || (b && c));
         } else if (isGate(kind)) {
-          const ins = SHEET_PORTS[kind].inputs.map((port) => input(element, port));
+          const ins = sheetPorts(element).inputs.map((port) => input(element, port));
           put(`${id}.y`, sheetGateOutput(kind, ins));
         }
       }
@@ -96,15 +104,24 @@ export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetS
   };
 
   let settled = settle();
-  const flipFlops = sheet.elements.filter((e) => e.kind === 'DFF');
+  const flipFlops = sheet.elements.filter((e) => remembers(e.kind));
   for (let pass = 0; pass <= flipFlops.length; pass++) {
     let changed = false;
     for (const element of flipFlops) {
       const clock = input(element, 'clk');
       if (!clocks[element.id] && clock) {
-        const d = input(element, 'd');
-        if (memory[element.id] !== d) changed = true;
-        memory[element.id] = d;
+        const q = memory[element.id]!;
+        let next = q;
+        if (element.kind === 'DFF') next = input(element, 'd');
+        else if (element.kind === 'TFF') next = input(element, 't') ? !q : q;
+        else {
+          // JK: J sets, K clears, both turn it over, neither keeps it.
+          const j = input(element, 'j');
+          const k = input(element, 'k');
+          next = j && k ? !q : j ? true : k ? false : q;
+        }
+        if (next !== q) changed = true;
+        memory[element.id] = next;
       }
       clocks[element.id] = clock;
     }
@@ -129,7 +146,7 @@ export function sheetTruthTable(sheet: LogicSheet): SheetTruthTable | null {
   const inputs = sheet.elements.filter((e) => e.kind === 'input').map((e) => e.id);
   const outputs = sheet.elements.filter((e) => e.kind === 'output').map((e) => e.id);
   if (inputs.length === 0 || outputs.length === 0 || inputs.length > 4) return null;
-  if (sheet.elements.some((e) => e.kind === 'DFF' || e.kind === 'clock')) return null;
+  if (sheet.elements.some((e) => remembers(e.kind) || e.kind === 'clock')) return null;
   const rows = Array.from({ length: 1 << inputs.length }, (_, row) => {
     const levels = inputs.map((_, i) => ((row >> (inputs.length - 1 - i)) & 1) === 1);
     const set: LogicSheet = {
@@ -142,4 +159,68 @@ export function sheetTruthTable(sheet: LogicSheet): SheetTruthTable | null {
     return { inputs: levels, outputs: outputs.map((id) => state.levels[`${id}.a`] ?? false) };
   });
   return { inputs, outputs, rows };
+}
+
+/**
+ * The simplest sum of products for one output of a truth table with up to four
+ * inputs: the prime implicants (Quine–McCluskey), then the smallest set of them
+ * that covers every row where the output is 1, found by trying every set (few
+ * enough with four inputs). Terms are written with the inputs called A, B, C, D
+ * in order, a bar over an input that is LOW: "A·B̄ + C". "0" and "1" when the
+ * output never or always is.
+ */
+export function simplestSum(inputs: number, outputs: readonly boolean[]): string {
+  const names = ['A', 'B', 'C', 'D'].slice(0, inputs);
+  const ones = outputs.flatMap((high, row) => (high ? [row] : []));
+  if (ones.length === 0) return '0';
+  if (ones.length === outputs.length) return '1';
+  // An implicant: the bits it fixes (mask) and their values.
+  type Term = { mask: number; value: number };
+  const full = (1 << inputs) - 1;
+  let terms: Term[] = ones.map((row) => ({ mask: full, value: row }));
+  const primes: Term[] = [];
+  while (terms.length > 0) {
+    const used = new Set<number>();
+    const next = new Map<string, Term>();
+    terms.forEach((a, i) =>
+      terms.forEach((b, j) => {
+        if (j <= i || a.mask !== b.mask) return;
+        const differ = (a.value ^ b.value) & a.mask;
+        if (differ !== 0 && (differ & (differ - 1)) === 0) {
+          const term = { mask: a.mask & ~differ, value: a.value & ~differ };
+          next.set(`${term.mask}:${term.value}`, term);
+          used.add(i).add(j);
+        }
+      }),
+    );
+    terms.forEach((term, i) => {
+      if (!used.has(i) && !primes.some((p) => p.mask === term.mask && p.value === term.value))
+        primes.push(term);
+    });
+    terms = [...next.values()];
+  }
+  const covers = (term: Term, row: number) => (row & term.mask) === term.value;
+  const literals = (term: Term) =>
+    names.filter((_, i) => term.mask & (1 << (inputs - 1 - i))).length;
+  let best: Term[] | null = null;
+  for (let set = 1; set < 1 << primes.length; set++) {
+    const chosen = primes.filter((_, i) => set & (1 << i));
+    if (best && chosen.length > best.length) continue;
+    if (!ones.every((row) => chosen.some((term) => covers(term, row)))) continue;
+    const cost = (list: Term[]) =>
+      list.length * 100 + list.reduce((sum, t) => sum + literals(t), 0);
+    if (!best || cost(chosen) < cost(best)) best = chosen;
+  }
+  return best!
+    .map((term) =>
+      names
+        .map((name, i) => {
+          const bit = 1 << (inputs - 1 - i);
+          if (!(term.mask & bit)) return '';
+          return term.value & bit ? name : `${name}\u0305`;
+        })
+        .filter(Boolean)
+        .join('·'),
+    )
+    .join(' + ');
 }

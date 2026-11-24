@@ -1510,3 +1510,15 @@ table works on a sheet with 1 to 4 switches and no clock or flip-flop.
 labelled inputs), copy and paste, and lessons that use it. The breadboard and
 the sheet are separate circuits: the sheet does not draw the breadboard's
 chips as symbols.
+
+## D-082 — The logic sheet, part 2
+
+Gates on the sheet take 2, 3 or 4 inputs (wires to inputs a gate no longer has
+go with them). New elements: a 2-to-1 multiplexer (Y is A while SEL is LOW, B
+while HIGH), a full adder (S and the carry of A + B + Cin), JK and T flip-flops
+(on the clock's rising edge: J sets, K clears, both turn over; T turns over),
+and a hex digit that shows its four inputs. Undo and redo on the sheet (up to
+100 steps). Under the truth table, each lamp's simplest sum of products, with
+the switches called A to D: the prime implicants by Quine–McCluskey, then the
+smallest cover found by trying every set of them, which is exact for up to four
+inputs. A bar over a letter means NOT.

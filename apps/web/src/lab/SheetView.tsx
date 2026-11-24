@@ -1,14 +1,15 @@
 import type { MessageKey } from '@banglalab/i18n';
 import {
+  SHEET_GATES,
   SHEET_HEIGHT,
   SHEET_KINDS,
-  SHEET_PORTS,
   SHEET_WIDTH,
   addSheetElement,
   connectSheet,
   moveSheetElement,
   removeFromSheet,
   setSheetElement,
+  sheetPorts,
   type LogicSheet,
   type SheetElement,
   type SheetError,
@@ -18,6 +19,7 @@ import {
   evaluateSheet,
   nextSheetClockChange,
   sheetTruthTable,
+  simplestSum,
   type SheetState,
   type SheetTruthTable,
 } from '@banglalab/simulation';
@@ -35,10 +37,11 @@ type SheetTool = 'select' | SheetKind;
 
 /** Where a port sits, in grid steps: inputs on the left edge, outputs on the right. */
 function portPoint(element: SheetElement, port: string): { x: number; y: number } {
-  const { inputs, outputs } = SHEET_PORTS[element.kind];
+  const { inputs, outputs } = sheetPorts(element);
   const side = inputs.includes(port) ? inputs : outputs;
   const index = side.indexOf(port);
-  const y = element.y + (side.length === 1 ? 1.5 : index === 0 ? 1 : 2);
+  // Spread evenly down the side: one in the middle, two at the thirds, and so on.
+  const y = element.y + (SIZE * (index + 1)) / (side.length + 1);
   return { x: inputs.includes(port) ? element.x : element.x + SIZE, y };
 }
 
@@ -175,6 +178,119 @@ function ElementBody({
           </text>
         </g>
       );
+    case 'MUX':
+    case 'FA':
+    case 'JKFF':
+    case 'TFF': {
+      const ports = sheetPorts(element);
+      const name = { MUX: 'MUX', FA: 'Σ', JKFF: 'JK', TFF: 'T' }[element.kind];
+      const pinName: Record<string, string> = {
+        a: 'A',
+        b: 'B',
+        sel: 'S',
+        cin: 'Ci',
+        s: 'S',
+        cout: 'Co',
+        j: 'J',
+        k: 'K',
+        t: 'T',
+        q: 'Q',
+        nq: 'Q̅',
+        y: 'Y',
+        clk: '',
+      };
+      const at = (index: number, count: number) => (w * (index + 1)) / (count + 1);
+      return (
+        <g>
+          {element.kind === 'MUX' ? (
+            <path
+              d={`M8 4L${w - 8} 16V${w - 16}L8 ${w - 4}Z`}
+              fill="var(--color-surface)"
+              stroke="currentColor"
+              strokeWidth={1.6}
+            />
+          ) : (
+            <rect
+              x={8}
+              y={6}
+              width={w - 16}
+              height={w - 12}
+              rx={3}
+              fill="var(--color-surface)"
+              stroke="currentColor"
+              strokeWidth={1.6}
+            />
+          )}
+          <text x={w / 2} y={w / 2 + 4} {...text} fontSize={10} fill="var(--color-ink-soft)">
+            {name}
+          </text>
+          {ports.inputs.map((port, i) =>
+            port === 'clk' ? (
+              <path
+                key={port}
+                d={`M8 ${at(i, ports.inputs.length) - 6}L15 ${at(i, ports.inputs.length)}L8 ${at(i, ports.inputs.length) + 6}`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.4}
+              />
+            ) : (
+              <text
+                key={port}
+                x={13}
+                y={at(i, ports.inputs.length) + 3.5}
+                fontSize={9}
+                fill="currentColor"
+                stroke="none"
+              >
+                {pinName[port]}
+              </text>
+            ),
+          )}
+          {ports.outputs.map((port, i) => (
+            <text
+              key={port}
+              x={w - 12}
+              y={at(i, ports.outputs.length) + 3.5}
+              fontSize={9}
+              fill="currentColor"
+              stroke="none"
+              textAnchor="end"
+            >
+              {pinName[port]}
+            </text>
+          ))}
+        </g>
+      );
+    }
+    case 'HEX': {
+      const value = [0, 1, 2, 3].reduce((sum, bit) => sum + (level(`d${bit}`) ? 1 << bit : 0), 0);
+      return (
+        <g data-value={value}>
+          <rect
+            x={8}
+            y={4}
+            width={w - 14}
+            height={w - 8}
+            rx={4}
+            fill="#1b1d1f"
+            stroke="currentColor"
+            strokeWidth={1.6}
+          />
+          <text
+            x={w / 2 + 2}
+            y={w / 2 + 14}
+            textAnchor="middle"
+            fontSize={36}
+            fontWeight={700}
+            fill="#ff4433"
+            stroke="none"
+            fontFamily="monospace"
+          >
+            {value.toString(16).toUpperCase()}
+          </text>
+        </g>
+      );
+    }
     case 'DFF':
       return (
         <g>
@@ -238,7 +354,9 @@ function ElementBody({
  */
 export function SheetView() {
   const sheet = useLab((s) => s.sheet);
-  const { editSheet } = useLab.getState();
+  const { editSheet, undoSheet, redoSheet } = useLab.getState();
+  const canUndo = useLab((s) => s.sheetPast.length > 0);
+  const canRedo = useLab((s) => s.sheetFuture.length > 0);
   const { t } = useT();
   const state = useSheetState(sheet);
   const [tool, setTool] = useState<SheetTool>('select');
@@ -297,9 +415,11 @@ export function SheetView() {
   const floating = state.floating.filter((port) => !port.startsWith('OUT'));
   const tools: SheetTool[] = ['select', ...SHEET_KINDS];
   const kindName = (kind: SheetKind) =>
-    kind === 'input' || kind === 'output' || kind === 'clock' || kind === 'DFF'
-      ? t(`sheet.kind.${kind}` as MessageKey)
-      : kind;
+    (SHEET_GATES as readonly string[]).includes(kind)
+      ? kind
+      : t(`sheet.kind.${kind}` as MessageKey);
+  const isWideGate = (kind?: SheetKind) =>
+    kind !== undefined && kind !== 'NOT' && (SHEET_GATES as readonly string[]).includes(kind);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="sheet">
@@ -406,7 +526,7 @@ export function SheetView() {
           })}
           {sheet.elements.map((element) => {
             const at = drag?.id === element.id ? { x: drag.x, y: drag.y } : element;
-            const ports = SHEET_PORTS[element.kind];
+            const ports = sheetPorts(element);
             return (
               <g
                 key={element.id}
@@ -525,6 +645,29 @@ export function SheetView() {
                 {t('sheet.delete', { id: selected })}
               </button>
             )}
+            {isWideGate(selectedElement?.kind) && (
+              <fieldset className="flex items-center gap-1.5" data-testid="sheet-inputs">
+                <legend className="sr-only">{t('sheet.inputs')}</legend>
+                <span className="text-sm text-ink-soft">{t('sheet.inputs')}</span>
+                {[2, 3, 4].map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    aria-pressed={(selectedElement!.inputs ?? 2) === count}
+                    onClick={() =>
+                      apply((s) => setSheetElement(s, selectedElement!.id, { inputs: count }))
+                    }
+                    className={`min-h-11 min-w-11 rounded-lg border-2 font-semibold ${
+                      (selectedElement!.inputs ?? 2) === count
+                        ? 'border-amber bg-amber-soft'
+                        : 'border-line'
+                    }`}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </fieldset>
+            )}
             {selectedElement?.kind === 'clock' && (
               <label className="flex items-center gap-2">
                 {t('sheet.hz', { count: selectedElement.hz ?? 1 })}
@@ -546,6 +689,24 @@ export function SheetView() {
                 />
               </label>
             )}
+            <button
+              type="button"
+              data-testid="sheet-undo"
+              disabled={!canUndo}
+              onClick={() => undoSheet()}
+              className="min-h-11 rounded-lg border-2 border-line px-3 font-medium hover:border-ink-soft disabled:opacity-40"
+            >
+              {t('sheet.undo')}
+            </button>
+            <button
+              type="button"
+              data-testid="sheet-redo"
+              disabled={!canRedo}
+              onClick={() => redoSheet()}
+              className="min-h-11 rounded-lg border-2 border-line px-3 font-medium hover:border-ink-soft disabled:opacity-40"
+            >
+              {t('sheet.redo')}
+            </button>
             <button
               type="button"
               data-testid="sheet-table"
@@ -581,6 +742,24 @@ export function SheetView() {
                 ))}
               </tbody>
             </table>
+          )}
+          {table && table !== 'none' && (
+            <div className="space-y-1" data-testid="sheet-expressions">
+              <p className="text-sm text-ink-soft">
+                {t('sheet.letters', {
+                  list: table.inputs.map((id, i) => `${'ABCD'[i]} = ${id}`).join(', '),
+                })}
+              </p>
+              {table.outputs.map((id, o) => (
+                <p key={id} className="font-mono text-lg" data-testid="sheet-expression">
+                  {id} ={' '}
+                  {simplestSum(
+                    table.inputs.length,
+                    table.rows.map((row) => row.outputs[o]!),
+                  )}
+                </p>
+              ))}
+            </div>
           )}
           {table === 'none' && (
             <p className="text-ink-soft" data-testid="sheet-no-table">
