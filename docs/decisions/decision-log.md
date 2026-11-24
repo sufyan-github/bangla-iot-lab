@@ -1881,3 +1881,29 @@ Built on 24 November 2026 as the "simulator accuracy" segment.
   wall-clock limits.
 - **Not done:** measuring the editor with 200 parts and the lab on a low-end
   Android phone; that needs the phone.
+
+## D-092 — Logic finishing touches: blocks to open, buses on blocks, a gate delay, a trigger
+
+Built on 24 November 2026, closing the gaps D-088 left.
+
+- **Buses on a block's pins.** A block with two or more inputs has one bar for
+  all of them, in order, and likewise for its outputs; a bus joins them to any
+  group of the same width.
+- **Opening a block.** A placed block can be opened: the sheet shows its
+  inside, worked out live, to test and change. Changes go back into the block
+  and reach every copy, on the sheet and inside later blocks; its switches and
+  lamps stay its pins, so copies take the new number of pins and wires to pins
+  that are gone are removed. Undo covers it. A block must keep a switch and a
+  lamp.
+- **Gate delay.** The sheet may give every gate a delay of 10, 20 or 50 ms
+  (none by default), kept with the sheet. With one, the sheet moves a delay at a
+  time, each element answering what its inputs were a step before, so changes
+  ripple and the timing diagram shows glitches (A AND NOT A pulses for one delay
+  when A rises; tested). Each clock change still gets a step. Truth tables and
+  lessons still settle at once. **Fixed along the way:** a clock inside a block
+  did not tick, as the sheet only looked for clocks placed on it directly.
+- **Analyser trigger.** An analyser row and an edge, armed: when the edge comes
+  the picture holds with it a fifth of the way across, marked, while recording
+  goes on.
+- **Not modelled:** different delays for different gates, and set-up and hold
+  times for flip-flops.
