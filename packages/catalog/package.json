@@ -10,7 +10,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "import": "tsx scripts/import.ts",
-    "verify": "tsx scripts/verify.ts"
+    "verify": "tsx scripts/verify.ts",
+    "links": "tsx scripts/links.ts",
+    "browse": "tsx scripts/browse.ts"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@banglalab/parts": "workspace:*"
+  }
 }

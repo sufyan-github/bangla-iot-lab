@@ -7,6 +7,8 @@ export interface ProductQuery {
   category?: string;
   /** Leave out products that cannot be bought now. */
   availableOnly?: boolean;
+  /** Any further test a product must pass, applied before the page is cut. */
+  filter?: (product: CatalogProduct) => boolean;
   offset?: number;
   limit?: number;
 }
@@ -91,7 +93,8 @@ export class CatalogIndex {
         (product) =>
           (query.group === undefined || product.group === query.group) &&
           (query.category === undefined || product.category === query.category) &&
-          (!query.availableOnly || AVAILABLE.has(product.stock)),
+          (!query.availableOnly || AVAILABLE.has(product.stock)) &&
+          (!query.filter || query.filter(product)),
       )
       .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
     const offset = Math.max(0, query.offset ?? 0);

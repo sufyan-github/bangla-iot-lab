@@ -283,7 +283,8 @@ export function importProjects(
     }
     const line: BomLine = {
       component: raw.Component!.trim(),
-      storeProduct: (raw['RoboticsBD product'] ?? '').trim(),
+      // The export names this column after the store; a generic name is read too.
+      storeProduct: (raw['Store product'] ?? raw['RoboticsBD product'] ?? '').trim(),
       quantity,
       unitBdt,
       lineBdt,

@@ -347,7 +347,11 @@ importers:
         specifier: 1.4.2
         version: 1.4.2
 
-  packages/catalog: {}
+  packages/catalog:
+    dependencies:
+      '@banglalab/parts':
+        specifier: workspace:*
+        version: link:../parts
 
   packages/circuit-engine:
     devDependencies:

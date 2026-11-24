@@ -74,7 +74,7 @@
   ],
   "variants": [],
   "catalog": {
-    "keywords": ["1.54\" ips"]
+    "keywords": ["1.54\" ips", "1.54 inch st7789"]
   },
   "placement": {
     "idPrefix": "TFT",
