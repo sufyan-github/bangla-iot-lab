@@ -1,36 +1,96 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/anek-bangla';
 
 /*
- * Visual language: an electronics workbench. The work surface is a green
- * cutting mat; everything around it is quiet paper so the circuit stays the
- * loudest thing on screen. Amber marks what the student is acting on.
+ * Type: Noto Sans Bengali for Bangla, Noto Sans for Latin, Noto Sans Mono for
+ * code, pin names and readings (D-103). Only the files the lab's two languages
+ * need are named here: Bengali, Latin, and Greek for the ohm sign. The
+ * packages carry many more scripts, which are not shipped.
+ */
+@font-face {
+  font-family: 'Noto Sans Bengali Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/noto-sans-bengali/files/noto-sans-bengali-bengali-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0951-0952, U+0964-0965, U+0980-09FE, U+1CD0, U+1CD2, U+1CD5-1CD6, U+1CD8, U+1CE1, U+1CEA,
+    U+1CED, U+1CF2, U+1CF5-1CF7, U+200C-200D, U+20B9, U+25CC, U+A8F1;
+}
+@font-face {
+  font-family: 'Noto Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/noto-sans/files/noto-sans-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Noto Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/noto-sans/files/noto-sans-greek-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Noto Sans Mono Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/noto-sans-mono/files/noto-sans-mono-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Visual language (D-103): two things from a school lab. In light the page is
+ * a breadboard: cool white plastic, with the red (+) and blue (−) rails as the
+ * line under every header. In dark it is the blackboard: board green with
+ * chalk-white text. Amber, the lit LED, marks what the student acts on.
  */
 @theme {
-  --font-sans: 'Anek Bangla Variable', 'Noto Sans Bengali', system-ui, sans-serif;
+  --font-sans: 'Noto Sans Variable', 'Noto Sans Bengali Variable', system-ui, sans-serif;
+  --font-mono: 'Noto Sans Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  --color-mat: #1d5a4e;
-  --color-mat-deep: #174a40;
-  --color-mat-line: #2a6c5f;
-  --color-paper: #f4f7f5;
+  --color-mat: #145c4c;
+  --color-mat-deep: #0e4439;
+  --color-mat-line: #216b5a;
+  --color-paper: #f3f5f2;
   --color-surface: #ffffff;
-  --color-ink: #13231f;
-  --color-ink-soft: #4b5d57;
-  --color-line: #d3dcd7;
-  --color-amber: #e8a21a;
-  --color-amber-deep: #8a5a00;
-  --color-amber-soft: #fdf1d6;
+  --color-ink: #12211d;
+  --color-ink-soft: #485a54;
+  --color-line: #d3dbd6;
+  --color-amber: #f2ac1d;
+  --color-amber-deep: #7a4e00;
+  --color-amber-soft: #fcefcf;
   --color-danger: #b8281f;
   --color-danger-soft: #fbe6e3;
-  --color-ok: #17753f;
-  --color-ok-soft: #e1f3e8;
+  --color-ok: #17703f;
+  --color-ok-soft: #ddf0e3;
   --color-lcd: #c9d6ba;
   --color-lcd-ink: #1b2a1d;
 
   /* Quieter steps of the same colours, for surfaces that should not compete with the board. */
-  --color-mat-soft: #e4efea;
-  --color-ink-faint: #74857f;
-  --color-line-strong: #b5c3bc;
+  --color-mat-soft: #e2eee9;
+  --color-ink-faint: #5c6d67;
+  --color-line-strong: #b4c1ba;
+  /* A surface set back from the page: wells, code, the ground under a drawing. */
+  --color-sunk: #e9ede9;
+  /* The band under a page's title, and the bar above it. */
+  --color-band: #145c4c;
+  --color-band-deep: #0e4439;
+  /* The two rails of a breadboard: red is +, blue is −. */
+  --color-rail-red: #d4382c;
+  --color-rail-blue: #2b62c9;
+  /* The lab's work surface, which looks the same in light and dark, as a thing on the bench. */
+  --color-bench: #1d5a4e;
   /* The face of an instrument: a dark screen with a phosphor-green trace. */
   --color-screen: #12201b;
   --color-screen-line: #22372f;
@@ -67,15 +127,15 @@
    * amber. Accent is the mat's green when it marks text, lines and focus on the
    * page, so it can brighten in dark mode while the mat itself stays dark.
    */
-  --color-chalk: #f4f7f5;
-  --color-graphite: #13231f;
-  --color-accent: #1d5a4e;
+  --color-chalk: #f2f6f0;
+  --color-graphite: #1b1400;
+  --color-accent: #0f5a49;
 }
 
 /*
- * Dark mode: the room with the lights down. The page and its panels go dark,
- * text goes light; the mat, the parts on it and the instruments look as they
- * do in daylight, since they are things on the bench. It follows the device's
+ * Dark mode: the blackboard. The page and its panels go board green, text goes
+ * chalk white; the lab's work surface, the parts on it and the instruments
+ * look as they do in daylight, since they are things on the bench. It follows the device's
  * setting unless the student chose light or dark (data-theme on <html>). The
  * same values are written twice, for the two ways in.
  */
@@ -102,22 +162,31 @@
 
   :root[data-theme='dark'] {
     color-scheme: dark;
-    --color-paper: #0f1714;
-    --color-surface: #17211d;
-    --color-ink: #e2ebe7;
-    --color-ink-soft: #a6b6af;
-    --color-ink-faint: #81938c;
-    --color-line: #2b3934;
-    --color-line-strong: #435650;
-    --color-accent: #6cc9b0;
-    --color-mat-soft: #1b322c;
-    --color-amber-deep: #f2bd57;
-    --color-amber-soft: #3a2d10;
+    --color-paper: #10241f;
+    --color-surface: #17322b;
+    --color-sunk: #0c1c18;
+    --color-ink: #eef3ec;
+    --color-ink-soft: #b4c6bd;
+    --color-ink-faint: #8fa69b;
+    --color-line: #28473e;
+    --color-line-strong: #3a5e53;
+    --color-accent: #7fd6bd;
+    --color-mat: #23755f;
+    --color-mat-deep: #1b5f4e;
+    --color-mat-line: #2f8a72;
+    --color-mat-soft: #1c3d33;
+    --color-band: #17352d;
+    --color-band-deep: #0b1b17;
+    --color-amber: #f5b93a;
+    --color-amber-deep: #f5c65b;
+    --color-amber-soft: #3b2e0f;
+    --color-rail-red: #f0695c;
+    --color-rail-blue: #6ea0f5;
     --color-danger: #ff8a80;
-    --color-danger-soft: #3b1f1c;
-    --color-ok: #5fd08f;
-    --color-ok-soft: #16301f;
-    --color-screen: #0b1411;
+    --color-danger-soft: #3d2320;
+    --color-ok: #6fd39a;
+    --color-ok-soft: #173d2a;
+    --color-screen: #0a1512;
     --shadow-raised: 0 1px 0 rgb(0 0 0 / 0.3), 0 8px 20px -8px rgb(0 0 0 / 0.6);
     --color-group-1: #fb923c;
     --color-group-2: #60a5fa;
@@ -136,22 +205,31 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
       color-scheme: dark;
-      --color-paper: #0f1714;
-      --color-surface: #17211d;
-      --color-ink: #e2ebe7;
-      --color-ink-soft: #a6b6af;
-      --color-ink-faint: #81938c;
-      --color-line: #2b3934;
-      --color-line-strong: #435650;
-      --color-accent: #6cc9b0;
-      --color-mat-soft: #1b322c;
-      --color-amber-deep: #f2bd57;
-      --color-amber-soft: #3a2d10;
+      --color-paper: #10241f;
+      --color-surface: #17322b;
+      --color-sunk: #0c1c18;
+      --color-ink: #eef3ec;
+      --color-ink-soft: #b4c6bd;
+      --color-ink-faint: #8fa69b;
+      --color-line: #28473e;
+      --color-line-strong: #3a5e53;
+      --color-accent: #7fd6bd;
+      --color-mat: #23755f;
+      --color-mat-deep: #1b5f4e;
+      --color-mat-line: #2f8a72;
+      --color-mat-soft: #1c3d33;
+      --color-band: #17352d;
+      --color-band-deep: #0b1b17;
+      --color-amber: #f5b93a;
+      --color-amber-deep: #f5c65b;
+      --color-amber-soft: #3b2e0f;
+      --color-rail-red: #f0695c;
+      --color-rail-blue: #6ea0f5;
       --color-danger: #ff8a80;
-      --color-danger-soft: #3b1f1c;
-      --color-ok: #5fd08f;
-      --color-ok-soft: #16301f;
-      --color-screen: #0b1411;
+      --color-danger-soft: #3d2320;
+      --color-ok: #6fd39a;
+      --color-ok-soft: #173d2a;
+      --color-screen: #0a1512;
       --shadow-raised: 0 1px 0 rgb(0 0 0 / 0.3), 0 8px 20px -8px rgb(0 0 0 / 0.6);
       --color-group-1: #fb923c;
       --color-group-2: #60a5fa;
@@ -439,6 +517,29 @@ input {
   }
   .btn-danger:hover:not(:disabled) {
     background: var(--color-danger-soft);
+  }
+
+  /*
+   * The band under a page's title: board green with the holes of a breadboard,
+   * and the two rails, red (+) over blue (−), as its lower edge.
+   */
+  .band {
+    background-color: var(--color-band);
+    background-image: radial-gradient(circle, rgb(255 255 255 / 0.09) 1.3px, transparent 1.7px);
+    background-size: 14px 14px;
+    color: var(--color-chalk);
+  }
+  .band::after {
+    content: '';
+    display: block;
+    height: 10px;
+    border-top: 2px solid var(--color-rail-red);
+    border-bottom: 2px solid var(--color-rail-blue);
+    background: var(--color-paper);
+  }
+  /* For a band that something else overlaps at its lower edge. */
+  .band-plain::after {
+    content: none;
   }
 
   /* A choice among a few: chips that read as one control. */

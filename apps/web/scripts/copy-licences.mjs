@@ -26,7 +26,7 @@ for (const [from, to] of [
   ['third_party/pms/LICENSE', 'pms.txt'],
   ['third_party/adafruit-st7735/NOTICE.txt', 'adafruit-st7735.txt'],
   ['third_party/lora/LICENSE', 'lora.txt'],
-  ['LICENSES/OFL-1.1-AnekBangla.txt', 'OFL-1.1-AnekBangla.txt'],
+  ['LICENSES/OFL-1.1-Noto.txt', 'OFL-1.1-Noto.txt'],
 ]) {
   cpSync(path.join(root, from), path.join(target, to));
 }

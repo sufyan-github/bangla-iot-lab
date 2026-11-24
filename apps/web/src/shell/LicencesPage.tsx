@@ -166,11 +166,11 @@ const NOTICES = [
   },
   {
     id: 'font',
-    name: 'Anek Bangla',
+    name: 'Noto Sans Bengali, Noto Sans, Noto Sans Mono',
     licence: 'SIL Open Font License 1.1',
-    text: 'Copyright 2021 The Anek Project Authors. The typeface used throughout.',
-    file: 'OFL-1.1-AnekBangla.txt',
-    source: 'https://github.com/EkType/Anek',
+    text: 'Copyright 2022 and 2025 The Noto Project Authors. The typefaces used throughout.',
+    file: 'OFL-1.1-Noto.txt',
+    source: 'https://github.com/notofonts',
   },
 ] as const;
 

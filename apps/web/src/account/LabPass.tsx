@@ -9,7 +9,7 @@ import { useT } from '../i18n';
  */
 const CARD = {
   paper: '#fffdf4',
-  band: '#1d5a4e',
+  band: '#145c4c',
   ink: '#13231f',
   soft: '#4b5d57',
   chalk: '#f4f7f5',
@@ -55,7 +55,7 @@ export function LabPass({
     g.beginPath();
     g.roundRect(0, 0, 640, 64, [24, 24, 0, 0]);
     g.fill();
-    const font = '"Anek Bangla Variable", "Noto Sans Bengali", sans-serif';
+    const font = '"Noto Sans Variable", "Noto Sans Bengali Variable", sans-serif';
     g.fillStyle = CARD.chalk;
     g.font = `600 22px ${font}`;
     g.fillText(`${t('app.name')} · ${t('pass.title')}`, 32, 42);

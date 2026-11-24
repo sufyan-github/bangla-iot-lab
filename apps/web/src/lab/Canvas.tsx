@@ -572,7 +572,7 @@ export function Canvas() {
 
   return (
     <div className="relative min-h-0 flex-1">
-      <div ref={frameRef} className="h-full overflow-auto bg-mat" data-testid="canvas-frame">
+      <div ref={frameRef} className="h-full overflow-auto bg-bench" data-testid="canvas-frame">
         <svg
           ref={svgRef}
           role="img"

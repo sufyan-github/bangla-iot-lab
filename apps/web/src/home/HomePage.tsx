@@ -22,7 +22,7 @@ function Thumbnail({ circuit }: { circuit: CircuitDocument }) {
     <svg
       viewBox={`0 0 ${canvasWidth(circuit)} ${canvasHeight(circuit)}`}
       preserveAspectRatio="xMidYMid meet"
-      className="block aspect-[16/10] w-full rounded-[var(--radius-control)] bg-mat"
+      className="block aspect-[16/10] w-full rounded-[var(--radius-control)] bg-bench"
       aria-hidden
     >
       <Scene
@@ -131,7 +131,7 @@ export function HomePage() {
 
   return (
     <main className="flex-1">
-      <div className="bg-mat text-chalk">
+      <div className="band band-plain">
         <div className="mx-auto max-w-5xl px-4 pt-8 pb-20 sm:pt-12">
           <h1 className="text-3xl font-bold sm:text-[2.5rem] sm:leading-tight">
             {t('home.title')}

@@ -88,7 +88,7 @@ function Header() {
 
   return (
     <>
-      <header className={`bg-mat-deep text-chalk ${inLab ? 'max-lg:hidden' : ''}`}>
+      <header className={`bg-band-deep text-chalk ${inLab ? 'max-lg:hidden' : ''}`}>
         <div className="flex h-12 items-center gap-1 px-3">
           <NavLink to="/" className="mr-3 flex shrink-0 items-center gap-2 font-semibold">
             <img src="/favicon.svg" alt="" width={26} height={26} />
@@ -102,7 +102,7 @@ function Header() {
               className={({ isActive }) =>
                 `flex min-h-9 max-w-32 items-center gap-2 truncate rounded-full sm:max-w-40 border px-3 text-sm font-medium ${
                   isActive
-                    ? 'border-chalk bg-chalk text-mat-deep'
+                    ? 'border-chalk bg-chalk text-band-deep'
                     : 'border-chalk/35 hover:bg-chalk/10'
                 }`
               }
@@ -126,12 +126,12 @@ function Header() {
               className="flex min-h-9 overflow-hidden rounded-full border border-chalk/35 text-xs font-semibold"
             >
               <span
-                className={`grid place-items-center px-2.5 ${locale === 'bn' ? 'bg-chalk text-mat-deep' : ''}`}
+                className={`grid place-items-center px-2.5 ${locale === 'bn' ? 'bg-chalk text-band-deep' : ''}`}
               >
                 বাং
               </span>
               <span
-                className={`grid place-items-center px-2.5 ${locale === 'en' ? 'bg-chalk text-mat-deep' : ''}`}
+                className={`grid place-items-center px-2.5 ${locale === 'en' ? 'bg-chalk text-band-deep' : ''}`}
               >
                 EN
               </span>

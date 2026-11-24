@@ -92,7 +92,7 @@ for (const scheme of ['light', 'dark'] as const) {
       });
     await page.goto('/lessons');
     const before = await look();
-    expect(before.font).toContain('Anek Bangla');
+    expect(before.font).toContain('Noto Sans Bengali');
     // Opening the office loads its code and styles (even signed out, which shows
     // only a notice); Back returns within the app, without reloading the page.
     await page.goto('/lessons');

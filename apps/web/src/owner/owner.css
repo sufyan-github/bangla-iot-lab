@@ -23,7 +23,8 @@
  * match app.css; a browser test compares the two after the office has loaded.
  */
 @theme {
-  --font-sans: 'Anek Bangla Variable', 'Noto Sans Bengali', system-ui, sans-serif;
+  --font-sans: 'Noto Sans Variable', 'Noto Sans Bengali Variable', system-ui, sans-serif;
+  --font-mono: 'Noto Sans Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
   --default-transition-duration: 150ms;
   --text-xs: 0.8125rem;
   --text-xs--line-height: 1.5;

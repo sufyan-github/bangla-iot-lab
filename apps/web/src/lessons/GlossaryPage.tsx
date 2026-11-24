@@ -63,7 +63,7 @@ export function GlossaryPage() {
 
   return (
     <main className="flex-1" data-testid="glossary">
-      <div className="bg-mat text-chalk">
+      <div className="band">
         <div className="mx-auto max-w-4xl px-4 pt-8 pb-10 sm:pt-12">
           <h1 className="text-3xl font-bold sm:text-[2.5rem] sm:leading-tight">
             {t('glossary.title')}

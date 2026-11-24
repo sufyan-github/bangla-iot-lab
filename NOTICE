@@ -100,10 +100,13 @@ under other licences. Each is kept apart from the Apache-2.0 code.
    its source by third_party/esp32sim/build.sh, and boots Espressif's mask ROM
    for the ESP32 (Apache-2.0).
 
-4. Anek Bangla font (SIL Open Font License 1.1)
+4. Noto Sans Bengali, Noto Sans and Noto Sans Mono fonts (SIL Open Font
+   License 1.1)
 
-   Copyright 2021 The Anek Project Authors. Distributed unmodified through the
-   @fontsource-variable/anek-bangla package. See LICENSES/OFL-1.1-AnekBangla.txt.
+   Copyright 2022 and 2025 The Noto Project Authors. Distributed unmodified
+   through the @fontsource-variable/noto-sans-bengali, noto-sans and
+   noto-sans-mono packages; only their Bengali, Latin and Greek files are
+   shipped. See LICENSES/OFL-1.1-Noto.txt.
 
 5. JavaScript dependencies
 
