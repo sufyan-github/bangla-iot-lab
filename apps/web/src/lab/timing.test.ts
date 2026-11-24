@@ -9,7 +9,7 @@ const sheet: LogicSheet = {
     { id: 'IN2', kind: 'input', x: 1, y: 6 },
     { id: 'G1', kind: 'AND', x: 10, y: 2 },
     { id: 'FF1', kind: 'DFF', x: 20, y: 2 },
-    { id: 'IN10', kind: 'input', x: 1, y: 9 },
+    { id: 'IN10', kind: 'input', x: 1, y: 9, label: 'B' },
     { id: 'CLK1', kind: 'clock', x: 1, y: 2 },
   ],
   wires: [],
@@ -20,7 +20,7 @@ describe('timing diagram', () => {
     expect(timingSignals(sheet)).toEqual([
       { port: 'CLK1.q', label: 'CLK1' },
       { port: 'IN2.q', label: 'IN2' },
-      { port: 'IN10.q', label: 'IN10' },
+      { port: 'IN10.q', label: 'B' },
       { port: 'FF1.q', label: 'FF1.Q' },
       { port: 'OUT1.a', label: 'OUT1' },
     ]);

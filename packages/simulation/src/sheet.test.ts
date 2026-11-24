@@ -6,6 +6,7 @@ import {
   moveSheetElement,
   removeFromSheet,
   setSheetElement,
+  sheetName,
   type LogicSheet,
   type SheetEdit,
   type SheetKind,
@@ -256,6 +257,20 @@ describe('logic sheet, part 2', () => {
     t = ok(setSheetElement(t, 'IN1', { on: true }));
     expect(tick()).toBe(true);
     expect(tick()).toBe(false);
+  });
+
+  it('an element can be given a name, which can be taken away again', () => {
+    let sheet = build(['input'], []);
+    sheet = ok(setSheetElement(sheet, 'IN1', { label: '  Carry   in ' }));
+    expect(sheet.elements[0]!.label).toBe('Carry in');
+    expect(sheetName(sheet.elements[0]!)).toBe('Carry in');
+    expect(isLogicSheet(sheet)).toBe(true);
+    // Long names are cut to twelve characters.
+    sheet = ok(setSheetElement(sheet, 'IN1', { label: 'a very long name indeed' }));
+    expect(sheet.elements[0]!.label).toBe('a very long');
+    sheet = ok(setSheetElement(sheet, 'IN1', { label: ' ' }));
+    expect(sheet.elements[0]!.label).toBeUndefined();
+    expect(sheetName(sheet.elements[0]!)).toBe('IN1');
   });
 
   it('a sheet whose hex digit is wired can be kept and opened again', () => {

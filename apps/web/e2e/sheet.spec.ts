@@ -64,6 +64,13 @@ test('two switches, an AND gate and a lamp: the lamp lights only with both on', 
   await page.reload();
   await page.getByTestId('view-sheet').click();
   await expect(page.locator('[data-wire]')).toHaveCount(3);
+
+  // Named, the lamp is called by its name in the expression.
+  await page.locator('[data-element="OUT1"] rect').first().click();
+  await page.getByTestId('sheet-label').fill('Both');
+  await page.getByTestId('sheet-label').press('Enter');
+  await page.getByTestId('sheet-table').click();
+  await expect(page.getByTestId('sheet-expression')).toHaveText('Both = A·B');
 });
 
 test('a clock and a D flip-flop with Q̅ to D: the flip-flop turns over by itself', async ({

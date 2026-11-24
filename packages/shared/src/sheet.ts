@@ -67,6 +67,9 @@ export function sheetPorts(element: Pick<SheetElement, 'kind' | 'inputs'>): {
   return base;
 }
 
+/** The longest name an element may be given. */
+export const MAX_LABEL = 12;
+
 /** How many elements and wires a sheet may hold. */
 export const MAX_SHEET_ELEMENTS = 60;
 export const MAX_SHEET_WIRES = 120;
@@ -106,6 +109,10 @@ export const SheetElementSchema = Type.Object({
   inputs: Type.Optional(Type.Integer({ minimum: 2, maximum: 4 })),
   /** A clock: how many times a second it ticks. */
   hz: Type.Optional(Type.Number({ minimum: 0.2, maximum: 10 })),
+  /** A name the student gives it ("A", "Sum"), shown instead of its id. */
+  label: Type.Optional(
+    Type.String({ minLength: 1, maxLength: MAX_LABEL, pattern: '^[^\\n\\r\\t]+$' }),
+  ),
 });
 export type SheetElement = Static<typeof SheetElementSchema>;
 
@@ -240,15 +247,27 @@ export function moveSheetElement(sheet: LogicSheet, id: string, x: number, y: nu
   };
 }
 
-/** Changes a switch's position or a clock's speed. */
+/** What an element is called on the sheet: the name it was given, or its id. */
+export const sheetName = (element: Pick<SheetElement, 'id' | 'label'>) =>
+  element.label ?? element.id;
+
+/**
+ * Changes a switch's position, a clock's speed, a gate's inputs, or the name
+ * shown (an empty name takes it away).
+ */
 export function setSheetElement(
   sheet: LogicSheet,
   id: string,
-  change: { on?: boolean; hz?: number; inputs?: number },
+  change: { on?: boolean; hz?: number; inputs?: number; label?: string },
 ): SheetEdit {
   const element = sheet.elements.find((e) => e.id === id);
   if (!element) return { ok: false, error: 'missing' };
   const next = { ...element };
+  if (change.label !== undefined) {
+    const label = change.label.replace(/\s+/g, ' ').trim().slice(0, MAX_LABEL).trim();
+    if (label) next.label = label;
+    else delete next.label;
+  }
   if (change.on !== undefined && element.kind === 'input') next.on = change.on;
   if (change.hz !== undefined && element.kind === 'clock')
     next.hz = Math.max(0.2, Math.min(10, change.hz));

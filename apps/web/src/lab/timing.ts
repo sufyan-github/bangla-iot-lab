@@ -1,4 +1,4 @@
-import { SHEET_MEMORY_KINDS, type LogicSheet } from '@banglalab/shared';
+import { SHEET_MEMORY_KINDS, sheetName, type LogicSheet } from '@banglalab/shared';
 
 /** How much of the past a timing diagram shows. */
 export const TIMING_WINDOW_MS = 8000;
@@ -19,16 +19,16 @@ export function timingSignals(sheet: LogicSheet): TimingSignal[] {
   const memory = SHEET_MEMORY_KINDS as readonly string[];
   const groups: TimingSignal[][] = [[], [], [], []];
   for (const element of sheet.elements) {
-    if (element.kind === 'clock') groups[0]!.push({ port: `${element.id}.q`, label: element.id });
-    else if (element.kind === 'input')
-      groups[1]!.push({ port: `${element.id}.q`, label: element.id });
+    const name = sheetName(element);
+    if (element.kind === 'clock') groups[0]!.push({ port: `${element.id}.q`, label: name });
+    else if (element.kind === 'input') groups[1]!.push({ port: `${element.id}.q`, label: name });
     else if (memory.includes(element.kind))
-      groups[2]!.push({ port: `${element.id}.q`, label: `${element.id}.Q` });
-    else if (element.kind === 'output')
-      groups[3]!.push({ port: `${element.id}.a`, label: element.id });
+      groups[2]!.push({ port: `${element.id}.q`, label: `${name}.Q` });
+    else if (element.kind === 'output') groups[3]!.push({ port: `${element.id}.a`, label: name });
   }
+  // In the order the elements were placed (IN2 before IN10), whatever they are called.
   const byNumber = (a: TimingSignal, b: TimingSignal) =>
-    a.label.localeCompare(b.label, 'en', { numeric: true });
+    a.port.localeCompare(b.port, 'en', { numeric: true });
   return groups.flatMap((group) => group.sort(byNumber)).slice(0, MAX_TIMING_SIGNALS);
 }
 

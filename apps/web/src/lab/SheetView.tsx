@@ -1,5 +1,6 @@
 import type { MessageKey } from '@banglalab/i18n';
 import {
+  MAX_LABEL,
   SHEET_GATES,
   SHEET_HEIGHT,
   SHEET_WIDTH,
@@ -8,6 +9,7 @@ import {
   moveSheetElement,
   removeFromSheet,
   setSheetElement,
+  sheetName,
   sheetPorts,
   type LogicSheet,
   type SheetElement,
@@ -490,6 +492,10 @@ export function SheetView() {
   };
 
   const selectedElement = sheet.elements.find((e) => e.id === selected);
+  const nameOf = (id: string) => {
+    const element = sheet.elements.find((e) => e.id === id);
+    return element ? sheetName(element) : id;
+  };
   const floating = state.floating.filter((port) => !port.startsWith('OUT'));
   const kindName = (kind: SheetKind) =>
     (SHEET_GATES as readonly string[]).includes(kind)
@@ -668,7 +674,7 @@ export function SheetView() {
                   }}
                 />
                 <g pointerEvents="none">
-                  <ElementBody element={element} state={state} label={element.id} />
+                  <ElementBody element={element} state={state} label={sheetName(element)} />
                   <text
                     x={SIZE * CELL - 3}
                     y={9}
@@ -679,8 +685,9 @@ export function SheetView() {
                     {element.kind === 'input' ||
                     element.kind === 'output' ||
                     element.kind === 'clock' ||
-                    element.kind === 'DFF'
-                      ? element.id
+                    element.kind === 'DFF' ||
+                    (element.label && !(SHEET_GATES as readonly string[]).includes(element.kind))
+                      ? sheetName(element)
                       : ''}
                   </text>
                 </g>
@@ -749,6 +756,29 @@ export function SheetView() {
               >
                 {t('sheet.delete', { id: selected })}
               </button>
+            )}
+            {selectedElement && (
+              <label className="flex items-center gap-2">
+                <span className="text-sm text-ink-soft">{t('sheet.label')}</span>
+                <input
+                  key={selectedElement.id}
+                  data-testid="sheet-label"
+                  defaultValue={selectedElement.label ?? ''}
+                  placeholder={selectedElement.id}
+                  maxLength={MAX_LABEL}
+                  className="field min-h-11 w-32"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') event.currentTarget.blur();
+                  }}
+                  onBlur={(event) => {
+                    if (event.target.value.trim() !== (selectedElement.label ?? '')) {
+                      apply((s) =>
+                        setSheetElement(s, selectedElement.id, { label: event.target.value }),
+                      );
+                    }
+                  }}
+                />
+              </label>
             )}
             {isWideGate(selectedElement?.kind) && (
               <fieldset className="flex items-center gap-1.5" data-testid="sheet-inputs">
@@ -839,7 +869,7 @@ export function SheetView() {
                 <tr>
                   {[...table.inputs, ...table.outputs].map((id) => (
                     <th key={id} className="px-3 py-1 text-left font-semibold">
-                      {id}
+                      {nameOf(id)}
                     </th>
                   ))}
                 </tr>
@@ -864,12 +894,12 @@ export function SheetView() {
             <div className="space-y-1" data-testid="sheet-expressions">
               <p className="text-sm text-ink-soft">
                 {t('sheet.letters', {
-                  list: table.inputs.map((id, i) => `${'ABCD'[i]} = ${id}`).join(', '),
+                  list: table.inputs.map((id, i) => `${'ABCD'[i]} = ${nameOf(id)}`).join(', '),
                 })}
               </p>
               {table.outputs.map((id, o) => (
                 <p key={id} className="font-mono text-lg" data-testid="sheet-expression">
-                  {id} ={' '}
+                  {nameOf(id)} ={' '}
                   {simplestSum(
                     table.inputs.length,
                     table.rows.map((row) => row.outputs[o]!),
