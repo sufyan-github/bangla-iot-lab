@@ -155,7 +155,7 @@ export function SignalsPanel() {
       const context = canvas.getContext('2d');
       if (!context) return;
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      context.fillStyle = '#13231f';
+      context.fillStyle = '#12201b';
       context.fillRect(0, 0, width, height);
 
       const plotWidth = width - LABEL_WIDTH;
@@ -253,7 +253,7 @@ export function SignalsPanel() {
   return (
     <div className="space-y-4 px-4 py-4" data-testid="signals-panel">
       <section>
-        <h2 className="text-base font-semibold">{t('scope.title')}</h2>
+        <h2 className="text-lg font-semibold">{t('scope.title')}</h2>
         <p className="text-sm text-ink-soft">{t('scope.about')}</p>
         <div className="mt-2 grid grid-cols-2 gap-2">
           {channels.map((probe, channel) => (
@@ -275,7 +275,7 @@ export function SignalsPanel() {
                     ),
                   )
                 }
-                className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-2"
+                className="field px-2"
               >
                 <option value="">{t('scope.none')}</option>
                 {options.map((option) => (
@@ -297,11 +297,7 @@ export function SignalsPanel() {
                 data-testid={`span-${span}`}
                 aria-pressed={spanMs === span}
                 onClick={() => setSpanMs(span)}
-                className={`min-h-11 rounded-lg border-2 px-3 text-sm font-medium ${
-                  spanMs === span
-                    ? 'border-amber bg-amber-soft'
-                    : 'border-line hover:border-ink-soft'
-                }`}
+                className="chip"
               >
                 {number(span / 1000)} s
               </button>
@@ -315,7 +311,7 @@ export function SignalsPanel() {
           ref={canvasRef}
           role="img"
           aria-label={t('scope.title')}
-          className="block w-full rounded-xl"
+          className="screen block w-full overflow-hidden"
           style={{ height: PLOT_HEIGHT + rows.length * ROW_HEIGHT }}
           data-rows={rows.length}
         />
@@ -357,14 +353,17 @@ export function SignalsPanel() {
       </table>
 
       <section>
-        <h2 className="text-base font-semibold">{t('scope.logic')}</h2>
+        <h2 className="text-lg font-semibold">{t('scope.logic')}</h2>
         <p className="text-sm text-ink-soft">
           {t(rows.length > 0 ? 'scope.logicAbout' : 'scope.logicEmpty')}
         </p>
         {chipProbes.length > 0 && (
           <ul className="mt-1 flex flex-wrap gap-1.5 text-sm" data-testid="analyser-legs">
             {chipProbes.map((probe) => (
-              <li key={probe} className="rounded-md border border-line px-2 py-0.5">
+              <li
+                key={probe}
+                className="rounded-full bg-screen px-2.5 py-0.5 font-mono text-xs text-screen-ink"
+              >
                 {legName(probe)}
               </li>
             ))}

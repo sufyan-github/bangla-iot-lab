@@ -74,14 +74,11 @@ function FormAction({ action, onSend }: { action: PageAction; onSend: (path: str
           <input
             value={values[name] ?? ''}
             onChange={(event) => setValues({ ...values, [name]: event.target.value })}
-            className="min-h-10 flex-1 rounded-lg border-2 border-line bg-surface px-2"
+            className="field min-h-10 flex-1"
           />
         </label>
       ))}
-      <button
-        type="submit"
-        className="min-h-10 rounded-lg border-2 border-line px-3 text-sm font-medium hover:border-ink-soft"
-      >
+      <button type="submit" className="btn btn-secondary min-h-10 text-sm">
         {action.label || t('web.send')}
       </button>
     </form>
@@ -137,7 +134,7 @@ export function WebPanel({ boardId }: { boardId: string }) {
           void open(path);
         }}
       >
-        <label className="flex min-w-0 flex-1 items-center rounded-lg border-2 border-line bg-surface px-2">
+        <label className="field flex min-w-0 flex-1 items-center px-2">
           <span className="shrink-0 text-sm text-ink-soft">http://{boardId}</span>
           <input
             data-testid="web-address"
@@ -147,11 +144,7 @@ export function WebPanel({ boardId }: { boardId: string }) {
             className="min-h-11 min-w-0 flex-1 bg-transparent px-1"
           />
         </label>
-        <button
-          type="submit"
-          data-testid="web-go"
-          className="min-h-11 rounded-lg bg-amber px-4 font-semibold text-ink"
-        >
+        <button type="submit" data-testid="web-go" className="btn btn-primary">
           {t('web.go')}
         </button>
       </form>
@@ -169,12 +162,24 @@ export function WebPanel({ boardId }: { boardId: string }) {
               : t('web.status', { status: page.status, path: page.path })}
           </p>
           {page.type.startsWith('text/html') ? (
-            <iframe
-              title={t('web.page')}
-              sandbox=""
-              srcDoc={PAGE_POLICY + page.body}
-              className="h-72 w-full rounded-lg border-2 border-line bg-white"
-            />
+            <>
+              <div
+                className="flex items-center gap-2 rounded-t-[var(--radius-card)] bg-line px-3 py-1.5"
+                aria-hidden
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-paper" />
+                <span className="truncate font-mono text-xs text-ink-soft">
+                  http://{boardId}
+                  {page.path}
+                </span>
+              </div>
+              <iframe
+                title={t('web.page')}
+                sandbox=""
+                srcDoc={PAGE_POLICY + page.body}
+                className="h-72 w-full rounded-b-[var(--radius-card)] border-2 border-t-0 border-line bg-white"
+              />
+            </>
           ) : (
             page.status !== 0 && (
               <pre className="max-h-72 overflow-auto rounded-lg border-2 border-line bg-paper p-2 text-sm whitespace-pre-wrap">
@@ -193,7 +198,7 @@ export function WebPanel({ boardId }: { boardId: string }) {
                       key={`${action.path}-${i}`}
                       type="button"
                       onClick={() => void open(action.path)}
-                      className="min-h-11 rounded-lg border-2 border-line px-3 text-sm font-medium hover:border-ink-soft"
+                      className="chip"
                     >
                       {action.label}
                     </button>

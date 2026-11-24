@@ -458,7 +458,7 @@ export function LabPage() {
           {/* The parts drawer, beside the board on a wide screen. */}
           {wide && view === 'board' && (
             <aside
-              className="flex w-64 shrink-0 flex-col border-r border-line bg-surface"
+              className="flex w-80 shrink-0 flex-col border-r border-line bg-surface"
               aria-label={t('drawer.title')}
             >
               <div className="px-3 pt-3">

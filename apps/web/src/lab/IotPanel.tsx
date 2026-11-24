@@ -17,7 +17,7 @@ function Sparkline({ values }: { values: number[] }) {
       <polyline
         points={points}
         fill="none"
-        stroke="var(--color-mat)"
+        stroke="var(--color-screen-ink)"
         strokeWidth={2}
         vectorEffect="non-scaling-stroke"
       />
@@ -53,7 +53,7 @@ export function IotPanel() {
       {list.length === 0 ? (
         <p className="text-sm text-ink-soft">{t('iot.none')}</p>
       ) : (
-        <ul className="divide-y divide-line rounded-lg border border-line" data-testid="iot-topics">
+        <ul className="screen divide-y divide-screen-line" data-testid="iot-topics">
           {list.map((item) => (
             <li
               key={item.topic}
@@ -62,8 +62,8 @@ export function IotPanel() {
               data-topic={item.topic}
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate font-mono text-sm">{item.topic}</p>
-                <p className="text-xs text-ink-soft">
+                <p className="truncate font-mono text-sm text-paper/85">{item.topic}</p>
+                <p className="text-xs text-paper/50">
                   {t('iot.from', {
                     from: item.from === 'dashboard' ? t('iot.dashboard') : item.from,
                     count: number(item.count),
@@ -71,7 +71,7 @@ export function IotPanel() {
                 </p>
               </div>
               <Sparkline values={item.history} />
-              <span className="font-mono text-lg font-semibold" data-testid="iot-value">
+              <span className="font-mono text-xl font-bold text-screen-ink" data-testid="iot-value">
                 {item.payload.length > 24 ? `${item.payload.slice(0, 24)}…` : item.payload}
               </span>
             </li>
@@ -79,7 +79,7 @@ export function IotPanel() {
         </ul>
       )}
       <form
-        className="space-y-2 rounded-xl border-2 border-line p-3"
+        className="space-y-2 rounded-[var(--radius-card)] border border-line bg-paper p-3"
         onSubmit={(event) => {
           event.preventDefault();
           void send(payload);
@@ -92,7 +92,7 @@ export function IotPanel() {
             data-testid="iot-topic-input"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-2 font-mono"
+            className="field font-mono"
           />
         </label>
         <label className="block">
@@ -101,7 +101,7 @@ export function IotPanel() {
             data-testid="iot-payload"
             value={payload}
             onChange={(e) => setPayload(e.target.value)}
-            className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-2 font-mono"
+            className="field font-mono"
           />
         </label>
         <label className="flex items-center gap-2 text-sm">
@@ -114,11 +114,7 @@ export function IotPanel() {
           {t('iot.retained')}
         </label>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="submit"
-            data-testid="iot-publish"
-            className="min-h-11 rounded-lg bg-amber px-4 font-semibold text-ink"
-          >
+          <button type="submit" data-testid="iot-publish" className="btn btn-primary">
             {t('iot.publish')}
           </button>
           {['on', 'off'].map((quick) => (
@@ -127,7 +123,7 @@ export function IotPanel() {
               type="button"
               data-testid={`iot-quick-${quick}`}
               onClick={() => void send(quick)}
-              className="min-h-11 rounded-lg border-2 border-line px-3 font-mono"
+              className="chip font-mono"
             >
               {quick}
             </button>
