@@ -878,6 +878,7 @@ export const bn = {
   'iot.tab': 'IoT',
   'iot.idle':
     'সার্কিট চালু করো, আর বোর্ডে এমন প্রোগ্রাম তোলো যা MQTT ব্রোকারে যুক্ত হয় (যেমন তৈরি প্রোগ্রাম "MQTT")।',
+  'iot.csv': 'ডেটা লগ নামাও (CSV, {count}টা বার্তা)',
   'iot.about':
     'ল্যাবের নিজের MQTT ব্রোকার: বোর্ডগুলো আর এই ড্যাশবোর্ড এখানে বার্তা পাঠায় আর পায়। আসল ইন্টারনেট নেই।',
   'iot.none': 'এখনো কোনো বার্তা আসেনি।',
@@ -1032,6 +1033,7 @@ export const bn = {
   'code.serialView': 'সিরিয়াল কীভাবে দেখাবে',
   'code.plotEmpty':
     'প্রোগ্রাম সংখ্যা ছাপলে এখানে রেখা হয়ে দেখা যাবে। এক লাইনে কয়েকটা সংখ্যা দিলে কয়েকটা রেখা হয়; নাম দিতে চাইলে "temp:24.5" লেখো।',
+  'code.plotCsv': 'CSV নামাও',
   'code.plotPoints': 'শেষ {count}টা লাইন',
   'code.clear': 'মুছে ফেলো',
 } as const;
@@ -1929,6 +1931,7 @@ export const en: Record<MessageKey, string> = {
   'iot.tab': 'IoT',
   'iot.idle':
     'Run the circuit, with a program on the board that connects to an MQTT broker (such as the ready-made “MQTT”).',
+  'iot.csv': 'Download the data log (CSV, {count} messages)',
   'iot.about':
     'The lab’s own MQTT broker: the boards and this dashboard send and receive messages here. There is no real internet.',
   'iot.none': 'No messages yet.',
@@ -2091,6 +2094,7 @@ export const en: Record<MessageKey, string> = {
   'code.serialView': 'How the serial monitor shows',
   'code.plotEmpty':
     'When the program prints numbers, they show here as lines. Several numbers on one line make several lines; to name one, print "temp:24.5".',
+  'code.plotCsv': 'Download CSV',
   'code.plotPoints': 'last {count} lines',
   'code.clear': 'Clear',
 };

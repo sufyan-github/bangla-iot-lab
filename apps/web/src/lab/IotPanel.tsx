@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { simulation } from '../sim/client';
 import { useT } from '../i18n';
+import { downloadText, toCsv } from './csv';
 import { useLab, type MqttTopic } from './store';
 
 /** A small line of a topic's recent numbers. */
@@ -32,6 +33,7 @@ function Sparkline({ values }: { values: number[] }) {
 export function IotPanel() {
   const running = useLab((s) => s.running);
   const topics = useLab((s) => s.topics);
+  const log = useLab((s) => s.mqttLog);
   const { t, number } = useT();
   const [topic, setTopic] = useState('lab/led');
   const [payload, setPayload] = useState('on');
@@ -50,6 +52,24 @@ export function IotPanel() {
   return (
     <div className="space-y-4 px-4 py-4" data-testid="iot-panel">
       <p className="text-sm text-ink-soft">{t('iot.about')}</p>
+      {log.length > 0 && (
+        <button
+          type="button"
+          data-testid="iot-csv"
+          className="btn btn-secondary"
+          onClick={() =>
+            downloadText(
+              'mqtt-log.csv',
+              toCsv(
+                ['time_s', 'from', 'topic', 'payload'],
+                log.map((m) => [m.timeMs / 1000, m.from, m.topic, m.payload]),
+              ),
+            )
+          }
+        >
+          {t('iot.csv', { count: number(log.length) })}
+        </button>
+      )}
       {list.length === 0 ? (
         <p className="text-sm text-ink-soft">{t('iot.none')}</p>
       ) : (

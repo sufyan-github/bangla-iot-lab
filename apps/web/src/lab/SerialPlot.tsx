@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useT } from '../i18n';
+import { downloadText, toCsv } from './csv';
 import { parsePlot } from './plot';
 
 /** Line colours on the instrument screen, easy to tell apart. */
@@ -80,6 +81,19 @@ export function SerialPlot({ text }: { text: string }) {
       <div className="flex justify-between px-1 font-mono text-xs text-paper/60 tabular-nums">
         <span>{number(Math.round(low * 100) / 100)}</span>
       </div>
+      <button
+        type="button"
+        data-testid="plot-csv"
+        className="float-right mt-1 rounded-md px-2 py-1 text-xs text-paper/80 hover:bg-paper/10"
+        onClick={() => {
+          // Every line still in the monitor, not only those drawn.
+          const all = parsePlot(text, Infinity);
+          const rows = (all.series[0] ?? []).map((_, i) => [i + 1, ...all.series.map((s) => s[i])]);
+          downloadText('serial-plot.csv', toCsv(['sample', ...all.names], rows));
+        }}
+      >
+        {t('code.plotCsv')}
+      </button>
       <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 px-1 text-xs">
         {plot.names.map((name, s) => {
           const latest = [...plot.series[s]!].reverse().find(Number.isFinite);

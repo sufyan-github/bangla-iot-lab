@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 
 /** The ESP32's own web page, opened in the lab's browser panel. */
@@ -82,6 +83,12 @@ test('the MQTT program shows the knob on the IoT dashboard, and "on" lights the 
   const knob = page.locator('[data-testid="iot-topic"][data-topic="lab/knob"]');
   await expect(knob).toBeVisible({ timeout: 15_000 });
   await expect(knob.getByTestId('iot-value')).toHaveText(/^\d+$/);
+  // Every message so far, as a data log.
+  const download = page.waitForEvent('download');
+  await page.getByTestId('iot-csv').click();
+  const csv = readFileSync((await (await download).path())!, 'utf8');
+  expect(csv).toContain('time_s,from,topic,payload');
+  expect(csv).toMatch(/\r\n[\d.]+,ESP1,lab\/knob,\d+\r\n/);
   await page.getByTestId('iot-topic-input').fill('lab/led');
   await page.getByTestId('iot-quick-on').click();
   await page.getByTestId('tab-circuit').click();

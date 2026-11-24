@@ -17,12 +17,13 @@ export const MAX_SERIES = 6;
 
 const NUMBER = /^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i;
 
-export function parsePlot(text: string): Plot {
+/** `limit` is how many of the latest lines are kept: the plotter draws 200, a data log takes all. */
+export function parsePlot(text: string, limit = MAX_POINTS): Plot {
   // The last line may still be arriving: leave it until its end comes.
   const lines = text
     .split('\n')
     .slice(0, -1)
-    .slice(-MAX_POINTS * 2);
+    .slice(Number.isFinite(limit) ? -limit * 2 : 0);
   const names: string[] = [];
   const rows: Map<string, number>[] = [];
   for (const line of lines) {
@@ -41,6 +42,6 @@ export function parsePlot(text: string): Plot {
     }
     if (values.size > 0) rows.push(values);
   }
-  const kept = rows.slice(-MAX_POINTS);
+  const kept = Number.isFinite(limit) ? rows.slice(-limit) : rows;
   return { names, series: names.map((name) => kept.map((row) => row.get(name) ?? NaN)) };
 }

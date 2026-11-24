@@ -24,4 +24,10 @@ describe('the serial plotter reads numbers as the Arduino one does', () => {
     expect(plot.series[0]).toHaveLength(MAX_POINTS);
     expect(plot.series[0]!.at(-1)).toBe(MAX_POINTS + 49);
   });
+
+  it('keeps every line when asked to, for a data log', () => {
+    const text = Array.from({ length: 300 }, (_, i) => `${i}`).join('\n') + '\n';
+    expect(parsePlot(text).series[0]).toHaveLength(200);
+    expect(parsePlot(text, Infinity).series[0]).toHaveLength(300);
+  });
 });
