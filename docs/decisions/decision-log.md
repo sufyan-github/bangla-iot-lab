@@ -2213,3 +2213,32 @@ Built on 25 November 2026, chosen as the next step after the retention job.
   tab, so the lesson stays as it was. Quiz questions are left alone, so a
   meaning cannot give an answer away.
 - The glossary is content under CC BY 4.0, like the lessons.
+
+## D-103 — The redesign, stage 1: colours and type
+
+Decided with the owner on 25 November 2026. The owner asked for the whole
+site to be redesigned, with another ESP32 labs site as the reference and Noto
+Sans Bengali for Bangla, and chose: a look of the lab's own (inspired by the
+reference, nothing copied from it), light and dark both, the three Noto
+families, and a design page to approve before any rebuilding. The design page
+was approved the same day.
+
+- **Two school materials.** Light is a breadboard: cool white, with the red
+  (+) and blue (−) rails as the line under a page's title band. Dark is the
+  blackboard: board green with chalk-white text. Amber, the lit LED, stays the
+  one action colour. What was taken from the reference, in the lab's own form:
+  wire colours on pin names, a numbered lesson path, a drawing for each part,
+  and progress as a row of LEDs. Its small all-capital monospace labels were
+  not taken: Bangla has no capitals and reads badly in a monospace face.
+- **Type.** Noto Sans Bengali for Bangla, Noto Sans for Latin, Noto Sans Mono
+  for code, pin names and readings, all under the SIL Open Font License 1.1,
+  in place of Anek Bangla. Only the Bengali, Latin and Greek (for Ω) files are
+  shipped: 197 KB, against 198 KB before.
+- **This stage** changes the colour and type settings of every page, the top
+  bar, and the title bands of home, lessons and glossary (holes and rails).
+  The lab's work surface has a colour of its own (`bench`) and looks as it
+  did; it is redesigned in a later stage. Faint text is darker than before, so
+  it meets the 4.5:1 contrast it missed.
+- **Stages to come,** one pull request each: home, lessons and glossary; the
+  lab; accounts, teachers' and guardians' pages. The owner's office keeps
+  Kumo and takes the new colours through its settings.

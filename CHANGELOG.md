@@ -8,6 +8,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Changed
 
+- **New colours and typefaces** (the first stage of a redesign): the pages
+  are a white breadboard in light and a green blackboard in dark, with a
+  breadboard's red and blue rails under each title; text is set in Noto Sans
+  Bengali, Noto Sans and Noto Sans Mono.
 - **A refreshed interface, built for phones first**: a parts drawer with
   labelled compartments and search; one bar in the lab; the board filling a
   phone's screen with the parts in a sheet; grouped side tabs; a home page with
