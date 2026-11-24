@@ -1,4 +1,10 @@
-import { isCircuitDocument, migrateCircuit, type CircuitDocument } from '@banglalab/shared';
+import {
+  isCircuitDocument,
+  isLogicSheet,
+  migrateCircuit,
+  type CircuitDocument,
+  type LogicSheet,
+} from '@banglalab/shared';
 import Dexie, { type Table } from 'dexie';
 
 /** The program written for one board, and the firmware last uploaded to it. */
@@ -71,11 +77,13 @@ export interface ProjectRecord {
    * a new program, as on a real board.
    */
   settings?: Record<string, string>;
+  /** The logic sheet, when the project has one. */
+  sheet?: LogicSheet;
 }
 
 export type ProjectContent = Pick<
   ProjectRecord,
-  'name' | 'circuit' | 'programs' | 'lesson' | 'settings'
+  'name' | 'circuit' | 'programs' | 'lesson' | 'settings' | 'sheet'
 >;
 
 class LabDatabase extends Dexie {
@@ -130,6 +138,9 @@ export const projectStore = {
   /** Saves changes to an existing project. Refuses documents the app could not reopen. */
   async save(id: string, content: ProjectContent): Promise<void> {
     if (!isCircuitDocument(content.circuit)) throw new Error('Refusing to save an invalid circuit');
+    if (content.sheet !== undefined && !isLogicSheet(content.sheet)) {
+      throw new Error('Refusing to save an invalid logic sheet');
+    }
     const updated = await database.projects.update(id, { ...content, updatedAt: Date.now() });
     if (updated === 0) throw new Error(`Project ${id} no longer exists`);
   },

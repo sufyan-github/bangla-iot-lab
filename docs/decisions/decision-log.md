@@ -1483,3 +1483,30 @@ of the oscilloscope's two channels.
 
 **Not done.** A threshold that follows each chip's own supply (a chip on 3.3 V
 is read against 2.5 V too), and triggering.
+
+## D-079 — The logic sheet: a symbol canvas
+
+The last logic segment (L6), the symbol canvas that D-060 put off. Each project
+now has a **logic sheet**, a third view beside the breadboard and the diagram,
+where a circuit is drawn with logic symbols instead of chips: switches, lamps,
+a clock (0.2 to 10 Hz), the six gates and a D flip-flop. Wires go from an
+output to an input; an input takes one wire, an output any number, its own
+element's inputs among them (a flip-flop's Q̅ back to its D).
+
+**Pure logic.** The sheet has no voltages, as a textbook draws logic: each
+port is HIGH or LOW. The gates answer at once; an input joined to nothing is
+read as LOW and shown with a red dot; a loop that never settles is reported.
+Flip-flops change on their clock's rising edge, compared with the level they
+saw last; one flip-flop may clock another (a ripple counter), so edges are
+taken in passes until nothing more changes. At power-on a flip-flop waits for
+its clock to be LOW before it takes an edge. The sheet runs whenever it is
+open, stopping at every clock change so that no edge is lost between frames.
+
+**Saved with the project** (`sheet` in the project record); a sheet the lab
+could not reopen is refused when saving and ignored when opening. The truth
+table works on a sheet with 1 to 4 switches and no clock or flip-flop.
+
+**Not done.** Undo for the sheet, more elements (counters, multiplexers,
+labelled inputs), copy and paste, and lessons that use it. The breadboard and
+the sheet are separate circuits: the sheet does not draw the breadboard's
+chips as symbols.

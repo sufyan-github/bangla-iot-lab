@@ -8,6 +8,8 @@ import {
   addWire,
   attachError,
   emptyCircuit,
+  emptySheet,
+  isLogicSheet,
   flipPart,
   isHole,
   placePart,
@@ -16,6 +18,8 @@ import {
   updateProps,
   type BoardPartType,
   type CircuitDocument,
+  type LogicSheet,
+  type SheetEdit,
   type EditError,
   type EditResult,
 } from '@banglalab/shared';
@@ -58,6 +62,8 @@ interface LabState {
   programs: Record<string, BoardProgram>;
   /** Each board's saved settings (Preferences), by board id; kept with the project. */
   settings: Record<string, string>;
+  /** The project's logic sheet: a circuit of logic symbols, apart from the breadboard. */
+  sheet: LogicSheet;
   selectedId: string | null;
   tool: Tool;
   /** First end of the wire being drawn. */
@@ -89,6 +95,8 @@ interface LabState {
   open(project: ProjectContent & { id: string }): void;
   close(): void;
   setName(name: string): void;
+  /** Applies an edit to the logic sheet; returns it, so a refusal can be shown. */
+  editSheet(edit: (sheet: LogicSheet) => SheetEdit): SheetEdit;
   setTool(tool: Tool): void;
   select(id: string | null): void;
   /** A tap on a hole, battery terminal or board socket; what it does depends on the tool. */
@@ -208,6 +216,7 @@ export const useLab = create<LabState>((set, get) => {
     circuit: emptyCircuit(),
     programs: {},
     settings: {},
+    sheet: emptySheet(),
     uploads: {},
     probes: [],
     selectedId: null,
@@ -231,6 +240,7 @@ export const useLab = create<LabState>((set, get) => {
         circuit: project.circuit,
         programs: project.programs,
         settings: project.settings ?? {},
+        sheet: isLogicSheet(project.sheet) ? project.sheet : emptySheet(),
         selectedId: null,
         tool: 'select',
         wireStart: null,
@@ -243,6 +253,11 @@ export const useLab = create<LabState>((set, get) => {
       set({ projectId: null, selectedId: null, wireStart: null, past: [], future: [], ...STOPPED });
     },
     setName: (name) => set({ name }),
+    editSheet(edit) {
+      const result = edit(get().sheet);
+      if (result.ok) set({ sheet: result.sheet });
+      return result;
+    },
     setTool: (tool) => set({ tool, wireStart: null, selectedId: null, notice: null }),
     select: (selectedId) => set({ selectedId }),
 

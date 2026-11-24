@@ -1,9 +1,38 @@
 import 'fake-indexeddb/auto';
-import { emptyCircuit, ledCircuitExample, unoCircuitExample, updateProps } from '@banglalab/shared';
+import {
+  addSheetElement,
+  emptyCircuit,
+  emptySheet,
+  ledCircuitExample,
+  unoCircuitExample,
+  updateProps,
+} from '@banglalab/shared';
 import { describe, expect, it } from 'vitest';
 import { projectStore } from './projects';
 
 describe('local project storage', () => {
+  it('keeps the logic sheet, and refuses one it could not reopen', async () => {
+    const project = await projectStore.create({ name: 'x', circuit: emptyCircuit(), programs: {} });
+    const placed = addSheetElement(emptySheet(), 'AND', 4, 4);
+    if (!placed.ok) throw new Error(placed.error);
+    await projectStore.save(project.id, {
+      name: 'x',
+      circuit: emptyCircuit(),
+      programs: {},
+      sheet: placed.sheet,
+    });
+    expect((await projectStore.get(project.id))!.sheet).toEqual(placed.sheet);
+    const broken = { ...placed.sheet, wires: [{ id: 'N1', from: 'G1.a', to: 'G1.y' }] };
+    await expect(
+      projectStore.save(project.id, {
+        name: 'x',
+        circuit: emptyCircuit(),
+        programs: {},
+        sheet: broken,
+      }),
+    ).rejects.toThrow('logic sheet');
+  });
+
   it('creates, reopens, updates and deletes a project', async () => {
     const created = await projectStore.create({
       name: 'LED',

@@ -8,6 +8,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The logic sheet**: a third view where a circuit is drawn with logic
+  symbols (switches, lamps, a clock, the six gates and a D flip-flop) and
+  wired port to port, worked out as pure logic, with its truth table. It is
+  saved with the project.
 - **The logic analyser reads chip legs**: every joined leg of a logic chip or
   clock module gets a row, named as in its datasheet, so a circuit of chips
   with no board can be watched too. Any of them can be an oscilloscope channel.

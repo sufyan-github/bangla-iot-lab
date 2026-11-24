@@ -10,6 +10,7 @@ import { Canvas } from './Canvas';
 import { Diagram } from './diagram/Diagram';
 import { CodePanel } from './CodePanel';
 import { Palette } from './Palette';
+import { SheetView } from './SheetView';
 import { Inspector, Messages, Meter, TruthTablePanel } from './panels';
 import { SignalsPanel } from './SignalsPanel';
 import { checkStep } from '@banglalab/lessons';
@@ -56,9 +57,10 @@ function useAutosave(enabled: boolean) {
     const save = () => {
       clearTimeout(timer);
       timer = undefined;
-      const { projectId, name, circuit, programs, settings, setSaveState } = useLab.getState();
+      const { projectId, name, circuit, programs, settings, sheet, setSaveState } =
+        useLab.getState();
       if (!projectId) return;
-      projectStore.save(projectId, { name, circuit, programs, settings }).then(
+      projectStore.save(projectId, { name, circuit, programs, settings, sheet }).then(
         () => setSaveState('saved'),
         () => setSaveState('error'),
       );
@@ -68,7 +70,8 @@ function useAutosave(enabled: boolean) {
         state.circuit === previous.circuit &&
         state.name === previous.name &&
         state.programs === previous.programs &&
-        state.settings === previous.settings
+        state.settings === previous.settings &&
+        state.sheet === previous.sheet
       ) {
         return;
       }
@@ -303,7 +306,7 @@ export function LabPage() {
   // A project made from a lesson opens at its lesson.
   useEffect(() => setTab(hasLesson ? 'lesson' : 'circuit'), [hasLesson]);
   /** The breadboard is where the circuit is built; the diagram is the same circuit as a schematic. */
-  const [view, setView] = useState<'board' | 'diagram'>('board');
+  const [view, setView] = useState<'board' | 'diagram' | 'sheet'>('board');
   const showCode = tab === 'code' && boardId !== undefined;
   const { setName, setRunning } = useLab.getState();
   const { t } = useT();
@@ -346,7 +349,7 @@ export function LabPage() {
             aria-label={t('lab.viewLabel')}
             className="flex shrink-0 overflow-hidden rounded-xl border-2 border-line"
           >
-            {(['board', 'diagram'] as const).map((id) => (
+            {(['board', 'diagram', 'sheet'] as const).map((id) => (
               <button
                 key={id}
                 type="button"
@@ -359,7 +362,13 @@ export function LabPage() {
                     : 'text-ink-soft hover:bg-paper hover:text-ink'
                 }`}
               >
-                {t(id === 'board' ? 'lab.viewBoard' : 'lab.viewDiagram')}
+                {t(
+                  id === 'board'
+                    ? 'lab.viewBoard'
+                    : id === 'diagram'
+                      ? 'lab.viewDiagram'
+                      : 'lab.viewSheet',
+                )}
               </button>
             ))}
           </div>
@@ -401,17 +410,23 @@ export function LabPage() {
             {t(running ? 'lab.stop' : 'lab.run')}
           </button>
         </div>
-        {view === 'board' ? (
-          <Palette />
+        {view === 'sheet' ? (
+          <SheetView />
         ) : (
-          <p className="border-b border-line bg-paper px-4 py-1.5 text-sm text-ink-soft">
-            {t('diagram.hint')}
-          </p>
+          <>
+            {view === 'board' ? (
+              <Palette />
+            ) : (
+              <p className="border-b border-line bg-paper px-4 py-1.5 text-sm text-ink-soft">
+                {t('diagram.hint')}
+              </p>
+            )}
+            <div className="relative flex min-h-0 flex-1 flex-col">
+              <Notice />
+              {view === 'board' ? <Canvas /> : <Diagram />}
+            </div>
+          </>
         )}
-        <div className="relative flex min-h-0 flex-1 flex-col">
-          <Notice />
-          {view === 'board' ? <Canvas /> : <Diagram />}
-        </div>
       </div>
 
       <aside
