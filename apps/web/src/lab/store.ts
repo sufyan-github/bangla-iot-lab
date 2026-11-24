@@ -24,6 +24,7 @@ import {
   type EditResult,
 } from '@banglalab/shared';
 import type {
+  BleNote,
   BoardStatus,
   HttpResponse,
   MqttMessage,
@@ -53,6 +54,8 @@ export type SaveState = 'saved' | 'saving' | 'error';
 const SERIAL_LIMIT = 8_000;
 /** How many recent numbers each MQTT topic keeps for its little chart. */
 const TOPIC_HISTORY = 60;
+/** How many BLE notifications the phone panel keeps for each board. */
+const BLE_NOTES_KEPT = 30;
 /** How many MQTT messages the data log keeps. */
 const MQTT_LOG_KEPT = 5000;
 /** How many of the boards' web requests the panel keeps. */
@@ -103,6 +106,8 @@ interface LabState {
   webCalls: WebCall[];
   /** Every MQTT message seen while running, oldest first (the last few thousand), for the data log. */
   mqttLog: MqttMessage[];
+  /** The latest BLE notifications each board sent the phone, oldest first. */
+  bleNotes: Record<string, BleNote[]>;
   /** How fast the simulation is running against real time; 1 when it keeps up. */
   speed: number;
   /** Counts uploads per board, so a running circuit knows when to restart a program. */
@@ -183,6 +188,7 @@ const STOPPED = {
   topics: {} as Record<string, MqttTopic>,
   webCalls: [] as WebCall[],
   mqttLog: [] as MqttMessage[],
+  bleNotes: {} as Record<string, BleNote[]>,
   serial: {},
   pressed: [] as string[],
   speed: 1,
@@ -517,6 +523,14 @@ export const useLab = create<LabState>((set, get) => {
           [message.topic]: { ...message, history, count: (before?.count ?? 0) + 1 },
         };
       }
+      let bleNotes = get().bleNotes;
+      for (const [boardId, board] of Object.entries(frame.boards)) {
+        if (!board.bleNotes?.length) continue;
+        bleNotes = {
+          ...bleNotes,
+          [boardId]: [...(bleNotes[boardId] ?? []), ...board.bleNotes].slice(-BLE_NOTES_KEPT),
+        };
+      }
       const mqttLog = frame.mqtt?.length
         ? [...get().mqttLog, ...frame.mqtt].slice(-MQTT_LOG_KEPT)
         : get().mqttLog;
@@ -531,6 +545,7 @@ export const useLab = create<LabState>((set, get) => {
         topics,
         webCalls,
         mqttLog,
+        bleNotes,
         serial,
         settings,
         speed: frame.speed ?? 1,

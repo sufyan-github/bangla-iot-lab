@@ -98,3 +98,42 @@ test('the MQTT program shows the knob on the IoT dashboard, and "on" lights the 
     })
     .toBe('on');
 });
+
+test('the lab’s phone finds the BLE program, gets its knob readings and switches its LED', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByTestId('open-example-esp32').click();
+  await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
+  await page.getByTestId('tab-code').click();
+  await page.getByTestId('starter').selectOption('ble');
+  await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
+  await page.getByTestId('run').click();
+  await page.getByTestId('tab-network').click();
+  await page.getByTestId('tab-ble').click();
+
+  const device = page.getByTestId('ble-device');
+  await expect(device).toHaveAttribute('data-advertising', 'true', { timeout: 15_000 });
+  await expect(device).toContainText('Lab-ESP32');
+  await expect(page.getByTestId('ble-characteristic')).toHaveCount(2);
+  await page.getByTestId('ble-connect').click();
+  await expect(device).toHaveAttribute('data-connected', 'true');
+  // The knob's reading arrives as a notification, about once a second.
+  await expect(page.getByTestId('ble-note').first()).toHaveText(/\d+/, { timeout: 10_000 });
+
+  const led = page.locator('[data-testid="ble-characteristic"][data-handle="1"]');
+  await led.getByTestId('ble-write-input').fill('on');
+  await led.getByTestId('ble-write-send').click();
+  await page.getByTestId('tab-circuit').click();
+  await expect
+    .poll(() => page.locator('[data-part="LED1"]').getAttribute('data-led-state'), {
+      timeout: 10_000,
+    })
+    .toBe('on');
+
+  // Leaving: the program makes the board findable again.
+  await page.getByTestId('tab-network').click();
+  await page.getByTestId('tab-ble').click();
+  await page.getByTestId('ble-disconnect').click();
+  await expect(device).toHaveAttribute('data-advertising', 'true', { timeout: 10_000 });
+});

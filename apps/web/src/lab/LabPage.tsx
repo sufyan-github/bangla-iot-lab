@@ -13,6 +13,7 @@ import { CanvasHint, PartsDrawer, ToolPicker } from './Palette';
 import { SheetView } from './SheetView';
 import { Inspector, Messages, Meter, TruthTablePanel } from './panels';
 import { SignalsPanel } from './SignalsPanel';
+import { BlePanel } from './BlePanel';
 import { IotPanel } from './IotPanel';
 import { WebPanel } from './WebPanel';
 import { checkStep } from '@banglalab/lessons';
@@ -328,7 +329,7 @@ export function LabPage() {
     }
   };
   const [tab, setTab] = useState<'lesson' | 'circuit' | 'code' | 'signals' | 'network'>('circuit');
-  const [networkView, setNetworkView] = useState<'web' | 'iot'>('web');
+  const [networkView, setNetworkView] = useState<'web' | 'iot' | 'ble'>('web');
   const [partsOpen, setPartsOpen] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
   const wide = useWide();
@@ -624,7 +625,7 @@ export function LabPage() {
                 aria-label={t('network.label')}
                 className="flex gap-1.5 border-b border-line px-4 pt-3 pb-2"
               >
-                {(['web', 'iot'] as const).map((id) => (
+                {(['web', 'iot', 'ble'] as const).map((id) => (
                   <button
                     key={id}
                     type="button"
@@ -635,11 +636,17 @@ export function LabPage() {
                     onClick={() => setNetworkView(id)}
                     className="chip px-4 font-semibold"
                   >
-                    {t(id === 'web' ? 'web.tab' : 'iot.tab')}
+                    {t(`${id}.tab`)}
                   </button>
                 ))}
               </div>
-              {networkView === 'web' ? <WebPanel boardId={esp32Id} /> : <IotPanel />}
+              {networkView === 'web' ? (
+                <WebPanel boardId={esp32Id} />
+              ) : networkView === 'iot' ? (
+                <IotPanel />
+              ) : (
+                <BlePanel boardId={esp32Id} />
+              )}
             </>
           ) : (
             <>
