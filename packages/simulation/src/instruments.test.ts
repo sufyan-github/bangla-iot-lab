@@ -81,3 +81,28 @@ describe('bench instruments', () => {
     expect(seen).toEqual([4.76, 0, 4.76, 0]);
   });
 });
+
+describe('the power supply’s current limit', () => {
+  const supply = (voltage: number, limit: number, ohms: number): CircuitDocument => {
+    const document = across({ voltage, source: 'supply', limit }, 'PSU1');
+    return {
+      ...document,
+      components: document.components.map((c) =>
+        c.type === 'resistor' ? { ...c, props: { resistance: ohms } } : c,
+      ),
+    };
+  };
+
+  it('keeps its voltage while the load takes less than the limit', () => {
+    const result = simulate(supply(5, 0.1, 100)); // 50 mA
+    expect(result.readings.R1!.voltage).toBeCloseTo(5, 1);
+    expect(result.readings.PSU1!.activity).toBe(0);
+  });
+
+  it('holds the limit, and lowers its voltage, when the load would take more', () => {
+    const result = simulate(supply(5, 0.02, 100)); // would be 50 mA; held at 20 mA
+    expect(result.readings.PSU1!.current * 1000).toBeCloseTo(20, 0);
+    expect(result.readings.R1!.voltage).toBeCloseTo(2, 1);
+    expect(result.readings.PSU1!.activity).toBe(1);
+  });
+});

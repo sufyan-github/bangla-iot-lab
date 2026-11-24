@@ -143,6 +143,7 @@ const EMPTY_SOLUTION: StateSolution = {
   sensing: {},
   chargers: {},
   regulators: {},
+  limiting: {},
   floating: [],
   unsettled: false,
   iterations: 0,
@@ -204,6 +205,8 @@ export class SimulationSession {
   /** What each charger and step-down regulator was last found to be doing. */
   private chargers: Record<string, ChargerState> = {};
   private regulators: Record<string, RegulatorState> = {};
+  /** Power supplies holding their current limit. */
+  private limiting: Record<string, boolean> = {};
 
   /** Number of times the circuit was actually solved; exposed for tests and tuning. */
   solveCount = 0;
@@ -523,6 +526,7 @@ export class SimulationSession {
       sensing: this.sensing,
       chargers: this.chargers,
       regulators: this.regulators,
+      limiting: this.limiting,
     };
   }
 
@@ -536,6 +540,7 @@ export class SimulationSession {
     for (const [id, volts] of Object.entries(this.sources)) key += `${id}~${volts};`;
     // A latch made of gates remembers: the same pin levels can leave it either way.
     // A charger's protection remembers that it cut off.
+    for (const [id, held] of Object.entries(this.limiting)) if (held) key += `${id}=cc;`;
     for (const [id, charger] of Object.entries(this.chargers)) {
       if (charger.tripped) key += `${id}!;`;
     }
@@ -568,6 +573,7 @@ export class SimulationSession {
       this.sensing = solution.sensing;
       this.chargers = solution.chargers;
       this.regulators = solution.regulators;
+      this.limiting = solution.limiting;
     }
     return solution;
   }

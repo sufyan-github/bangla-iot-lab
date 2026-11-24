@@ -315,7 +315,7 @@ export function addBattery(
     source === 'generator'
       ? { voltage: 2.5, source, wave: 'square' as const, hz: 1, offset: 2.5 }
       : source === 'supply'
-        ? { voltage: 5, source }
+        ? { voltage: 5, source, limit: 1 }
         : { voltage };
   const prefix = source === 'generator' ? 'FG' : source === 'supply' ? 'PSU' : 'BAT';
   const battery = { id: nextId(circuit, prefix), type: 'battery', props } as const;

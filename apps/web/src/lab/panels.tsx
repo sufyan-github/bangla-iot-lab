@@ -428,27 +428,49 @@ function PartSettings({ part }: { part: CircuitComponent }) {
   if (part.type === 'breadboard') return <BreadboardSettings part={part} />;
 
   if (part.type === 'battery' && part.props.source === 'supply') {
+    const limit = part.props.limit ?? 1;
     return (
-      <label className="block">
-        <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
-          {t('inspector.voltage')}
-          <span className="font-medium text-ink tabular-nums">
-            {quantity(part.props.voltage, 'V')}
+      <div className="space-y-2">
+        <label className="block">
+          <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+            {t('inspector.voltage')}
+            <span className="font-medium text-ink tabular-nums">
+              {quantity(part.props.voltage, 'V')}
+            </span>
           </span>
-        </span>
-        <input
-          type="range"
-          data-testid="slider-supply"
-          min={0.1}
-          max={24}
-          step={0.1}
-          value={part.props.voltage}
-          onChange={(event) =>
-            setProps(part.id, { voltage: Math.round(Number(event.target.value) * 10) / 10 })
-          }
-          className="h-11 w-full accent-amber"
-        />
-      </label>
+          <input
+            type="range"
+            data-testid="slider-supply"
+            min={0.1}
+            max={24}
+            step={0.1}
+            value={part.props.voltage}
+            onChange={(event) =>
+              setProps(part.id, { voltage: Math.round(Number(event.target.value) * 10) / 10 })
+            }
+            className="w-full"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+            {t('inspector.currentLimit')}
+            <span className="font-medium text-ink tabular-nums">{quantity(limit, 'A')}</span>
+          </span>
+          <input
+            type="range"
+            data-testid="slider-supply-limit"
+            min={0.01}
+            max={3}
+            step={0.01}
+            value={limit}
+            onChange={(event) =>
+              setProps(part.id, { limit: Math.round(Number(event.target.value) * 100) / 100 })
+            }
+            className="w-full"
+          />
+        </label>
+        <p className="text-sm text-ink-soft">{t('inspector.currentLimitAbout')}</p>
+      </div>
     );
   }
   if (part.type === 'battery' && part.props.source === 'generator') {

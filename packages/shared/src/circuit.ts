@@ -97,6 +97,8 @@ export const BatterySchema = Type.Object({
     ),
     hz: Type.Optional(Type.Number({ minimum: 0.1, maximum: 100 })),
     offset: Type.Optional(Type.Number({ minimum: -12, maximum: 12 })),
+    /** A power supply's current limit, in amperes. */
+    limit: Type.Optional(Type.Number({ minimum: 0.01, maximum: 5 })),
   }),
   at: Type.Optional(PositionSchema),
 });

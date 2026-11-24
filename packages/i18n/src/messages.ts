@@ -206,6 +206,9 @@ export const bn = {
     'যেখানে ভোল্টেজ মাপবে সেখানে ট্যাপ করো: প্রথমে লাল প্রোব, তারপর কালো। কালো না বসালে GND থেকে মাপা হয়।',
   'tool.supply': 'পাওয়ার সাপ্লাই',
   'tool.generator': 'ফাংশন জেনারেটর',
+  'inspector.currentLimit': 'কারেন্টের সীমা',
+  'inspector.currentLimitAbout':
+    'লোড এর বেশি কারেন্ট নিতে চাইলে সাপ্লাই ভোল্টেজ কমিয়ে কারেন্ট এই সীমায় ধরে রাখে, আর ডিসপ্লেতে CC দেখায়। নতুন সার্কিট পরীক্ষার সময় সীমা কম রাখলে ভুল হলেও যন্ত্রাংশ পোড়ে না।',
   'inspector.wave': 'তরঙ্গের আকার',
   'inspector.wave.square': 'বর্গ',
   'inspector.wave.sine': 'সাইন',
@@ -1162,6 +1165,9 @@ export const en: Record<MessageKey, string> = {
     'Tap where you want to measure voltage: the red probe first, then the black. Without the black probe, it measures from GND.',
   'tool.supply': 'Power supply',
   'tool.generator': 'Function generator',
+  'inspector.currentLimit': 'Current limit',
+  'inspector.currentLimitAbout':
+    'If the load would take more current than this, the supply lowers its voltage to hold the current at the limit, and its display shows CC. Keep the limit low while trying a new circuit, so a mistake burns nothing.',
   'inspector.wave': 'Wave shape',
   'inspector.wave.square': 'Square',
   'inspector.wave.sine': 'Sine',

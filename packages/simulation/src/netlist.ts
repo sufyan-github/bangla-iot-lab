@@ -145,6 +145,8 @@ export interface CircuitState {
   clocks?: Readonly<Record<string, boolean>>;
   /** Each function generator's output now, in volts. */
   sources?: Readonly<Record<string, number>>;
+  /** Power supplies holding their current limit (constant-current mode). */
+  limiting?: Readonly<Record<string, boolean>>;
   /**
    * What each motor driver is doing. It follows from the circuit's own voltages
    * (the driver's supply and the levels on its inputs), so whoever solves the
@@ -332,6 +334,15 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
     }
     switch (component.type) {
       case 'battery': {
+        // A power supply at its current limit holds that current instead of its voltage.
+        if (component.props.source === 'supply' && state.limiting?.[id]) {
+          const pos = node(`${id}.pos`);
+          const neg = node(`${id}.neg`);
+          partDevice.set(id, add(currentSource(id, pos, neg, component.props.limit ?? 1)));
+          // A very high resistance across it, so that an open circuit still has an answer.
+          add(resistor(`${id}:shunt`, pos, neg, 1e6));
+          break;
+        }
         // A function generator gives its wave's value now, through its 50 Ω output.
         const generator = component.props.source === 'generator';
         partDevice.set(

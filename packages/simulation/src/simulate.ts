@@ -266,6 +266,7 @@ export interface StateSolution {
   chargers: Record<string, ChargerState>;
   /** What each step-down regulator is doing in this state. */
   regulators: Record<string, RegulatorState>;
+  limiting: Record<string, boolean>;
   /** Logic chip inputs joined to nothing at all, as "U1.p2". */
   floating: string[];
   /** True when the logic chips never settled: a circuit that keeps changing by itself. */
@@ -619,6 +620,11 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
   let sensing = state.sensing ?? {};
   let chargers = state.chargers ?? {};
   let regulators = state.regulators ?? {};
+  let limiting = state.limiting ?? {};
+  const supplies = document.components.filter(
+    (c): c is Extract<typeof c, { type: 'battery' }> =>
+      c.type === 'battery' && c.props.source === 'supply',
+  );
   const hasCharger = document.components.some((c) => c.type === 'tp4056');
   const hasRegulator = document.components.some((c) => c.type === 'lm2596');
   const hasSensor = document.components.some((c) => c.type === 'acs712' || c.type === 'tds');
@@ -628,7 +634,8 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
   // A motor driver needs a few more rounds: its regulator, then its logic, then its outputs.
   // Logic chips need one round for each gate a signal passes through.
   // A charger or regulator finds its operating point over a few rounds too.
-  const rounds = hasChip || hasCharger || hasRegulator ? 24 : hasDriver ? 12 : 4;
+  const rounds =
+    hasChip || hasCharger || hasRegulator ? 24 : hasDriver ? 12 : supplies.length > 0 ? 8 : 4;
   let settled = false;
   for (let round = 0; round < rounds; round++) {
     const netlist = buildNetlist(document, {
@@ -640,6 +647,7 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
       sensing,
       chargers,
       regulators,
+      limiting,
     });
     const dc = solveDc(netlist.circuit);
     if (!dc.ok) return null;
@@ -652,6 +660,16 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     const seen = hasSensor ? sensorStates(document, solution) : sensing;
     const charging = hasCharger ? chargerStates(document, solution, chargers) : chargers;
     const regulating = hasRegulator ? regulatorStates(document, solution) : regulators;
+    // A supply goes to its limit when its load would take more, and back when its
+    // voltage would rise above the one it is set to.
+    const limited: Record<string, boolean> = {};
+    for (const supply of supplies) {
+      const part = solution.parts[supply.id];
+      const was = limiting[supply.id] ?? false;
+      limited[supply.id] = was
+        ? (part?.voltage ?? 0) < supply.props.voltage
+        : (part?.current ?? 0) > (supply.props.limit ?? 1) * (1 + 1e-6);
+    }
     solution.relays = next;
     solution.motion = moving;
     solution.clocks = { ...(state.clocks ?? {}) };
@@ -660,6 +678,7 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     solution.sensing = sensing;
     solution.chargers = chargers;
     solution.regulators = regulators;
+    solution.limiting = limiting;
     if (
       sameStates(relays, next) &&
       sameStates(motion, moving) &&
@@ -667,7 +686,8 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
       sameChips(chips, logic) &&
       sameSensing(sensing, seen) &&
       sameChargers(chargers, charging) &&
-      sameRegulators(regulators, regulating)
+      sameRegulators(regulators, regulating) &&
+      sameStates(limiting, limited)
     ) {
       settled = true;
       break;
@@ -679,6 +699,7 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     sensing = seen;
     chargers = charging;
     regulators = regulating;
+    limiting = limited;
   }
   // Gates that keep changing each other (a NOT gate fed its own output) never settle.
   if (solution && hasChip && !settled) solution.unsettled = true;
@@ -734,6 +755,7 @@ export function readSolution(
     sensing: {},
     chargers: {},
     regulators: {},
+    limiting: {},
     floating: [],
     unsettled: false,
     iterations,
@@ -1264,6 +1286,10 @@ export class Observation {
             componentId: id,
           });
         }
+      }
+      // A power supply at its current limit shows CC, as a bench supply's light does.
+      if (component.type === 'battery' && component.props.source === 'supply') {
+        reading.activity = average((s) => (s.limiting?.[id] ? 1 : 0)) >= 0.5 ? 1 : 0;
       }
       if (component.type === 'relay' || component.type === 'relaymodule') {
         reading.activity = average((s) => (s.relays[id] ? 1 : 0)) >= 0.5 ? 1 : 0;

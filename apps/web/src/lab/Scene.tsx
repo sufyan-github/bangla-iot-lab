@@ -831,7 +831,7 @@ export function Scene({
           const lines: [string, string] =
             props.source === 'supply'
               ? [
-                  `${props.voltage.toFixed(2)} V`,
+                  `${props.voltage.toFixed(2)} V${reading?.activity === 1 ? ' CC' : ''}`,
                   `${((reading?.current ?? 0) * 1000).toFixed(1)} mA`,
                 ]
               : [`${props.wave ?? 'square'} ${props.hz ?? 1} Hz`, `${volts.toFixed(2)} V`];
