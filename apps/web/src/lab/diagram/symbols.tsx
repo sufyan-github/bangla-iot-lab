@@ -1,6 +1,7 @@
 import {
   LOGIC_CHIP_GATES,
   isGateChip,
+  isLogicChipPart,
   type CircuitComponent,
   type GateKind,
 } from '@banglalab/shared';
@@ -192,7 +193,7 @@ function GateSymbol(props: {
 function ChipGates({ part }: { part: DiagramPart }) {
   const { component } = part;
   // A flip-flop chip is a plain box with its pins named, as its datasheet draws it.
-  if (component.type !== 'logic' || !isGateChip(component.props.chip)) return null;
+  if (!isLogicChipPart(component) || !isGateChip(component.props.chip)) return null;
   const connected = new Set(part.pins.filter((pin) => pin.net !== null).map((pin) => pin.name));
   const used = gatesInUse(component, (name) => connected.has(name));
   const { kind, gates } = LOGIC_CHIP_GATES[component.props.chip];
@@ -232,7 +233,7 @@ function BoxSymbol({ part, name }: { part: DiagramPart; name: string }) {
       />
       <text
         x={box.width / 2}
-        y={part.component.type === 'logic' ? box.top + 25 : box.top + box.height / 2 + 4.5}
+        y={isLogicChipPart(part.component) ? box.top + 25 : box.top + box.height / 2 + 4.5}
         textAnchor="middle"
         fontSize={12.5}
         fontWeight={700}
@@ -240,7 +241,7 @@ function BoxSymbol({ part, name }: { part: DiagramPart; name: string }) {
         fill="currentColor"
       >
         {name}
-        {part.component.type === 'logic' && (
+        {isLogicChipPart(part.component) && (
           <tspan dx={6} fontWeight={600} fill="var(--color-ink-soft)">
             {part.component.props.chip}
           </tspan>

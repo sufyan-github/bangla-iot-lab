@@ -29,12 +29,15 @@ import { holeExists, holeName, isHole, parseHole, type BreadboardSize } from './
  *     sizes, and each hole is named after its breadboard ("BB1.a12").
  * 22 — adds the Ra-02 LoRa radio.
  * 23 — adds the 74HC74 flip-flop chip and the clock module.
+ * 24 — adds the 74HC393 counter, the 16-pin chips (74HC161 counter and CD4511
+ *     decoder) and the seven-segment display.
+ * 25 — adds the 74HC595 shift register.
  * Up to version 20 each version only adds part types or optional fields, so an
  * older document is valid in a newer version apart from the number. Version
  * 21 renames every hole: `migrateCircuit` puts the one fixed breadboard of an
  * older circuit in as BB1, where it was, and names its holes after it.
  */
-export const CIRCUIT_SCHEMA_VERSION = 23;
+export const CIRCUIT_SCHEMA_VERSION = 25;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 /** A breadboard hole: the breadboard's id, a dot and the hole, as "BB1.a12". */
@@ -657,12 +660,16 @@ export const RelayModuleSchema = Type.Object({
 /** The 74HC chips made of gates, each with fourteen pins. */
 export const GATE_CHIPS = ['74HC00', '74HC02', '74HC04', '74HC08', '74HC32', '74HC86'] as const;
 export type GateChip = (typeof GATE_CHIPS)[number];
-/** The 74HC logic chips with fourteen pins the lab has: the gate chips and a flip-flop. */
-export const LOGIC_CHIPS = [...GATE_CHIPS, '74HC74'] as const;
+/** The logic chips with fourteen pins the lab has: the gate chips, a flip-flop and a counter. */
+export const LOGIC_CHIPS = [...GATE_CHIPS, '74HC74', '74HC393'] as const;
 export type LogicChip = (typeof LOGIC_CHIPS)[number];
+/** The logic chips with sixteen pins: a counter, a shift register and a seven-segment decoder. */
+export const LOGIC16_CHIPS = ['74HC161', '74HC595', 'CD4511'] as const;
+export type Logic16Chip = (typeof LOGIC16_CHIPS)[number];
+export type AnyLogicChip = LogicChip | Logic16Chip;
 
 /** True for a chip made of gates, which the diagram draws as gate symbols. */
-export function isGateChip(chip: LogicChip): chip is GateChip {
+export function isGateChip(chip: AnyLogicChip): chip is GateChip {
   return (GATE_CHIPS as readonly string[]).includes(chip);
 }
 export type GateKind = 'NAND' | 'NOR' | 'NOT' | 'AND' | 'OR' | 'XOR';
@@ -751,7 +758,65 @@ export const LogicSchema = Type.Object({
       Type.Literal('74HC32'),
       Type.Literal('74HC86'),
       Type.Literal('74HC74'),
+      Type.Literal('74HC393'),
     ]),
+  }),
+});
+
+const DIP16_PINS = Array.from({ length: 16 }, (_, i) => `p${i + 1}`);
+
+/**
+ * A logic chip in a 16-pin package, across the centre gap like the 14-pin
+ * ones: pins 1 to 8 along row f from the left, 9 to 16 back along row e.
+ */
+export const Logic16Schema = Type.Object({
+  id: Id,
+  type: Type.Literal('logic16'),
+  pins: Type.Object(
+    Object.fromEntries(DIP16_PINS.map((pin) => [pin, Hole])) as Record<string, typeof Hole>,
+  ),
+  props: Type.Object({
+    chip: Type.Union([Type.Literal('74HC161'), Type.Literal('74HC595'), Type.Literal('CD4511')]),
+  }),
+});
+
+/** A logic chip of either size. */
+export type LogicChipPart = Static<typeof LogicSchema> | Static<typeof Logic16Schema>;
+export function isLogicChipPart(component: { type: string }): component is LogicChipPart {
+  return component.type === 'logic' || component.type === 'logic16';
+}
+
+export const SEVEN_SEGMENT_KINDS = ['cathode', 'anode'] as const;
+export type SevenSegmentKind = (typeof SEVEN_SEGMENT_KINDS)[number];
+/** The display's segments, in the order its legs are listed. */
+export const SEVEN_SEGMENTS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp'] as const;
+export type SevenSegment = (typeof SEVEN_SEGMENTS)[number];
+
+/**
+ * A single-digit seven-segment display (0.56 inch, red): eight LEDs, the
+ * segments a to g and the decimal point, sharing one leg. In a common-cathode
+ * display the shared leg is the LEDs' negative, in a common-anode one their
+ * positive. It stands across the centre gap, its two rows of five legs 0.6
+ * inch apart, in rows d and h: the bottom row is e, d, COM, c, DP from the
+ * left, the top row g, f, COM, a, b.
+ */
+export const SevenSegmentSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('sevenseg'),
+  pins: Type.Object({
+    e: Hole,
+    d: Hole,
+    com: Hole,
+    c: Hole,
+    dp: Hole,
+    b: Hole,
+    a: Hole,
+    com2: Hole,
+    f: Hole,
+    g: Hole,
+  }),
+  props: Type.Object({
+    kind: Type.Union([Type.Literal('cathode'), Type.Literal('anode')]),
   }),
 });
 
@@ -853,6 +918,8 @@ export const ComponentSchema = Type.Union([
   LoraSchema,
   RelayModuleSchema,
   LogicSchema,
+  Logic16Schema,
+  SevenSegmentSchema,
   UnoSchema,
   Esp32Schema,
   L298nSchema,

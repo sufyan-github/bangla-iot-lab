@@ -5,6 +5,9 @@ import {
   LED_COLORS,
   ACS712_RANGES,
   LOGIC_CHIPS,
+  LOGIC16_CHIPS,
+  PART_SHAPES,
+  SEVEN_SEGMENT_KINDS,
   LOGIC_CHIP_GATES,
   isGateChip,
   LED_RING_SIZES,
@@ -563,11 +566,56 @@ function PartSettings({ part }: { part: CircuitComponent }) {
               {chip} ·{' '}
               {isGateChip(chip)
                 ? t(`gate.${LOGIC_CHIP_GATES[chip].kind}` as MessageKey)
-                : t('chip.flipflop')}
+                : t(chip === '74HC74' ? 'chip.flipflop' : 'chip.counter')}
             </option>
           ))}
         </select>
       </label>
+    );
+  }
+  if (part.type === 'logic16') {
+    // The 16-pin chips share a shape, so one can be swapped for the other where it sits.
+    return (
+      <label className="block">
+        <span className="mb-1.5 block text-sm text-ink-soft">{t('inspector.chip')}</span>
+        <select
+          data-testid="logic-chip"
+          value={part.props.chip}
+          onChange={(event) => setProps(part.id, { chip: event.target.value })}
+          className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-3"
+        >
+          {LOGIC16_CHIPS.map((chip) => (
+            <option key={chip} value={chip}>
+              {chip} ·{' '}
+              {t(
+                chip === 'CD4511'
+                  ? 'chip.decoder'
+                  : chip === '74HC595'
+                    ? 'chip.shift'
+                    : 'chip.counter',
+              )}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
+  if (part.type === 'sevenseg') {
+    return (
+      <fieldset>
+        <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.displayKind')}</legend>
+        <div className="flex flex-wrap gap-1.5" data-testid="display-kind">
+          {SEVEN_SEGMENT_KINDS.map((kind) => (
+            <Choice
+              key={kind}
+              selected={part.props.kind === kind}
+              onClick={() => setProps(part.id, { kind })}
+            >
+              {t(`inspector.common.${kind}`)}
+            </Choice>
+          ))}
+        </div>
+      </fieldset>
     );
   }
   if (part.type === 'relaymodule') {
@@ -1301,7 +1349,7 @@ export function Inspector() {
       {part && <PartSettings part={part} />}
       <p className="mt-3 text-sm text-ink-soft">{t(`part.${type}.about`)}</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {part && 'pins' in part && part.type !== 'logic' && (
+        {part && 'pins' in part && !PART_SHAPES[part.type].rows && (
           <button
             type="button"
             data-testid="flip"

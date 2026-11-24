@@ -533,7 +533,6 @@ export const L298N_JUMPER_RESISTANCE = 1;
  * rail, and may carry 25 mA at most. ESTIMATE: the 50 Ω output resistance that
  * reproduces that, and the leakage that stands for an input.
  */
-export const LOGIC_MAX_SUPPLY = 6;
 export const LOGIC_HIGH_FRACTION = 0.7;
 export const LOGIC_LOW_FRACTION = 0.3;
 export const LOGIC_OUTPUT_RESISTANCE = 50;

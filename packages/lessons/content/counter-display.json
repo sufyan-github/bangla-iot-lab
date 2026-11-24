@@ -1,0 +1,406 @@
+{
+  "id": "counter-display",
+  "order": 46,
+  "kind": "project",
+  "after": ["flip-flop"],
+  "parts": ["clock-555", "74hc393", "cd4511", "seven-segment-056", "resistor"],
+  "title": {
+    "bn": "নিজে নিজে গোনা: কাউন্টার আর ৭-সেগমেন্ট ডিসপ্লে",
+    "en": "Counting by itself: a counter and a seven-segment display"
+  },
+  "summary": {
+    "bn": "একটা ঘড়ি, একটা কাউন্টার, একটা ডিকোডার আর একটা ডিসপ্লে মিলে ০ থেকে ৯ গোনো, কোনো প্রোগ্রাম ছাড়াই।",
+    "en": "A clock, a counter, a decoder and a display count from 0 to 9 together, with no program at all."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "steps": [
+    {
+      "text": {
+        "bn": "এই প্রকল্পে অনেক পা আর তার, তাই আগে ব্রেডবোর্ডটা বেছে নিয়ে ডানের প্যানেলে **ফুল** সাইজ করে নাও।\n\nএখানে বোর্ড শুধু বিদ্যুৎ দেবে: **VIN** থেকে 5 V, আর **GND**। কোনো প্রোগ্রাম লাগবে না।\n\nএকটা **ঘড়ি (555 ক্লক মডিউল)** বসাও। এর **VCC** পা **VIN**-এ, **GND** পা **GND**-তে। এর অন্তত 4.5 V লাগে, তাই 3V3 চলবে না।",
+        "en": "This project has many legs and wires, so first select the breadboard and make it **full** size in the panel on the right.\n\nThe board only gives power here: 5 V from **VIN**, and **GND**. No program is needed.\n\nPlace a **clock (555 clock module)**. Its **VCC** leg to **VIN**, its **GND** leg to **GND**. It needs at least 4.5 V, so 3V3 will not do."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "clock"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "clock",
+            "pin": "vcc"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "clock",
+            "pin": "gnd"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **লজিক চিপ** খাঁজের ওপর বসাও, প্যানেলে **74HC393** বেছে নাও: এতে দুটো ৪-বিট কাউন্টার। পা ১৪ **VIN**-এ, পা ৭ **GND**-তে। প্রথম কাউন্টারের **1MR** (পা ২) **GND**-তে, যাতে এটা গুনতে পারে। আর ঘড়ির **OUT** থেকে একটা তার **1CP**-তে (পা ১)।\n\nএই কাউন্টার ঘড়ির প্রতি **নামতি** ধারে (HIGH থেকে LOW) এক করে বাড়ে। পা ৩ থেকে ৬ (Q0–Q3) মিলে সংখ্যাটা বাইনারিতে দেখায়।",
+        "en": "Place a **logic chip** across the gap and choose **74HC393** in the panel: two 4-bit counters. Leg 14 to **VIN**, leg 7 to **GND**. The first counter’s **1MR** (leg 2) to **GND**, so that it may count. And a wire from the clock’s **OUT** to **1CP** (leg 1).\n\nThis counter goes up by one on every **falling** edge of the clock (HIGH to LOW). Legs 3 to 6 (Q0 to Q3) show the number in binary."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "logic",
+          "prop": "chip",
+          "equals": "74HC393"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p14"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p7"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p2"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "clock",
+            "pin": "out"
+          },
+          "to": {
+            "part": "logic",
+            "pin": "p1"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার একটা **১৬ পায়ের চিপ** বসাও আর প্যানেলে **CD4511** বেছে নাও। পা ১৬ (VDD) **VIN**-এ, পা ৮ (VSS) **GND**-তে। **LT̅** (পা ৩) আর **BL̅** (পা ৪) **VIN**-এ, **LE** (পা ৫) **GND**-তে।\n\nকাউন্টারের চার বিট এর চার ইনপুটে দাও: Q0 (পা ৩) → **A** (পা ৭), Q1 (পা ৪) → **B** (পা ১), Q2 (পা ৫) → **C** (পা ২), Q3 (পা ৬) → **D** (পা ৬)।",
+        "en": "Now place a **16-pin chip** and choose **CD4511** in the panel. Leg 16 (VDD) to **VIN**, leg 8 (VSS) to **GND**. **LT̅** (leg 3) and **BL̅** (leg 4) to **VIN**, **LE** (leg 5) to **GND**.\n\nGive the counter’s four bits to its four inputs: Q0 (leg 3) → **A** (leg 7), Q1 (leg 4) → **B** (leg 1), Q2 (leg 5) → **C** (leg 2), Q3 (leg 6) → **D** (leg 6)."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "logic16",
+          "prop": "chip",
+          "equals": "CD4511"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p16"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p8"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p3"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p4"
+          },
+          "to": {
+            "board": "vin"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p5"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p3"
+          },
+          "to": {
+            "part": "logic16",
+            "pin": "p7"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p4"
+          },
+          "to": {
+            "part": "logic16",
+            "pin": "p1"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p5"
+          },
+          "to": {
+            "part": "logic16",
+            "pin": "p2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p6"
+          },
+          "to": {
+            "part": "logic16",
+            "pin": "p6"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **৭-সেগমেন্ট ডিসপ্লে** খাঁজের ওপর বসাও। প্যানেলে দেখো এটা **কমন ক্যাথোড**: CD4511 এমন ডিসপ্লেতেই কারেন্ট দেয়। এর **COM** পা **GND**-তে।\n\nCD4511-এর সাতটা আউটপুট প্রতিটা একটা করে **রেজিস্টর** (৩৩০ Ω থেকে ১ kΩ) হয়ে ডিসপ্লের একই নামের পায়ে: **a** (পা ১৩), **b** (১২), **c** (১১), **d** (১০), **e** (৯), **f** (১৫), **g** (১৪)। রেজিস্টর না দিলে সেগমেন্টে বেশি কারেন্ট যাবে।",
+        "en": "Place a **seven-segment display** across the gap. In the panel, see that it is **common cathode**: that is the kind the CD4511 gives current to. Its **COM** leg to **GND**.\n\nEach of the CD4511’s seven outputs goes through its own **resistor** (330 Ω to 1 kΩ) to the display leg of the same name: **a** (leg 13), **b** (12), **c** (11), **d** (10), **e** (9), **f** (15), **g** (14). Without the resistors too much current flows through the segments."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "sevenseg",
+          "prop": "kind",
+          "equals": "cathode"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "sevenseg",
+            "pin": "com"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p13"
+          },
+          "to": {
+            "part": "sevenseg",
+            "pin": "a"
+          },
+          "through": "resistor",
+          "ohms": [330, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p12"
+          },
+          "to": {
+            "part": "sevenseg",
+            "pin": "b"
+          },
+          "through": "resistor",
+          "ohms": [330, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p11"
+          },
+          "to": {
+            "part": "sevenseg",
+            "pin": "c"
+          },
+          "through": "resistor",
+          "ohms": [330, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p10"
+          },
+          "to": {
+            "part": "sevenseg",
+            "pin": "d"
+          },
+          "through": "resistor",
+          "ohms": [330, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p9"
+          },
+          "to": {
+            "part": "sevenseg",
+            "pin": "e"
+          },
+          "through": "resistor",
+          "ohms": [330, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p15"
+          },
+          "to": {
+            "part": "sevenseg",
+            "pin": "f"
+          },
+          "through": "resistor",
+          "ohms": [330, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p14"
+          },
+          "to": {
+            "part": "sevenseg",
+            "pin": "g"
+          },
+          "through": "resistor",
+          "ohms": [330, 1000]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সার্কিট চালু করো। ঘড়ি সেকেন্ডে একবার টিক দেয়, আর প্রতি টিকে ডিসপ্লের সংখ্যা এক করে বাড়ে: ০, ১, ২, ৩… কোনো প্রোগ্রাম নেই: পুরোটাই চিপের কাজ।",
+        "en": "Switch the circuit on. The clock ticks once a second, and with each tick the number on the display goes up by one: 0, 1, 2, 3… There is no program: the chips do it all."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "no-errors"
+        },
+        {
+          "kind": "reading",
+          "part": "sevenseg",
+          "path": "segments.a",
+          "above": 0,
+          "label": {
+            "bn": "ডিসপ্লের ওপরের দাগ (a) জ্বলেছে",
+            "en": "The top bar (a) lit"
+          }
+        },
+        {
+          "kind": "reading",
+          "part": "sevenseg",
+          "path": "segments.a",
+          "equals": 0,
+          "label": {
+            "bn": "তারপর এক এসেছে: ওপরের দাগ নেভা",
+            "en": "Then a 1 came: the top bar dark"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "ঘড়িটা বেছে নিয়ে প্যানেলে **৫ Hz** করো: এখন সেকেন্ডে পাঁচবার গোনে। ৯-এর পর কী হয়, দেখো: কাউন্টার ১০ থেকে ১৫ পর্যন্ত গোনে, কিন্তু CD4511 এই সংখ্যাগুলোর জন্য কিছুই জ্বালায় না, তাই ডিসপ্লে কিছুক্ষণ অন্ধকার থাকে। তারপর ১৫-র পর কাউন্টার আবার ০ থেকে শুরু করে।",
+        "en": "Select the clock and set it to **5 Hz** in the panel: now it counts five times a second. Watch what happens after 9: the counter goes on from 10 to 15, but the CD4511 lights nothing for those numbers, so the display stays dark for a while. After 15 the counter starts again from 0."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "clock",
+          "prop": "hz",
+          "above": 4
+        },
+        {
+          "kind": "reading",
+          "part": "sevenseg",
+          "path": "led.state",
+          "equals": "off",
+          "label": {
+            "bn": "৯-এর পর ডিসপ্লে অন্ধকার হয়েছে",
+            "en": "The display went dark after 9"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "ঘড়ি, কাউন্টার আর ডিকোডার মিলে প্রোগ্রাম ছাড়াই গোনা যায়।",
+      "74HC393 নামতি ধারে গোনে, আর চার বিটে ০ থেকে ১৫ রাখে।",
+      "CD4511 চার বিটের সংখ্যাকে সেগমেন্টে বদলায়, ১০ থেকে ১৫-তে কিছু দেখায় না।",
+      "প্রতিটা সেগমেন্ট একটা LED, তাই প্রতিটার আলাদা রেজিস্টর লাগে।"
+    ],
+    "en": [
+      "A clock, a counter and a decoder can count with no program.",
+      "The 74HC393 counts on the falling edge and holds 0 to 15 in four bits.",
+      "The CD4511 turns a four-bit number into segments, and shows nothing for 10 to 15.",
+      "Each segment is an LED, so each needs its own resistor."
+    ]
+  },
+  "tryNext": {
+    "bn": "কাউন্টারকে ৯-এর পরে ০-তে ফেরাও: ১০ মানে Q1 আর Q3 দুটোই HIGH। একটা 74HC08 (AND) দিয়ে Q1 আর Q3 মিলিয়ে তার আউটপুট 1MR-এ দাও (আর 1MR থেকে GND-এর তারটা সরাও)।",
+    "en": "Make the counter go back to 0 after 9: 10 means Q1 and Q3 are both HIGH. Join Q1 and Q3 through a 74HC08 (AND) and give its output to 1MR (and take away 1MR’s wire to GND)."
+  }
+}

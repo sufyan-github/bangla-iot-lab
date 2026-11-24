@@ -306,7 +306,7 @@ void loop() { delay(100); }
 
   it('every shipped starter still builds and runs', async () => {
     const sketches = (await readdir(startersDir)).filter((file) => file.endsWith('.ino'));
-    expect(sketches.length).toBe(47);
+    expect(sketches.length).toBe(48);
     for (const sketch of sketches) {
       const { board } = await run(await readFile(new URL(sketch, startersDir), 'utf8'), 200);
       expect(board.stopped, sketch).toBeNull();

@@ -1,4 +1,9 @@
-import { isProgrammable, type CircuitComponent, type CircuitDocument } from '@banglalab/shared';
+import {
+  isLogicChipPart,
+  isProgrammable,
+  type CircuitComponent,
+  type CircuitDocument,
+} from '@banglalab/shared';
 import {
   BOX_TYPES,
   LOGIC_BOX_HEIGHT,
@@ -114,7 +119,7 @@ export function layoutRails(circuit: CircuitDocument, analysis: Analysis): Diagr
         (Math.max(top.length, bottom.length) + 1) * BOX_PIN_SPACING,
         logicBoxWidth(gates),
       );
-      const height = component.type === 'logic' ? LOGIC_BOX_HEIGHT : BOX_HEIGHT;
+      const height = isLogicChipPart(component) ? LOGIC_BOX_HEIGHT : BOX_HEIGHT;
       box = { width, height, top: -height / 2 };
       const spread = (legs: typeof shown, y: number, side: Side) =>
         legs.map((leg, i) =>

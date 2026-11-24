@@ -15,6 +15,7 @@ import {
   type EditError,
   type EditResult,
   type Wire,
+  PART_SHAPES,
 } from '@banglalab/shared';
 import {
   memo,
@@ -123,6 +124,9 @@ const BODY_HEIGHT: Partial<Record<string, number>> = {
   relaymodule: 58,
   // A chip's body runs from its row f legs up to its row e legs.
   logic: 76,
+  logic16: 76,
+  // From its bottom row of legs (row h) up to its top row (row d), six pitches.
+  sevenseg: 152,
   relay: 26,
   servo: 36,
   ultrasonic: 38,
@@ -690,8 +694,16 @@ export function Canvas() {
                 }
                 const leads = Object.values(component.pins).map((hole) => holePoint(circuit, hole));
                 const first = leads[0]!;
-                // A chip is held along its row of pins 1 to 7.
-                const second = (component.type === 'logic' ? leads[6] : leads.at(-1))!;
+                // A chip is held along its row of pins 1 to 7 (or 8); a display along its bottom row.
+                const second = (
+                  component.type === 'logic'
+                    ? leads[6]
+                    : component.type === 'logic16'
+                      ? leads[7]
+                      : component.type === 'sevenseg'
+                        ? leads[4]
+                        : leads.at(-1)
+                )!;
                 // Modules stand taller than their legs; the whole body is touchable.
                 const bodyHeight = BODY_HEIGHT[component.type] ?? 0;
                 const length = Math.hypot(second.x - first.x, second.y - first.y);
@@ -978,7 +990,7 @@ export function Canvas() {
         {selecting && (selectedPart || selectedWire) && !lift && !floating && (
           <div className="quick-actions pointer-events-auto flex items-center gap-1 rounded-xl border border-line bg-surface p-1 shadow-md">
             <span className="px-2 text-sm font-semibold text-ink">{selectedId}</span>
-            {selectedPart && 'pins' in selectedPart && selectedPart.type !== 'logic' && (
+            {selectedPart && 'pins' in selectedPart && !PART_SHAPES[selectedPart.type].rows && (
               <button
                 type="button"
                 data-testid="quick-flip"

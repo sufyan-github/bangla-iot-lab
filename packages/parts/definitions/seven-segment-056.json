@@ -1,0 +1,91 @@
+{
+  "formatVersion": 1,
+  "id": "seven-segment-056",
+  "simulates": "sevenseg",
+  "status": "simulated",
+  "family": "display",
+  "tier": 2,
+  "name": {
+    "bn": "৭-সেগমেন্ট ডিসপ্লে (০.৫৬ ইঞ্চি)",
+    "en": "Seven-segment display (0.56 inch)"
+  },
+  "summary": {
+    "bn": "আটটা LED দিয়ে একটা অঙ্ক: a থেকে g সেগমেন্ট আর দশমিক বিন্দু",
+    "en": "One digit made of eight LEDs: segments a to g and a decimal point"
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": [
+      "Each segment is a red LED, about 1.8 V forward, like the lab's red LED. A segment lights while current flows through it; it needs its own resistor (start with 220 Ω to 1 kΩ).",
+      "The display can be common cathode (the shared leg to GND, a segment's leg taken HIGH to light it) or common anode (the shared leg to the supply, a segment's leg taken LOW). Choose which in the inspector; a real one says which on its label or datasheet.",
+      "Its two COM legs are joined inside, as on the real display.",
+      "The legs are in the common 10-pin order: bottom row e, d, COM, c, DP from the left, top row g, f, COM, a, b. Some displays differ: read your datasheet.",
+      "It stands across the centre gap, its rows 0.6 inch apart, in rows d and h."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "e",
+      "label": "e",
+      "role": "passive"
+    },
+    {
+      "id": "d",
+      "label": "d",
+      "role": "passive"
+    },
+    {
+      "id": "com",
+      "label": "COM",
+      "role": "passive"
+    },
+    {
+      "id": "c",
+      "label": "c",
+      "role": "passive"
+    },
+    {
+      "id": "dp",
+      "label": "DP",
+      "role": "passive"
+    },
+    {
+      "id": "b",
+      "label": "b",
+      "role": "passive"
+    },
+    {
+      "id": "a",
+      "label": "a",
+      "role": "passive"
+    },
+    {
+      "id": "com2",
+      "label": "COM",
+      "role": "passive"
+    },
+    {
+      "id": "f",
+      "label": "f",
+      "role": "passive"
+    },
+    {
+      "id": "g",
+      "label": "g",
+      "role": "passive"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["7 segment display", "seven segment"]
+  },
+  "placement": {
+    "idPrefix": "DS",
+    "offsets": [0, 1, 2, 3, 4, 4, 3, 2, 1, 0],
+    "rows": ["h", "h", "h", "h", "h", "d", "d", "d", "d", "d"]
+  }
+}

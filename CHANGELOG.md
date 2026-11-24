@@ -16,6 +16,19 @@ make no promise of compatibility, except that saved circuits are always migrated
   ESP32 board library, on a made-up network with no real internet, and a
   "Web page" panel that asks the board for its pages and shows them safely
   (no scripts, nothing reaches outside). Ready-made program `webserver`.
+- **Four logic lessons**, each checked step by step by the lab: AND and OR
+  gates, the flip-flop, counting by itself with a seven-segment display, and
+  the shift register.
+- **74HC595 shift register** (circuit format version 25), with `shiftOut()`
+  and `shiftIn()` in the ESP32 board library, so three pins drive eight LEDs.
+  Ready-made program `shift`.
+- **Counters, a decoder and a seven-segment display** (circuit format version
+  24): the 74HC393 (two 4-bit counters) joins the 14-pin chips; a new 16-pin
+  chip can be the 74HC161 counter (count, load, clear and carry) or the CD4511
+  BCD to seven-segment decoder. The seven-segment display, common cathode or
+  common anode, stands across the gap and lights each segment like an LED.
+  A chip's highest safe supply now depends on its family (6 V for 74HC, 18 V
+  for the CD4511).
 - **74HC74 flip-flop and a 555 clock module** (circuit format version 23): the
   logic chip list gains the 74HC74, two D flip-flops that take D on the clock's
   rising edge and keep it, with active-LOW clear and preset. The new clock
