@@ -1,7 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Database } from '../db/client';
-import { classes, schoolMemberships } from '../db/schema';
+import { classes, consentRecords, schoolMemberships } from '../db/schema';
 import { signedIn, type SignedIn } from './session';
 
 /** The signed-in user, or a 401 sent and null. */
@@ -40,6 +40,26 @@ async function holds(
   return rows.length > 0;
 }
 
+/**
+ * True for a learner who signed up on their own, with a guardian's permission:
+ * their account is theirs, not a class's.
+ */
+export async function onOwnAccount(database: Database, userId: string) {
+  const rows = await database.db
+    .select({ id: consentRecords.id })
+    .from(consentRecords)
+    .where(
+      and(
+        eq(consentRecords.learnerId, userId),
+        eq(consentRecords.grantedBy, 'guardian'),
+        eq(consentRecords.scope, 'platform_use'),
+        isNull(consentRecords.revokedAt),
+      ),
+    )
+    .limit(1);
+  return rows.length > 0;
+}
+
 /** True when the user teaches in the school. */
 export const teachesIn = (database: Database, userId: string, schoolId: string) =>
   holds(database, userId, schoolId, 'teacher');
@@ -48,12 +68,16 @@ export const teachesIn = (database: Database, userId: string, schoolId: string) 
 export const adminOf = (database: Database, userId: string, schoolId: string) =>
   holds(database, userId, schoolId, 'school_admin');
 
-/** A class the user teaches and has not archived, or null. */
+/**
+ * A class the user teaches and has not archived, or null. A teacher who has
+ * left the class's school no longer has it.
+ */
 export async function ownClass(database: Database, userId: string, classId: string) {
   const [row] = await database.db
     .select()
     .from(classes)
     .where(and(eq(classes.id, classId), eq(classes.teacherId, userId), isNull(classes.archivedAt)))
     .limit(1);
-  return row ?? null;
+  if (!row || !(await teachesIn(database, userId, row.schoolId))) return null;
+  return row;
 }

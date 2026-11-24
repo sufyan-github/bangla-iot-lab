@@ -6,6 +6,7 @@ import { DUMMY_HASH, hashPassword, verifyPassword } from '../auth/password';
 import { audit, clearSessionCookie, endSession, signedIn, startSession } from '../auth/session';
 import { classEnrollments, classes, schoolMemberships, schools, users } from '../db/schema';
 import { acceptInvite } from './schools';
+import { onOwnAccount } from '../auth/access';
 
 /** Thrown inside the sign-up transaction to undo it when the invitation does not work. */
 class NoSuchInvite extends Error {}
@@ -154,7 +155,14 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
         .innerJoin(classes, eq(classes.id, classEnrollments.classId))
         .where(and(eq(classEnrollments.learnerId, who.userId), isNull(classEnrollments.revokedAt)));
       return {
-        user: { id: who.userId, kind: who.kind, displayName: who.displayName, locale: who.locale },
+        user: {
+          id: who.userId,
+          kind: who.kind,
+          displayName: who.displayName,
+          locale: who.locale,
+          // A learner who signed up on their own, rather than only through a class.
+          ownAccount: who.kind === 'learner' && (await onOwnAccount(database, who.userId)),
+        },
         schools: roles,
         classes: enrolled,
       };
