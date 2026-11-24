@@ -24,6 +24,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The catalogue linked to the parts master**: each product is suggested for
+  a lab part by its name, a person confirms or changes it on a private
+  catalogue desk that runs on their own computer, and a report shows each part's
+  products and each project's coverage. The data stays private.
 - **The UNO catches up**: the OLED, the ST7789 colour display (with I²C and SPI,
   through Wire, SPI and Adafruit's libraries) and the WS2812B LED ring (through
   the lab's own NeoPixel library) now work on the UNO-compatible board.

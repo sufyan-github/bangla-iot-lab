@@ -1936,3 +1936,31 @@ LED ring worked only on the ESP32.
   every third-party library, not only the DHT library.
 - **Not checked:** whether a display or ring module takes the UNO's 5 V
   signals, and any of it on a real board.
+
+## D-094 — Linking the catalogue to the parts master, and a private catalogue desk
+
+Built on 24 November 2026.
+
+- **Where the links live.** Product numbers, names and prices are the store's
+  data, so the links between products and lab parts, and a person's decisions
+  on them, are kept in `data/private/`, never in the repository. The code, its
+  tests (on made-up products) and the parts' generic keywords are public.
+- **Suggest, then decide.** Keywords suggest a part; a person confirms, moves
+  the product to another part (with a variant if it is one), or says it is no
+  lab part. Decisions are kept by product number, outside any snapshot, so a new
+  export keeps them; ones that no longer fit are reported. **Chosen over**
+  typing the links by hand (4,511 products) or trusting the keywords alone
+  (a keyword cannot tell a part from a tool or kit
+  that names it).
+- **Project coverage** goes through a line's product link first and its words
+  second, so a decision corrects the "missing in the simulator" figures too.
+- **The desk** is a local page served by Node's own HTTP server, with no new
+  dependency, for the owner's computer only (127.0.0.1, host check, a token for
+  changes, nothing loaded from elsewhere). It is not part of the web app, so no
+  store data can reach a build or a deployment.
+- **Keyword fixes from the first run:** whole words only; longer keywords in any
+  order; part numbers with maker and package letters; a keyword for the 1.54"
+  ST7789 module as stores name it.
+- **Not done:** decisions themselves (the owner's call, product by product), and
+  showing catalogue prices to students, which needs the store's written
+  permission first.
