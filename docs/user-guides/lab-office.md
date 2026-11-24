@@ -20,13 +20,13 @@ under **Lab office** in the header.
 
 ## What you can do
 
-| Where    | What                                                                                                                                                                                                |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Top line | Working schools, schools waiting for you, teachers, people on their own (adults, and learners under 18), class learners, suspended accounts and schools, and new accounts this week                 |
-| Schools  | Search and filter. **Suspend** a school: no one can join its classes, and its teachers cannot make classes or invitations, until you **start** it again. **Close** a school; it can be **reopened** |
-| People   | Search by name, email or sign-in name, and filter by kind. **Suspend** an account (signed out on every device at once) and **restore** it; **close** it for good                                    |
-| People   | **Reset link**: a one-time link to set a new password, working for 24 hours, for you to hand on yourself (to the adult, or to a learner's guardian). For when email does not arrive                 |
-| Activity | The latest 100 actions: who did what, and when                                                                                                                                                      |
+| Where    | What                                                                                                                                                                                                                                                                                                 |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Top line | Working schools, schools waiting for you, teachers, people on their own (adults, and learners under 18), class learners, suspended accounts and schools, and new accounts this week                                                                                                                  |
+| Schools  | Search and filter. A new school waits for you: **Approve** it, and its teachers can make classes and invite others. **Suspend** a school: no one can join its classes, and its teachers cannot make classes or invitations, until you **start** it again. **Close** a school; it can be **reopened** |
+| People   | Search by name, email or sign-in name, and filter by kind. **Suspend** an account (signed out on every device at once) and **restore** it; **close** it for good                                                                                                                                     |
+| People   | **Reset link**: a one-time link to set a new password, working for 24 hours, for you to hand on yourself (to the adult, or to a learner's guardian). For when email does not arrive                                                                                                                  |
+| Activity | The latest 100 actions: who did what, and when                                                                                                                                                                                                                                                       |
 
 Every change asks first, in words that say what will happen, and is written to
 the log with you as the one who did it.

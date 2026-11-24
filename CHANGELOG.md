@@ -16,6 +16,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Fixed
 
+- A whole class can now join at once from one school address.
+- An expired join code says so; a learner's new key asks first; failed
+  teacher actions show why.
 - On a shared device, progress waiting to upload can no longer be sent as the
   next learner's.
 - Too many requests in a minute is now explained, and no longer looks like
@@ -28,6 +31,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Schools that apply**: a new school waits for the lab owner's approval;
+  teachers confirm their email; a school admin can give a teacher a reset link;
+  everyone with a password can change it and sign out on every device. The
+  teacher's page has tabs for classes, the school and the account.
 - **The lab office**: the owner's page for every school and every person:
   suspend, restart and close schools and accounts, make a one-time reset link
   to hand on, and read the latest activity. Owners are made only on the server.

@@ -2074,3 +2074,37 @@ Built on 24 November 2026, the second step of D-096.
   can still send a reset link to hand on without seeing it.
 - **Not done:** schools applying for approval (next step); reopening a closed
   account (by design, closing is final); a fuller audit search.
+
+## D-098 — Schools that apply, teachers' passwords, and the classroom's limits
+
+Built on 24 November 2026, the third step of D-096.
+
+- **A new school waits for an owner.** A teacher who names a new school gets a
+  school that is `pending`: they can sign in and see it, but cannot make
+  classes or invite teachers until an owner approves it in the lab office
+  (**Approve**, D-097). Setting `SCHOOL_APPROVAL=automatic` lets schools work
+  at once; only the development and browser-test servers use it. The approval
+  itself is tested against the API with approval required, as in production.
+- **Teachers confirm their email** before their first sign-in, like adults on
+  their own; every adult now needs a confirmed email to sign in. Adults made
+  before this (development and test accounts only; the lab was never
+  deployed) are marked confirmed by migration `0008`.
+- **Teachers' passwords.** A forgotten password is reset by email (D-096). When
+  email does not arrive, the school's admin makes a one-time reset link for one
+  of the school's teachers (24 hours) to hand on; the owner does the same for
+  an admin (D-097). Anyone with a password can change it (other devices are
+  signed out) and sign out on every device.
+- **The classroom's limits.** Joining a class and signing in with a key have
+  their own limit, 120 a minute per address (`CLASS_JOINS_PER_MINUTE`), since a
+  whole class does it at once from one school address; codes and keys are long
+  enough that guessing stays hopeless. All requests: 1,200 a minute per
+  address (was 300). Behind a reverse proxy, `TRUST_PROXY` makes the limits
+  count each visitor rather than the proxy; it is off by default, so a visitor
+  cannot claim another address.
+- **The teacher's page** is split into Classes, School (the school's teachers,
+  invitations, joining another school) and My account (password, sign out
+  everywhere). A school waiting or suspended says so at the top. A join code
+  that has run out says so. A new key for a learner asks first, and actions
+  that fail now show why.
+- **Not done:** account closing by the user or a guardian, and the retention
+  job; a check that a school is real (the owner decides, by any means).
