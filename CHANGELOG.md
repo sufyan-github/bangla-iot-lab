@@ -16,6 +16,18 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **HTTPClient for the ESP32**: `HTTPClient.h` in the board library and three
+  made-up web services in the lab (`echo.lab`, `weather.lab`, `log.lab`); the
+  web panel lists the requests a program made. Ready-made program `webclient`.
+- **A timing diagram on the logic sheet**: clocks, switches, flip-flop outputs
+  and lamps drawn as lines over the last eight seconds, which can be held still.
+- **Teacher invitations**: a school's admin makes one-use codes for other
+  teachers, sees the school's teachers and withdraws unused codes.
+- **Quizzes at the end of lessons**: short questions marked at once, with the
+  reason; seven lessons have them. Nothing is sent.
+- **A current limit on the bench supply**: past the limit it holds the current
+  and lets its voltage fall, and shows CC.
+- **A serial plotter**: the serial monitor's numbers drawn as lines.
 - **Logic sheet, part 2**: gates with up to four inputs, a multiplexer, a full
   adder, JK and T flip-flops and a hex digit; undo and redo; and the simplest
   Boolean expression for each lamp under the truth table.

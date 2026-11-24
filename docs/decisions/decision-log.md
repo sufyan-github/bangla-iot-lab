@@ -1672,3 +1672,47 @@ layout and consistency.
   class's join code is written in chalk on a slate, to copy onto the board.
 
 Not done: a dark mode, and measuring the lab on a low-end Android phone.
+
+## D-086 — A serial plotter, a current limit, quizzes, invitations, a timing diagram and HTTP
+
+Built on 24 November 2026, one piece at a time, after the owner asked for the
+remaining pieces to be built one by one. Block coding was left out at the
+owner's word.
+
+- **Serial plotter.** The serial monitor can show its numbers as lines
+  instead of text, as the Arduino IDE's plotter does: numbers on a line,
+  split by spaces, commas or tabs, or written `name:value`. Up to six lines
+  and the last 200 points.
+- **Current limit on the bench supply.** D-084 left this out; it is now
+  modelled. The supply has a limit from 10 mA to 3 A (1 A for a new one).
+  When the circuit would draw more, the supply holds the current at the limit
+  and its voltage falls, as a real bench supply does, and its display shows
+  **CC**. Checked: 5 V into 100 Ω with a 20 mA limit gives about 2 V.
+- **Quizzes.** A lesson may end with up to five questions of two to four
+  choices, each with the reason for its answer. Answers are marked at once,
+  on the device only; nothing is sent or kept. Seven lessons have two
+  questions each, written for this project.
+- **Teacher invitations.** The teacher who signs a school up is its admin.
+  The admin makes an invitation code (three groups of four, shown once and
+  kept only as a hash, working once for seven days), sees the school's
+  teachers and withdraws codes not yet used. A new teacher signs up with the
+  code instead of naming a school; a teacher already signed in joins with it.
+  A teacher in two schools chooses the school for a new class. Nothing is
+  emailed: the admin passes the code on in person. Every invitation, its
+  use and its withdrawal are in the audit log. **Not done:** removing a
+  teacher from a school, and passing the admin role on.
+- **Timing diagram.** The logic sheet can draw its clocks, switches, the
+  flip-flops' Q and its lamps as lines over the last eight seconds. Levels
+  are noted at every clock change, not once a frame, so no edge is missed at
+  10 Hz. It can be held still to read.
+- **HTTP requests from a program.** The ESP32 board library gains
+  `HTTPClient.h`, written for the lab from the documented API (the ESP32
+  Arduino core's own is LGPL, so none of its code is used). The lab has no
+  real internet, so three **made-up services** answer: `echo.lab` sends the
+  request back; `weather.lab/now?city=…` makes up a city's temperature and
+  humidity, drifting over a minute, and marks it `"madeUp": true`; `log.lab`
+  keeps up to 50 lines a program posts and gives the last 20 back. Any other
+  address finds nobody (connection refused). A request takes 40 ms of lab
+  time. Headers are accepted but not used. The web panel lists each request
+  a board's program made and its status. A new ready-made program,
+  `webclient`, uses all of this.
