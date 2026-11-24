@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { pick } from './pick';
+import { withinLabTime } from './lab-time';
 
 /**
  * Two boards in one circuit: each has its own program, chosen in its own tab
@@ -47,7 +48,9 @@ test('two ESP32 boards, each with its own program, talk over a serial wire', asy
   await program(page, 'ESP2', 'receiver');
   await page.getByTestId('run').click();
   // The receiver's monitor shows what the sender sent.
-  await expect(page.getByTestId('serial')).toContainText('পেলাম: count 1', { timeout: 20_000 });
+  await withinLabTime(page, 6000, () =>
+    expect(page.getByTestId('serial')).toContainText('পেলাম: count 1', { timeout: 300 }),
+  );
   await page.getByTestId('code-board-ESP1').click();
   await expect(page.getByTestId('serial')).toContainText('পাঠালাম: 1');
   await expect(page.locator('[data-diag="no-common-ground"]')).toHaveCount(0);

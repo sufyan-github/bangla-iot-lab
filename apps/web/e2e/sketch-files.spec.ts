@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { writeProgram } from './editor';
+import { withinLabTime } from './lab-time';
 
 /**
  * A program in several files: tabs in the code editor, each sent to the
@@ -33,7 +34,9 @@ test('a sketch with a header in a second tab builds, runs, and keeps its tabs', 
     timeout: 60_000,
   });
   await page.getByTestId('run').click();
-  await expect(page.getByTestId('serial')).toContainText('hello from a tab', { timeout: 15_000 });
+  await withinLabTime(page, 5000, () =>
+    expect(page.getByTestId('serial')).toContainText('hello from a tab', { timeout: 300 }),
+  );
 
   // Saved with the project: the tab is still there after a reload.
   await page.getByTestId('run').click();

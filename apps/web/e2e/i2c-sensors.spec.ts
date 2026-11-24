@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { pick } from './pick';
+import { withinLabTime } from './lab-time';
 
 /** Stage 3's I2C sensors: the BME280 and the INA219, read by their real libraries on the ESP32. */
 
@@ -48,7 +49,9 @@ test('the weather program reads the BME280 over I2C and follows its sliders', as
   await page.locator('[data-hit="BME1"]').click();
   await page.getByTestId('slider-celsius').fill('31.5');
   await page.getByTestId('tab-code').click();
-  await expect(serial).toContainText('তাপমাত্রা: 31.5 °C', { timeout: 15_000 });
+  await withinLabTime(page, 6000, () =>
+    expect(serial).toContainText('তাপমাত্রা: 31.5 °C', { timeout: 300 }),
+  );
 });
 
 test('the INA219 can be placed and kept, and its pins are named in the diagram', async ({

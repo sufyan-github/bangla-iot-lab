@@ -110,6 +110,8 @@ interface LabState {
   bleNotes: Record<string, BleNote[]>;
   /** How fast the simulation is running against real time; 1 when it keeps up. */
   speed: number;
+  /** Simulated time since the circuit was switched on, milliseconds. */
+  labTimeMs: number;
   /** Counts uploads per board, so a running circuit knows when to restart a program. */
   uploads: Record<string, number>;
   /** Serial output received from each board since the circuit was started. */
@@ -195,6 +197,7 @@ const STOPPED = {
   serial: {},
   pressed: [] as string[],
   speed: 1,
+  labTimeMs: 0,
 };
 
 export const useLab = create<LabState>((set, get) => {
@@ -557,6 +560,7 @@ export const useLab = create<LabState>((set, get) => {
         serial,
         settings,
         speed: frame.speed ?? 1,
+        labTimeMs: frame.timeMs,
       });
     },
     clearSerial: (boardId) => set({ serial: { ...get().serial, [boardId]: '' } }),

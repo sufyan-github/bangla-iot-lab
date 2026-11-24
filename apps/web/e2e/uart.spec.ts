@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { pick } from './pick';
+import { withinLabTime } from './lab-time';
 
 /**
  * Stage 5: the ESP32's second serial port, with the NEO-6M GPS, the PMS5003
@@ -44,16 +45,20 @@ test('the GPS program prints the position over RX2, and waits when the sky is hi
   await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
   const serial = page.getByTestId('serial');
   await page.getByTestId('run').click();
-  await expect(serial).toContainText('অক্ষাংশ: 23.746500, দ্রাঘিমাংশ: 90.376300, স্যাটেলাইট: 8', {
-    timeout: 20_000,
-  });
+  await withinLabTime(page, 8000, () =>
+    expect(serial).toContainText('অক্ষাংশ: 23.746500, দ্রাঘিমাংশ: 90.376300, স্যাটেলাইট: 8', {
+      timeout: 300,
+    }),
+  );
 
   await page.getByTestId('tab-circuit').click();
   await page.locator('[data-hit="GPS1"]').click();
   await page.getByTestId('gps-fix').click();
   await expect(page.getByTestId('gps-fix')).toHaveAttribute('aria-pressed', 'false');
   await page.getByTestId('tab-code').click();
-  await expect(serial).toContainText('অবস্থান এখনো জানা নেই', { timeout: 15_000 });
+  await withinLabTime(page, 8000, () =>
+    expect(serial).toContainText('অবস্থান এখনো জানা নেই', { timeout: 300 }),
+  );
 });
 
 test('the air program reads the PMS5003 and follows its slider; both parts are kept', async ({
@@ -135,7 +140,9 @@ test('the MP3 program finds the player and plays; a SIM800L on 5 V is flagged', 
   await page.getByTestId('starter').selectOption('mp3');
   await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
   await page.getByTestId('run').click();
-  await expect(page.getByTestId('serial')).toContainText('গান 1 বাজছে', { timeout: 20_000 });
+  await withinLabTime(page, 6000, () =>
+    expect(page.getByTestId('serial')).toContainText('গান 1 বাজছে', { timeout: 300 }),
+  );
   await page.getByTestId('tab-circuit').click();
   await page.locator('[data-hit="MP1"]').click();
   await expect(page.getByTestId('player-state')).toHaveAttribute('data-playing', 'true');

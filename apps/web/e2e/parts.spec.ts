@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { pick } from './pick';
+import { withinLabTime } from './lab-time';
 
 /** The wider parts library: placing, operating and reading the parts added in Phase 1. */
 
@@ -142,8 +143,9 @@ test('a servo follows the angle its program sets', async ({ page }) => {
   await page.getByTestId('run').click();
 
   const angle = async () => Number(await part(page, 'SRV1').getAttribute('data-angle'));
-  await expect.poll(angle, { timeout: 30_000 }).toBeGreaterThan(150);
-  await expect.poll(angle, { timeout: 30_000 }).toBeLessThan(30);
+  // Waited for in the lab's own time: the sweep takes a few seconds of it, however busy the computer.
+  await withinLabTime(page, 15_000, async () => expect(await angle()).toBeGreaterThan(150));
+  await withinLabTime(page, 15_000, async () => expect(await angle()).toBeLessThan(30));
 });
 
 test('an ultrasonic sensor reports the distance set on its slider', async ({ page }) => {

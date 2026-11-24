@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { pick } from './pick';
 import { writeProgram } from './editor';
+import { withinLabTime } from './lab-time';
 
 /**
  * The ESP32 board (experimental): ready-made programs run from the lab's own
@@ -338,14 +339,18 @@ test('a DHT11 on the ESP32 is read by the program and follows its sliders', asyn
   await page.getByTestId('tab-code').click();
   const serial = page.getByTestId('serial');
   // The part arrives set to 28 °C and 70 %; the program asks every two seconds.
-  await expect(serial).toContainText('তাপমাত্রা 28 °C, আর্দ্রতা 70 %', { timeout: 20_000 });
+  await withinLabTime(page, 6000, () =>
+    expect(serial).toContainText('তাপমাত্রা 28 °C, আর্দ্রতা 70 %', { timeout: 300 }),
+  );
 
   await page.getByTestId('tab-circuit').click();
   await page.locator('[data-hit="DHT1"]').click();
   await page.getByTestId('slider-celsius').fill('35');
   await page.getByTestId('slider-humidity').fill('82');
   await page.getByTestId('tab-code').click();
-  await expect(serial).toContainText('তাপমাত্রা 35 °C, আর্দ্রতা 82 %', { timeout: 20_000 });
+  await withinLabTime(page, 6000, () =>
+    expect(serial).toContainText('তাপমাত্রা 35 °C, আর্দ্রতা 82 %', { timeout: 300 }),
+  );
 });
 
 test('a servo on the ESP32 sweeps when it is powered from VIN', async ({ page }) => {
@@ -361,8 +366,8 @@ test('a servo on the ESP32 sweeps when it is powered from VIN', async ({ page })
   await page.getByTestId('run').click();
   const angle = async () =>
     Number(await page.locator('[data-part="SRV1"]').getAttribute('data-angle'));
-  await expect.poll(angle, { timeout: 30_000, intervals: [70, 110, 130] }).toBeGreaterThan(150);
-  await expect.poll(angle, { timeout: 30_000, intervals: [70, 110, 130] }).toBeLessThan(30);
+  await withinLabTime(page, 15_000, async () => expect(await angle()).toBeGreaterThan(150));
+  await withinLabTime(page, 15_000, async () => expect(await angle()).toBeLessThan(30));
 });
 
 test('the lab warns when the ultrasonic sensor’s 5 V echo goes straight into an ESP32 pin', async ({
@@ -576,7 +581,7 @@ test('saved settings outlast stopping the circuit and a reload, and can be erase
   const runOnce = async (expected: string) => {
     await page.getByTestId('run').click();
     await page.getByTestId('tab-code').click();
-    await expect(serial).toContainText(expected, { timeout: 15_000 });
+    await withinLabTime(page, 5000, () => expect(serial).toContainText(expected, { timeout: 300 }));
     await page.getByTestId('run').click();
     await page.getByTestId('tab-circuit').click();
   };

@@ -133,6 +133,15 @@ function useLiveSimulation() {
  * Keeps the lesson's current step up to date with the student's work: every
  * change to the circuit, the program or what the simulation shows is checked.
  */
+/**
+ * The lab's own time, for tests that wait for something the simulation does:
+ * on a busy computer it runs slower than the clock on the wall. Not shown.
+ */
+function LabClock() {
+  const ms = useLab((s) => s.labTimeMs);
+  return <span hidden data-testid="lab-clock" data-ms={Math.round(ms)} />;
+}
+
 function useLessonChecks() {
   useEffect(() => {
     const check = () => {
@@ -437,6 +446,7 @@ export function LabPage() {
             />
             <span className="max-sm:sr-only">{t(saveText[saveState])}</span>
           </span>
+          <LabClock />
           {hasBuzzer && (
             <button
               type="button"
