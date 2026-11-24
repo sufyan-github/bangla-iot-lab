@@ -40,23 +40,46 @@ export const signals = {
     this.version++;
   },
 
-  /** The samples of one probe that matter for the time window ending now. */
+  /** The samples of one probe that matter for the time window ending now, or at `to`. */
   window(
     probe: Probe,
     spanMs: number,
+    until?: number,
   ): { times: number[]; values: number[]; from: number; to: number } | null {
     const index = this.probes.indexOf(probe);
     if (index < 0 || this.times.length === 0) return null;
-    const from = this.now - spanMs;
+    const to = until ?? this.now;
+    const from = to - spanMs;
     // Start one sample before the window, since that value is still showing at its left edge.
     let start = this.times.findIndex((t) => t > from);
     start = start < 0 ? this.times.length - 1 : Math.max(0, start - 1);
+    // And stop at the window's end, for a window held in the past.
+    let end = this.times.findIndex((t) => t > to);
+    end = end < 0 ? this.times.length : end;
     return {
-      times: this.times.slice(start),
-      values: this.values[index]!.slice(start),
+      times: this.times.slice(start, end),
+      values: this.values[index]!.slice(start, end),
       from,
-      to: this.now,
+      to: Math.min(to, this.now),
     };
+  },
+
+  /**
+   * The first time after `after` that a probe crosses a logic threshold the
+   * given way: from LOW to HIGH (`rise`) or HIGH to LOW (`fall`). Null if it
+   * has not happened yet.
+   */
+  findEdge(probe: Probe, edge: 'rise' | 'fall', after: number, threshold = 2.5): number | null {
+    const index = this.probes.indexOf(probe);
+    if (index < 0) return null;
+    const values = this.values[index]!;
+    for (let i = 1; i < this.times.length; i++) {
+      if (this.times[i]! <= after) continue;
+      const was = values[i - 1]! > threshold;
+      const now = values[i]! > threshold;
+      if (edge === 'rise' ? !was && now : was && !now) return this.times[i]!;
+    }
+    return null;
   },
 };
 

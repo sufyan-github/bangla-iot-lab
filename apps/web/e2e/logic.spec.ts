@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { pick } from './pick';
+import { withinLabTime } from './lab-time';
 
 /** 74HC logic chips on the breadboard, and the truth-table tool. */
 
@@ -158,4 +159,20 @@ test('the logic analyser has a row for a chip leg joined to a clock module', asy
       timeout: 6000,
     })
     .toBeGreaterThan(4);
+
+  // A trigger on the clock's rising edge: armed, the picture holds when it comes.
+  await page.getByTestId('trigger-source').selectOption('pin:CLK1.out');
+  await page.getByTestId('trigger-rise').click();
+  await page.getByTestId('trigger-arm').click();
+  const state = page.getByTestId('trigger-state');
+  await withinLabTime(page, 4000, () =>
+    expect(state).toHaveAttribute('data-state', 'held', { timeout: 300 }),
+  );
+  const at = Number(await state.getAttribute('data-at'));
+  expect(at).toBeGreaterThan(0);
+  // Held: the edge stays where it was while the circuit runs on.
+  await page.waitForTimeout(500);
+  await expect(state).toHaveAttribute('data-at', String(at));
+  await page.getByTestId('trigger-arm').click();
+  await expect(state).toHaveAttribute('data-state', 'idle');
 });

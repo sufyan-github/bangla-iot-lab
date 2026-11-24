@@ -39,4 +39,28 @@ describe('signal recording buffer', () => {
     expect(signals.times[0]).toBe(10_000);
     expect(signals.values[0]!.length).toBe(60_000);
   });
+
+  it('finds the first rising or falling edge after a time, for a trigger', () => {
+    // 0 V, then 3.3 V at 10 ms, 0 V at 30 ms, 3.3 V at 50 ms.
+    signals.append(
+      { probes: ['part:LED1'], times: [0, 10, 30, 50], values: [[0, 3.3, 0, 3.3]] },
+      60,
+    );
+    expect(signals.findEdge('part:LED1', 'rise', 0)).toBe(10);
+    expect(signals.findEdge('part:LED1', 'rise', 10)).toBe(50);
+    expect(signals.findEdge('part:LED1', 'fall', 0)).toBe(30);
+    expect(signals.findEdge('part:LED1', 'fall', 30)).toBeNull();
+    expect(signals.findEdge('socket:UNO1.d9', 'rise', 0)).toBeNull();
+  });
+
+  it('can show a window held in the past, around a trigger', () => {
+    signals.append(
+      { probes: ['part:LED1'], times: [0, 10, 30, 50], values: [[0, 3.3, 0, 3.3]] },
+      60,
+    );
+    const held = signals.window('part:LED1', 20, 35)!;
+    expect(held).toMatchObject({ from: 15, to: 35 });
+    // The sample at 50 ms is after the window and left out.
+    expect(held.times).toEqual([10, 30]);
+  });
 });

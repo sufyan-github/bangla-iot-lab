@@ -121,6 +121,17 @@ export function SignalsPanel() {
   ]);
   const [spanMs, setSpanMs] = useState<number>(1000);
   const [stats, setStats] = useState<(SignalStats | null)[]>([null, null]);
+  /**
+   * The trigger: an analyser row and an edge. Armed, it waits for that edge;
+   * then the picture holds with the edge a fifth of the way across.
+   */
+  const [trigger, setTrigger] = useState<{
+    probe: Probe | null;
+    edge: 'rise' | 'fall';
+    armedAt: number | null;
+    at: number | null;
+  }>({ probe: null, edge: 'rise', armedAt: null, at: null });
+  const triggerProbe = trigger.probe && rows.includes(trigger.probe) ? trigger.probe : null;
 
   // Record the chosen channels plus every analyser row while this panel is open.
   const probeKey = [...channels, ...rows].join();
@@ -158,9 +169,17 @@ export function SignalsPanel() {
       context.fillStyle = '#12201b';
       context.fillRect(0, 0, width, height);
 
+      // Armed and waiting: look for the edge (in a new run, from its start).
+      if (triggerProbe && trigger.armedAt !== null && trigger.at === null) {
+        const after = trigger.armedAt <= signals.now ? trigger.armedAt : 0;
+        const edge = signals.findEdge(triggerProbe, trigger.edge, after);
+        if (edge !== null) setTrigger({ ...trigger, at: edge });
+      }
+      // Held: the window around the edge; otherwise the latest.
+      const end = trigger.at !== null ? trigger.at + spanMs * 0.8 : signals.now;
       const plotWidth = width - LABEL_WIDTH;
       const x = (time: number, from: number) => LABEL_WIDTH + ((time - from) / spanMs) * plotWidth;
-      const views = channels.map((probe) => (probe ? signals.window(probe, spanMs) : null));
+      const views = channels.map((probe) => (probe ? signals.window(probe, spanMs, end) : null));
       const measured = views.map((view) => (view ? signalStats(view) : null));
       const peak = Math.max(
         1,
@@ -228,9 +247,20 @@ export function SignalsPanel() {
           6,
           rowTop + 17,
         );
-        const view = signals.window(probe, spanMs);
+        const view = signals.window(probe, spanMs, end);
         if (view) trace(view, (volts) => rowTop + (volts > 2.5 ? 6 : ROW_HEIGHT - 6), '#7dff9b');
       });
+
+      // Where the picture is held: the trigger's edge.
+      if (trigger.at !== null) {
+        const column = x(trigger.at, end - spanMs);
+        context.strokeStyle = '#e8a21a';
+        context.lineWidth = 1.5;
+        context.beginPath();
+        context.moveTo(column, 0);
+        context.lineTo(column, height);
+        context.stroke();
+      }
 
       // Numbers change far less often than the picture.
       if (timestamp - lastStats > 250) {
@@ -240,7 +270,7 @@ export function SignalsPanel() {
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [channels, rows, spanMs, legName]);
+  }, [channels, rows, spanMs, legName, trigger, triggerProbe]);
 
   const probeLabel = (probe: Probe) =>
     probe.startsWith('part:')
@@ -357,6 +387,75 @@ export function SignalsPanel() {
         <p className="text-sm text-ink-soft">
           {t(rows.length > 0 ? 'scope.logicAbout' : 'scope.logicEmpty')}
         </p>
+        {rows.length > 0 && (
+          <fieldset className="mt-2 flex flex-wrap items-center gap-2" data-testid="trigger">
+            <legend className="sr-only">{t('scope.trigger')}</legend>
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-ink-soft">{t('scope.trigger')}</span>
+              <select
+                data-testid="trigger-source"
+                value={triggerProbe ?? ''}
+                onChange={(event) =>
+                  setTrigger({
+                    ...trigger,
+                    probe: (event.target.value || null) as Probe | null,
+                    armedAt: null,
+                    at: null,
+                  })
+                }
+                className="field min-h-10 w-auto py-1"
+              >
+                <option value="">{t('scope.triggerNone')}</option>
+                {rows.map((probe) => (
+                  <option key={probe} value={probe}>
+                    {probe.startsWith('pin:') ? legName(probe) : socketName(probe)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {(['rise', 'fall'] as const).map((edge) => (
+              <button
+                key={edge}
+                type="button"
+                data-testid={`trigger-${edge}`}
+                aria-pressed={trigger.edge === edge}
+                onClick={() => setTrigger({ ...trigger, edge, armedAt: null, at: null })}
+                className="chip"
+              >
+                {t(edge === 'rise' ? 'scope.rise' : 'scope.fall')}
+              </button>
+            ))}
+            <button
+              type="button"
+              data-testid="trigger-arm"
+              disabled={!triggerProbe}
+              onClick={() =>
+                setTrigger(
+                  trigger.armedAt === null
+                    ? { ...trigger, armedAt: signals.now, at: null }
+                    : { ...trigger, armedAt: null, at: null },
+                )
+              }
+              className="btn btn-secondary min-h-10"
+            >
+              {t(trigger.armedAt === null ? 'scope.arm' : 'scope.release')}
+            </button>
+            <span
+              className="text-sm text-ink-soft"
+              data-testid="trigger-state"
+              data-state={
+                trigger.at !== null ? 'held' : trigger.armedAt !== null ? 'armed' : 'idle'
+              }
+              data-at={trigger.at ?? undefined}
+            >
+              {trigger.at !== null
+                ? t('scope.held', { time: `${number(Math.round(trigger.at))} ms` })
+                : trigger.armedAt !== null
+                  ? t('scope.armed')
+                  : ''}
+            </span>
+          </fieldset>
+        )}
         {chipProbes.length > 0 && (
           <ul className="mt-1 flex flex-wrap gap-1.5 text-sm" data-testid="analyser-legs">
             {chipProbes.map((probe) => (
