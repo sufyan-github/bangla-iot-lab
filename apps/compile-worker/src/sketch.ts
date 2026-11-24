@@ -135,3 +135,59 @@ export function sketchToCpp(source: string): string {
     source.slice(insertAt)
   );
 }
+
+/** One more file of a sketch: a tab in the editor. */
+export interface SketchFile {
+  name: string;
+  content: string;
+}
+
+/**
+ * Names a sketch's other files may have, as tabs in the Arduino IDE: a plain
+ * name, then .ino (more of the sketch), .h or .hpp (a header to include), or
+ * .c or .cpp (compiled on its own and linked in). The main file is sketch.ino.
+ */
+export const SKETCH_FILE_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,39}\.(ino|h|hpp|c|cpp)$/;
+/** At most this many files besides the main one. */
+export const MAX_SKETCH_FILES = 16;
+
+/** Why a set of files cannot be a sketch's, or null when it can. */
+export function sketchFilesProblem(files: readonly SketchFile[]): string | null {
+  if (files.length > MAX_SKETCH_FILES)
+    return `at most ${MAX_SKETCH_FILES} files besides the sketch`;
+  const names = new Set<string>();
+  for (const { name } of files) {
+    if (!SKETCH_FILE_NAME.test(name)) return `not a file name a sketch can have: ${name}`;
+    // The build keeps its own files beside the student's.
+    if (/^(sketch|firmware)\./.test(name)) return `that name is the main file's: ${name}`;
+    if (names.has(name.toLowerCase())) return `two files called ${name}`;
+    names.add(name.toLowerCase());
+  }
+  return null;
+}
+
+/**
+ * A sketch and its other files, as the compiler gets them, the way the Arduino
+ * IDE puts them together: the main file first, then the other .ino tabs in
+ * name order, as one sketch with its prototypes; headers written as they are;
+ * .c and .cpp files compiled on their own.
+ */
+export function sketchBuild(
+  source: string,
+  files: readonly SketchFile[] = [],
+): { cpp: string; written: SketchFile[]; compiled: string[] } {
+  const tabs = files
+    .filter((file) => file.name.endsWith('.ino'))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  // Each tab carries a #line directive, so messages point at the tab and its own line.
+  const combined = tabs.reduce(
+    (text, tab) => `${text}\n#line 1 "${tab.name}"\n${tab.content}`,
+    source,
+  );
+  const others = files.filter((file) => !file.name.endsWith('.ino'));
+  return {
+    cpp: sketchToCpp(combined),
+    written: others,
+    compiled: others.filter((file) => /\.(c|cpp)$/.test(file.name)).map((file) => file.name),
+  };
+}

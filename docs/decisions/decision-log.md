@@ -1323,3 +1323,24 @@ asleep. `ESP.restart()` still ends the run, as before.
 Ready-made program `deepsleep`; a test checks three boots, the wake-up cause,
 an RTC variable counting and an ordinary one starting again each time, and the
 LED let go while asleep.
+
+## D-073 — Programs in several files, as tabs
+
+The second ESP32 gap of the study (E2): 28 reference sketches are split into
+several files, as the Arduino IDE allows. A program can now have up to 16 more
+files beside its main one, each a tab in the code editor:
+
+- more `.ino` tabs, joined after the main file in name order, as the Arduino
+  IDE does, with prototypes for every function in any of them;
+- headers (`.h`, `.hpp`), written beside the sketch for `#include "…"`;
+- `.c` and `.cpp` files, each compiled on its own and linked in.
+
+This works for the UNO-compatible board and for both ways of running an ESP32
+program. File names are plain (letters, digits and `_`, then the extension);
+names that would leave the build folder, the main file's own name and two
+files of one name are refused by the compile server, and all the files
+together are held to the size one program may have. A compile error says which
+tab it is in, at that tab's own line. The files are saved with the project; a
+change to any of them shows that the program needs uploading again.
+
+Ready-made programs stay single files.

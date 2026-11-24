@@ -21,7 +21,7 @@ import {
 } from '@banglalab/shared';
 import type { BoardStatus, Probe, SimulationFrame, SimulationResult } from '@banglalab/simulation';
 import { create } from 'zustand';
-import type { BoardProgram, ProjectContent } from '../storage/projects';
+import type { BoardProgram, ProjectContent, SketchTab } from '../storage/projects';
 import { freeBreadboardPlace, placeBesideOtherBoard, settleOffBoardPart } from './geometry';
 import { signals } from './signals';
 import { starterProgram } from './starters';
@@ -116,6 +116,8 @@ interface LabState {
   redo(): void;
   /** Changes the program text without touching what is on the board. */
   setSource(boardId: string, source: string): void;
+  /** Replaces a program's other files (its tabs), without touching what is on the board. */
+  setFiles(boardId: string, files: SketchTab[]): void;
   /** Puts firmware on the board; a running circuit restarts that board's program. */
   uploadProgram(boardId: string, program: BoardProgram): void;
   /** ESP32 only: chooses how the board's program is run. The program must then be uploaded again. */
@@ -373,6 +375,13 @@ export const useLab = create<LabState>((set, get) => {
     setSource(boardId, source) {
       const program = get().programs[boardId] ?? { hex: null, hexSource: null };
       set({ programs: { ...get().programs, [boardId]: { ...program, source } } });
+    },
+    setFiles(boardId, files) {
+      const program = get().programs[boardId] ?? { source: '', hex: null, hexSource: null };
+      const next = { ...program };
+      if (files.length) next.files = files;
+      else delete next.files;
+      set({ programs: { ...get().programs, [boardId]: next } });
     },
     uploadProgram(boardId, program) {
       const { programs, uploads } = get();

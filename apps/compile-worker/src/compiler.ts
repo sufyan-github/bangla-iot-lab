@@ -29,7 +29,7 @@ import {
   type Esp32FirmwareToolchain,
 } from './esp32-firmware';
 import { runTool, type RunResult } from './sandbox';
-import { sketchToCpp } from './sketch';
+import { sketchBuild, type SketchFile } from './sketch';
 
 export interface CompileRequest {
   /**
@@ -47,9 +47,13 @@ export interface CompileRequest {
   /** `c`: plain avr-libc C. `arduino`: an Arduino sketch with setup() and loop(). */
   language: 'c' | 'arduino';
   source: string;
+  /** Arduino sketches only: the sketch's other files, its tabs besides the main one. */
+  files?: SketchFile[];
 }
 
 export interface CompileDiagnostic {
+  /** The tab the message is about, when it is not the main file. */
+  file?: string;
   line: number;
   column: number;
   severity: 'error' | 'warning';
@@ -94,19 +98,35 @@ const RECIPE_VERSION = 2;
 export function parseGccDiagnostics(stderr: string): CompileDiagnostic[] {
   const diagnostics: CompileDiagnostic[] = [];
   for (const line of stderr.split('\n')) {
-    const match = /^sketch\.(?:c|ino):(\d+):(?:(\d+):)? (?:fatal )?(error|warning): (.*)$/.exec(
-      line,
-    );
+    const match =
+      /^([A-Za-z_][A-Za-z0-9_]*\.(?:c|ino|cpp|h|hpp)):(\d+):(?:(\d+):)? (?:fatal )?(error|warning): (.*)$/.exec(
+        line,
+      );
     if (!match) continue;
+    const file = match[1]!;
     diagnostics.push({
-      line: Number(match[1]),
-      column: Number(match[2] ?? 1),
-      severity: match[3] as 'error' | 'warning',
-      message: match[4]!.slice(0, 500),
+      // The main file is sketch.ino (or sketch.c); the build's own sketch.cpp is the same file.
+      ...(/^sketch\./.test(file) ? {} : { file }),
+      line: Number(match[2]),
+      column: Number(match[3] ?? 1),
+      severity: match[4] as 'error' | 'warning',
+      message: match[5]!.slice(0, 500),
     });
     if (diagnostics.length >= 50) break;
   }
   return diagnostics;
+}
+
+/**
+ * Writes an Arduino sketch and its other files into a job's folder: the
+ * sketch as sketch.cpp, headers and sources under their own names. Returns
+ * the .c and .cpp files to compile besides sketch.cpp.
+ */
+async function writeSketch(jobDir: string, request: CompileRequest): Promise<string[]> {
+  const build = sketchBuild(request.source, request.files ?? []);
+  await writeFile(path.join(jobDir, 'sketch.cpp'), build.cpp);
+  for (const file of build.written) await writeFile(path.join(jobDir, file.name), file.content);
+  return build.compiled;
 }
 
 /** Simple counting semaphore so a burst of requests cannot exhaust the machine. */
@@ -164,11 +184,15 @@ export class Compiler {
           ? [ARDUINO_CORE_VERSION, ARDUINO_LIBRARIES, ARDUINO_FLAGS, CXX_FLAGS]
           : GCC_FLAGS;
     const parts = [RECIPE_VERSION, this.toolchain, recipe, request.board, request.language];
-    return createHash('sha256')
+    const hash = createHash('sha256')
       .update(JSON.stringify(parts))
       .update('\0')
-      .update(request.source)
-      .digest('hex');
+      .update(request.source);
+    // The other files, in name order, each with its name.
+    for (const file of [...(request.files ?? [])].sort((a, b) => a.name.localeCompare(b.name))) {
+      hash.update('\0').update(file.name).update('\0').update(file.content);
+    }
+    return hash.digest('hex');
   }
 
   private cachePath(key: string): string {
@@ -229,14 +253,14 @@ export class Compiler {
     return this.esp32;
   }
 
-  private async buildEsp32(source: string): Promise<CompileOutcome> {
+  private async buildEsp32(request: CompileRequest): Promise<CompileOutcome> {
     const { sandbox, timeoutMs } = this.config;
     const { toolchain, library } = await this.prepareEsp32();
     const jobDir = await mkdtemp(path.join(tmpdir(), 'banglalab-compile-'));
     try {
-      await writeFile(path.join(jobDir, 'sketch.cpp'), sketchToCpp(source));
+      const extra = await writeSketch(jobDir, request);
       let log = '';
-      for (const step of esp32BuildSteps(toolchain, library)) {
+      for (const step of esp32BuildSteps(toolchain, library, extra)) {
         const result = await runTool(
           sandbox,
           jobDir,
@@ -290,16 +314,16 @@ export class Compiler {
     return this.firmware;
   }
 
-  private async buildEsp32Firmware(source: string): Promise<CompileOutcome> {
+  private async buildEsp32Firmware(request: CompileRequest): Promise<CompileOutcome> {
     const { sandbox } = this.config;
     // Linking against several hundred libraries takes longer than an UNO build.
     const timeoutMs = Math.max(this.config.timeoutMs, 30_000);
     const { toolchain, core } = await this.prepareEsp32Firmware();
     const jobDir = await mkdtemp(path.join(tmpdir(), 'banglalab-compile-'));
     try {
-      await writeFile(path.join(jobDir, 'sketch.cpp'), sketchToCpp(source));
+      const extra = await writeSketch(jobDir, request);
       let log = '';
-      for (const step of esp32FirmwareSteps(toolchain, core)) {
+      for (const step of esp32FirmwareSteps(toolchain, core, extra)) {
         const result = await runTool(
           sandbox,
           jobDir,
@@ -346,25 +370,32 @@ export class Compiler {
   private async build(request: CompileRequest): Promise<CompileOutcome> {
     if (request.board === 'esp32') {
       return request.engine === 'emulator'
-        ? this.buildEsp32Firmware(request.source)
-        : this.buildEsp32(request.source);
+        ? this.buildEsp32Firmware(request)
+        : this.buildEsp32(request);
     }
     const { sandbox, timeoutMs } = this.config;
     const jobDir = await mkdtemp(path.join(tmpdir(), 'banglalab-compile-'));
     const run = (tool: string, args: string[], readOnly: string[] = []) =>
       runTool(sandbox, jobDir, tool, args, timeoutMs, readOnly);
     try {
-      let compiled: RunResult;
+      let compiled!: RunResult;
       if (request.language === 'arduino') {
         const core = await this.prepareArduino();
-        await writeFile(path.join(jobDir, 'sketch.cpp'), sketchToCpp(request.source));
-        compiled = await run(
-          'avr-g++',
-          [...ARDUINO_FLAGS, ...CXX_FLAGS, '-Wall', '-c', 'sketch.cpp', '-o', 'sketch.o'],
-          core.readOnlyPaths,
-        );
+        const extra = await writeSketch(jobDir, request);
+        // The sketch, then each of its .c and .cpp files, compiled on its own.
+        let warnings = '';
+        for (const file of ['sketch.cpp', ...extra]) {
+          const cxx = !file.endsWith('.c');
+          compiled = await run(
+            cxx ? 'avr-g++' : 'avr-gcc',
+            [...ARDUINO_FLAGS, ...(cxx ? CXX_FLAGS : []), '-Wall', '-c', file, '-o', `${file}.o`],
+            core.readOnlyPaths,
+          );
+          warnings += compiled.stderr;
+          if (compiled.exitCode !== 0 || compiled.timedOut) break;
+        }
+        compiled.stderr = warnings;
         if (compiled.exitCode === 0 && !compiled.timedOut) {
-          const warnings = compiled.stderr;
           compiled = await run(
             'avr-gcc',
             [
@@ -373,7 +404,8 @@ export class Compiler {
               '-Wl,--gc-sections',
               '-o',
               'sketch.elf',
-              'sketch.o',
+              'sketch.cpp.o',
+              ...extra.map((file) => `${file}.o`),
               core.archive,
               '-lm',
             ],

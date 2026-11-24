@@ -321,12 +321,27 @@ export async function ensureEsp32Library(
 export function esp32BuildSteps(
   toolchain: Esp32Toolchain,
   library: Esp32Library,
+  /** The sketch's own .c and .cpp files, compiled beside it. */
+  extra: readonly string[] = [],
 ): { tool: string; args: string[] }[] {
   return [
     {
       tool: toolchain.compiler,
       args: [...compileFlags(toolchain), '-Wall', '-c', 'sketch.cpp', '-o', 'sketch.o'],
     },
+    ...extra.map((file) => ({
+      tool: toolchain.compiler,
+      // clang++ takes a .c file as C++; plain C is asked for by name.
+      args: [
+        ...compileFlags(toolchain),
+        ...(file.endsWith('.c') ? ['-x', 'c', '-std=gnu11'] : []),
+        '-Wall',
+        '-c',
+        file,
+        '-o',
+        `${file}.o`,
+      ],
+    })),
     {
       tool: toolchain.linker,
       args: [
@@ -334,6 +349,7 @@ export function esp32BuildSteps(
         'sketch.wasm',
         path.join(toolchain.cLib, 'crt1-reactor.o'),
         'sketch.o',
+        ...extra.map((file) => `${file}.o`),
         ...library.objects,
         `-L${toolchain.cxxLib}`,
         `-L${toolchain.cLib}`,

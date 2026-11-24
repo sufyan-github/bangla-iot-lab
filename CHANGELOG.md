@@ -8,6 +8,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Programs in several files**: tabs in the code editor for more `.ino`
+  files, headers and `.c`/`.cpp` files, built together for the UNO-compatible
+  board and the ESP32. A compile error names the tab it is in.
 - **Deep sleep on the ESP32**: `esp_deep_sleep_start()` and its timer and pin
   wake-ups, with `RTC_DATA_ATTR` variables kept and the program starting again
   from `setup()` on waking, as on the chip. Ready-made program `deepsleep`.

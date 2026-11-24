@@ -1,12 +1,19 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Suspense, lazy, useEffect, useRef } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { isProgrammable, type ProgrammableType } from '@banglalab/shared';
 import { compileSketch, hasChipEmulator } from '../api';
 import { useT } from '../i18n';
 import { useOnline } from '../shell/useOnline';
 import { matchingStarter, starterIds, starterLabel, starterProgram } from './starters';
+import { programText, type SketchTab } from '../storage/projects';
 import { useLab } from './store';
+
+/** The main file's name, as the Arduino IDE shows a sketch's first tab. */
+const MAIN_TAB = 'sketch.ino';
+/** Names a new tab may have: a plain name and .ino, .h, .c or .cpp, as the compile server accepts. */
+const TAB_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,39}\.(ino|h|hpp|c|cpp)$/;
+const MAX_TABS = 16;
 
 // The editor is the heaviest part of the app, so it loads only when a board is used.
 const CodeEditor = lazy(() => import('./CodeEditor'));
@@ -19,10 +26,44 @@ export function CodePanel({ boardId }: { boardId: string }) {
     (s) => s.circuit.components.find((c) => c.id === boardId && isProgrammable(c))?.type,
   ) as ProgrammableType | undefined;
   const board: ProgrammableType = boardType ?? 'uno';
-  const { setSource, uploadProgram, setEngine, clearSerial } = useLab.getState();
+  const { setSource, setFiles, uploadProgram, setEngine, clearSerial } = useLab.getState();
   const { t, number } = useT();
   const online = useOnline();
   const source = program?.source ?? '';
+  const files: SketchTab[] = program?.files ?? [];
+  /** The tab being edited: the main file, or one of the others by name. */
+  const [tab, setTab] = useState(MAIN_TAB);
+  const open = files.find((file) => file.name === tab);
+  const [newName, setNewName] = useState('');
+  const nameError =
+    newName === ''
+      ? null
+      : !TAB_NAME.test(newName) || /^(sketch|firmware)\./.test(newName)
+        ? 'code.tabNameBad'
+        : files.some((file) => file.name.toLowerCase() === newName.toLowerCase())
+          ? 'code.tabNameTaken'
+          : null;
+  const addTab = () => {
+    if (newName === '' || nameError || files.length >= MAX_TABS) return;
+    setFiles(boardId, [...files, { name: newName, source: '' }]);
+    setTab(newName);
+    setNewName('');
+  };
+  const removeTab = (name: string) => {
+    setFiles(
+      boardId,
+      files.filter((file) => file.name !== name),
+    );
+    setTab(MAIN_TAB);
+  };
+  const editTab = (next: string) => {
+    if (!open) setSource(boardId, next);
+    else
+      setFiles(
+        boardId,
+        files.map((file) => (file.name === open.name ? { ...file, source: next } : file)),
+      );
+  };
 
   // The ESP32 has two ways of running a program, when this build carries the chip emulator.
   const emulatorBuilt = useQuery({
@@ -36,13 +77,15 @@ export function CodePanel({ boardId }: { boardId: string }) {
   const builtFor = program?.hex?.trimStart().startsWith('{') ? 'emulator' : 'library';
 
   const build = useMutation({
-    mutationFn: (code: string) => compileSketch(code, board, engine),
+    mutationFn: (sketch: { source: string; files: SketchTab[] }) =>
+      compileSketch(sketch.source, board, engine, sketch.files),
     onSuccess: (result, compiled) => {
       if (result.ok)
         uploadProgram(boardId, {
-          source: compiled,
+          source: compiled.source,
+          ...(compiled.files.length ? { files: compiled.files } : {}),
           hex: result.hex,
-          hexSource: compiled,
+          hexSource: programText(compiled),
           ...(engine ? { engine } : {}),
         });
     },
@@ -50,7 +93,7 @@ export function CodePanel({ boardId }: { boardId: string }) {
   const result = build.data;
   const upToDate =
     typeof program?.hex === 'string' &&
-    program.hexSource === source &&
+    program.hexSource === programText({ source, files }) &&
     (engine === undefined || builtFor === engine);
 
   const serialBox = useRef<HTMLPreElement>(null);
@@ -62,6 +105,7 @@ export function CodePanel({ boardId }: { boardId: string }) {
     if (id === 'custom') return;
     build.reset();
     const starter = await starterProgram(id, board);
+    setTab(MAIN_TAB);
     // Ready-made programs ship built for the lab's own model of the board. For
     // the chip emulator only the sketch is taken: it is built when uploaded.
     if (engine === 'emulator') setSource(boardId, starter.source);
@@ -119,7 +163,7 @@ export function CodePanel({ boardId }: { boardId: string }) {
         <span className="mb-1.5 block text-sm text-ink-soft">{t('code.starter')}</span>
         <select
           data-testid="starter"
-          value={matchingStarter(source, board) ?? 'custom'}
+          value={(files.length === 0 && matchingStarter(source, board)) || 'custom'}
           onChange={(event) => void chooseStarter(event.target.value)}
           className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-3"
         >
@@ -134,13 +178,71 @@ export function CodePanel({ boardId }: { boardId: string }) {
 
       <div>
         <p className="mb-1.5 text-sm text-ink-soft">{t('code.editor')}</p>
+        {/* The sketch's files, as tabs: the main one first, then the others. */}
+        <div role="tablist" aria-label={t('code.files')} className="mb-2 flex flex-wrap gap-1.5">
+          {[MAIN_TAB, ...files.map((file) => file.name)].map((name) => (
+            <button
+              key={name}
+              type="button"
+              role="tab"
+              data-testid={`code-tab-${name}`}
+              aria-selected={name === (open ? open.name : MAIN_TAB)}
+              onClick={() => setTab(name)}
+              className={`min-h-10 rounded-lg border-2 px-3 font-mono text-sm ${
+                name === (open ? open.name : MAIN_TAB)
+                  ? 'border-amber bg-amber-soft text-ink'
+                  : 'border-line text-ink-soft hover:border-ink-soft'
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
         <Suspense fallback={<div className="h-56 rounded-xl border-2 border-line bg-paper" />}>
           <CodeEditor
-            value={source}
-            label={t('code.editor')}
-            onChange={(next) => setSource(boardId, next)}
+            key={open ? open.name : MAIN_TAB}
+            value={open ? open.source : source}
+            label={`${t('code.editor')}: ${open ? open.name : MAIN_TAB}`}
+            onChange={editTab}
           />
         </Suspense>
+        <div className="mt-2 flex flex-wrap items-start gap-2">
+          <label className="min-w-0 flex-1">
+            <span className="sr-only">{t('code.newTab')}</span>
+            <input
+              data-testid="new-tab-name"
+              value={newName}
+              onChange={(event) => setNewName(event.target.value.trim())}
+              onKeyDown={(event) => event.key === 'Enter' && addTab()}
+              placeholder={t('code.newTabPlaceholder')}
+              className="min-h-11 w-full rounded-lg border-2 border-line bg-surface px-3 font-mono text-sm"
+            />
+          </label>
+          <button
+            type="button"
+            data-testid="add-tab"
+            disabled={newName === '' || nameError !== null || files.length >= MAX_TABS}
+            onClick={addTab}
+            className="min-h-11 rounded-lg border-2 border-line px-3 text-sm font-medium hover:border-ink-soft disabled:opacity-50"
+          >
+            {t('code.newTab')}
+          </button>
+          {open && (
+            <button
+              type="button"
+              data-testid="remove-tab"
+              onClick={() => removeTab(open.name)}
+              className="min-h-11 rounded-lg border-2 border-danger/40 px-3 text-sm font-medium text-danger hover:bg-danger-soft"
+            >
+              {t('code.removeTab', { name: open.name })}
+            </button>
+          )}
+        </div>
+        {nameError && (
+          <p className="mt-1 text-sm text-danger" data-testid="tab-name-error">
+            {t(nameError)}
+          </p>
+        )}
       </div>
 
       <div>
@@ -148,7 +250,7 @@ export function CodePanel({ boardId }: { boardId: string }) {
           type="button"
           data-testid="upload"
           disabled={!online || build.isPending || upToDate}
-          onClick={() => build.mutate(source)}
+          onClick={() => build.mutate({ source, files })}
           className="min-h-12 w-full rounded-xl bg-amber px-4 text-lg font-semibold text-ink hover:brightness-105 disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-soft"
         >
           {t(build.isPending ? 'code.uploading' : 'code.upload')}
@@ -168,6 +270,11 @@ export function CodePanel({ boardId }: { boardId: string }) {
                   <ul className="mt-1 list-disc pl-5">
                     {result.diagnostics.map((d, i) => (
                       <li key={i}>
+                        {d.file && (
+                          <span dir="ltr" className="font-mono">
+                            {d.file}:{' '}
+                          </span>
+                        )}
                         {t('code.line', { line: number(d.line) })}
                         {/* Compiler messages are English; mark them so they render and read correctly. */}
                         <span dir="ltr" lang="en" className="font-mono">

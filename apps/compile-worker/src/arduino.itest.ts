@@ -62,6 +62,36 @@ function dutyCycle(board: UnoBoard, pin: number, milliseconds: number): number {
 }
 
 describe('Arduino sketches on the emulated UNO', () => {
+  it('a sketch in several files: a header, a C file and a second tab', async () => {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/compile',
+      payload: {
+        board: 'uno',
+        language: 'arduino',
+        source:
+          '#include "pins.h"\nvoid setup() { pinMode(LED, OUTPUT); }\nvoid loop() { blinkOnce(half(1000)); }\n',
+        files: [
+          {
+            name: 'pins.h',
+            content: '#pragma once\n#define LED 13\nextern "C" int half(int x);\n',
+          },
+          { name: 'half.c', content: 'int half(int x) { return x / 2; }\n' },
+          {
+            name: 'blink.ino',
+            content:
+              'void blinkOnce(int ms) {\n  digitalWrite(LED, HIGH);\n  delay(ms);\n  digitalWrite(LED, LOW);\n  delay(ms);\n}\n',
+          },
+        ],
+      },
+    });
+    const result = response.json();
+    expect(result.ok, JSON.stringify(result.diagnostics)).toBe(true);
+    const board = new UnoBoard(result.hex);
+    // HIGH for half of each second.
+    expect(dutyCycle(board, 13, 3000)).toBeCloseTo(0.5, 1);
+  });
+
   it('Blink: delay() and digitalWrite() keep real time', async () => {
     const board = await boardRunning(await starter('blink.ino'));
     const changes: { drive: string; timeMs: number }[] = [];

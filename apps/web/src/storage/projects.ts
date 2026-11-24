@@ -14,6 +14,30 @@ export interface BoardProgram {
    * emulator of the chip.
    */
   engine?: 'library' | 'emulator';
+  /**
+   * The sketch's other files, as tabs beside the main one: more of the sketch
+   * (.ino), headers (.h) and sources compiled on their own (.c, .cpp).
+   */
+  files?: SketchTab[];
+}
+
+/** One of a sketch's other files. */
+export interface SketchTab {
+  name: string;
+  source: string;
+}
+
+/**
+ * Everything a program is made of, as one text: the main file alone when there
+ * are no other files. `hexSource` holds this, so a change to any tab shows the
+ * program needs uploading again.
+ */
+export function programText(program: { source: string; files?: readonly SketchTab[] }): string {
+  const files = program.files ?? [];
+  if (files.length === 0) return program.source;
+  return [program.source, ...files.map((file) => `\u0000${file.name}\u0000${file.source}`)].join(
+    '',
+  );
 }
 
 /**

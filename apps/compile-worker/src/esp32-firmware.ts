@@ -225,6 +225,8 @@ export async function ensureEsp32Core(
 export function esp32FirmwareSteps(
   toolchain: Esp32FirmwareToolchain,
   core: Esp32Core,
+  /** The sketch's own .c and .cpp files, compiled beside it. */
+  extra: readonly string[] = [],
 ): { tool: string; args: string[] }[] {
   const { sdk } = toolchain;
   return [
@@ -241,6 +243,19 @@ export function esp32FirmwareSteps(
         'sketch.o',
       ],
     },
+    ...extra.map((file) => ({
+      tool: file.endsWith('.c') ? toolchain.gcc : toolchain.gxx,
+      args: [
+        '-c',
+        flagFile(toolchain, file.endsWith('.c') ? 'c_flags' : 'cpp_flags'),
+        '-Wall',
+        '-fno-diagnostics-show-caret',
+        ...commonFlags(toolchain, '/work'),
+        file,
+        '-o',
+        `${file}.o`,
+      ],
+    })),
     {
       tool: toolchain.gxx,
       args: [
@@ -260,6 +275,7 @@ export function esp32FirmwareSteps(
         flagFile(toolchain, 'ld_scripts'),
         '-Wl,--start-group',
         'sketch.o',
+        ...extra.map((file) => `${file}.o`),
         core.archive,
         flagFile(toolchain, 'ld_libs'),
         '-Wl,--end-group',

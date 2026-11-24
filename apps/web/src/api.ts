@@ -19,7 +19,7 @@ export type CompileResult =
   | {
       ok: false;
       reason: 'compile-error' | 'timeout' | 'program-too-large';
-      diagnostics: { line: number; severity: string; message: string }[];
+      diagnostics: { file?: string; line: number; severity: string; message: string }[];
     };
 
 /**
@@ -31,11 +31,21 @@ export async function compileSketch(
   board: 'uno' | 'esp32' = 'uno',
   /** ESP32 only: `emulator` asks for real firmware for the chip emulator. */
   engine?: 'library' | 'emulator',
+  /** The sketch's other files, its tabs besides the main one. */
+  files: readonly { name: string; source: string }[] = [],
 ): Promise<CompileResult> {
   const response = await fetch(`${API_URL}/v1/compile`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ board, language: 'arduino', source, ...(engine ? { engine } : {}) }),
+    body: JSON.stringify({
+      board,
+      language: 'arduino',
+      source,
+      ...(engine ? { engine } : {}),
+      ...(files.length
+        ? { files: files.map((file) => ({ name: file.name, content: file.source })) }
+        : {}),
+    }),
   });
   if (!response.ok) throw new Error(`compile request failed: ${response.status}`);
   return response.json();

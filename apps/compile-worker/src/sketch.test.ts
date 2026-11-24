@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findFunctions, sketchToCpp } from './sketch';
+import { findFunctions, sketchBuild, sketchFilesProblem, sketchToCpp } from './sketch';
 
 const prototypes = (source: string) => findFunctions(source).map((f) => f.prototype);
 
@@ -97,5 +97,38 @@ void loop() { }
 
   it('leaves a sketch with no functions alone', () => {
     expect(sketchToCpp('int x;\n')).toBe('#include <Arduino.h>\n#line 1 "sketch.ino"\nint x;\n');
+  });
+});
+
+describe('a sketch in several files', () => {
+  it('joins the .ino tabs after the main file, in name order, each marked with its name', () => {
+    const build = sketchBuild('void setup() { blink(); }\nvoid loop() {}\n', [
+      { name: 'zeta.ino', content: 'void blink() {}\n' },
+      { name: 'alpha.ino', content: 'int count = 0;\n' },
+      { name: 'pins.h', content: '#define LED 2\n' },
+      { name: 'helper.cpp', content: 'int twice(int x) { return 2 * x; }\n' },
+    ]);
+    expect(build.cpp.indexOf('#line 1 "alpha.ino"')).toBeLessThan(
+      build.cpp.indexOf('#line 1 "zeta.ino"'),
+    );
+    // A function in a later tab still gets its prototype before the main file's code.
+    expect(build.cpp.indexOf('void blink();')).toBeLessThan(build.cpp.indexOf('void setup() {'));
+    expect(build.written.map((f) => f.name)).toEqual(['pins.h', 'helper.cpp']);
+    expect(build.compiled).toEqual(['helper.cpp']);
+  });
+
+  it("refuses names a tab cannot have, the main file's, and two of the same", () => {
+    expect(sketchFilesProblem([{ name: 'pins.h', content: '' }])).toBeNull();
+    for (const name of ['../x.h', 'a b.h', 'x.py', 'sketch.ino', 'firmware.cpp', '.h']) {
+      expect(sketchFilesProblem([{ name, content: '' }]), name).not.toBeNull();
+    }
+    expect(
+      sketchFilesProblem([
+        { name: 'Pins.h', content: '' },
+        { name: 'pins.h', content: '' },
+      ]),
+    ).toMatch(/two files/);
+    const many = Array.from({ length: 17 }, (_, i) => ({ name: `t${i}.h`, content: '' }));
+    expect(sketchFilesProblem(many)).toMatch(/at most 16/);
   });
 });

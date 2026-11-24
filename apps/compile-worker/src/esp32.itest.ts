@@ -30,11 +30,15 @@ afterAll(async () => {
   await rm(cacheDir, { recursive: true, force: true });
 });
 
-async function compile(source: string, language = 'arduino') {
+async function compile(
+  source: string,
+  language = 'arduino',
+  files?: { name: string; content: string }[],
+) {
   return server.inject({
     method: 'POST',
     url: '/compile',
-    payload: { board: 'esp32', language, source },
+    payload: { board: 'esp32', language, source, ...(files ? { files } : {}) },
   });
 }
 /** Compiles a sketch and runs it on the board for a while; returns what it printed. */
@@ -96,6 +100,46 @@ int twice(int n) { return n * 2; }
     expect(result.reason).toBe('compile-error');
     expect(result.diagnostics[0].line).toBe(2);
     expect(result.diagnostics[0].message).toMatch(/expected ';'/);
+  }, 60_000);
+
+  it('builds a sketch in several files: tabs, a header and a C++ file', async () => {
+    const files = [
+      { name: 'pins.h', content: '#pragma once\nconst int LED_PIN = 2;\nint twice(int x);\n' },
+      { name: 'maths.cpp', content: '#include "pins.h"\nint twice(int x) { return 2 * x; }\n' },
+      {
+        name: 'report.ino',
+        content:
+          'void report(int n) {\n  Serial.print("twice: ");\n  Serial.println(twice(n));\n}\n',
+      },
+    ];
+    const result = (
+      await compile(
+        '#include "pins.h"\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(LED_PIN, OUTPUT);\n  report(21);\n}\nvoid loop() {}\n',
+        'arduino',
+        files,
+      )
+    ).json();
+    expect(result.ok, JSON.stringify(result.diagnostics)).toBe(true);
+    const board = new Esp32SketchBoard(Buffer.from(result.hex, 'base64'));
+    let serial = '';
+    board.onSerial((text) => (serial += text));
+    board.runUntil(50);
+    expect(serial).toContain('twice: 42');
+
+    // A mistake in a tab is reported in that tab, at its own line.
+    const broken = (
+      await compile('void setup() { report(1); }\nvoid loop() {}\n', 'arduino', [
+        { name: 'report.ino', content: 'void report(int n) {\n  missing(n);\n}\n' },
+      ])
+    ).json();
+    expect(broken.ok).toBe(false);
+    expect(broken.diagnostics[0]).toMatchObject({ file: 'report.ino', line: 2 });
+
+    // A name a tab may not have is refused before anything is built.
+    const refused = await compile('void setup() {}\nvoid loop() {}\n', 'arduino', [
+      { name: '../escape.h', content: '' },
+    ]);
+    expect(refused.statusCode).toBe(400);
   }, 60_000);
 
   it('says so when a sketch uses something the board library does not have yet', async () => {

@@ -7,6 +7,7 @@ import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import Fastify from 'fastify';
 import { Type } from 'typebox';
 import { Compiler, QueueFullError } from './compiler';
+import { MAX_SKETCH_FILES, sketchFilesProblem } from './sketch';
 import type { WorkerConfig } from './config';
 import { findEsp32FirmwareToolchain } from './esp32-firmware';
 import { assertSandboxWorks } from './sandbox';
@@ -86,6 +87,19 @@ export async function buildServer(config: WorkerConfig) {
             language: Type.Union([Type.Literal('c'), Type.Literal('arduino')]),
             engine: Type.Optional(Type.Union([Type.Literal('library'), Type.Literal('emulator')])),
             source: Type.String({ minLength: 1, maxLength: config.maxSourceBytes }),
+            /** The sketch's other files: its tabs besides the main one. */
+            files: Type.Optional(
+              Type.Array(
+                Type.Object(
+                  {
+                    name: Type.String({ minLength: 3, maxLength: 44 }),
+                    content: Type.String({ maxLength: config.maxSourceBytes }),
+                  },
+                  { additionalProperties: false },
+                ),
+                { maxItems: MAX_SKETCH_FILES },
+              ),
+            ),
           },
           { additionalProperties: false },
         ),
@@ -97,6 +111,22 @@ export async function buildServer(config: WorkerConfig) {
       }
       if (request.body.engine && request.body.board !== 'esp32') {
         return reply.code(400).send({ error: 'only the ESP32 board has a choice of engine' });
+      }
+      const files = request.body.files ?? [];
+      if (files.length > 0) {
+        if (request.body.language !== 'arduino') {
+          return reply.code(400).send({ error: 'only Arduino sketches have other files' });
+        }
+        const problem = sketchFilesProblem(files);
+        if (problem) return reply.code(400).send({ error: problem });
+        // All the files together are held to the size one source may have.
+        const total = files.reduce(
+          (sum, file) => sum + file.content.length,
+          request.body.source.length,
+        );
+        if (total > config.maxSourceBytes) {
+          return reply.code(400).send({ error: 'the sketch and its files are too large' });
+        }
       }
       try {
         return await compiler.compile(request.body);
