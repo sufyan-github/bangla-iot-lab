@@ -1380,3 +1380,37 @@ HIGH and LOW times.
 Tests: the flip-flop divides a button's presses by two and stays cleared while
 CLR is LOW; the clock module ticks at 1 Hz and the flip-flop halves it. A
 browser test picks the chip and sets the clock's frequency.
+
+## D-080 — Wi-Fi and the board's own web page
+
+The owner chose (24 November 2026) the board's own web page, with no real
+internet (E3). The lab's ESP32 library gains `WiFi.h` and `WebServer.h`,
+written for the lab from the Arduino ESP32 core's documented API (the core's
+own code is LGPL and is not used):
+
+- `WiFi.begin()` joins any network after 1.5 s (ESTIMATE) and gives the board
+  192.168.1.50 on the lab's made-up network; `WiFi.softAP()` starts the
+  board's own access point at 192.168.4.1. `status()`, `localIP()`,
+  `softAPIP()`, `RSSI()` (−55 dBm, ESTIMATE) and `disconnect()` are there.
+- `WebServer`: `on()` with or without a method, `onNotFound()`, `begin()`,
+  `handleClient()`, `send()`, `sendHeader()`, and the request's `uri()`,
+  `method()`, `arg()`, `hasArg()`, `args()` and `argName()`, with the query
+  decoded as a browser encodes it.
+
+**The browser panel.** A "Web page" tab beside the others, when there is an
+ESP32. A request goes to the board's program, which answers it in
+`handleClient()`; up to four may wait. The panel says why a board cannot be
+reached (not on Wi-Fi yet, no server started, requests piling up because
+`handleClient()` is not called) and when the program sent no answer. A redirect
+to the board's own path is followed once.
+
+**Safety.** The page is shown in a sandboxed frame with no scripts, and a
+content policy that lets nothing in it reach any address: a student's page
+could name any site, and a lab for children must not send their requests
+anywhere. Links and GET forms on the page are read without running anything
+and offered as buttons beneath it.
+
+**Not modelled.** Real networks, scanning, other boards' Wi-Fi, HTTPS, the
+internet, POST bodies, and the time a request takes on air.
+
+Ready-made program `webserver`: an LED switched from the board's page.

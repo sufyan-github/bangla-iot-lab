@@ -30,6 +30,7 @@ const LIBRARY_SOURCES = [
   'src/spi.cpp',
   'src/neopixel.cpp',
   'src/sleep.cpp',
+  'src/wifi.cpp',
   'wasm/entry.cpp',
 ];
 

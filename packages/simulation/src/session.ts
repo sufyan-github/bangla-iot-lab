@@ -1,4 +1,9 @@
-import { UnoBoard, type PinDrive, type ProgrammableBoard } from '@banglalab/board-emulators';
+import {
+  UnoBoard,
+  type HttpResponse,
+  type PinDrive,
+  type ProgrammableBoard,
+} from '@banglalab/board-emulators';
 import { solveTimeStep, type Capacitor } from '@banglalab/circuit-engine';
 import {
   boardSocketOfPin,
@@ -60,6 +65,8 @@ export interface BoardStatus {
   serial: string;
   /** All of the board's saved settings, present when the program changed them since the last frame. */
   settings?: string;
+  /** Answers the board's web server gave since the last frame, when there were any. */
+  http?: HttpResponse[];
 }
 
 /**
@@ -100,6 +107,8 @@ interface RunningBoard {
   drives: PinDrive[];
   highTime: number[];
   serial: string;
+  /** Web server answers not yet reported. */
+  http: HttpResponse[];
   /** Level last presented to each input, for hysteresis and to avoid redundant updates. */
   inputLevel: (boolean | undefined)[];
   /** Pins the board was last told the circuit does not decide (see `releaseInput`). */
@@ -341,6 +350,7 @@ export class SimulationSession {
       drives: Array.from({ length: model.pinCount }, (_, pin) => emulator.pinDrive(pin)),
       highTime: new Array<number>(model.pinCount).fill(0),
       serial: '',
+      http: [],
       inputLevel: [],
       inputReleased: [],
       events: [],
@@ -365,6 +375,7 @@ export class SimulationSession {
       }
     });
     emulator.onSerial((text) => (board.serial += text));
+    emulator.onHttpResponse?.((response) => board.http.push(response));
     emulator.onSettingsSaved?.((settings) => {
       this.settings.set(boardId, settings);
       this.settingsChanged.add(boardId);
@@ -809,6 +820,16 @@ export class SimulationSession {
   }
 
   /**
+   * A request from the lab's browser panel to a board's web server. Returns its
+   * number, to find the answer by in a later frame, or why it was not sent.
+   */
+  request(boardId: string, path: string): number | 'no-board' | 'no-wifi' | 'no-server' | 'busy' {
+    const board = this.boards.get(boardId);
+    if (!board?.emulator.request) return 'no-board';
+    return board.emulator.request(path);
+  }
+
+  /**
    * Text typed on the phone panel of a Bluetooth or GSM module: it reaches the
    * module now, and the board as fast as the serial line carries it.
    */
@@ -847,9 +868,11 @@ export class SimulationSession {
         ),
         serial: board.serial,
         ...(this.settingsChanged.has(id) ? { settings: this.settings.get(id) ?? '' } : {}),
+        ...(board.http.length > 0 ? { http: board.http } : {}),
       };
       board.highTime.fill(0);
       board.serial = '';
+      board.http = [];
       this.settingsChanged.delete(id);
     }
     const frame: SimulationFrame = { timeMs: this.time, result, boards };

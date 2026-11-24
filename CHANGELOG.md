@@ -8,6 +8,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Wi-Fi and the board's own web page**: `WiFi.h` and `WebServer.h` in the
+  ESP32 board library, on a made-up network with no real internet, and a
+  "Web page" panel that asks the board for its pages and shows them safely
+  (no scripts, nothing reaches outside). Ready-made program `webserver`.
 - **74HC74 flip-flop and a 555 clock module** (circuit format version 23): the
   logic chip list gains the 74HC74, two D flip-flops that take D on the clock's
   rising edge and keep it, with active-LOW clear and preset. The new clock

@@ -19,7 +19,13 @@ import {
   type EditError,
   type EditResult,
 } from '@banglalab/shared';
-import type { BoardStatus, Probe, SimulationFrame, SimulationResult } from '@banglalab/simulation';
+import type {
+  BoardStatus,
+  HttpResponse,
+  Probe,
+  SimulationFrame,
+  SimulationResult,
+} from '@banglalab/simulation';
 import { create } from 'zustand';
 import type { BoardProgram, ProjectContent, SketchTab } from '../storage/projects';
 import { freeBreadboardPlace, placeBesideOtherBoard, settleOffBoardPart } from './geometry';
@@ -69,6 +75,8 @@ interface LabState {
   result: SimulationResult | null;
   /** Latest status of each board with a running program. */
   boards: Record<string, BoardStatus>;
+  /** The latest answer each board's web server gave, by board id. */
+  pages: Record<string, HttpResponse>;
   /** How fast the simulation is running against real time; 1 when it keeps up. */
   speed: number;
   /** Counts uploads per board, so a running circuit knows when to restart a program. */
@@ -137,6 +145,7 @@ const STOPPED = {
   running: false,
   result: null,
   boards: {},
+  pages: {} as Record<string, HttpResponse>,
   serial: {},
   pressed: [] as string[],
   speed: 1,
@@ -421,10 +430,16 @@ export const useLab = create<LabState>((set, get) => {
       for (const [boardId, board] of Object.entries(frame.boards)) {
         if (board.settings !== undefined) settings = { ...settings, [boardId]: board.settings };
       }
+      let pages = get().pages;
+      for (const [boardId, board] of Object.entries(frame.boards)) {
+        const last = board.http?.at(-1);
+        if (last) pages = { ...pages, [boardId]: last };
+      }
       signals.append(frame.trace, frame.timeMs);
       set({
         result: frame.result,
         boards: frame.boards,
+        pages,
         serial,
         settings,
         speed: frame.speed ?? 1,

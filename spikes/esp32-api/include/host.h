@@ -114,6 +114,28 @@ void host_deep_sleep(int64_t wake_after_us, int ext0_pin, int ext0_level, const 
 /** Why the board last started, as ESP-IDF numbers it: 0 power-on, 2 a pin (ext0), 4 the timer. */
 int host_wakeup_cause(void);
 
+/**
+ * Wi-Fi, as the lab models it: there is no real network. `mode` 1 joins a
+ * network as a station, 2 starts the board's own access point; 0 turns Wi-Fi
+ * off. The status follows the Arduino numbering (3 connected, 6 disconnected,
+ * 255 off), and the address is IPv4, first byte lowest.
+ */
+void host_wifi_begin(int mode, const char* ssid, size_t ssid_length);
+int host_wifi_status(void);
+uint32_t host_wifi_address(void);
+
+/**
+ * The board's web server. `host_http_listen` starts it on a port. The lab's
+ * browser panel sends requests; `host_http_next` copies the oldest one, as
+ * "METHOD path?query", into `buffer` and takes it off the queue when it fits,
+ * and returns its whole length (0 when none is waiting). `host_http_respond`
+ * answers the request taken last.
+ */
+void host_http_listen(int port);
+size_t host_http_next(char* buffer, size_t capacity);
+void host_http_respond(int status, const char* type, size_t type_length, const char* body,
+                       size_t body_length);
+
 uint64_t host_micros(void);
 /** Lets time pass. This is where the world moves on and scripted inputs arrive. */
 void host_delay_micros(uint64_t microseconds);

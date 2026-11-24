@@ -320,6 +320,7 @@ export const bn = {
   'code.starter.esp32.lora-send': 'LoRa: বার্তা পাঠানো (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.lora-receive': 'LoRa: বার্তা শোনা (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.deepsleep': 'ডিপ স্লিপ: ঘুমিয়ে আবার জাগা (LED: D2)',
+  'code.starter.esp32.webserver': 'ওয়েব পেজ: ব্রাউজার থেকে LED (LED: D2)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -625,6 +626,26 @@ export const bn = {
 
   'code.tabCircuit': 'সার্কিট',
   'code.tabCode': 'কোড',
+  'web.tab': 'ওয়েব পেজ',
+  'web.about':
+    'বোর্ডের নিজের ওয়েব সার্ভার থেকে পেজ চাও। আসল ইন্টারনেট নেই: অনুরোধ যায় বোর্ডের প্রোগ্রামের কাছে, আর পেজের কোনো স্ক্রিপ্ট চলে না।',
+  'web.idle':
+    'সার্কিট চালু করো, আর বোর্ডে এমন প্রোগ্রাম তোলো যা Wi-Fi-তে যোগ দিয়ে ওয়েব সার্ভার চালু করে (যেমন তৈরি প্রোগ্রাম "ওয়েব পেজ")।',
+  'web.address': 'পেজের ঠিকানা',
+  'web.go': 'খোলো',
+  'web.send': 'পাঠাও',
+  'web.waiting': 'বোর্ডের উত্তরের অপেক্ষা…',
+  'web.page': 'বোর্ডের পেজ',
+  'web.status': '{path}: উত্তর {status}',
+  'web.noAnswer': '{path}: বোর্ডের প্রোগ্রাম কোনো উত্তর পাঠায়নি (server.send() চলেনি)।',
+  'web.actions': 'পেজের লিংক আর ফর্ম:',
+  'web.error.no-wifi':
+    'বোর্ড এখনো Wi-Fi-তে নেই। প্রোগ্রাম WiFi.begin() বা WiFi.softAP() চালালে আর যোগ দেওয়া শেষ হলে আবার চেষ্টা করো।',
+  'web.error.no-server':
+    'বোর্ড Wi-Fi-তে আছে, কিন্তু কোনো ওয়েব সার্ভার চালু নেই: প্রোগ্রামে server.begin() লাগবে।',
+  'web.error.busy':
+    'বোর্ডের কাছে আগের কয়েকটা অনুরোধ এখনো জমে আছে: প্রোগ্রাম কি loop()-এ server.handleClient() ডাকছে?',
+  'web.error.no-board': 'এই বোর্ডে কোনো প্রোগ্রাম চলছে না।',
   'code.tabSignals': 'সিগন্যাল',
   'scope.title': 'অসিলোস্কোপ',
   'scope.about': 'সময়ের সাথে ভোল্টেজ কীভাবে বদলায় তা দেখায়। ডান দিকে সবচেয়ে নতুন।',
@@ -1064,6 +1085,7 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.lora-send': 'LoRa: sending (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.lora-receive': 'LoRa: listening (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.deepsleep': 'Deep sleep: sleeping and waking again (LED: D2)',
+  'code.starter.esp32.webserver': 'Web page: an LED from the browser (LED: D2)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -1369,6 +1391,26 @@ export const en: Record<MessageKey, string> = {
 
   'code.tabCircuit': 'Circuit',
   'code.tabCode': 'Code',
+  'web.tab': 'Web page',
+  'web.about':
+    'Ask the board’s own web server for a page. There is no real internet: the request goes to the board’s program, and no script on the page runs.',
+  'web.idle':
+    'Run the circuit, with a program on the board that joins Wi-Fi and starts a web server (such as the ready-made “Web page”).',
+  'web.address': 'Page address',
+  'web.go': 'Open',
+  'web.send': 'Send',
+  'web.waiting': 'Waiting for the board’s answer…',
+  'web.page': 'The board’s page',
+  'web.status': '{path}: answer {status}',
+  'web.noAnswer': '{path}: the board’s program sent no answer (server.send() did not run).',
+  'web.actions': 'Links and forms on the page:',
+  'web.error.no-wifi':
+    'The board is not on Wi-Fi yet. Try again once the program has called WiFi.begin() or WiFi.softAP() and finished joining.',
+  'web.error.no-server':
+    'The board is on Wi-Fi, but no web server is running: the program needs server.begin().',
+  'web.error.busy':
+    'Several requests are still waiting at the board: does the program call server.handleClient() in loop()?',
+  'web.error.no-board': 'No program is running on this board.',
   'code.tabSignals': 'Signals',
   'scope.title': 'Oscilloscope',
   'scope.about': 'Shows how a voltage changes over time. Newest on the right.',
