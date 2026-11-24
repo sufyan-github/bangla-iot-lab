@@ -11,6 +11,7 @@ import {
   progressEvents,
   sessions,
   users,
+  schools,
 } from '../db/schema';
 import { PLATFORM_POLICY_VERSION, Pseudonym } from './classes';
 
@@ -55,17 +56,22 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
       },
       async (request, reply) => {
         const pseudonym = request.body.pseudonym.trim();
-        const [found] = await database.db
-          .select()
+        // Only a class of a working school can be joined.
+        const [row] = await database.db
+          .select({ found: classes })
           .from(classes)
+          .innerJoin(schools, eq(schools.id, classes.schoolId))
           .where(
             and(
               eq(classes.joinCodeHash, hashCode(request.body.code)),
               gt(classes.joinCodeExpiresAt, new Date()),
               isNull(classes.archivedAt),
+              eq(schools.status, 'active'),
+              isNull(schools.archivedAt),
             ),
           )
           .limit(1);
+        const found = row?.found;
         if (!found) return reply.code(404).send({ error: 'no-such-code' });
         const who = await signedIn(database, request);
         const existing = who?.kind === 'learner' ? who.userId : null;
@@ -153,7 +159,7 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
       },
       async (request, reply) => {
         const [learner] = await database.db
-          .select({ id: users.id })
+          .select({ id: users.id, suspendedAt: users.suspendedAt })
           .from(users)
           .where(
             and(
@@ -164,6 +170,8 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
           )
           .limit(1);
         if (!learner) return reply.code(401).send({ error: 'wrong-key' });
+        if (learner.suspendedAt !== null)
+          return reply.code(403).send({ error: 'account-suspended' });
         await audit(database, { actorId: learner.id, action: 'auth.key-sign-in' });
         await startSession(database, reply, learner.id, secure, request.body.keep ?? false);
         return { ok: true };

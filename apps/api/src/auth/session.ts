@@ -72,6 +72,8 @@ export interface SignedIn {
   kind: 'adult' | 'learner';
   displayName: string;
   locale: string;
+  /** "platform_admin" for the lab's owner and anyone they trust with the panel. */
+  platformRole: string | null;
 }
 
 /** Who the request is from, or null when it has no live session. */
@@ -88,6 +90,7 @@ export async function signedIn(
       kind: users.kind,
       displayName: users.displayName,
       locale: users.locale,
+      platformRole: users.platformRole,
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
@@ -97,6 +100,8 @@ export async function signedIn(
         isNull(sessions.revokedAt),
         gt(sessions.expiresAt, new Date()),
         isNull(users.deactivatedAt),
+        // A suspended account's sessions stop working at once, and work again if it is restarted.
+        isNull(users.suspendedAt),
       ),
     )
     .limit(1);

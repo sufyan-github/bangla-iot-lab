@@ -1,7 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Database } from '../db/client';
-import { classes, consentRecords, schoolMemberships } from '../db/schema';
+import { classes, consentRecords, schoolMemberships, schools } from '../db/schema';
 import { signedIn, type SignedIn } from './session';
 
 /** The signed-in user, or a 401 sent and null. */
@@ -25,19 +25,38 @@ async function holds(
   schoolId: string,
   role: 'teacher' | 'school_admin',
 ) {
+  // Roles count only in a working school: a suspended or closed one gives no powers.
   const rows = await database.db
     .select({ id: schoolMemberships.id })
     .from(schoolMemberships)
+    .innerJoin(schools, eq(schools.id, schoolMemberships.schoolId))
     .where(
       and(
         eq(schoolMemberships.userId, userId),
         eq(schoolMemberships.schoolId, schoolId),
         eq(schoolMemberships.role, role),
         isNull(schoolMemberships.endedAt),
+        eq(schools.status, 'active'),
+        isNull(schools.archivedAt),
       ),
     )
     .limit(1);
   return rows.length > 0;
+}
+
+/** The signed-in lab owner (a platform admin), or a 401 or 403 sent and null. */
+export async function requireOwner(
+  database: Database,
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<SignedIn | null> {
+  const who = await requireUser(database, request, reply);
+  if (!who) return null;
+  if (who.platformRole !== 'platform_admin') {
+    await reply.code(403).send({ error: 'owners-only' });
+    return null;
+  }
+  return who;
 }
 
 /**

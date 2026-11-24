@@ -50,6 +50,13 @@
       "when": 1795536165107,
       "tag": "0006_individual_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795537760528,
+      "tag": "0007_owner_panel",
+      "breakpoints": true
     }
   ]
 }

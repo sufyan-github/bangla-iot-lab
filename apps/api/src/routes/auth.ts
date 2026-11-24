@@ -135,6 +135,7 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
             kind: users.kind,
             passwordHash: users.passwordHash,
             emailVerifiedAt: users.emailVerifiedAt,
+            suspendedAt: users.suspendedAt,
           })
           .from(users)
           .where(
@@ -150,6 +151,7 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
         const matches = await verifyPassword(password, user?.passwordHash ?? DUMMY_HASH);
         if (!user || !matches) return reply.code(401).send({ error: 'wrong-email-or-password' });
         // Only after the right password, so these say nothing to someone guessing.
+        if (user.suspendedAt !== null) return reply.code(403).send({ error: 'account-suspended' });
         if (
           user.kind === 'adult' &&
           user.emailVerifiedAt === null &&
@@ -209,6 +211,7 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
           locale: who.locale,
           // A learner who signed up on their own, rather than only through a class.
           ownAccount,
+          platformRole: who.platformRole,
           /**
            * - staff: an adult in a school (teacher or admin);
            * - individual: an adult in no school, or a learner with their own account;

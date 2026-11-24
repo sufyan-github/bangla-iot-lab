@@ -23,7 +23,7 @@ type Writer = Pick<Database['db'], 'insert' | 'update'>;
 
 export async function issueEmailToken(
   db: Writer,
-  entry: { userId: string; purpose: EmailTokenPurpose; email: string },
+  entry: { userId: string; purpose: EmailTokenPurpose; email: string; lifetimeMs?: number },
 ): Promise<string> {
   const now = new Date();
   await db
@@ -42,7 +42,7 @@ export async function issueEmailToken(
     purpose: entry.purpose,
     email: entry.email,
     tokenHash: hash(token),
-    expiresAt: new Date(now.getTime() + TOKEN_LIFETIME_MS[entry.purpose]),
+    expiresAt: new Date(now.getTime() + (entry.lifetimeMs ?? TOKEN_LIFETIME_MS[entry.purpose])),
   });
   return token;
 }

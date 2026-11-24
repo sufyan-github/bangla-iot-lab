@@ -43,12 +43,20 @@ export const schoolRole = pgEnum('school_role', ['school_admin', 'teacher', 'stu
 export const consentScope = pgEnum('consent_scope', ['platform_use', 'ai_tutor', 'gallery']);
 export const consentGrantor = pgEnum('consent_grantor', ['guardian', 'school']);
 
+/**
+ * pending: applied, waiting for the lab's owner; active: working; suspended:
+ * stopped by the owner for now (its classes cannot be joined and its staff
+ * cannot act for it). A closed school has `archived_at` set instead.
+ */
+export const schoolStatus = pgEnum('school_status', ['pending', 'active', 'suspended']);
+
 export const schools = pgTable('schools', {
   id: id(),
   name: text('name').notNull(),
   /** Educational Institute Identification Number, when the school has one. */
   eiin: text('eiin').unique(),
   district: text('district'),
+  status: schoolStatus('status').notNull().default('active'),
   createdAt: createdAt(),
   archivedAt: at('archived_at'),
 });
@@ -77,7 +85,10 @@ export const users = pgTable(
     platformRole: platformRole('platform_role'),
     locale: text('locale').notNull().default('bn'),
     createdAt: createdAt(),
+    /** Closed for good (by its school, or by the lab's owner); its data waits for the retention job. */
     deactivatedAt: at('deactivated_at'),
+    /** Stopped for now by the lab's owner, and can be started again. */
+    suspendedAt: at('suspended_at'),
   },
   (t) => [
     uniqueIndex('users_email_unique').on(sql`lower(${t.email})`),
