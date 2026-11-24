@@ -6,6 +6,7 @@ import {
   SHEET_WIDTH,
   addSheetElement,
   blockPinNames,
+  connectBus,
   connectSheet,
   copyFromSheet,
   makeBlock,
@@ -14,6 +15,8 @@ import {
   removeBlock,
   removeFromSheet,
   removeManyFromSheet,
+  pinGroupOf,
+  sheetPinGroups,
   setSheetElement,
   sheetName,
   sheetPorts,
@@ -62,6 +65,14 @@ function portPoint(element: SheetElement, port: string): { x: number; y: number 
   const { w, h } = sheetSize(element);
   const y = element.y + (h * (index + 1)) / (side.length + 1);
   return { x: inputs.includes(port) ? element.x : element.x + w, y };
+}
+
+/** A wire's path from an output at a to an input at b, in grid steps, drawn in right angles. */
+function wirePath(a: { x: number; y: number }, b: { x: number; y: number }): string {
+  const middle = b.x > a.x ? (a.x + b.x) / 2 : a.x + 1;
+  return b.x > a.x
+    ? `M${a.x * CELL} ${a.y * CELL}H${middle * CELL}V${b.y * CELL}H${b.x * CELL}`
+    : `M${a.x * CELL} ${a.y * CELL}H${(a.x + 1) * CELL}V${(Math.max(a.y, b.y) + 2) * CELL}H${(b.x - 1) * CELL}V${b.y * CELL}H${b.x * CELL}`;
 }
 
 /**
@@ -731,7 +742,23 @@ export function SheetView() {
     window.addEventListener('keydown', listener);
     return () => window.removeEventListener('keydown', listener);
   }, []);
+  /** A tap on a pin group's bar: the first chooses it, the second joins the two by a bus. */
+  const onGroup = (group: string) => {
+    if (pending && pending !== group) {
+      const from = pending;
+      apply((s) =>
+        pinGroupOf(s, from) ? connectBus(s, from, group) : { ok: false, error: 'not-bus' },
+      );
+      setPending(null);
+    } else setPending(group === pending ? null : group);
+  };
   const onPort = (port: string) => {
+    if (pending && pinGroupOf(sheet, pending)) {
+      // A single pin cannot join a group.
+      setProblem('not-bus');
+      setPending(null);
+      return;
+    }
     if (pending && pending !== port) {
       apply((s) => connectSheet(s, pending, port));
       setPending(null);
@@ -818,11 +845,13 @@ export function SheetView() {
         ))}
       </div>
       <p className="border-b border-line bg-paper px-4 py-1.5 text-sm text-ink-soft">
-        {pending
-          ? t('sheet.hint.wire')
-          : tool === 'select'
-            ? t('sheet.hint.select')
-            : t('sheet.hint.place')}
+        {pending && pinGroupOf(sheet, pending)
+          ? t('sheet.hint.bus')
+          : pending
+            ? t('sheet.hint.wire')
+            : tool === 'select'
+              ? t('sheet.hint.select')
+              : t('sheet.hint.place')}
       </p>
       <div className="min-h-0 flex-1 overflow-auto bg-paper p-3">
         <svg
@@ -880,39 +909,98 @@ export function SheetView() {
             fill="url(#sheet-grid)"
             pointerEvents="none"
           />
-          {sheet.wires.map((wire) => {
-            const [fromId, fromPort] = wire.from.split('.');
-            const [toId, toPort] = wire.to.split('.');
-            const from = sheet.elements.find((e) => e.id === fromId);
-            const to = sheet.elements.find((e) => e.id === toId);
+          {[...new Set(sheet.wires.flatMap((w) => (w.bus ? [w.bus] : [])))].map((bus) => {
+            const wires = sheet.wires.filter((w) => w.bus === bus);
+            const owner = (port: string) => sheet.elements.find((e) => e.id === port.split('.')[0]);
+            const from = owner(wires[0]!.from);
+            const to = owner(wires[0]!.to);
             if (!from || !to) return null;
-            const a = portPoint(place(from), fromPort!);
-            const b = portPoint(place(to), toPort!);
-            const middle = b.x > a.x ? (a.x + b.x) / 2 : a.x + 1;
-            const d =
-              b.x > a.x
-                ? `M${a.x * CELL} ${a.y * CELL}H${middle * CELL}V${b.y * CELL}H${b.x * CELL}`
-                : `M${a.x * CELL} ${a.y * CELL}H${(a.x + 1) * CELL}V${(Math.max(a.y, b.y) + 2) * CELL}H${(b.x - 1) * CELL}V${b.y * CELL}H${b.x * CELL}`;
-            const high = state.levels[wire.from] === true;
+            const middle = (element: SheetElement, ports: string[]) => {
+              const points = ports.map((port) => portPoint(place(element), port.split('.')[1]!));
+              return {
+                x: points[0]!.x,
+                y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
+              };
+            };
+            const a = middle(
+              from,
+              wires.map((w) => w.from),
+            );
+            const b = middle(
+              to,
+              wires.map((w) => w.to),
+            );
+            const d = wirePath(a, b);
+            // The value it carries, the first wire the smallest bit.
+            const value = wires.reduce(
+              (sum, w, bit) => sum + (state.levels[w.from] ? 1 << bit : 0),
+              0,
+            );
+            const chosenBus = selected === bus;
+            const label = { x: ((a.x + b.x) / 2) * CELL, y: Math.min(a.y, b.y) * CELL };
             return (
-              <g key={wire.id} data-wire={wire.id} data-high={high ? 'true' : 'false'}>
+              <g key={bus} data-bus={bus} data-value={value} data-width={wires.length}>
                 <path
                   d={d}
                   fill="none"
                   stroke="transparent"
-                  strokeWidth={12}
-                  onPointerDown={() => setSelection([wire.id])}
+                  strokeWidth={16}
+                  onPointerDown={() => setSelection([bus])}
                 />
                 <path
                   d={d}
                   fill="none"
-                  stroke={selected === wire.id ? 'var(--color-ink)' : high ? HIGH : LOW}
-                  strokeWidth={selected === wire.id ? 3.5 : 2.5}
+                  stroke={
+                    chosenBus ? 'var(--color-ink)' : value > 0 ? HIGH : 'var(--color-ink-soft)'
+                  }
+                  strokeWidth={chosenBus ? 7 : 5.5}
+                  strokeLinejoin="round"
                   pointerEvents="none"
                 />
+                <g transform={`translate(${label.x} ${label.y - 9})`} pointerEvents="none">
+                  <rect x={-15} y={-8} width={30} height={14} rx={7} fill="var(--color-ink)" />
+                  <text
+                    y={3}
+                    textAnchor="middle"
+                    fontSize={9}
+                    fontFamily="monospace"
+                    fill="var(--color-paper)"
+                  >
+                    {wires.length}:{value.toString(16).toUpperCase()}
+                  </text>
+                </g>
               </g>
             );
           })}
+          {sheet.wires
+            .filter((wire) => !wire.bus)
+            .map((wire) => {
+              const [fromId, fromPort] = wire.from.split('.');
+              const [toId, toPort] = wire.to.split('.');
+              const from = sheet.elements.find((e) => e.id === fromId);
+              const to = sheet.elements.find((e) => e.id === toId);
+              if (!from || !to) return null;
+              const d = wirePath(portPoint(place(from), fromPort!), portPoint(place(to), toPort!));
+              const high = state.levels[wire.from] === true;
+              return (
+                <g key={wire.id} data-wire={wire.id} data-high={high ? 'true' : 'false'}>
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke="transparent"
+                    strokeWidth={12}
+                    onPointerDown={() => setSelection([wire.id])}
+                  />
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke={selected === wire.id ? 'var(--color-ink)' : high ? HIGH : LOW}
+                    strokeWidth={selected === wire.id ? 3.5 : 2.5}
+                    pointerEvents="none"
+                  />
+                </g>
+              );
+            })}
           {sheet.elements.map((element) => {
             const at = place(element);
             const ports = sheetPorts(element);
@@ -989,6 +1077,32 @@ export function SheetView() {
                       : ''}
                   </text>
                 </g>
+                {sheetPinGroups(element).map((group) => {
+                  const points = group.ports.map((port) =>
+                    portPoint({ ...element, x: 0, y: 0 }, port.split('.')[1]!),
+                  );
+                  const top = points[0]!.y * CELL - 7;
+                  const bottom = points.at(-1)!.y * CELL + 7;
+                  const x = group.side === 'input' ? -15 : sheetSize(element).w * CELL + 9;
+                  return (
+                    <rect
+                      key={group.name}
+                      data-group={group.name}
+                      x={x}
+                      y={top}
+                      width={6}
+                      height={bottom - top}
+                      rx={3}
+                      fill={pending === group.name ? HIGH : 'var(--color-ink-faint)'}
+                      opacity={pending === group.name ? 1 : 0.55}
+                      className="cursor-crosshair"
+                      onPointerDown={(event) => {
+                        event.stopPropagation();
+                        onGroup(group.name);
+                      }}
+                    />
+                  );
+                })}
                 {[...ports.inputs, ...ports.outputs].map((port) => {
                   const point = portPoint({ ...element, x: 0, y: 0 }, port);
                   const name = `${element.id}.${port}`;

@@ -254,3 +254,36 @@ test('a half adder made into a block, placed and wired, adds; it is kept with th
   await expect(page.locator('[data-element="U1"][data-kind="SUB"]')).toBeVisible();
   await expect(page.getByTestId('sheet-tool-block:B1')).toBeVisible();
 });
+
+test('a bus joins a counter to a hex digit in one go, and shows the value it carries', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await page.getByTestId('view-sheet').click();
+  await place(page, 'clock', 3, 4);
+  await place(page, 'CNT', 10, 3);
+  await place(page, 'HEX', 20, 4);
+  await page.getByTestId('sheet-tool-select').click();
+  await port(page, 'CLK1.q');
+  await port(page, 'CNT1.clk');
+  // The bar beside the counter's outputs, then the one beside the digit's inputs.
+  await page.locator('[data-group="CNT1.q"]').click();
+  await page.locator('[data-group="HEX1.d"]').click();
+  const bus = page.locator('[data-bus="K1"]');
+  await expect(bus).toHaveAttribute('data-width', '4');
+  const digit = page.locator('[data-element="HEX1"] [data-value]');
+  await expect(digit).toHaveAttribute('data-value', '2', { timeout: 4000 });
+  await expect(bus).toHaveAttribute('data-value', /^[23]$/);
+
+  // A group cannot be joined to a single pin.
+  await page.locator('[data-group="CNT1.q"]').click();
+  await port(page, 'HEX1.d0');
+  await expect(page.getByTestId('sheet-problem')).toBeVisible();
+
+  // The whole bus goes at once.
+  await bus.locator('path').first().click({ force: true });
+  await page.getByTestId('sheet-delete').click();
+  await expect(page.locator('[data-bus]')).toHaveCount(0);
+  await expect(page.locator('[data-wire]')).toHaveCount(1);
+});

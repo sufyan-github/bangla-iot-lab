@@ -1,5 +1,6 @@
 import {
   addSheetElement,
+  connectBus,
   connectSheet,
   copyFromSheet,
   emptySheet,
@@ -686,5 +687,42 @@ describe('logic sheet, part 3: blocks made from a sheet', () => {
     const again = ok(pasteIntoSheet(placed, clip, 0, 6));
     expect(again.blocks).toHaveLength(1);
     expect(again.elements.at(-1)).toMatchObject({ kind: 'SUB', block: 'B1' });
+  });
+});
+
+describe('logic sheet, part 3: buses', () => {
+  it('joins a counter to a hex digit with one bus of four wires, smallest bit to smallest', () => {
+    let sheet = build(['input', 'CNT', 'HEX'], [['IN1.q', 'CNT1.clk']]);
+    // Either group may be given first.
+    const joined = connectBus(sheet, 'HEX1.d', 'CNT1.q');
+    if (!joined.ok) throw new Error(joined.error);
+    sheet = joined.sheet;
+    expect(joined.id).toBe('K1');
+    expect(sheet.wires.filter((w) => w.bus === 'K1').map((w) => `${w.from}>${w.to}`)).toEqual([
+      'CNT1.q0>HEX1.d0',
+      'CNT1.q1>HEX1.d1',
+      'CNT1.q2>HEX1.d2',
+      'CNT1.q3>HEX1.d3',
+    ]);
+    expect(isLogicSheet(sheet)).toBe(true);
+    // Its inputs are taken now; and the whole bus goes at once.
+    expect(connectBus(sheet, 'CNT1.q', 'HEX1.d')).toEqual({ ok: false, error: 'input-taken' });
+    expect(ok(removeFromSheet(sheet, 'K1')).wires).toHaveLength(1);
+  });
+
+  it('joins only groups of the same width, an output group to an input group', () => {
+    const sheet = build(['DEC', 'CNT', 'REG'], []);
+    // A decoder's two address pins do not fit a counter's four outputs.
+    expect(connectBus(sheet, 'CNT1.q', 'DEC1.a')).toEqual({ ok: false, error: 'not-bus' });
+    // Two output groups cannot be joined.
+    expect(connectBus(sheet, 'CNT1.q', 'REG1.q')).toEqual({ ok: false, error: 'not-bus' });
+    expect(ok(connectBus(sheet, 'DEC1.y', 'REG1.d')).wires).toHaveLength(4);
+  });
+
+  it('a pasted bus gets a number of its own', () => {
+    const sheet = ok(connectBus(build(['CNT', 'HEX'], []), 'CNT1.q', 'HEX1.d'));
+    const pasted = ok(pasteIntoSheet(sheet, copyFromSheet(sheet, ['CNT1', 'HEX1']), 0, 6));
+    expect([...new Set(pasted.wires.map((w) => w.bus))]).toEqual(['K1', 'K2']);
+    expect(isLogicSheet(pasted)).toBe(true);
   });
 });

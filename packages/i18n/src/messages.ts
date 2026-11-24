@@ -219,6 +219,9 @@ export const bn = {
   'sheet.error.no-pins':
     'ব্লক বানাতে বাছাইয়ে অন্তত একটা সুইচ আর একটা বাতি রাখো: সেগুলোই হবে ব্লকের ইনপুট আর আউটপুট।',
   'sheet.error.in-use': 'এই ব্লক শিটে বা অন্য কোনো ব্লকে ব্যবহার হচ্ছে: আগে সেগুলো সরাও।',
+  'sheet.hint.bus': 'এবার আরেকটা ব্লকের মিলিয়ে নেওয়া পিনের দণ্ডে ট্যাপ করো: বাস একবারে সব পিন জোড়ে।',
+  'sheet.error.not-bus':
+    'বাস জোড়ে একই মাপের দুটো পিনের দল: একটা আউটপুটের, একটা ইনপুটের। দলের পাশের দণ্ডে ট্যাপ করো।',
   'sheet.label': 'নাম',
   'sheet.timing': 'টাইমিং ডায়াগ্রাম',
   'sheet.timingHold': 'থামিয়ে দেখো',
@@ -1230,6 +1233,10 @@ export const en: Record<MessageKey, string> = {
     'To make a block, choose at least one switch and one lamp with it: they become its inputs and outputs.',
   'sheet.error.in-use':
     'This block is used on the sheet or inside another block: remove those first.',
+  'sheet.hint.bus':
+    'Now tap the matching bar of pins on another block: a bus joins every pin at once.',
+  'sheet.error.not-bus':
+    'A bus joins two groups of pins of the same size, one of outputs and one of inputs. Tap the bars beside the groups.',
   'sheet.label': 'Name',
   'sheet.timing': 'Timing diagram',
   'sheet.timingHold': 'Hold still',

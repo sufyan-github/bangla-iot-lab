@@ -192,6 +192,8 @@ export const SheetWireSchema = Type.Object({
   from: Port,
   /** An input port, "G2.a". */
   to: Port,
+  /** Set on each wire of a bus: the wires of one bus share it and are drawn as one. */
+  bus: Type.Optional(Type.String({ pattern: '^K[0-9]{1,3}$' })),
 });
 export type SheetWire = Static<typeof SheetWireSchema>;
 
@@ -314,7 +316,15 @@ const PREFIX: Record<SheetKind, string> = {
 export type SheetEdit =
   { ok: true; sheet: LogicSheet; id?: string; ids?: string[] } | { ok: false; error: SheetError };
 export type SheetError =
-  'full' | 'taken' | 'not-output' | 'not-input' | 'input-taken' | 'missing' | 'no-pins' | 'in-use';
+  | 'full'
+  | 'taken'
+  | 'not-output'
+  | 'not-input'
+  | 'input-taken'
+  | 'missing'
+  | 'no-pins'
+  | 'in-use'
+  | 'not-bus';
 
 function nextId(sheet: LogicSheet, prefix: string): string {
   const used = new Set(sheet.elements.map((e) => e.id));
@@ -418,10 +428,13 @@ export function setSheetElement(
   };
 }
 
-/** Takes away an element and every wire to or from it, or a wire by its id. */
+/** Takes away an element and every wire to or from it, a wire by its id, or a whole bus by its id. */
 export function removeFromSheet(sheet: LogicSheet, id: string): SheetEdit {
-  if (sheet.wires.some((w) => w.id === id)) {
-    return { ok: true, sheet: { ...sheet, wires: sheet.wires.filter((w) => w.id !== id) } };
+  if (sheet.wires.some((w) => w.id === id || w.bus === id)) {
+    return {
+      ok: true,
+      sheet: { ...sheet, wires: sheet.wires.filter((w) => w.id !== id && w.bus !== id) },
+    };
   }
   if (!sheet.elements.some((e) => e.id === id)) return { ok: false, error: 'missing' };
   const owner = (port: string) => port.split('.')[0];
@@ -567,6 +580,15 @@ export function pasteIntoSheet(sheet: LogicSheet, clip: SheetClip, dx = 2, dy = 
       working = { ...working, elements: [...working.elements, { ...element, id }] };
     }
     const used = new Set(working.wires.map((w) => w.id));
+    // The pasted buses get numbers of their own.
+    const takenBuses = new Set(working.wires.flatMap((w) => (w.bus ? [w.bus] : [])));
+    const busIds = new Map<string, string>();
+    let k = 1;
+    for (const bus of new Set(clip.wires.flatMap((w) => (w.bus ? [w.bus] : [])))) {
+      while (takenBuses.has(`K${k}`)) k++;
+      takenBuses.add(`K${k}`);
+      busIds.set(bus, `K${k}`);
+    }
     let n = 1;
     const wires = clip.wires.map((wire) => {
       while (used.has(`N${n}`)) n++;
@@ -575,7 +597,12 @@ export function pasteIntoSheet(sheet: LogicSheet, clip: SheetClip, dx = 2, dy = 
         const [id, name] = p.split('.');
         return `${rename.get(id!)}.${name}`;
       };
-      return { id: `N${n}`, from: port(wire.from), to: port(wire.to) };
+      return {
+        id: `N${n}`,
+        from: port(wire.from),
+        to: port(wire.to),
+        ...(wire.bus ? { bus: busIds.get(wire.bus)! } : {}),
+      };
     });
     return {
       ok: true,
@@ -676,4 +703,81 @@ export function blockPinNames(block: SheetBlock): { inputs: string[]; outputs: s
     return element ? sheetName(element) : id;
   };
   return { inputs: block.inputs.map(nameOf), outputs: block.outputs.map(nameOf) };
+}
+
+/** A group of an element's pins that a bus can join, D0 to D3 say, the smallest bit first. */
+export interface SheetPinGroup {
+  /** "CNT1.q" */
+  name: string;
+  ports: string[];
+  side: 'input' | 'output';
+}
+
+/** Which pins of each kind form groups, by the letter they start with. */
+const GROUPS: Partial<Record<SheetKind, { letter: string; side: 'input' | 'output' }[]>> = {
+  CNT: [{ letter: 'q', side: 'output' }],
+  REG: [
+    { letter: 'd', side: 'input' },
+    { letter: 'q', side: 'output' },
+  ],
+  RAM: [
+    { letter: 'a', side: 'input' },
+    { letter: 'd', side: 'input' },
+    { letter: 'q', side: 'output' },
+  ],
+  HEX: [{ letter: 'd', side: 'input' }],
+  DEC: [
+    { letter: 'a', side: 'input' },
+    { letter: 'y', side: 'output' },
+  ],
+};
+
+/** The element's pin groups that a bus can join. */
+export function sheetPinGroups(element: SheetElement): SheetPinGroup[] {
+  const ports = sheetPorts(element);
+  return (GROUPS[element.kind] ?? []).map(({ letter, side }) => ({
+    name: `${element.id}.${letter}`,
+    ports: (side === 'input' ? ports.inputs : ports.outputs)
+      .filter((port) => new RegExp(`^${letter}[0-9]$`).test(port))
+      .map((port) => `${element.id}.${port}`),
+    side,
+  }));
+}
+
+/** The group with this name ("CNT1.q"), or null. */
+export function pinGroupOf(
+  sheet: Pick<LogicSheet, 'elements'>,
+  name: string,
+): SheetPinGroup | null {
+  const [id] = name.split('.');
+  const element = sheet.elements.find((e) => e.id === id);
+  return (element && sheetPinGroups(element).find((g) => g.name === name)) ?? null;
+}
+
+/**
+ * Joins two pin groups of the same width with a bus: one wire for each bit,
+ * the smallest to the smallest, from the outputs to the inputs (either group
+ * may be given first). None of the inputs may have a wire already.
+ */
+export function connectBus(sheet: LogicSheet, a: string, b: string): SheetEdit {
+  const first = pinGroupOf(sheet, a);
+  const second = pinGroupOf(sheet, b);
+  if (!first || !second) return { ok: false, error: 'missing' };
+  if (first.side === second.side || first.ports.length !== second.ports.length)
+    return { ok: false, error: 'not-bus' };
+  const [from, to] = first.side === 'output' ? [first, second] : [second, first];
+  if (to.ports.some((port) => sheet.wires.some((w) => w.to === port)))
+    return { ok: false, error: 'input-taken' };
+  if (sheet.wires.length + from.ports.length > MAX_SHEET_WIRES) return { ok: false, error: 'full' };
+  const buses = new Set(sheet.wires.flatMap((w) => (w.bus ? [w.bus] : [])));
+  let k = 1;
+  while (buses.has(`K${k}`)) k++;
+  const used = new Set(sheet.wires.map((w) => w.id));
+  let n = 1;
+  const wires = from.ports.map((port, bit) => {
+    while (used.has(`N${n}`)) n++;
+    used.add(`N${n}`);
+    return { id: `N${n}`, from: port, to: to.ports[bit]!, bus: `K${k}` };
+  });
+  return { ok: true, id: `K${k}`, sheet: { ...sheet, wires: [...sheet.wires, ...wires] } };
 }
