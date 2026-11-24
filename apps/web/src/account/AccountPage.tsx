@@ -1,5 +1,7 @@
 import type { MessageKey } from '@banglalab/i18n';
+import { LESSONS } from '@banglalab/lessons';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { useT } from '../i18n';
 import { call, useAccount, type ClassSummary, type Learner } from './client';
 
@@ -26,6 +28,7 @@ const KNOWN_ERRORS = [
   'wrong-key',
   'offline',
   'bad-request',
+  'already-set',
 ];
 
 function Problem({ error }: { error: string | null }) {
@@ -341,6 +344,118 @@ function Roster({ classId }: { classId: string }) {
   );
 }
 
+interface ClassLesson {
+  id: string;
+  lessonId: string;
+  dueAt: string | null;
+  started: number;
+  finished: number;
+}
+
+/** The lessons set for a class, with how many learners started and finished each. */
+function ClassLessons({ classId }: { classId: string }) {
+  const { t, locale, number } = useT();
+  const [summary, setSummary] = useState<{ learners: number; lessons: ClassLesson[] } | null>(null);
+  const [choice, setChoice] = useState(LESSONS[0]!.id);
+  const [due, setDue] = useState('');
+  const { busy, error, submit } = useSubmit();
+  const load = async () => {
+    const answer = await call<{ learners: number; lessons: ClassLesson[] }>(
+      `/v1/classes/${classId}/summary`,
+    );
+    setSummary(answer.ok ? answer.value : { learners: 0, lessons: [] });
+  };
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classId]);
+  const title = (id: string) => LESSONS.find((lesson) => lesson.id === id)?.title[locale] ?? id;
+  if (!summary) return <p className="text-sm text-ink-soft">{t('account.loading')}</p>;
+  return (
+    <div className="space-y-2" data-testid="class-lessons">
+      {summary.lessons.length === 0 ? (
+        <p className="text-sm text-ink-soft">{t('account.noLessons')}</p>
+      ) : (
+        <ul className="divide-y divide-line rounded-lg border border-line">
+          {summary.lessons.map((item) => (
+            <li
+              key={item.id}
+              className="flex flex-wrap items-center gap-2 px-3 py-2"
+              data-testid="class-lesson"
+              data-lesson={item.lessonId}
+            >
+              <span className="flex-1 font-medium">{title(item.lessonId)}</span>
+              <span className="text-sm text-ink-soft" data-testid="lesson-counts">
+                {t('account.lessonCounts', {
+                  started: number(item.started),
+                  finished: number(item.finished),
+                  total: number(summary.learners),
+                })}
+              </span>
+              {item.dueAt && (
+                <span className="text-sm text-ink-soft">
+                  {t('account.dueBy', { date: new Date(item.dueAt).toLocaleDateString() })}
+                </span>
+              )}
+              <button
+                type="button"
+                className="text-sm font-medium text-danger underline"
+                onClick={async () => {
+                  await call(`/v1/classes/${classId}/assignments/${item.id}/remove`, {});
+                  await load();
+                }}
+              >
+                {t('account.remove')}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form
+        className="flex flex-wrap items-end gap-2"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          const done = await submit(`/v1/classes/${classId}/assignments`, {
+            lessonId: choice,
+            ...(due ? { dueAt: new Date(`${due}T23:59:00`).toISOString() } : {}),
+          });
+          if (done) await load();
+        }}
+      >
+        <label className="min-w-48 flex-1">
+          <span className="mb-1 block text-sm text-ink-soft">{t('account.setLesson')}</span>
+          <select
+            data-testid="assign-lesson"
+            value={choice}
+            onChange={(e) => setChoice(e.target.value)}
+            className={input}
+          >
+            {LESSONS.map((lesson) => (
+              <option key={lesson.id} value={lesson.id}>
+                {number(lesson.order)}. {lesson.title[locale]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className="mb-1 block text-sm text-ink-soft">{t('account.due')}</span>
+          <input
+            type="date"
+            value={due}
+            onChange={(e) => setDue(e.target.value)}
+            className={input}
+          />
+        </label>
+        <button type="submit" data-testid="assign-submit" disabled={busy} className={secondary}>
+          {t('account.set')}
+        </button>
+      </form>
+      <Problem error={error} />
+      <p className="text-xs text-ink-soft">{t('account.countsOnly')}</p>
+    </div>
+  );
+}
+
 function TeacherDashboard() {
   const { t, number } = useT();
   const me = useAccount((s) => s.me)!;
@@ -349,6 +464,7 @@ function TeacherDashboard() {
   const [form, setForm] = useState({ name: '', grade: 6, consent: false });
   const [shownCode, setShownCode] = useState<{ classId: string; code: string } | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [lessonsOpen, setLessonsOpen] = useState<string | null>(null);
   const [archiving, setArchiving] = useState<string | null>(null);
   const { busy, error, submit } = useSubmit();
   const load = async () => {
@@ -402,6 +518,14 @@ function TeacherDashboard() {
                   </button>
                   <button
                     type="button"
+                    data-testid="class-lessons-open"
+                    className={secondary}
+                    onClick={() => setLessonsOpen(lessonsOpen === item.id ? null : item.id)}
+                  >
+                    {t('account.lessons')}
+                  </button>
+                  <button
+                    type="button"
                     data-testid="class-new-code"
                     className={secondary}
                     onClick={async () => {
@@ -444,6 +568,11 @@ function TeacherDashboard() {
                       date: new Date(item.joinCodeExpiresAt).toLocaleDateString(),
                     })}
                   </p>
+                )}
+                {lessonsOpen === item.id && (
+                  <div className="mt-3">
+                    <ClassLessons classId={item.id} />
+                  </div>
                 )}
                 {open === item.id && (
                   <div className="mt-3">
@@ -526,8 +655,16 @@ function TeacherDashboard() {
 }
 
 function LearnerHome() {
-  const { t, number } = useT();
+  const { t, number, locale } = useT();
   const me = useAccount((s) => s.me)!;
+  const [assigned, setAssigned] = useState<
+    { id: string; lessonId: string; dueAt: string | null; className: string }[]
+  >([]);
+  useEffect(() => {
+    void call<{ assignments: typeof assigned }>('/v1/assignments').then((answer) => {
+      if (answer.ok) setAssigned(answer.value.assignments);
+    });
+  }, []);
   return (
     <section className="space-y-2" data-testid="learner-home">
       <h2 className="text-lg font-semibold">{t('account.yourClasses')}</h2>
@@ -540,6 +677,34 @@ function LearnerHome() {
           </li>
         ))}
       </ul>
+      <h2 className="pt-4 text-lg font-semibold">{t('account.setForYou')}</h2>
+      {assigned.length === 0 ? (
+        <p className="text-sm text-ink-soft">{t('account.noLessons')}</p>
+      ) : (
+        <ul className="space-y-2" data-testid="assigned-lessons">
+          {assigned.map((item) => {
+            const lesson = LESSONS.find((l) => l.id === item.lessonId);
+            return (
+              <li
+                key={item.id}
+                className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-line p-3"
+              >
+                <span className="flex-1 font-semibold">
+                  {lesson?.title[locale] ?? item.lessonId}
+                </span>
+                {item.dueAt && (
+                  <span className="text-sm text-ink-soft">
+                    {t('account.dueBy', { date: new Date(item.dueAt).toLocaleDateString() })}
+                  </span>
+                )}
+                <Link to={`/lessons#${item.lessonId}`} className="font-medium text-mat underline">
+                  {t('account.openLesson')}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }

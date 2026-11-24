@@ -24,6 +24,12 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
   expect(code).toMatch(/^\w{4}-\w{4}$/);
   await expect(page.getByTestId('class-item')).toHaveCount(1);
 
+  // Set the class a lesson; the summary counts the class, not anyone by name.
+  await page.getByTestId('class-lessons-open').click();
+  await page.getByTestId('assign-lesson').selectOption('push-button');
+  await page.getByTestId('assign-submit').click();
+  await expect(page.locator('[data-testid="class-lesson"][data-lesson="push-button"]')).toBeVisible();
+
   await page.getByTestId('sign-out').click();
   await page.getByTestId('join-code').fill(code.toLowerCase());
   await page.getByTestId('join-pseudonym').fill('তারা');
@@ -32,6 +38,7 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
   await page.getByRole('button', { name: /চালিয়ে যাও|Continue/ }).click();
   await expect(page.getByTestId('learner-home')).toContainText('সপ্তম ক');
   await expect(page.getByTestId('nav-account')).toHaveText('তারা');
+  await expect(page.getByTestId('assigned-lessons')).toContainText(/পুশ বোতাম|push button/i);
 });
 
 test('a wrong class code is explained', async ({ page }) => {

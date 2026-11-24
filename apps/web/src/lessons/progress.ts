@@ -1,6 +1,7 @@
 import type { StepStatus } from '@banglalab/lessons';
 import { LESSONS, type Lesson } from '@banglalab/lessons';
 import { create } from 'zustand';
+import { recordProgress } from '../account/outbox';
 import { projectStore, type LessonProgress } from '../storage/projects';
 
 /**
@@ -46,6 +47,14 @@ export const useLessonState = create<LessonState>((set, get) => {
         status.done && !progress.done.includes(progress.step)
           ? [...progress.done, progress.step].sort((a, b) => a - b)
           : progress.done;
+      if (done !== progress.done) {
+        // A learner's progress also goes to their teacher's class totals.
+        const lesson = get().lesson;
+        recordProgress({ lessonId: progress.id, step: progress.step, outcome: 'step-done' });
+        if (lesson && done.length === lesson.steps.length) {
+          recordProgress({ lessonId: progress.id, step: progress.step, outcome: 'lesson-done' });
+        }
+      }
       const changed = done !== progress.done || !sameList(status.seen, progress.seen);
       if (changed) {
         const next = { ...progress, done, seen: status.seen };

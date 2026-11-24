@@ -53,6 +53,11 @@ export const useAccount = create<{
   async refresh() {
     const answer = await call<Me>('/v1/me');
     set({ me: answer.ok ? answer.value : null });
+    // Progress made while offline goes now.
+    if (answer.ok && answer.value.user.kind === 'learner') {
+      const { flushProgress } = await import('./outbox');
+      void flushProgress();
+    }
   },
   async signOut() {
     await call('/v1/auth/sign-out', {});
