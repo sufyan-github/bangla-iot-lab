@@ -1,6 +1,7 @@
 import type { MessageKey } from '@banglalab/i18n';
 import {
   BREADBOARD_SIZES,
+  WAVE_SHAPES,
   BREADBOARD_SPECS,
   LED_COLORS,
   ACS712_RANGES,
@@ -430,6 +431,85 @@ function PartSettings({ part }: { part: CircuitComponent }) {
 
   if (part.type === 'breadboard') return <BreadboardSettings part={part} />;
 
+  if (part.type === 'battery' && part.props.source === 'supply') {
+    return (
+      <label className="block">
+        <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+          {t('inspector.voltage')}
+          <span className="font-medium text-ink tabular-nums">
+            {quantity(part.props.voltage, 'V')}
+          </span>
+        </span>
+        <input
+          type="range"
+          data-testid="slider-supply"
+          min={0.1}
+          max={24}
+          step={0.1}
+          value={part.props.voltage}
+          onChange={(event) =>
+            setProps(part.id, { voltage: Math.round(Number(event.target.value) * 10) / 10 })
+          }
+          className="h-11 w-full accent-amber"
+        />
+      </label>
+    );
+  }
+  if (part.type === 'battery' && part.props.source === 'generator') {
+    const slider = (
+      key: 'voltage' | 'hz' | 'offset',
+      label: MessageKey,
+      min: number,
+      max: number,
+      step: number,
+      unit: 'V' | 'Hz',
+      value: number,
+    ) => (
+      <label className="block">
+        <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+          {t(label)}
+          <span className="font-medium text-ink tabular-nums">
+            {unit === 'Hz'
+              ? t('inspector.hzValue', { count: number(value) })
+              : quantity(value, 'V')}
+          </span>
+        </span>
+        <input
+          type="range"
+          data-testid={`slider-generator-${key}`}
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(event) =>
+            setProps(part.id, { [key]: Math.round(Number(event.target.value) * 10) / 10 })
+          }
+          className="h-11 w-full accent-amber"
+        />
+      </label>
+    );
+    return (
+      <div className="space-y-2">
+        <fieldset>
+          <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.wave')}</legend>
+          <div className="flex flex-wrap gap-1.5" data-testid="generator-wave">
+            {WAVE_SHAPES.map((wave) => (
+              <Choice
+                key={wave}
+                selected={(part.props.wave ?? 'square') === wave}
+                onClick={() => setProps(part.id, { wave })}
+              >
+                {t(`inspector.wave.${wave}` as MessageKey)}
+              </Choice>
+            ))}
+          </div>
+        </fieldset>
+        {slider('hz', 'inspector.frequency', 0.1, 100, 0.1, 'Hz', part.props.hz ?? 1)}
+        {slider('voltage', 'inspector.amplitude', 0.1, 12, 0.1, 'V', part.props.voltage)}
+        {slider('offset', 'inspector.offset', -12, 12, 0.1, 'V', part.props.offset ?? 0)}
+      </div>
+    );
+  }
   if (part.type === 'battery') {
     return (
       <fieldset>

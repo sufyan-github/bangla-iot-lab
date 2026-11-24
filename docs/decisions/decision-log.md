@@ -1419,3 +1419,19 @@ Tests: each counter counts on the right edge, wraps, resets and (for the
 every code and obeys LT̅ and BL̅; the display lights the segment fed, in either
 kind, and stays dark when wired for the other kind; both new parts land where
 they should. Two browser tests place them.
+
+## D-084 — A bench power supply and a function generator
+
+Two bench instruments beside the breadboard, as variants of the battery part
+(its `source` is `supply` or `generator`), so they wire, move and draw in the
+diagram as a DC source does. Older circuits are unchanged.
+
+- **Power supply:** any voltage from 0.1 to 24 V in 0.1 V steps, turned by a
+  slider; its display shows the voltage set and the current drawn. **Not
+  modelled:** a current limit (a real bench supply would lower its voltage).
+- **Function generator:** a square, sine or triangle wave from 0.1 to 100 Hz,
+  with a peak amplitude up to 12 V and an offset of −12 to 12 V, through a 50 Ω
+  output as bench generators have. The session stops at each half period of a
+  square wave and 32 times a period for the others, so the oscilloscope draws
+  them; a sine is therefore drawn in 32 straight steps. New ones start as a
+  0 to 5 V square wave at 1 Hz.

@@ -97,7 +97,8 @@ interface LabState {
   endWire(toSelect: boolean): void;
   /** Takes both multimeter probes off the circuit. */
   clearMeter(): void;
-  addBattery(): void;
+  /** Adds a battery, or (given) a bench power supply or a function generator. */
+  addBattery(source?: 'supply' | 'generator'): void;
   /** Adds a half breadboard in a free place, below what is already there. */
   addBreadboard(): void;
   addUno(): void;
@@ -292,8 +293,8 @@ export const useLab = create<LabState>((set, get) => {
       const id = apply(addBreadboard(get().circuit, 'half', place));
       if (id) set({ tool: 'select', selectedId: id, wireStart: null });
     },
-    addBattery() {
-      const id = apply(addBattery(get().circuit));
+    addBattery(source) {
+      const id = apply(addBattery(get().circuit, 9, source));
       if (!id) return;
       // Its usual place may be taken by something the student moved there.
       set({ circuit: settleOffBoardPart(get().circuit, id) });

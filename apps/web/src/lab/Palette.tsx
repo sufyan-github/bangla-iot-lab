@@ -11,7 +11,8 @@ const stroke = {
 } as const;
 const lead = <path d="M2 12h4M18 12h4" {...stroke} />;
 
-type PaletteItem = Tool | 'breadboard' | 'battery' | 'uno' | 'esp32' | 'l298n';
+type PaletteItem =
+  Tool | 'breadboard' | 'battery' | 'supply' | 'generator' | 'uno' | 'esp32' | 'l298n';
 
 const ICONS: Record<PaletteItem, ReactNode> = {
   select: <path d="M7 4l11 9-5 .8 3 6-2.4 1.2-3-6L7 18z" fill="currentColor" />,
@@ -37,6 +38,20 @@ const ICONS: Record<PaletteItem, ReactNode> = {
         <circle key={`${x}a`} cx={x} cy="8.6" r="1" fill="currentColor" />,
         <circle key={`${x}b`} cx={x} cy="15.4" r="1" fill="currentColor" />,
       ])}
+    </>
+  ),
+  supply: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" {...stroke} />
+      <path d="M6 9h7" {...stroke} strokeWidth={1.6} />
+      <circle cx="16.5" cy="15" r="1.6" {...stroke} />
+      <circle cx="7.5" cy="15" r="1.6" {...stroke} />
+    </>
+  ),
+  generator: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" {...stroke} />
+      <path d="M6 12q2-5 4 0t4 0 4 0" {...stroke} strokeWidth={1.6} />
     </>
   ),
   battery: (
@@ -453,7 +468,7 @@ const ICONS: Record<PaletteItem, ReactNode> = {
 /** Tools in the order they are shown; each inner list is one group. */
 const GROUPS: PaletteItem[][] = [
   ['select', 'wire', 'probe'],
-  ['breadboard', 'battery', 'uno', 'esp32'],
+  ['breadboard', 'battery', 'supply', 'generator', 'uno', 'esp32'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
   ['buzzer', 'motor', 'l298n', 'relay', 'relaymodule', 'servo', 'rgbled', 'lcd', 'oled'],
   ['logic', 'logic16', 'clock', 'sevenseg'],
@@ -500,13 +515,15 @@ export function Palette() {
       ? addBreadboard()
       : item === 'battery'
         ? addBattery()
-        : item === 'uno'
-          ? addUno()
-          : item === 'esp32'
-            ? addEsp32()
-            : item === 'l298n'
-              ? addMotorDriver()
-              : setTool(item);
+        : item === 'supply' || item === 'generator'
+          ? addBattery(item)
+          : item === 'uno'
+            ? addUno()
+            : item === 'esp32'
+              ? addEsp32()
+              : item === 'l298n'
+                ? addMotorDriver()
+                : setTool(item);
 
   return (
     <div className="border-b border-line bg-surface">

@@ -53,6 +53,7 @@ import {
   Tp4056View,
   AnalogModuleView,
   BatteryView,
+  InstrumentView,
   BuzzerView,
   ButtonView,
   CapacitorView,
@@ -823,6 +824,30 @@ export function Scene({
         const selected = component.id === selectedId;
         const reading = result?.readings[component.id];
         if (component.type === 'breadboard') return null;
+        if (component.type === 'battery' && component.props.source) {
+          const box = partBox(circuit, component);
+          const { props } = component;
+          const volts = reading?.voltage ?? 0;
+          const lines: [string, string] =
+            props.source === 'supply'
+              ? [
+                  `${props.voltage.toFixed(2)} V`,
+                  `${((reading?.current ?? 0) * 1000).toFixed(1)} mA`,
+                ]
+              : [`${props.wave ?? 'square'} ${props.hz ?? 1} Hz`, `${volts.toFixed(2)} V`];
+          return (
+            <g key={component.id} data-part={component.id} data-source={props.source}>
+              <InstrumentView
+                box={box}
+                title={component.id}
+                lines={lines}
+                positive={batteryTerminalPoint(box, 'pos')}
+                negative={batteryTerminalPoint(box, 'neg')}
+                selected={selected}
+              />
+            </g>
+          );
+        }
         if (component.type === 'battery') {
           const box = partBox(circuit, component);
           return (

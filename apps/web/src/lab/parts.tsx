@@ -196,6 +196,78 @@ export function LedView(props: {
   );
 }
 
+/**
+ * A bench instrument beside the breadboard: a power supply or a function
+ * generator, a grey case with a display and red (+) and black (−) terminals.
+ */
+export function InstrumentView(props: {
+  box: { x: number; y: number; width: number; height: number };
+  /** Two short lines for the display. */
+  lines: [string, string];
+  title: string;
+  positive: Point;
+  negative: Point;
+  selected: boolean;
+}) {
+  const { x, y, width, height } = props.box;
+  const lead = (at: Point, color: string) => (
+    <g>
+      <path
+        d={`M${x + width - 4} ${at.y}H${at.x - 6}`}
+        stroke={color}
+        strokeWidth={5}
+        strokeLinecap="round"
+      />
+      <circle cx={at.x} cy={at.y} r={7} fill={color} stroke="#1b1d1f" strokeWidth={1.5} />
+    </g>
+  );
+  return (
+    <g>
+      {props.selected && (
+        <rect
+          x={x - 8}
+          y={y - 8}
+          width={width + 16}
+          height={height + 16}
+          rx={14}
+          fill={SELECTION}
+          opacity={0.4}
+        />
+      )}
+      <rect x={x + 3} y={y + 5} width={width} height={height} rx={8} fill="#000" opacity={0.3} />
+      <rect x={x} y={y} width={width} height={height} rx={8} fill="#c9ccc8" stroke="#8d918c" />
+      <text
+        x={x + 10}
+        y={y + 16}
+        fontSize={10}
+        fontWeight={700}
+        fill="#3b3f3c"
+        pointerEvents="none"
+      >
+        {props.title}
+      </text>
+      <rect x={x + 8} y={y + 22} width={width - 40} height={34} rx={4} fill="#1d2a22" />
+      {props.lines.map((line, i) => (
+        <text
+          key={i}
+          x={x + 14}
+          y={y + 36 + i * 14}
+          fontSize={11}
+          fontFamily="monospace"
+          fontWeight={700}
+          fill="#8ff0a4"
+          pointerEvents="none"
+          data-display={i}
+        >
+          {line}
+        </text>
+      ))}
+      {lead(props.positive, '#d43c2f')}
+      {lead(props.negative, '#2a2c2e')}
+    </g>
+  );
+}
+
 export function BatteryView(props: {
   box: { x: number; y: number; width: number; height: number };
   label: string;
