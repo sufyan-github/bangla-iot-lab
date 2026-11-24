@@ -12,6 +12,22 @@ const CompileBody = Type.Object(
     /** ESP32 only. `emulator`: real firmware for the chip emulator, not the lab's own board library. */
     engine: Type.Optional(Type.Union([Type.Literal('library'), Type.Literal('emulator')])),
     source: Type.String({ minLength: 1, maxLength: 64 * 1024 }),
+    /**
+     * An Arduino sketch's other files, its tabs. The compile worker checks their
+     * names and their total size; here they are only held to its limits.
+     */
+    files: Type.Optional(
+      Type.Array(
+        Type.Object(
+          {
+            name: Type.String({ minLength: 3, maxLength: 44 }),
+            content: Type.String({ maxLength: 64 * 1024 }),
+          },
+          { additionalProperties: false },
+        ),
+        { maxItems: 16 },
+      ),
+    ),
   },
   { additionalProperties: false },
 );
@@ -51,6 +67,8 @@ export const compileRoutes =
           request.log.error({ err: error }, 'compile worker unreachable');
           return reply.code(503).send({ error: 'compiler-unavailable' });
         }
+        // A request the worker refuses (a file name it does not allow, say) is the student's to fix.
+        if (response.status === 400) return reply.code(400).send({ error: 'bad-request' });
         if (response.status === 503) {
           return reply.code(503).header('retry-after', '5').send({ error: 'compiler-busy' });
         }

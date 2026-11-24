@@ -31,6 +31,27 @@ describe('POST /v1/compile', () => {
     );
   });
 
+  it("passes on a sketch's other files, and the worker's refusal of a bad name", async () => {
+    const fetch = vi.fn(async () => json({ ok: true, hex: ':00000001FF', cached: false }));
+    app = await build(fetch);
+    const payload = {
+      board: 'esp32',
+      language: 'arduino',
+      source: '#include "pins.h"\nvoid setup(){}',
+      files: [{ name: 'pins.h', content: '#define LED 2\n' }],
+    };
+    const response = await app.inject({ method: 'POST', url: '/v1/compile', payload });
+    expect(response.statusCode).toBe(200);
+    const sent = JSON.parse((fetch.mock.calls[0] as unknown as [string, { body: string }])[1].body);
+    expect(sent.files).toEqual(payload.files);
+
+    const refusing = vi.fn(async () => json({ error: 'not a file name a sketch can have' }, 400));
+    await app.close();
+    app = await build(refusing);
+    const refused = await app.inject({ method: 'POST', url: '/v1/compile', payload });
+    expect(refused.statusCode).toBe(400);
+  });
+
   it('passes on which engine an ESP32 program is built for', async () => {
     const fetch = vi.fn(async () => json({ ok: true, hex: '{}', cached: false }));
     app = await build(fetch);
