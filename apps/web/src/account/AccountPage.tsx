@@ -5,10 +5,9 @@ import { Link } from 'react-router';
 import { useT } from '../i18n';
 import { call, useAccount, type ClassSummary, type Learner } from './client';
 
-const input = 'min-h-11 w-full rounded-lg border-2 border-line bg-surface px-3';
-const primary =
-  'min-h-11 rounded-xl bg-amber px-5 font-semibold text-ink hover:brightness-105 disabled:opacity-60';
-const secondary = 'min-h-11 rounded-lg border-2 border-line px-3 font-medium hover:border-ink-soft';
+const input = 'field';
+const primary = 'btn btn-primary px-5';
+const secondary = 'btn btn-secondary';
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -41,16 +40,22 @@ function Problem({ error }: { error: string | null }) {
   );
 }
 
-/** A secret shown once: a join code or a learner's key. */
+/**
+ * A secret shown once: a join code or a learner's key, written large in
+ * chalk on a slate, so a teacher can copy it onto the classroom's board.
+ */
 function ShownOnce({ label, value, testId }: { label: string; value: string; testId: string }) {
   const { t } = useT();
   return (
-    <div className="rounded-xl border-2 border-amber bg-amber-soft p-3">
-      <p className="text-sm">{label}</p>
-      <p data-testid={testId} className="my-1 font-mono text-2xl font-bold tracking-widest">
+    <div className="rounded-[var(--radius-card)] border-[6px] border-[#8a6a43] bg-[#23332d] p-4 text-paper shadow-[var(--shadow-raised)]">
+      <p className="text-sm text-paper/75">{label}</p>
+      <p
+        data-testid={testId}
+        className="my-2 font-mono text-3xl font-bold tracking-[0.18em] text-[#f4f1e8] [text-shadow:0_0_1px_rgb(255_255_255/0.6)] sm:text-4xl"
+      >
         {value}
       </p>
-      <p className="text-sm text-ink-soft">{t('account.shownOnce')}</p>
+      <p className="text-sm text-paper/70">{t('account.shownOnce')}</p>
     </div>
   );
 }
@@ -160,14 +165,19 @@ function TeacherSignIn() {
       {signUp && <p className="text-sm text-ink-soft">{t('account.passwordRule')}</p>}
       <Problem error={error} />
       <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" data-testid="teacher-submit" disabled={busy} className={primary}>
+        <button
+          type="submit"
+          data-testid="teacher-submit"
+          disabled={busy}
+          className="btn bg-mat px-5 text-paper hover:bg-mat-deep"
+        >
           {t(signUp ? 'account.signUp' : 'account.signIn')}
         </button>
         <button
           type="button"
           data-testid="teacher-switch"
           onClick={() => setSignUp(!signUp)}
-          className="text-sm font-medium text-mat underline"
+          className="btn btn-quiet min-h-9 text-sm"
         >
           {t(signUp ? 'account.haveAccount' : 'account.newTeacher')}
         </button>
@@ -300,7 +310,7 @@ function Roster({ classId }: { classId: string }) {
               <span className="flex-1 font-medium">{learner.pseudonym}</span>
               <button
                 type="button"
-                className="text-sm font-medium text-mat underline"
+                className="btn btn-quiet min-h-9 text-sm"
                 onClick={async () => {
                   const answer = await call<{ key: string }>(
                     `/v1/classes/${classId}/learners/${learner.enrolment}/key`,
@@ -315,7 +325,7 @@ function Roster({ classId }: { classId: string }) {
                 <button
                   type="button"
                   data-testid="confirm-remove"
-                  className="rounded-lg bg-danger px-2 py-1 text-sm font-semibold text-paper"
+                  className="btn min-h-9 bg-danger px-3 text-sm text-paper"
                   onClick={async () => {
                     await call(`/v1/classes/${classId}/learners/${learner.enrolment}/remove`, {});
                     setConfirming(null);
@@ -327,7 +337,7 @@ function Roster({ classId }: { classId: string }) {
               ) : (
                 <button
                   type="button"
-                  className="text-sm font-medium text-danger underline"
+                  className="btn btn-danger min-h-9 text-sm"
                   onClick={() => setConfirming(learner.enrolment)}
                 >
                   {t('account.remove')}
@@ -399,7 +409,7 @@ function ClassLessons({ classId }: { classId: string }) {
               )}
               <button
                 type="button"
-                className="text-sm font-medium text-danger underline"
+                className="btn btn-danger min-h-9 text-sm"
                 onClick={async () => {
                   await call(`/v1/classes/${classId}/assignments/${item.id}/remove`, {});
                   await load();
@@ -496,7 +506,7 @@ function TeacherDashboard() {
             {classes.map((item) => (
               <li
                 key={item.id}
-                className="rounded-xl border-2 border-line p-3"
+                className="rounded-[var(--radius-card)] border border-line bg-surface p-4"
                 data-testid="class-item"
               >
                 <div className="flex flex-wrap items-center gap-2">
@@ -543,7 +553,7 @@ function TeacherDashboard() {
                   {archiving === item.id ? (
                     <button
                       type="button"
-                      className="min-h-11 rounded-lg bg-danger px-3 font-semibold text-paper"
+                      className="btn bg-danger text-paper"
                       onClick={async () => {
                         await call(`/v1/classes/${item.id}/archive`, {});
                         setArchiving(null);
@@ -587,7 +597,7 @@ function TeacherDashboard() {
 
       {school && (
         <form
-          className="space-y-3 rounded-xl border-2 border-line p-4"
+          className="space-y-3 rounded-[var(--radius-card)] border border-line bg-paper p-4"
           data-testid="new-class"
           onSubmit={async (event) => {
             event.preventDefault();
@@ -670,7 +680,10 @@ function LearnerHome() {
       <h2 className="text-lg font-semibold">{t('account.yourClasses')}</h2>
       <ul className="space-y-2">
         {me.classes.map((item) => (
-          <li key={item.classId} className="rounded-xl border-2 border-line p-3">
+          <li
+            key={item.classId}
+            className="rounded-[var(--radius-card)] border border-line bg-surface p-4"
+          >
             <span className="font-semibold">{item.className}</span> ·{' '}
             {t('account.grade', { grade: number(item.grade) })}
             <p className="text-sm text-ink-soft">{t('account.youAre', { name: item.pseudonym })}</p>
@@ -687,7 +700,7 @@ function LearnerHome() {
             return (
               <li
                 key={item.id}
-                className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-line p-3"
+                className="flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-line bg-surface p-4"
               >
                 <span className="flex-1 font-semibold">
                   {lesson?.title[locale] ?? item.lessonId}
@@ -720,7 +733,7 @@ export function AccountPage() {
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6" data-testid="account-page">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="flex-1 text-2xl font-semibold">{t('account.title')}</h1>
+        <h1 className="flex-1 text-3xl font-bold">{t('account.title')}</h1>
         {me && (
           <>
             <span className="text-sm text-ink-soft" data-testid="signed-in-as">
@@ -743,10 +756,10 @@ export function AccountPage() {
         <>
           <p className="text-ink-soft">{t('account.about')}</p>
           <div className="grid gap-6 md:grid-cols-2">
-            <section className="rounded-xl border-2 border-line bg-surface p-4">
+            <section className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
               <LearnerJoin />
             </section>
-            <section className="rounded-xl border-2 border-line bg-surface p-4">
+            <section className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
               <TeacherSignIn />
             </section>
           </div>
