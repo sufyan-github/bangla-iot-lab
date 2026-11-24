@@ -1,7 +1,7 @@
 import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Esp32SketchBoard } from '@banglalab/simulation';
+import { Esp32SketchBoard, LabWebServices } from '@banglalab/simulation';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { loadConfig } from './config';
 import { buildServer } from './server';
@@ -142,12 +142,43 @@ int twice(int n) { return n * 2; }
     expect(refused.statusCode).toBe(400);
   }, 60_000);
 
+  it('asks a made-up service over HTTPS with WiFiClientSecure, as a real sketch would', async () => {
+    const result = (
+      await compile(`#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin("lab-wifi", "12345678");
+  while (WiFi.status() != WL_CONNECTED) delay(100);
+  WiFiClientSecure secure;
+  secure.setInsecure();
+  HTTPClient http;
+  http.begin(secure, "https://echo.lab/hello?x=1");
+  int code = http.POST("secret");
+  Serial.println(code);
+  Serial.println(http.getString());
+  http.end();
+}
+void loop() { delay(1000); }
+`)
+    ).json();
+    expect(result.ok).toBe(true);
+    const board = new Esp32SketchBoard(Buffer.from(result.hex, 'base64'));
+    const web = new LabWebServices();
+    board.onWeb((method, url, body) => web.handle({ from: 'U1', method, url, body, timeMs: 0 }));
+    let serial = '';
+    board.onSerial((text) => (serial += text));
+    for (let t = 100; t <= 3000; t += 100) board.runUntil(t);
+    expect(serial).toContain('200\r\nPOST /hello?x=1\n\nsecret');
+  }, 60_000);
+
   it('says so when a sketch uses something the board library does not have yet', async () => {
     const missingHeader = (
-      await compile('#include <WiFiClientSecure.h>\nvoid setup() {}\nvoid loop() {}\n')
+      await compile('#include <SD.h>\nvoid setup() {}\nvoid loop() {}\n')
     ).json();
     expect(missingHeader.ok).toBe(false);
-    expect(missingHeader.diagnostics[0].message).toMatch(/WiFiClientSecure\.h/);
+    expect(missingHeader.diagnostics[0].message).toMatch(/SD\.h/);
     const missingFunction = (
       await compile('void setup() { esp_sleep_enable_ext1_wakeup(1, 0); }\nvoid loop() {}\n')
     ).json();
