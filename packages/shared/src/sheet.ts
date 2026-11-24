@@ -25,6 +25,7 @@ export const SHEET_KINDS = [
   'CNT',
   'REG',
   'RAM',
+  'SUB',
 ] as const;
 /** Flip-flops: their outputs change only on their clock's rising edge. */
 export const SHEET_MEMORY_KINDS = ['DFF', 'JKFF', 'TFF'] as const;
@@ -71,7 +72,13 @@ export const SHEET_PORTS: Record<
     inputs: ['a0', 'a1', 'a2', 'a3', 'd0', 'd1', 'd2', 'd3', 'we', 'clk'],
     outputs: ['q0', 'q1', 'q2', 'q3'],
   },
+  /** A block the student made: its ports (i1, i2, … and o1, o2, …) come from its pins. */
+  SUB: { inputs: [], outputs: [] },
 };
+
+/** The most inputs, and the most outputs, a block may have; and how many blocks a sheet may hold. */
+export const MAX_PINS = 8;
+export const MAX_BLOCKS = 12;
 
 /** How much of the grid each kind takes, wide by high: most take 3 × 3; blocks with many ports are taller. */
 const SIZES: Partial<Record<SheetKind, { w: number; h: number }>> = {
@@ -80,7 +87,14 @@ const SIZES: Partial<Record<SheetKind, { w: number; h: number }>> = {
   REG: { w: 3, h: 5 },
   RAM: { w: 4, h: 9 },
 };
-export function sheetSize(element: Pick<SheetElement, 'kind'>): { w: number; h: number } {
+export function sheetSize(element: Pick<SheetElement, 'kind'> & { pins?: number[] }): {
+  w: number;
+  h: number;
+} {
+  if (element.kind === 'SUB') {
+    const [ins = 1, outs = 1] = element.pins ?? [];
+    return { w: SIZE, h: Math.max(SIZE, Math.max(ins, outs) + 1) };
+  }
   return SIZES[element.kind] ?? { w: SIZE, h: SIZE };
 }
 
@@ -92,10 +106,17 @@ const WIDE_GATES: readonly SheetKind[] = ['AND', 'OR', 'NAND', 'NOR', 'XOR'];
 const GATE_INPUTS = ['a', 'b', 'c', 'd'];
 
 /** An element's ports: a gate has as many inputs as it was given. */
-export function sheetPorts(element: Pick<SheetElement, 'kind' | 'inputs'>): {
+export function sheetPorts(element: Pick<SheetElement, 'kind' | 'inputs'> & { pins?: number[] }): {
   inputs: readonly string[];
   outputs: readonly string[];
 } {
+  if (element.kind === 'SUB') {
+    const [ins = 0, outs = 0] = element.pins ?? [];
+    return {
+      inputs: Array.from({ length: ins }, (_, i) => `i${i + 1}`),
+      outputs: Array.from({ length: outs }, (_, i) => `o${i + 1}`),
+    };
+  }
   const base = SHEET_PORTS[element.kind];
   if (WIDE_GATES.includes(element.kind) && element.inputs) {
     return { inputs: GATE_INPUTS.slice(0, element.inputs), outputs: base.outputs };
@@ -114,6 +135,8 @@ export const SHEET_WIDTH = 40;
 export const SHEET_HEIGHT = 24;
 
 const SheetId = Type.String({ pattern: '^[A-Z]+[0-9]{1,3}$' });
+const BlockId = Type.String({ pattern: '^B[0-9]{1,3}$' });
+const Label = Type.String({ minLength: 1, maxLength: MAX_LABEL, pattern: '^[^\\n\\r\\t]+$' });
 /** A port, "G1.y"; a port's name may end in a number, as a hex digit's "d0" does. */
 const Port = Type.String({ pattern: '^[A-Z]+[0-9]{1,3}\\.[a-z][a-z0-9]*$' });
 
@@ -139,6 +162,7 @@ export const SheetElementSchema = Type.Object({
     Type.Literal('CNT'),
     Type.Literal('REG'),
     Type.Literal('RAM'),
+    Type.Literal('SUB'),
   ]),
   /** Where its top-left corner is, in grid steps. */
   x: Type.Integer({ minimum: 0, maximum: SHEET_WIDTH - 1 }),
@@ -150,8 +174,14 @@ export const SheetElementSchema = Type.Object({
   /** A clock: how many times a second it ticks. */
   hz: Type.Optional(Type.Number({ minimum: 0.2, maximum: 10 })),
   /** A name the student gives it ("A", "Sum"), shown instead of its id. */
-  label: Type.Optional(
-    Type.String({ minLength: 1, maxLength: MAX_LABEL, pattern: '^[^\\n\\r\\t]+$' }),
+  label: Type.Optional(Label),
+  /** A block: which of the sheet's blocks it is, and how many inputs and outputs that has. */
+  block: Type.Optional(BlockId),
+  pins: Type.Optional(
+    Type.Tuple([
+      Type.Integer({ minimum: 1, maximum: MAX_PINS }),
+      Type.Integer({ minimum: 1, maximum: MAX_PINS }),
+    ]),
   ),
 });
 export type SheetElement = Static<typeof SheetElementSchema>;
@@ -165,10 +195,28 @@ export const SheetWireSchema = Type.Object({
 });
 export type SheetWire = Static<typeof SheetWireSchema>;
 
+/**
+ * A block the student made from part of a sheet: its elements and wires, kept
+ * as they were. Its switches, in order, are the block's inputs, and its lamps
+ * its outputs. It may use blocks made before it, never itself or later ones.
+ */
+export const SheetBlockSchema = Type.Object({
+  id: BlockId,
+  name: Label,
+  elements: Type.Array(SheetElementSchema, { maxItems: MAX_SHEET_ELEMENTS }),
+  wires: Type.Array(SheetWireSchema, { maxItems: MAX_SHEET_WIRES }),
+  /** The ids of the switches that are its inputs, and the lamps that are its outputs. */
+  inputs: Type.Array(SheetId, { minItems: 1, maxItems: MAX_PINS }),
+  outputs: Type.Array(SheetId, { minItems: 1, maxItems: MAX_PINS }),
+});
+export type SheetBlock = Static<typeof SheetBlockSchema>;
+
 export const LogicSheetSchema = Type.Object({
   version: Type.Literal(1),
   elements: Type.Array(SheetElementSchema, { maxItems: MAX_SHEET_ELEMENTS }),
   wires: Type.Array(SheetWireSchema, { maxItems: MAX_SHEET_WIRES }),
+  /** Blocks made on this sheet, which can be placed on it like any element. */
+  blocks: Type.Optional(Type.Array(SheetBlockSchema, { maxItems: MAX_BLOCKS })),
 });
 export type LogicSheet = Static<typeof LogicSheetSchema>;
 
@@ -184,10 +232,36 @@ export function isLogicSheet(value: unknown): value is LogicSheet {
 
 /** What is wrong with a sheet's wiring, or null. */
 function sheetProblem(sheet: LogicSheet): string | null {
+  const blocks = sheet.blocks ?? [];
+  const blockIds = new Set<string>();
+  for (const [index, block] of blocks.entries()) {
+    if (blockIds.has(block.id)) return 'same-block';
+    blockIds.add(block.id);
+    // A block may use only blocks made before it.
+    const inner = wiringProblem(block, blocks.slice(0, index));
+    if (inner) return `block-${inner}`;
+    const kindOf = (id: string) => block.elements.find((e) => e.id === id)?.kind;
+    if (!block.inputs.every((id) => kindOf(id) === 'input')) return 'bad-pin';
+    if (!block.outputs.every((id) => kindOf(id) === 'output')) return 'bad-pin';
+  }
+  return wiringProblem(sheet, blocks);
+}
+
+/** What is wrong with these elements and wires, using these blocks, or null. */
+function wiringProblem(
+  sheet: Pick<LogicSheet, 'elements' | 'wires'>,
+  blocks: readonly SheetBlock[],
+): string | null {
   const ids = new Set<string>();
   for (const element of sheet.elements) {
     if (ids.has(element.id)) return 'same-id';
     ids.add(element.id);
+    if (element.kind === 'SUB') {
+      const block = blocks.find((b) => b.id === element.block);
+      if (!block) return 'no-block';
+      const [ins, outs] = element.pins ?? [];
+      if (ins !== block.inputs.length || outs !== block.outputs.length) return 'bad-pins';
+    }
   }
   const fed = new Set<string>();
   for (const wire of sheet.wires) {
@@ -201,7 +275,7 @@ function sheetProblem(sheet: LogicSheet): string | null {
 
 /** The element and side of a port, or null when there is no such port. */
 export function portOf(
-  sheet: LogicSheet,
+  sheet: Pick<LogicSheet, 'elements'>,
   port: string,
 ): { element: SheetElement; side: 'input' | 'output' } | null {
   const [id, name] = port.split('.');
@@ -234,26 +308,28 @@ const PREFIX: Record<SheetKind, string> = {
   CNT: 'CNT',
   REG: 'REG',
   RAM: 'RAM',
+  SUB: 'U',
 };
 
 export type SheetEdit =
   { ok: true; sheet: LogicSheet; id?: string; ids?: string[] } | { ok: false; error: SheetError };
-export type SheetError = 'full' | 'taken' | 'not-output' | 'not-input' | 'input-taken' | 'missing';
+export type SheetError =
+  'full' | 'taken' | 'not-output' | 'not-input' | 'input-taken' | 'missing' | 'no-pins' | 'in-use';
 
 function nextId(sheet: LogicSheet, prefix: string): string {
   const used = new Set(sheet.elements.map((e) => e.id));
   for (let n = 1; ; n++) if (!used.has(`${prefix}${n}`)) return `${prefix}${n}`;
 }
 
-type Placed = Pick<SheetElement, 'kind' | 'x' | 'y'>;
+type Placed = Pick<SheetElement, 'kind' | 'x' | 'y' | 'pins'>;
 /** True when two elements' blocks of the grid share any square. */
 const overlaps = (a: Placed, b: Placed) => {
   const [sa, sb] = [sheetSize(a), sheetSize(b)];
   return a.x < b.x + sb.w && b.x < a.x + sa.w && a.y < b.y + sb.h && b.y < a.y + sa.h;
 };
 /** The nearest place to (x, y) where the element lies wholly on the sheet. */
-const onSheet = (kind: SheetKind, x: number, y: number) => {
-  const { w, h } = sheetSize({ kind });
+const onSheet = (kind: SheetKind, x: number, y: number, pins?: number[]) => {
+  const { w, h } = sheetSize({ kind, pins });
   return {
     x: Math.max(0, Math.min(SHEET_WIDTH - w, Math.round(x))),
     y: Math.max(0, Math.min(SHEET_HEIGHT - h, Math.round(y))),
@@ -266,16 +342,24 @@ export function addSheetElement(
   kind: SheetKind,
   x: number,
   y: number,
+  /** For a block: which of the sheet's blocks. */
+  blockId?: string,
 ): SheetEdit {
   if (sheet.elements.length >= MAX_SHEET_ELEMENTS) return { ok: false, error: 'full' };
-  const at = onSheet(kind, x, y);
-  if (sheet.elements.some((e) => overlaps(e, { kind, ...at })))
+  const block = kind === 'SUB' ? sheet.blocks?.find((b) => b.id === blockId) : undefined;
+  if (kind === 'SUB' && !block) return { ok: false, error: 'missing' };
+  const extra = block
+    ? { block: block.id, pins: [block.inputs.length, block.outputs.length] as [number, number] }
+    : {};
+  const at = onSheet(kind, x, y, extra.pins);
+  if (sheet.elements.some((e) => overlaps(e, { kind, ...at, ...extra })))
     return { ok: false, error: 'taken' };
   const id = nextId(sheet, PREFIX[kind]);
   const element: SheetElement = {
     id,
     kind,
     ...at,
+    ...extra,
     ...(kind === 'input' ? { on: false } : {}),
     ...(kind === 'clock' ? { hz: 1 } : {}),
   };
@@ -286,8 +370,8 @@ export function addSheetElement(
 export function moveSheetElement(sheet: LogicSheet, id: string, x: number, y: number): SheetEdit {
   const element = sheet.elements.find((e) => e.id === id);
   if (!element) return { ok: false, error: 'missing' };
-  const at = onSheet(element.kind, x, y);
-  if (sheet.elements.some((e) => e.id !== id && overlaps(e, { kind: element.kind, ...at })))
+  const at = onSheet(element.kind, x, y, element.pins);
+  if (sheet.elements.some((e) => e.id !== id && overlaps(e, { ...element, ...at })))
     return { ok: false, error: 'taken' };
   return {
     ok: true,
@@ -380,16 +464,65 @@ export function sheetGateOutput(kind: (typeof SHEET_GATES)[number], inputs: read
 export interface SheetClip {
   elements: SheetElement[];
   wires: SheetWire[];
+  /** The blocks the copied elements are made with, and those they are made with, in order. */
+  blocks?: SheetBlock[];
 }
 
 /** The elements with these ids, and the wires that join them to each other. */
 export function copyFromSheet(sheet: LogicSheet, ids: readonly string[]): SheetClip {
   const chosen = new Set(ids);
   const owner = (port: string) => port.split('.')[0]!;
-  return {
-    elements: sheet.elements.filter((e) => chosen.has(e.id)),
-    wires: sheet.wires.filter((w) => chosen.has(owner(w.from)) && chosen.has(owner(w.to))),
+  const elements = sheet.elements.filter((e) => chosen.has(e.id));
+  // Every block these use, directly or inside another block.
+  const all = sheet.blocks ?? [];
+  const needed = new Set<string>();
+  const need = (list: readonly SheetElement[]) => {
+    for (const e of list) {
+      if (e.kind !== 'SUB' || !e.block || needed.has(e.block)) continue;
+      needed.add(e.block);
+      need(all.find((b) => b.id === e.block)?.elements ?? []);
+    }
   };
+  need(elements);
+  return {
+    elements,
+    wires: sheet.wires.filter((w) => chosen.has(owner(w.from)) && chosen.has(owner(w.to))),
+    ...(needed.size > 0 ? { blocks: all.filter((b) => needed.has(b.id)) } : {}),
+  };
+}
+
+/**
+ * Brings copied blocks into a sheet: one the sheet already has, the same in
+ * every way, is used as it is; any other is added under a new id. Returns the
+ * sheet and how the ids changed, or null when there is no room.
+ */
+function bringBlocks(
+  sheet: LogicSheet,
+  blocks: readonly SheetBlock[],
+): { sheet: LogicSheet; ids: Map<string, string> } | null {
+  const ids = new Map<string, string>();
+  let have = [...(sheet.blocks ?? [])];
+  const retarget = (elements: readonly SheetElement[]) =>
+    elements.map((e) =>
+      e.kind === 'SUB' && e.block && ids.has(e.block) ? { ...e, block: ids.get(e.block)! } : e,
+    );
+  const sameAs = (a: SheetBlock, b: SheetBlock) =>
+    JSON.stringify({ ...a, id: '' }) === JSON.stringify({ ...b, id: '' });
+  for (const block of blocks) {
+    const moved = { ...block, elements: retarget(block.elements) };
+    const match = have.find((b) => sameAs(b, moved));
+    if (match) {
+      ids.set(block.id, match.id);
+      continue;
+    }
+    if (have.length >= MAX_BLOCKS) return null;
+    const used = new Set(have.map((b) => b.id));
+    let n = 1;
+    while (used.has(`B${n}`)) n++;
+    ids.set(block.id, `B${n}`);
+    have = [...have, { ...moved, id: `B${n}` }];
+  }
+  return { sheet: have.length > 0 ? { ...sheet, blocks: have } : sheet, ids };
 }
 
 const inside = (e: Placed) => {
@@ -404,6 +537,18 @@ const inside = (e: Placed) => {
  */
 export function pasteIntoSheet(sheet: LogicSheet, clip: SheetClip, dx = 2, dy = 2): SheetEdit {
   if (clip.elements.length === 0) return { ok: false, error: 'missing' };
+  const brought = bringBlocks(sheet, clip.blocks ?? []);
+  if (!brought) return { ok: false, error: 'full' };
+  const blockIds = brought.ids;
+  sheet = brought.sheet;
+  clip = {
+    ...clip,
+    elements: clip.elements.map((e) =>
+      e.kind === 'SUB' && e.block && blockIds.has(e.block)
+        ? { ...e, block: blockIds.get(e.block)! }
+        : e,
+    ),
+  };
   if (sheet.elements.length + clip.elements.length > MAX_SHEET_ELEMENTS)
     return { ok: false, error: 'full' };
   if (sheet.wires.length + clip.wires.length > MAX_SHEET_WIRES) return { ok: false, error: 'full' };
@@ -476,4 +621,59 @@ export function moveSheetElements(
     ok: true,
     sheet: { ...sheet, elements: sheet.elements.map((e) => byId.get(e.id) ?? e) },
   };
+}
+
+/**
+ * Makes a block from these elements: its switches (top to bottom) become its
+ * inputs and its lamps its outputs, under their names; the elements and the
+ * wires between them are kept inside it. The sheet's own elements stay as they
+ * are, so the circuit can still be tried there. Returns the new block's id.
+ */
+export function makeBlock(sheet: LogicSheet, ids: readonly string[], name: string): SheetEdit {
+  const blocks = sheet.blocks ?? [];
+  if (blocks.length >= MAX_BLOCKS) return { ok: false, error: 'full' };
+  const clip = copyFromSheet(sheet, ids);
+  const order = (a: SheetElement, b: SheetElement) => a.y - b.y || a.x - b.x;
+  const inputs = clip.elements.filter((e) => e.kind === 'input').sort(order);
+  const outputs = clip.elements.filter((e) => e.kind === 'output').sort(order);
+  if (inputs.length === 0 || outputs.length === 0) return { ok: false, error: 'no-pins' };
+  if (inputs.length > MAX_PINS || outputs.length > MAX_PINS) return { ok: false, error: 'full' };
+  const used = new Set(blocks.map((b) => b.id));
+  let n = 1;
+  while (used.has(`B${n}`)) n++;
+  const id = `B${n}`;
+  const label = name.replace(/\s+/g, ' ').trim().slice(0, MAX_LABEL).trim() || id;
+  const block: SheetBlock = {
+    id,
+    name: label,
+    // Switches inside a block are driven from outside; their own position does not matter.
+    elements: clip.elements.map((e) => (e.kind === 'input' ? { ...e, on: false } : e)),
+    wires: clip.wires,
+    inputs: inputs.map((e) => e.id),
+    outputs: outputs.map((e) => e.id),
+  };
+  return { ok: true, id, sheet: { ...sheet, blocks: [...blocks, block] } };
+}
+
+/** Forgets a block, if nothing on the sheet or in a later block is made with it. */
+export function removeBlock(sheet: LogicSheet, blockId: string): SheetEdit {
+  const blocks = sheet.blocks ?? [];
+  if (!blocks.some((b) => b.id === blockId)) return { ok: false, error: 'missing' };
+  const uses = (elements: readonly SheetElement[]) =>
+    elements.some((e) => e.kind === 'SUB' && e.block === blockId);
+  if (uses(sheet.elements) || blocks.some((b) => uses(b.elements)))
+    return { ok: false, error: 'in-use' };
+  const rest = blocks.filter((b) => b.id !== blockId);
+  const without: LogicSheet = { ...sheet };
+  delete without.blocks;
+  return { ok: true, sheet: rest.length > 0 ? { ...without, blocks: rest } : without };
+}
+
+/** The names of a block's inputs and outputs, in port order. */
+export function blockPinNames(block: SheetBlock): { inputs: string[]; outputs: string[] } {
+  const nameOf = (id: string) => {
+    const element = block.elements.find((e) => e.id === id);
+    return element ? sheetName(element) : id;
+  };
+  return { inputs: block.inputs.map(nameOf), outputs: block.outputs.map(nameOf) };
 }

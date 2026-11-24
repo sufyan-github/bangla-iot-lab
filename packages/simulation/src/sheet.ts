@@ -6,7 +6,9 @@ import {
   sheetGateOutput,
   sheetPorts,
   type LogicSheet,
+  type SheetBlock,
   type SheetElement,
+  type SheetWire,
 } from '@banglalab/shared';
 
 /**
@@ -48,8 +50,90 @@ export function sheetClockLevel(element: SheetElement, timeMs: number): boolean 
   return Math.floor((timeMs * 2 * hz) / 1000 + 1e-9) % 2 === 1;
 }
 
+/** How deep blocks may sit inside blocks. */
+const MAX_DEPTH = 6;
+
+/**
+ * A sheet with its blocks taken apart: each block's elements are put in its
+ * place, named after it ("U1_G1"), and the wires to its ports are joined
+ * straight through to what is inside. `alias` gives, for each block port, the
+ * port whose level it has.
+ */
+export interface FlatSheet {
+  sheet: LogicSheet;
+  alias: Map<string, string>;
+}
+const flattened = new WeakMap<LogicSheet, FlatSheet>();
+
+export function flattenSheet(sheet: LogicSheet): FlatSheet {
+  const known = flattened.get(sheet);
+  if (known) return known;
+  const blocks = sheet.blocks ?? [];
+  const alias = new Map<string, string>();
+  const expand = (
+    elements: readonly SheetElement[],
+    wires: readonly SheetWire[],
+    prefix: string,
+    depth: number,
+  ): { elements: SheetElement[]; wires: SheetWire[] } => {
+    let els = elements.map((e) => (prefix ? { ...e, id: prefix + e.id } : e));
+    let ws = wires.map((w) =>
+      prefix ? { id: prefix + w.id, from: prefix + w.from, to: prefix + w.to } : w,
+    );
+    for (const sub of els.filter((e) => e.kind === 'SUB')) {
+      els = els.filter((e) => e !== sub);
+      const block: SheetBlock | undefined = blocks.find((b) => b.id === sub.block);
+      const outside = (w: SheetWire) => !w.to.startsWith(`${sub.id}.`);
+      if (!block || depth >= MAX_DEPTH) {
+        ws = ws.filter((w) => outside(w) && !w.from.startsWith(`${sub.id}.`));
+        continue;
+      }
+      const inner = expand(block.elements, block.wires, `${sub.id}_`, depth + 1);
+      const pinIn = block.inputs.map((id) => `${sub.id}_${id}`);
+      const pinOut = block.outputs.map((id) => `${sub.id}_${id}`);
+      let innerWires = inner.wires;
+      // What feeds each input port now feeds what its switch fed inside.
+      pinIn.forEach((pin, k) => {
+        const port = `${sub.id}.i${k + 1}`;
+        const feed = ws.find((w) => w.to === port)?.from;
+        if (feed) alias.set(port, feed);
+        innerWires = innerWires.flatMap((w) =>
+          w.from === `${pin}.q` ? (feed ? [{ ...w, from: feed }] : []) : [w],
+        );
+      });
+      // What fed each output's lamp inside now feeds what the output port fed.
+      pinOut.forEach((pin, k) => {
+        const port = `${sub.id}.o${k + 1}`;
+        const source = innerWires.find((w) => w.to === `${pin}.a`)?.from;
+        if (source) alias.set(port, source);
+        const rewire = (w: SheetWire) =>
+          w.from === port ? (source ? [{ ...w, from: source }] : []) : [w];
+        ws = ws.flatMap(rewire);
+        innerWires = innerWires.flatMap(rewire);
+      });
+      const pins = new Set([...pinIn, ...pinOut]);
+      ws = [...ws.filter(outside), ...innerWires.filter((w) => !pins.has(w.to.split('.')[0]!))];
+      els = [...els, ...inner.elements.filter((e) => !pins.has(e.id))];
+    }
+    return { elements: els, wires: ws };
+  };
+  const flat = expand(sheet.elements, sheet.wires, '', 0);
+  // A port may take its level from another block's port: follow it to a real one.
+  for (const [port, source] of alias) {
+    let end = source;
+    for (let hops = 0; alias.has(end) && hops < 64; hops++) end = alias.get(end)!;
+    alias.set(port, end);
+  }
+  const result = { sheet: { version: 1 as const, ...flat }, alias };
+  flattened.set(sheet, result);
+  return result;
+}
+
+const hasBlocks = (sheet: LogicSheet) => sheet.elements.some((e) => e.kind === 'SUB');
+
 /** The next moment any clock on the sheet changes, after `timeMs`, or Infinity. */
 export function nextSheetClockChange(sheet: LogicSheet, timeMs: number): number {
+  if (hasBlocks(sheet)) sheet = flattenSheet(sheet).sheet;
   let soonest = Infinity;
   for (const element of sheet.elements) {
     if (element.kind !== 'clock') continue;
@@ -60,6 +144,32 @@ export function nextSheetClockChange(sheet: LogicSheet, timeMs: number): number 
 }
 
 export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetState): SheetState {
+  if (!hasBlocks(sheet)) return evaluateFlat(sheet, timeMs, before);
+  const flat = flattenSheet(sheet);
+  const state = evaluateFlat(flat.sheet, timeMs, before);
+  // Each block port shows the level of what drives it.
+  for (const element of sheet.elements) {
+    if (element.kind !== 'SUB') continue;
+    const ports = sheetPorts(element);
+    for (const port of [...ports.inputs, ...ports.outputs]) {
+      const name = `${element.id}.${port}`;
+      const source = flat.alias.get(name);
+      state.levels[name] = source ? (state.levels[source] ?? false) : false;
+    }
+  }
+  // Inputs inside blocks are the blocks' business; a block's own unjoined inputs are not.
+  state.floating = state.floating.filter((port) => !port.split('.')[0]!.includes('_'));
+  for (const element of sheet.elements) {
+    if (element.kind !== 'SUB') continue;
+    for (const port of sheetPorts(element).inputs) {
+      const name = `${element.id}.${port}`;
+      if (!sheet.wires.some((w) => w.to === name)) state.floating.push(name);
+    }
+  }
+  return state;
+}
+
+function evaluateFlat(sheet: LogicSheet, timeMs: number, before?: SheetState): SheetState {
   const source = new Map(sheet.wires.map((wire) => [wire.to, wire.from]));
   const levels: Record<string, boolean> = { ...(before?.levels ?? {}) };
   const memory: Record<string, boolean> = {};
@@ -191,8 +301,8 @@ export function sheetTruthTable(sheet: LogicSheet): SheetTruthTable | null {
   const inputs = sheet.elements.filter((e) => e.kind === 'input').map((e) => e.id);
   const outputs = sheet.elements.filter((e) => e.kind === 'output').map((e) => e.id);
   if (inputs.length === 0 || outputs.length === 0 || inputs.length > 4) return null;
-  if (sheet.elements.some((e) => remembers(e.kind) || stores(e.kind) || e.kind === 'clock'))
-    return null;
+  const parts = hasBlocks(sheet) ? flattenSheet(sheet).sheet.elements : sheet.elements;
+  if (parts.some((e) => remembers(e.kind) || stores(e.kind) || e.kind === 'clock')) return null;
   const rows = Array.from({ length: 1 << inputs.length }, (_, row) => {
     const levels = inputs.map((_, i) => ((row >> (inputs.length - 1 - i)) & 1) === 1);
     const set: LogicSheet = {

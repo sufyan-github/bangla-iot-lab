@@ -209,6 +209,16 @@ export const bn = {
   'sheet.empty': 'ওপরের সারি থেকে একটা সুইচ, একটা গেট আর একটা বাতি নিয়ে শুরু করো।',
   'sheet.kmap': 'কারনো ম্যাপ',
   'sheet.kmapGroups': 'প্রতিটা দল রাশির একটা পদ। একটা বাছলে তার ঘরগুলো দেখা যাবে।',
+  'sheet.group.yours': 'তোমার ব্লক',
+  'sheet.makeBlock': 'ব্লক বানাও',
+  'sheet.makeBlockAbout':
+    'বাছাই করা সুইচগুলো (উপর থেকে নিচে) ব্লকের ইনপুট হবে, বাতিগুলো আউটপুট; তাদের নামই হবে পোর্টের নাম। শিটের সার্কিট যেমন আছে তেমনই থাকবে।',
+  'sheet.blockName': 'ব্লকের নাম',
+  'sheet.cancel': 'থাক',
+  'sheet.forgetBlock': '“{name}” ব্লক মুছে ফেলো',
+  'sheet.error.no-pins':
+    'ব্লক বানাতে বাছাইয়ে অন্তত একটা সুইচ আর একটা বাতি রাখো: সেগুলোই হবে ব্লকের ইনপুট আর আউটপুট।',
+  'sheet.error.in-use': 'এই ব্লক শিটে বা অন্য কোনো ব্লকে ব্যবহার হচ্ছে: আগে সেগুলো সরাও।',
   'sheet.label': 'নাম',
   'sheet.timing': 'টাইমিং ডায়াগ্রাম',
   'sheet.timingHold': 'থামিয়ে দেখো',
@@ -1209,6 +1219,17 @@ export const en: Record<MessageKey, string> = {
   'sheet.empty': 'Start with a switch, a gate and a lamp from the row above.',
   'sheet.kmap': 'Karnaugh map',
   'sheet.kmapGroups': 'Each group is one term of the expression. Choose one to see its cells.',
+  'sheet.group.yours': 'Your blocks',
+  'sheet.makeBlock': 'Make a block',
+  'sheet.makeBlockAbout':
+    'The chosen switches (top to bottom) become the block’s inputs and the lamps its outputs, named as they are. The circuit on the sheet stays as it is.',
+  'sheet.blockName': 'Block name',
+  'sheet.cancel': 'Cancel',
+  'sheet.forgetBlock': 'Forget the block “{name}”',
+  'sheet.error.no-pins':
+    'To make a block, choose at least one switch and one lamp with it: they become its inputs and outputs.',
+  'sheet.error.in-use':
+    'This block is used on the sheet or inside another block: remove those first.',
   'sheet.label': 'Name',
   'sheet.timing': 'Timing diagram',
   'sheet.timingHold': 'Hold still',

@@ -5,10 +5,13 @@ import {
   SHEET_HEIGHT,
   SHEET_WIDTH,
   addSheetElement,
+  blockPinNames,
   connectSheet,
   copyFromSheet,
+  makeBlock,
   moveSheetElements,
   pasteIntoSheet,
+  removeBlock,
   removeFromSheet,
   removeManyFromSheet,
   setSheetElement,
@@ -18,6 +21,7 @@ import {
   type LogicSheet,
   type SheetElement,
   type SheetError,
+  type SheetBlock,
   type SheetClip,
   type SheetKind,
 } from '@banglalab/shared';
@@ -43,7 +47,8 @@ const SIZE = 3;
 const HIGH = '#e8a21a';
 const LOW = 'var(--color-line)';
 
-type SheetTool = 'select' | SheetKind;
+/** What a tap on the sheet puts there: an element of a kind, or one of the sheet's own blocks. */
+type SheetTool = 'select' | SheetKind | `block:${string}`;
 
 /** What was copied last; it outlives the view, so it can be pasted into another project. */
 let sheetClipboard: SheetClip | null = null;
@@ -121,59 +126,63 @@ function ToolGlyph({ id }: { id: SheetTool }) {
     strokeLinejoin: 'round' as const,
   };
   const bubble = id === 'NAND' || id === 'NOR' || id === 'NOT';
-  const body =
-    id === 'select' ? (
-      <path d="M7 4l10 7-5 1.5L10 18z" {...common} />
-    ) : id === 'input' ? (
-      <>
-        <rect x="4" y="8" width="16" height="8" rx="4" {...common} />
-        <circle cx="16" cy="12" r="2.5" fill="currentColor" />
-      </>
-    ) : id === 'output' ? (
-      <>
-        <circle cx="12" cy="12" r="6" {...common} />
-        <path d="M8 8l8 8M16 8l-8 8" {...common} strokeWidth={1.2} />
-      </>
-    ) : id === 'clock' ? (
-      <path d="M3 16h4V8h5v8h5V8h4" {...common} />
-    ) : id === 'AND' || id === 'NAND' ? (
-      <path d="M5 6h6a6 6 0 0 1 0 12H5z" {...common} />
-    ) : id === 'OR' || id === 'NOR' || id === 'XOR' ? (
-      <>
-        <path d="M5 6q9 0 12 6q-3 6-12 6q3-6 0-12z" {...common} />
-        {id === 'XOR' && <path d="M3 6q3 6 0 12" {...common} />}
-      </>
-    ) : id === 'NOT' ? (
-      <path d="M5 6l10 6-10 6z" {...common} />
-    ) : id === 'MUX' ? (
-      <path d="M7 4l10 4v8l-10 4z" {...common} />
-    ) : id === 'DEC' || id === 'CNT' || id === 'REG' || id === 'RAM' ? (
-      <>
-        <rect x="5" y="3" width="14" height="18" rx="1.5" {...common} />
-        <text
-          x="12"
-          y="14.5"
-          textAnchor="middle"
-          fontSize={id === 'RAM' ? 6 : 7}
-          fontWeight={700}
-          fill="currentColor"
-          stroke="none"
-        >
-          {{ DEC: '2→4', CNT: '+1', REG: 'R', RAM: 'RAM' }[id]}
-        </text>
-      </>
-    ) : id === 'HEX' ? (
-      <>
-        <rect x="6" y="3" width="12" height="18" rx="2" {...common} />
-        <path d="M9 7h6M9 12h6M9 17h6M9 7v10M15 7v10" {...common} strokeWidth={1.2} />
-      </>
-    ) : (
-      <>
-        <rect x="5" y="4" width="14" height="16" rx="1.5" {...common} />
-        {id !== 'FA' && <path d="M5 13l3 2-3 2" {...common} strokeWidth={1.2} />}
-        {id === 'FA' && <path d="M9 9h6l-4 3 4 3H9" {...common} strokeWidth={1.2} />}
-      </>
-    );
+  const body = id.startsWith('block:') ? (
+    <>
+      <rect x="6" y="4" width="12" height="16" rx="2" {...common} />
+      <path d="M3 9h3M3 15h3M18 12h3" {...common} />
+    </>
+  ) : id === 'select' ? (
+    <path d="M7 4l10 7-5 1.5L10 18z" {...common} />
+  ) : id === 'input' ? (
+    <>
+      <rect x="4" y="8" width="16" height="8" rx="4" {...common} />
+      <circle cx="16" cy="12" r="2.5" fill="currentColor" />
+    </>
+  ) : id === 'output' ? (
+    <>
+      <circle cx="12" cy="12" r="6" {...common} />
+      <path d="M8 8l8 8M16 8l-8 8" {...common} strokeWidth={1.2} />
+    </>
+  ) : id === 'clock' ? (
+    <path d="M3 16h4V8h5v8h5V8h4" {...common} />
+  ) : id === 'AND' || id === 'NAND' ? (
+    <path d="M5 6h6a6 6 0 0 1 0 12H5z" {...common} />
+  ) : id === 'OR' || id === 'NOR' || id === 'XOR' ? (
+    <>
+      <path d="M5 6q9 0 12 6q-3 6-12 6q3-6 0-12z" {...common} />
+      {id === 'XOR' && <path d="M3 6q3 6 0 12" {...common} />}
+    </>
+  ) : id === 'NOT' ? (
+    <path d="M5 6l10 6-10 6z" {...common} />
+  ) : id === 'MUX' ? (
+    <path d="M7 4l10 4v8l-10 4z" {...common} />
+  ) : id === 'DEC' || id === 'CNT' || id === 'REG' || id === 'RAM' ? (
+    <>
+      <rect x="5" y="3" width="14" height="18" rx="1.5" {...common} />
+      <text
+        x="12"
+        y="14.5"
+        textAnchor="middle"
+        fontSize={id === 'RAM' ? 6 : 7}
+        fontWeight={700}
+        fill="currentColor"
+        stroke="none"
+      >
+        {{ DEC: '2→4', CNT: '+1', REG: 'R', RAM: 'RAM' }[id]}
+      </text>
+    </>
+  ) : id === 'HEX' ? (
+    <>
+      <rect x="6" y="3" width="12" height="18" rx="2" {...common} />
+      <path d="M9 7h6M9 12h6M9 17h6M9 7v10M15 7v10" {...common} strokeWidth={1.2} />
+    </>
+  ) : (
+    <>
+      <rect x="5" y="4" width="14" height="16" rx="1.5" {...common} />
+      {id !== 'FA' && <path d="M5 13l3 2-3 2" {...common} strokeWidth={1.2} />}
+      {id === 'FA' && <path d="M9 9h6l-4 3 4 3H9" {...common} strokeWidth={1.2} />}
+    </>
+  );
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
       {body}
@@ -209,10 +218,13 @@ function ElementBody({
   element,
   state,
   label,
+  block,
 }: {
   element: SheetElement;
   state: SheetState;
   label: string;
+  /** For a block: what it was made from. */
+  block?: SheetBlock;
 }) {
   const w = SIZE * CELL;
   const level = (port: string) => state.levels[`${element.id}.${port}`] === true;
@@ -358,6 +370,57 @@ function ElementBody({
               textAnchor="end"
             >
               {pinName[port]}
+            </text>
+          ))}
+        </g>
+      );
+    }
+    case 'SUB': {
+      const { w: across, h: down } = sheetSize(element);
+      const [width, height] = [across * CELL, down * CELL];
+      const ports = sheetPorts(element);
+      const names = block ? blockPinNames(block) : { inputs: [], outputs: [] };
+      const at = (index: number, count: number) => (height * (index + 1)) / (count + 1);
+      // Pin names are cut short to fit inside the block.
+      const short = (name = '') => (name.length > 5 ? `${name.slice(0, 4)}…` : name);
+      return (
+        <g>
+          <rect
+            x={8}
+            y={4}
+            width={width - 16}
+            height={height - 8}
+            rx={6}
+            fill="var(--color-mat-soft)"
+            stroke="currentColor"
+            strokeWidth={1.8}
+          />
+          <text x={width / 2} y={16} {...text} fontSize={9} fill="var(--color-mat-deep)">
+            {block?.name ?? '?'}
+          </text>
+          {ports.inputs.map((port, i) => (
+            <text
+              key={port}
+              x={15}
+              y={at(i, ports.inputs.length) + 3}
+              fontSize={8}
+              fill="currentColor"
+              stroke="none"
+            >
+              {short(names.inputs[i])}
+            </text>
+          ))}
+          {ports.outputs.map((port, i) => (
+            <text
+              key={port}
+              x={width - 14}
+              y={at(i, ports.outputs.length) + 3}
+              fontSize={8}
+              fill="currentColor"
+              stroke="none"
+              textAnchor="end"
+            >
+              {short(names.outputs[i])}
             </text>
           ))}
         </g>
@@ -554,6 +617,8 @@ export function SheetView() {
   const [selection, setSelection] = useState<string[]>([]);
   const selected = selection.length === 1 ? selection[0]! : null;
   const [clip, setClip] = useState<SheetClip | null>(sheetClipboard);
+  /** The name being typed for a new block, while its form is open. */
+  const [blockName, setBlockName] = useState<string | null>(null);
   /** A box being dragged out over the background to choose what is inside it. */
   const [box, setBox] = useState<{
     x0: number;
@@ -611,8 +676,15 @@ export function SheetView() {
       setBox({ x0: at.x, y0: at.y, x1: at.x, y1: at.y, adding });
       return;
     }
+    const block = tool.startsWith('block:') ? tool.slice('block:'.length) : undefined;
     const result = apply((s) =>
-      addSheetElement(s, tool, Math.floor(at.x - 1), Math.floor(at.y - 1)),
+      addSheetElement(
+        s,
+        block ? 'SUB' : (tool as SheetKind),
+        Math.floor(at.x - 1),
+        Math.floor(at.y - 1),
+        block,
+      ),
     );
     if (result.ok) setSelection(result.id ? [result.id] : []);
   };
@@ -672,6 +744,20 @@ export function SheetView() {
     return element ? sheetName(element) : id;
   };
   const floating = state.floating.filter((port) => !port.startsWith('OUT'));
+  const blocks = sheet.blocks ?? [];
+  const toolName = (id: SheetTool) =>
+    id === 'select'
+      ? t('sheet.tool.select')
+      : id.startsWith('block:')
+        ? (blocks.find((b) => `block:${b.id}` === id)?.name ?? id)
+        : kindName(id as SheetKind);
+  const groups = [
+    ...TOOL_GROUPS,
+    ...(blocks.length > 0
+      ? [{ id: 'yours', items: blocks.map((b) => `block:${b.id}` as SheetTool) }]
+      : []),
+  ];
+  const toolBlock = tool.startsWith('block:') ? tool.slice('block:'.length) : null;
   const kindName = (kind: SheetKind) =>
     (SHEET_GATES as readonly string[]).includes(kind)
       ? kind
@@ -686,7 +772,7 @@ export function SheetView() {
         role="toolbar"
         aria-label={t('lab.viewSheet')}
       >
-        {TOOL_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div
             key={group.id}
             role="group"
@@ -706,7 +792,7 @@ export function SheetView() {
                   type="button"
                   data-testid={`sheet-tool-${id}`}
                   aria-pressed={tool === id}
-                  title={id === 'select' ? t('sheet.tool.select') : kindName(id)}
+                  title={toolName(id)}
                   onClick={() => {
                     setTool(id);
                     setPending(null);
@@ -723,7 +809,7 @@ export function SheetView() {
                       (SHEET_GATES as readonly string[]).includes(id) ? 'font-mono text-xs' : ''
                     }
                   >
-                    {id === 'select' ? t('sheet.tool.select') : kindName(id)}
+                    {toolName(id)}
                   </span>
                 </button>
               ))}
@@ -881,7 +967,12 @@ export function SheetView() {
                   }}
                 />
                 <g pointerEvents="none">
-                  <ElementBody element={element} state={state} label={sheetName(element)} />
+                  <ElementBody
+                    element={element}
+                    state={state}
+                    label={sheetName(element)}
+                    block={blocks.find((b) => b.id === element.block)}
+                  />
                   <text
                     x={sheetSize(element).w * CELL - 3}
                     y={9}
@@ -996,6 +1087,29 @@ export function SheetView() {
                 {t('sheet.paste', { count: clip.elements.length })}
               </button>
             )}
+            {chosen.length > 1 && blockName === null && (
+              <button
+                type="button"
+                data-testid="sheet-make-block"
+                onClick={() => setBlockName('')}
+                className="min-h-11 rounded-lg border-2 border-line px-3 font-medium hover:border-ink-soft"
+              >
+                {t('sheet.makeBlock')}
+              </button>
+            )}
+            {toolBlock && (
+              <button
+                type="button"
+                data-testid="block-forget"
+                onClick={() => {
+                  const result = apply((s) => removeBlock(s, toolBlock));
+                  if (result.ok) setTool('select');
+                }}
+                className="min-h-11 rounded-lg border-2 border-line px-3 font-medium hover:border-danger hover:text-danger"
+              >
+                {t('sheet.forgetBlock', { name: toolName(tool) })}
+              </button>
+            )}
             {selectedElement && (
               <label className="flex items-center gap-2">
                 <span className="text-sm text-ink-soft">{t('sheet.label')}</span>
@@ -1101,6 +1215,40 @@ export function SheetView() {
               {t('sheet.timing')}
             </button>
           </div>
+          {blockName !== null && (
+            <form
+              data-testid="block-form"
+              className="flex flex-wrap items-end gap-2 rounded-[var(--radius-card)] border border-line bg-paper p-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const result = apply((s) => makeBlock(s, chosen, blockName));
+                if (result.ok) {
+                  setBlockName(null);
+                  // Ready to put the new block down.
+                  if (result.id) setTool(`block:${result.id}`);
+                }
+              }}
+            >
+              <p className="w-full text-sm text-ink-soft">{t('sheet.makeBlockAbout')}</p>
+              <label className="flex items-center gap-2">
+                <span className="text-sm text-ink-soft">{t('sheet.blockName')}</span>
+                <input
+                  data-testid="block-name"
+                  value={blockName}
+                  onChange={(event) => setBlockName(event.target.value)}
+                  maxLength={MAX_LABEL}
+                  required
+                  className="field min-h-11 w-40"
+                />
+              </label>
+              <button type="submit" data-testid="block-make" className="btn btn-primary">
+                {t('sheet.makeBlock')}
+              </button>
+              <button type="button" className="btn btn-quiet" onClick={() => setBlockName(null)}>
+                {t('sheet.cancel')}
+              </button>
+            </form>
+          )}
           {timing && <TimingDiagram sheet={sheet} trace={trace} clock={clock} />}
           {table && table !== 'none' && (
             <table className="tabular-nums" data-testid="sheet-truth-table">

@@ -4,10 +4,12 @@ import {
   copyFromSheet,
   emptySheet,
   isLogicSheet,
+  makeBlock,
   moveSheetElement,
   moveSheetElements,
   pasteIntoSheet,
   removeFromSheet,
+  removeBlock,
   removeManyFromSheet,
   setSheetElement,
   sheetName,
@@ -511,5 +513,178 @@ describe('the groups behind the simplest sum', () => {
   it('has no terms when the output is never HIGH, and one that fixes nothing when always', () => {
     expect(simplestTerms(2, [false, false, false, false])).toEqual([]);
     expect(simplestTerms(2, [true, true, true, true])).toEqual([{ mask: 0, value: 0, text: '1' }]);
+  });
+});
+
+describe('logic sheet, part 3: blocks made from a sheet', () => {
+  /** A half adder with named switches and lamps, made into block B1. */
+  function withHalfAdder(): LogicSheet {
+    let sheet = build(
+      ['input', 'input', 'XOR', 'AND', 'output', 'output'],
+      [
+        ['IN1.q', 'G1.a'],
+        ['IN2.q', 'G1.b'],
+        ['IN1.q', 'G2.a'],
+        ['IN2.q', 'G2.b'],
+        ['G1.y', 'OUT1.a'],
+        ['G2.y', 'OUT2.a'],
+      ],
+    );
+    // Put B under A, and Carry under Sum, so the ports come in that order.
+    sheet = ok(moveSheetElement(sheet, 'IN2', 0, 4));
+    sheet = ok(moveSheetElement(sheet, 'OUT2', 20, 4));
+    for (const [id, label] of [
+      ['IN1', 'A'],
+      ['IN2', 'B'],
+      ['OUT1', 'Sum'],
+      ['OUT2', 'Carry'],
+    ])
+      sheet = ok(setSheetElement(sheet, id!, { label }));
+    return ok(
+      makeBlock(
+        sheet,
+        sheet.elements.map((e) => e.id),
+        'Half add',
+      ),
+    );
+  }
+  /** Truth-table rows as strings of their outputs. */
+  const outputsOf = (sheet: LogicSheet) =>
+    sheetTruthTable(sheet)!.rows.map((row) => row.outputs.map(Number).join(''));
+
+  it('a block takes its inputs from its switches and its outputs from its lamps', () => {
+    const sheet = withHalfAdder();
+    const block = sheet.blocks![0]!;
+    expect(block).toMatchObject({
+      id: 'B1',
+      name: 'Half add',
+      inputs: ['IN1', 'IN2'],
+      outputs: ['OUT1', 'OUT2'],
+    });
+    expect(isLogicSheet(sheet)).toBe(true);
+    // The original circuit stays on the sheet.
+    expect(sheet.elements).toHaveLength(6);
+    // Without a switch or a lamp there is nothing to join it by.
+    expect(makeBlock(sheet, ['G1', 'G2'], 'x')).toEqual({ ok: false, error: 'no-pins' });
+  });
+
+  it('two half adders and an OR gate make a full adder', () => {
+    let sheet = withHalfAdder();
+    sheet = { ...sheet, elements: [], wires: [] };
+    sheet = ok(addSheetElement(sheet, 'input', 0, 0));
+    sheet = ok(addSheetElement(sheet, 'input', 0, 4));
+    sheet = ok(addSheetElement(sheet, 'input', 0, 8));
+    sheet = ok(addSheetElement(sheet, 'SUB', 6, 0, 'B1'));
+    sheet = ok(addSheetElement(sheet, 'SUB', 12, 4, 'B1'));
+    sheet = ok(addSheetElement(sheet, 'OR', 18, 8));
+    sheet = ok(addSheetElement(sheet, 'output', 24, 0));
+    sheet = ok(addSheetElement(sheet, 'output', 24, 8));
+    expect(sheet.elements.filter((e) => e.kind === 'SUB').map((e) => e.id)).toEqual(['U1', 'U2']);
+    for (const [a, b] of [
+      ['IN1.q', 'U1.i1'],
+      ['IN2.q', 'U1.i2'],
+      ['U1.o1', 'U2.i1'],
+      ['IN3.q', 'U2.i2'],
+      ['U2.o1', 'OUT1.a'],
+      ['U1.o2', 'G1.a'],
+      ['U2.o2', 'G1.b'],
+      ['G1.y', 'OUT2.a'],
+    ])
+      sheet = ok(connectSheet(sheet, a!, b!));
+    expect(isLogicSheet(sheet)).toBe(true);
+    // Sum and carry of A + B + Cin, rows 000 to 111.
+    expect(outputsOf(sheet)).toEqual(['00', '10', '10', '01', '10', '01', '01', '11']);
+    // A block's ports show the levels inside it.
+    const on = ok(
+      setSheetElement(ok(setSheetElement(sheet, 'IN1', { on: true })), 'IN2', { on: true }),
+    );
+    const state = evaluateSheet(on, 0);
+    expect(state.levels['U1.o2']).toBe(true);
+    expect(state.levels['U1.i1']).toBe(true);
+    expect(state.floating).toEqual([]);
+
+    // The full adder becomes a block itself, made with the half adder's.
+    const full = ok(
+      makeBlock(
+        on,
+        on.elements.map((e) => e.id),
+        'Full add',
+      ),
+    );
+    expect(full.blocks!.map((b) => b.id)).toEqual(['B1', 'B2']);
+    let user = { ...full, elements: [], wires: [] } as LogicSheet;
+    for (let i = 0; i < 3; i++) user = ok(addSheetElement(user, 'input', 0, 4 * i));
+    user = ok(addSheetElement(user, 'SUB', 8, 0, 'B2'));
+    user = ok(addSheetElement(user, 'output', 16, 0));
+    user = ok(addSheetElement(user, 'output', 16, 4));
+    for (const [a, b] of [
+      ['IN1.q', 'U1.i1'],
+      ['IN2.q', 'U1.i2'],
+      ['IN3.q', 'U1.i3'],
+      ['U1.o1', 'OUT1.a'],
+      ['U1.o2', 'OUT2.a'],
+    ])
+      user = ok(connectSheet(user, a!, b!));
+    expect(isLogicSheet(user)).toBe(true);
+    expect(outputsOf(user)).toEqual(['00', '10', '10', '01', '10', '01', '01', '11']);
+    // A block in use cannot be forgotten; nor can one another block is made with.
+    expect(removeBlock(user, 'B2')).toEqual({ ok: false, error: 'in-use' });
+    expect(removeBlock(user, 'B1')).toEqual({ ok: false, error: 'in-use' });
+    const cleared = { ...user, elements: [], wires: [] };
+    expect(removeBlock(cleared, 'B1')).toEqual({ ok: false, error: 'in-use' });
+    expect(ok(removeBlock(ok(removeBlock(cleared, 'B2')), 'B1')).blocks).toBeUndefined();
+  });
+
+  it('a block with a flip-flop inside keeps time, and its unjoined inputs are reported', () => {
+    // A T flip-flop with T held HIGH by a switch inside: a divide-by-two block.
+    let sheet = build(
+      ['input', 'input', 'TFF', 'output'],
+      [
+        ['IN1.q', 'FF1.clk'],
+        ['IN2.q', 'FF1.t'],
+        ['FF1.q', 'OUT1.a'],
+      ],
+    );
+    sheet = ok(
+      makeBlock(
+        sheet,
+        sheet.elements.map((e) => e.id),
+        'Divide',
+      ),
+    );
+    let user = { ...sheet, elements: [], wires: [] } as LogicSheet;
+    user = ok(addSheetElement(user, 'input', 0, 0));
+    user = ok(addSheetElement(user, 'input', 0, 4));
+    user = ok(addSheetElement(user, 'SUB', 6, 0, 'B1'));
+    expect(evaluateSheet(user, 0).floating.sort()).toEqual(['U1.i1', 'U1.i2']);
+    user = ok(connectSheet(user, 'IN1.q', 'U1.i1'));
+    user = ok(connectSheet(user, 'IN2.q', 'U1.i2'));
+    user = ok(setSheetElement(user, 'IN2', { on: true }));
+    let state = evaluateSheet(user, 0);
+    expect(state.floating).toEqual([]);
+    for (let edge = 1; edge <= 3; edge++) {
+      user = ok(setSheetElement(user, 'IN1', { on: false }));
+      state = evaluateSheet(user, 0, state);
+      user = ok(setSheetElement(user, 'IN1', { on: true }));
+      state = evaluateSheet(user, 0, state);
+      expect(state.levels['U1.o1']).toBe(edge % 2 === 1);
+    }
+    // With a flip-flop inside, the sheet has no truth table.
+    expect(sheetTruthTable(user)).toBeNull();
+  });
+
+  it('copies a block with its making, into a sheet that does not have it', () => {
+    const source = withHalfAdder();
+    const placed = ok(addSheetElement(source, 'SUB', 30, 0, 'B1'));
+    const clip = copyFromSheet(placed, ['U1']);
+    expect(clip.blocks!.map((b) => b.id)).toEqual(['B1']);
+    // Into a fresh sheet: the block comes too.
+    const fresh = ok(pasteIntoSheet(emptySheet(), clip, 0, 0));
+    expect(fresh.blocks!.map((b) => b.name)).toEqual(['Half add']);
+    expect(isLogicSheet(fresh)).toBe(true);
+    // Into its own sheet again: the same block is used, not a second one.
+    const again = ok(pasteIntoSheet(placed, clip, 0, 6));
+    expect(again.blocks).toHaveLength(1);
+    expect(again.elements.at(-1)).toMatchObject({ kind: 'SUB', block: 'B1' });
   });
 });

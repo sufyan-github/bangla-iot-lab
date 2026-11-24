@@ -193,3 +193,64 @@ test('a clock drives a counter, whose bits show on a hex digit', async ({ page }
   await page.getByTestId('sheet-timing').click();
   await expect(page.locator('[data-testid="timing-row"][data-signal="CNT1.Q0"]')).toBeVisible();
 });
+
+test('a half adder made into a block, placed and wired, adds; it is kept with the project', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await page.getByTestId('view-sheet').click();
+  await place(page, 'input', 3, 2);
+  await place(page, 'input', 3, 8);
+  await place(page, 'XOR', 10, 2);
+  await place(page, 'AND', 10, 8);
+  await place(page, 'output', 17, 2);
+  await place(page, 'output', 17, 8);
+  await page.getByTestId('sheet-tool-select').click();
+  for (const [a, b] of [
+    ['IN1.q', 'G1.a'],
+    ['IN2.q', 'G1.b'],
+    ['IN1.q', 'G2.a'],
+    ['IN2.q', 'G2.b'],
+    ['G1.y', 'OUT1.a'],
+    ['G2.y', 'OUT2.a'],
+  ]) {
+    await port(page, a!);
+    await port(page, b!);
+  }
+  // From empty space below and to the right, so the box does not start on an element.
+  await dragBox(page, [23, 14], [0.5, 0.5]);
+  await expect(page.locator('[data-selected="true"]')).toHaveCount(6);
+  await page.getByTestId('sheet-make-block').click();
+  await page.getByTestId('block-name').fill('Half add');
+  await page.getByTestId('block-make').click();
+  // The new block is the tool now: put it down and wire it to the same switches.
+  await expect(page.getByTestId('sheet-tool-block:B1')).toHaveAttribute('aria-pressed', 'true');
+  await tapSheet(page, 27, 3);
+  await page.getByTestId('sheet-tool-output').click();
+  await tapSheet(page, 34, 3);
+  await page.getByTestId('sheet-tool-select').click();
+  await expect(page.locator('[data-element="U1"][data-kind="SUB"]')).toBeVisible();
+  for (const [a, b] of [
+    ['IN1.q', 'U1.i1'],
+    ['IN2.q', 'U1.i2'],
+    ['U1.o1', 'OUT3.a'],
+  ]) {
+    await port(page, a!);
+    await port(page, b!);
+  }
+  const sum = page.locator('[data-element="OUT3"]');
+  await expect(sum).toHaveAttribute('data-high', 'false');
+  await page.locator('[data-element="IN1"] rect').first().click();
+  await expect(sum).toHaveAttribute('data-high', 'true');
+  // 1 + 1: the sum is 0 again, as the XOR inside gives.
+  await page.locator('[data-element="IN2"] rect').first().click();
+  await expect(sum).toHaveAttribute('data-high', 'false');
+
+  // Saved with the project, block and all.
+  await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
+  await page.reload();
+  await page.getByTestId('view-sheet').click();
+  await expect(page.locator('[data-element="U1"][data-kind="SUB"]')).toBeVisible();
+  await expect(page.getByTestId('sheet-tool-block:B1')).toBeVisible();
+});
