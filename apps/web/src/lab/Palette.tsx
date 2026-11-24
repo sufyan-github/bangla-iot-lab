@@ -559,6 +559,14 @@ const Icon = ({ item, size = 24 }: { item: PaletteItem; size?: number }) => (
   </svg>
 );
 
+/**
+ * The drawer's small drawing of a part, for use outside the lab: by the type a
+ * part definition simulates. Anything without a drawing of its own gets the chip.
+ */
+export function PartIcon({ type, size = 26 }: { type: string; size?: number }) {
+  return <Icon item={(type in ICONS ? type : 'logic') as PaletteItem} size={size} />;
+}
+
 /** Select, wire and probe: the three ways of working on the board. */
 export function ToolPicker({ compact = false }: { compact?: boolean }) {
   const tool = useLab((s) => s.tool);

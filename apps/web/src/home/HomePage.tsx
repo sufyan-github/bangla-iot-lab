@@ -13,6 +13,7 @@ import { listCloud, openFromCloud, saveToCloud } from '../account/cloud';
 import { useAccount } from '../account/client';
 import { canvasHeight, canvasWidth } from '../lab/geometry';
 import { starterProgram } from '../lab/starters';
+import { ResumeLesson } from '../lessons/ResumeLesson';
 import { Scene } from '../lab/Scene';
 import { projectStore, type ProjectContent, type ProjectRecord } from '../storage/projects';
 
@@ -34,6 +35,9 @@ function Thumbnail({ circuit }: { circuit: CircuitDocument }) {
     </svg>
   );
 }
+
+/** The circuit drawn beside the page's title. */
+const HERO = esp32CircuitExample();
 
 /** The student's saved circuits, with ways to start a new one. */
 export function HomePage() {
@@ -131,42 +135,49 @@ export function HomePage() {
 
   return (
     <main className="flex-1">
-      <div className="band band-plain">
-        <div className="mx-auto max-w-5xl px-4 pt-8 pb-20 sm:pt-12">
-          <h1 className="text-3xl font-bold sm:text-[2.5rem] sm:leading-tight">
-            {t('home.title')}
-          </h1>
-          <p className="mt-2 max-w-xl text-lg text-chalk/80">{t('home.intro')}</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              data-testid="new-project"
-              onClick={() =>
-                create.mutate({ name: t('home.untitled'), circuit: emptyCircuit(), programs: {} })
-              }
-              className="btn btn-primary min-h-12 px-6 text-lg"
-            >
-              <span aria-hidden>＋</span>
-              {t('home.new')}
-            </button>
-            <Link
-              to="/lessons"
-              data-testid="home-lessons"
-              className="btn min-h-12 border-2 border-chalk/50 px-6 text-lg text-chalk hover:bg-chalk/10"
-            >
-              {t('home.lessons')}
-            </Link>
+      <div className="band">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-10 gap-y-6 px-4 pt-8 pb-8 sm:pt-12 sm:pb-10">
+          <div className="min-w-0 flex-[1_1_22rem]">
+            <h1 className="text-3xl leading-tight font-extrabold sm:text-[2.75rem]">
+              {t('app.tagline')}
+            </h1>
+            <p className="mt-3 max-w-xl text-lg text-chalk/80">{t('home.pitch')}</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                data-testid="new-project"
+                onClick={() =>
+                  create.mutate({ name: t('home.untitled'), circuit: emptyCircuit(), programs: {} })
+                }
+                className="btn btn-primary min-h-12 px-6 text-lg"
+              >
+                <span aria-hidden>＋</span>
+                {t('home.new')}
+              </button>
+              <Link
+                to="/lessons"
+                data-testid="home-lessons"
+                className="btn min-h-12 border-2 border-chalk/50 px-6 text-lg text-chalk hover:bg-chalk/10"
+              >
+                {t('home.lessons')}
+              </Link>
+            </div>
+          </div>
+          {/* The lab's own drawing of a circuit, as the student will build it. */}
+          <div className="min-w-0 max-w-md flex-[1_1_18rem]">
+            <Thumbnail circuit={HERO} />
           </div>
         </div>
       </div>
 
-      <div className="mx-auto -mt-14 max-w-5xl px-4 pb-10">
+      <div className="mx-auto max-w-5xl px-4 pt-6 pb-10">
+        <div className="mb-8 empty:hidden">
+          <ResumeLesson projects={projects.data ?? []} />
+        </div>
+
         {/* Three circuits to start from, drawn as they are. */}
-        <section
-          aria-labelledby="examples"
-          className="rounded-[var(--radius-sheet)] bg-surface p-4 shadow-[var(--shadow-raised)] sm:p-5"
-        >
-          <h2 id="examples" className="mb-3 text-lg font-semibold">
+        <section aria-labelledby="examples">
+          <h2 id="examples" className="mb-3 text-xl font-bold">
             {t('home.examplesTitle')}
           </h2>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -176,7 +187,7 @@ export function HomePage() {
                 type="button"
                 data-testid={example.id}
                 onClick={example.open}
-                className="group rounded-[var(--radius-card)] border-2 border-line p-2 text-left transition hover:border-accent"
+                className="group rounded-[var(--radius-card)] border border-line bg-surface p-2 text-left transition hover:border-accent hover:shadow-[var(--shadow-raised)]"
               >
                 <Thumbnail circuit={example.circuit} />
                 <span className="mt-2 block px-1 font-semibold leading-snug group-hover:text-accent">
@@ -191,7 +202,7 @@ export function HomePage() {
         {storageFailed && (
           <p
             role="alert"
-            className="mt-6 rounded-lg border-l-4 border-danger bg-danger-soft px-4 py-3"
+            className="mt-6 rounded-lg border-2 border-danger bg-danger-soft px-4 py-3"
           >
             {t('home.storageError')}
           </p>
@@ -223,8 +234,8 @@ export function HomePage() {
           </section>
         )}
 
-        <div className="mt-8 mb-3 flex items-baseline gap-2">
-          <h2 className="text-xl font-semibold">{t('home.yours')}</h2>
+        <div className="mt-10 mb-3 flex items-baseline gap-2">
+          <h2 className="text-xl font-bold">{t('home.yours')}</h2>
           {projects.data && projects.data.length > 0 && (
             <span className="text-sm text-ink-faint tabular-nums">{projects.data.length}</span>
           )}
@@ -284,6 +295,7 @@ export function HomePage() {
             </li>
           ))}
         </ul>
+        <p className="mt-4 max-w-2xl text-sm text-ink-soft">{t('home.intro')}</p>
       </div>
     </main>
   );

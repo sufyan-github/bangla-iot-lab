@@ -537,9 +537,27 @@ input {
     border-bottom: 2px solid var(--color-rail-blue);
     background: var(--color-paper);
   }
-  /* For a band that something else overlaps at its lower edge. */
-  .band-plain::after {
-    content: none;
+
+  /* Progress as a row of LEDs: lit for done, a ring for the one in hand, dark for not yet. */
+  .led {
+    display: inline-block;
+    width: 0.625rem;
+    height: 0.625rem;
+    flex: none;
+    border-radius: 50%;
+    border: 1.5px solid var(--led-off, var(--color-line-strong));
+  }
+  .led[data-led='on'] {
+    border-color: var(--color-amber);
+    background: var(--color-amber);
+  }
+  .led[data-led='now'] {
+    border: 3px solid var(--color-amber);
+    background: var(--color-surface);
+  }
+  /* On the green band the unlit ones need a lighter rim. */
+  .band {
+    --led-off: rgb(242 246 240 / 0.55);
   }
 
   /* A choice among a few: chips that read as one control. */

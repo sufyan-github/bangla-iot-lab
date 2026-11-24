@@ -40,6 +40,34 @@ test('the lessons page lists the kit lessons, then the projects, in order', asyn
   await expect(projects.last()).toHaveAttribute('data-lesson', 'counter-display');
   // Each project names the lessons worth taking first.
   await expect(projects.first().getByTestId('lesson-after')).toBeVisible();
+  // Progress is a row of LEDs: one for every lesson, none lit in a fresh lab.
+  const leds = page.getByTestId('led-row').first().locator('.led');
+  await expect(leds).toHaveCount(50);
+  await expect(leds.and(page.locator('[data-led="off"]'))).toHaveCount(50);
+});
+
+test('a lesson in hand is offered on the home page, with its steps as LEDs', async ({ page }) => {
+  await page.goto('/lessons');
+  await page.locator('[data-lesson="led-resistor"]').getByTestId('lesson-start').click();
+  await expect(page).toHaveURL(/\/lab\//);
+  const lab = page.url();
+
+  await page.goto('/');
+  const resume = page.getByTestId('lesson-resume');
+  await expect(resume).toContainText(/LED আর তার রেজিস্টর|An LED and its resistor/);
+  // Five steps, none done yet: the first is the one in hand.
+  const leds = resume.getByTestId('led-row').locator('.led');
+  await expect(leds).toHaveCount(5);
+  await expect(leds.first()).toHaveAttribute('data-led', 'now');
+  await resume.getByTestId('lesson-resume-open').click();
+  await expect(page).toHaveURL(lab);
+
+  // On the path, that lesson is the one that stands out.
+  await page.goto('/lessons');
+  await expect(page.locator('[data-lesson="led-resistor"]')).toHaveAttribute(
+    'data-state',
+    'started',
+  );
 });
 
 test('a project opens with its own numbering and its battery in place', async ({ page }) => {

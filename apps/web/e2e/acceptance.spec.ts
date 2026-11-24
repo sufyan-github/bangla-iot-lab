@@ -168,12 +168,18 @@ test('dragging a lead moves it; a plain tap does not', async ({ page }) => {
 
 test('switches between Bangla and English', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('আমার সার্কিট');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'নিজের হাতে সার্কিট বানাও, চালিয়ে দেখো',
+  );
   await expect(page.locator('html')).toHaveAttribute('lang', 'bn');
   await page.getByTestId('language').click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('My circuits');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'Build circuits with your own hands and watch them run',
+  );
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('My circuits');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'Build circuits with your own hands and watch them run',
+  );
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 

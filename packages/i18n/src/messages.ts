@@ -367,6 +367,7 @@ export const bn = {
   'status.updateReady': 'অফলাইনে ব্যবহারের জন্য প্রস্তুত',
 
   'home.title': 'আমার সার্কিট',
+  'home.pitch': 'ব্রেডবোর্ডে পার্টস বসাও, তার জোড়ো, প্রোগ্রাম লেখো। ভুল হলে কিছুই পোড়ে না।',
   'home.intro':
     'এখানে তোমার বানানো সার্কিটগুলো থাকে। সবকিছু এই ডিভাইসেই সেভ হয়, তাই ইন্টারনেট ছাড়াও খুলতে পারবে।',
   'home.new': 'নতুন সার্কিট',
@@ -672,6 +673,8 @@ export const bn = {
   'lessons.trackProgress': '{total}টার {done}টা শেষ',
   'lessons.resume': 'যেখানে থেমেছিলে',
   'lessons.steps': '{count} ধাপ',
+  'lessons.label.part': 'পাঠ {n}',
+  'lessons.label.project': 'প্রকল্প {n}',
   'lessons.title': 'কিটের পাঠ',
   'lessons.intro':
     'প্রতিটা পাঠে কিটের একটা যন্ত্রাংশ: সার্কিট বানাও, প্রোগ্রাম চালাও, আর নিজের চোখে দেখো সেটা কীভাবে কাজ করে। প্রতিটা ধাপ ল্যাব নিজেই মিলিয়ে দেখে।',
@@ -1677,6 +1680,8 @@ export const en: Record<MessageKey, string> = {
   'status.updateReady': 'Ready to use offline',
 
   'home.title': 'My circuits',
+  'home.pitch':
+    'Put parts on a breadboard, join them with wires and write the program. Nothing burns when you get it wrong.',
   'home.intro':
     'The circuits you build are kept here. Everything is saved on this device, so you can open it without internet.',
   'home.new': 'New circuit',
@@ -1992,6 +1997,8 @@ export const en: Record<MessageKey, string> = {
   'lessons.trackProgress': '{done} of {total} finished',
   'lessons.resume': 'Where you left off',
   'lessons.steps': '{count} steps',
+  'lessons.label.part': 'Lesson {n}',
+  'lessons.label.project': 'Project {n}',
   'lessons.title': 'Kit lessons',
   'lessons.intro':
     'Each lesson is about one part of the kit: build the circuit, run the program, and see for yourself how it works. The lab checks every step itself.',

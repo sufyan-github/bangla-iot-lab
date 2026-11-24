@@ -122,7 +122,7 @@ export function GlossaryPage() {
             {t('glossary.none')}
           </p>
         ) : searching ? (
-          <ol className="mt-3 space-y-3">
+          <ol className="mt-3 divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
             {shown.map((term) => (
               <Entry key={term.id} term={term} />
             ))}
@@ -130,10 +130,10 @@ export function GlossaryPage() {
         ) : (
           topics.map((id) => (
             <section key={id} className="mt-6" aria-labelledby={`topic-${id}`}>
-              <h2 id={`topic-${id}`} className="mb-3 text-lg font-semibold">
+              <h2 id={`topic-${id}`} className="mb-3 text-xl font-bold">
                 {t(`glossary.topic.${id}`)}
               </h2>
-              <ol className="space-y-3">
+              <ol className="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
                 {shown
                   .filter((term) => term.topic === id)
                   .map((term) => (
@@ -164,9 +164,10 @@ function Entry({ term }: { term: GlossaryTerm }) {
       id={term.id}
       data-testid="glossary-term"
       data-term={term.id}
-      className="scroll-mt-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 target:border-accent target:ring-2 target:ring-accent"
+      className="flex scroll-mt-4 flex-wrap gap-x-8 gap-y-2 p-4 target:ring-2 target:ring-amber target:ring-inset sm:px-5"
     >
-      <h3 className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      {/* A dictionary entry: the two names on the left, what they mean on the right. */}
+      <h3 className="flex min-w-0 flex-[1_1_13rem] flex-wrap items-baseline gap-x-3 gap-y-0.5 sm:flex-col sm:items-start">
         <span lang={locale} className="text-xl font-bold">
           {term.term[locale]}
         </span>
@@ -176,64 +177,66 @@ function Entry({ term }: { term: GlossaryTerm }) {
           </span>
         )}
         {term.unit && (
-          <span className="rounded-full bg-amber-soft px-2.5 py-0.5 text-sm font-medium text-amber-deep">
+          <span className="rounded-md bg-amber-soft px-2 py-0.5 text-sm font-medium text-amber-deep sm:mt-1.5">
             {t('glossary.unit', { unit: term.unit })}
           </span>
         )}
       </h3>
-      {also.length > 0 && (
-        <p className="mt-1 text-sm text-ink-soft">
-          {t('glossary.also', { names: also.join(', ') })}
-        </p>
-      )}
-      <p className="mt-2 max-w-prose">{term.meaning[locale]}</p>
-      {(lessons.length > 0 || (term.see ?? []).length > 0) && (
-        <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
-          {lessons.length > 0 && (
-            <>
-              <dt className="font-semibold text-ink-soft">{t('glossary.inLessons')}</dt>
-              <dd className="flex flex-wrap gap-x-3 gap-y-1">
-                {listed.map((lesson) => (
-                  <Link
-                    key={lesson.id}
-                    to={`/lessons#${lesson.id}`}
-                    className="text-accent underline underline-offset-2"
-                  >
-                    {lesson.title[locale]}
-                  </Link>
-                ))}
-                {listed.length < lessons.length && (
-                  <button
-                    type="button"
-                    className="font-medium text-accent"
-                    data-testid="glossary-more-lessons"
-                    onClick={() => setAllLessons(true)}
-                  >
-                    {t('glossary.moreLessons', { count: number(lessons.length - listed.length) })}
-                  </button>
-                )}
-              </dd>
-            </>
-          )}
-          {(term.see ?? []).length > 0 && (
-            <>
-              <dt className="font-semibold text-ink-soft">{t('glossary.see')}</dt>
-              <dd className="flex flex-wrap gap-x-3 gap-y-1">
-                {term.see!.map((id) => (
-                  <Link
-                    key={id}
-                    to={`/glossary#${id}`}
-                    className="text-accent underline underline-offset-2"
-                    data-see={id}
-                  >
-                    {name(id)}
-                  </Link>
-                ))}
-              </dd>
-            </>
-          )}
-        </dl>
-      )}
+      <div className="min-w-0 flex-[3_1_24rem]">
+        <p className="max-w-prose">{term.meaning[locale]}</p>
+        {also.length > 0 && (
+          <p className="mt-1.5 text-sm text-ink-soft">
+            {t('glossary.also', { names: also.join(', ') })}
+          </p>
+        )}
+        {(lessons.length > 0 || (term.see ?? []).length > 0) && (
+          <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
+            {lessons.length > 0 && (
+              <>
+                <dt className="font-semibold text-ink-soft">{t('glossary.inLessons')}</dt>
+                <dd className="flex flex-wrap gap-x-3 gap-y-1">
+                  {listed.map((lesson) => (
+                    <Link
+                      key={lesson.id}
+                      to={`/lessons#${lesson.id}`}
+                      className="text-accent underline underline-offset-2"
+                    >
+                      {lesson.title[locale]}
+                    </Link>
+                  ))}
+                  {listed.length < lessons.length && (
+                    <button
+                      type="button"
+                      className="font-medium text-accent"
+                      data-testid="glossary-more-lessons"
+                      onClick={() => setAllLessons(true)}
+                    >
+                      {t('glossary.moreLessons', { count: number(lessons.length - listed.length) })}
+                    </button>
+                  )}
+                </dd>
+              </>
+            )}
+            {(term.see ?? []).length > 0 && (
+              <>
+                <dt className="font-semibold text-ink-soft">{t('glossary.see')}</dt>
+                <dd className="flex flex-wrap gap-x-3 gap-y-1">
+                  {term.see!.map((id) => (
+                    <Link
+                      key={id}
+                      to={`/glossary#${id}`}
+                      className="text-accent underline underline-offset-2"
+                      data-see={id}
+                    >
+                      {name(id)}
+                    </Link>
+                  ))}
+                </dd>
+              </>
+            )}
+          </dl>
+        )}
+      </div>
     </li>
   );
 }
