@@ -33,6 +33,10 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
   const strict = {
     config: { rateLimit: { max: deps.config.signInsPerMinute, timeWindow: '1 minute' } },
   };
+  // Joining and key sign-ins come from a whole class at once, often from one address.
+  const classwide = {
+    config: { rateLimit: { max: deps.config.classJoinsPerMinute, timeWindow: '1 minute' } },
+  };
 
   return async (app) => {
     /**
@@ -42,7 +46,7 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
     app.post(
       '/v1/join',
       {
-        ...strict,
+        ...classwide,
         schema: {
           body: Type.Object(
             {
@@ -146,7 +150,7 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
     app.post(
       '/v1/auth/key',
       {
-        ...strict,
+        ...classwide,
         schema: {
           body: Type.Object(
             {

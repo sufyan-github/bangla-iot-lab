@@ -3,11 +3,21 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import type { AppDependencies } from '../app';
 import { DUMMY_HASH, hashPassword, verifyPassword } from '../auth/password';
-import { audit, clearSessionCookie, endSession, signedIn, startSession } from '../auth/session';
+import { requireUser } from '../auth/access';
+import { sessions } from '../db/schema';
+import {
+  audit,
+  clearSessionCookie,
+  endAllSessions,
+  endSession,
+  signedIn,
+  startSession,
+} from '../auth/session';
 import { classEnrollments, classes, schoolMemberships, schools, users } from '../db/schema';
 import { acceptInvite } from './schools';
 import { onOwnAccount } from '../auth/access';
-import { approvedGuardian, isStaff } from './individuals';
+import { accountEmails, approvedGuardian } from './individuals';
+import { issueEmailToken } from '../auth/email-tokens';
 
 /** Thrown inside the sign-up transaction to undo it when the invitation does not work. */
 class NoSuchInvite extends Error {}
@@ -28,7 +38,8 @@ const Name = Type.String({ minLength: 1, maxLength: 80 });
  * through a class instead.
  */
 export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
-  const { database, config } = deps;
+  const { database, config, mailer } = deps;
+  const mail = accountEmails(config.webOrigin);
   const secure = config.webOrigin.startsWith('https:');
   const strict = {
     config: { rateLimit: { max: deps.config.signInsPerMinute, timeWindow: '1 minute' } },
@@ -49,7 +60,6 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
               /** Joins an existing school instead of naming a new one. */
               inviteCode: Type.Optional(Type.String({ minLength: 4, maxLength: 40 })),
               district: Type.Optional(Type.String({ maxLength: 60 })),
-              keep: Type.Optional(Type.Boolean()),
             },
             { additionalProperties: false },
           ),
@@ -78,9 +88,14 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
               if (!(await acceptInvite(tx, inviteCode, user!.id))) throw new NoSuchInvite();
               return user!.id;
             }
+            // A new school waits for an owner's approval, unless approval is switched off.
             const [school] = await tx
               .insert(schools)
-              .values({ name: schoolName!, district: district || null })
+              .values({
+                name: schoolName!,
+                district: district || null,
+                status: config.schoolApproval === 'required' ? 'pending' : 'active',
+              })
               .returning({ id: schools.id });
             await tx.insert(schoolMemberships).values([
               { schoolId: school!.id, userId: user!.id, role: 'school_admin' },
@@ -94,16 +109,22 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
           throw error;
         }
         await audit(database, { actorId: userId, action: 'auth.sign-up' });
-        await startSession(database, reply, userId, secure, request.body.keep ?? false);
-        return reply.code(201).send({ ok: true });
+        // A teacher confirms their email before signing in, like any adult.
+        const address = email.toLowerCase();
+        const token = await issueEmailToken(database.db, {
+          userId,
+          purpose: 'verify-email',
+          email: address,
+        });
+        await mailer.send(mail.verify(address, displayName, token));
+        return reply.code(202).send({ ok: true, confirmEmail: true });
       },
     );
 
     /**
      * Signs in with an email (adults) or a sign-in name (learners with their own
-     * account), and a password. An adult on their own must have confirmed their
-     * email, and a learner's guardian must have approved the account; teachers'
-     * emails are not checked yet (D-096).
+     * account), and a password. Every adult must have confirmed their email,
+     * and a learner's guardian must have approved the account (D-096, D-098).
      */
     app.post(
       '/v1/auth/sign-in',
@@ -152,11 +173,7 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
         if (!user || !matches) return reply.code(401).send({ error: 'wrong-email-or-password' });
         // Only after the right password, so these say nothing to someone guessing.
         if (user.suspendedAt !== null) return reply.code(403).send({ error: 'account-suspended' });
-        if (
-          user.kind === 'adult' &&
-          user.emailVerifiedAt === null &&
-          !(await isStaff(database, user.id))
-        ) {
+        if (user.kind === 'adult' && user.emailVerifiedAt === null) {
           return reply.code(403).send({ error: 'email-not-verified' });
         }
         if (user.kind === 'learner' && !(await approvedGuardian(database, user.id))) {
@@ -178,15 +195,82 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
       return { ok: true };
     });
 
+    /** Signs this account out on every device, this one too. */
+    app.post('/v1/auth/sign-out-everywhere', async (request, reply) => {
+      const who = await requireUser(database, request, reply);
+      if (!who) return;
+      await endAllSessions(database, who.userId);
+      await audit(database, { actorId: who.userId, action: 'auth.sign-out-everywhere' });
+      clearSessionCookie(reply, secure);
+      return { ok: true };
+    });
+
+    /**
+     * A new password, given the current one. Other devices are signed out; this
+     * one stays signed in. Class learners have a key, not a password.
+     */
+    app.post(
+      '/v1/me/password',
+      {
+        ...strict,
+        schema: {
+          body: Type.Object(
+            { current: Type.String({ maxLength: 200 }), next: Password },
+            { additionalProperties: false },
+          ),
+        },
+      },
+      async (request, reply) => {
+        const who = await requireUser(database, request, reply);
+        if (!who) return;
+        const [user] = await database.db
+          .select({ passwordHash: users.passwordHash })
+          .from(users)
+          .where(eq(users.id, who.userId));
+        if (!user?.passwordHash) return reply.code(409).send({ error: 'no-password' });
+        if (!(await verifyPassword(request.body.current, user.passwordHash))) {
+          return reply.code(401).send({ error: 'wrong-password' });
+        }
+        await database.db
+          .update(users)
+          .set({ passwordHash: await hashPassword(request.body.next) })
+          .where(eq(users.id, who.userId));
+        await database.db
+          .update(sessions)
+          .set({ revokedAt: new Date() })
+          .where(
+            and(
+              eq(sessions.userId, who.userId),
+              isNull(sessions.revokedAt),
+              sql`${sessions.id} <> ${who.sessionId}`,
+            ),
+          );
+        await audit(database, { actorId: who.userId, action: 'auth.change-password' });
+        return { ok: true };
+      },
+    );
+
     /** Who is signed in, and their roles in schools. 401 when no one is. */
     app.get('/v1/me', async (request, reply) => {
       const who = await signedIn(database, request);
       if (!who) return reply.code(401).send({ error: 'signed-out' });
       const roles = await database.db
-        .select({ schoolId: schools.id, schoolName: schools.name, role: schoolMemberships.role })
+        .select({
+          schoolId: schools.id,
+          schoolName: schools.name,
+          role: schoolMemberships.role,
+          // Whether the school works yet: waiting for approval, working, or suspended.
+          schoolStatus: schools.status,
+        })
         .from(schoolMemberships)
         .innerJoin(schools, eq(schools.id, schoolMemberships.schoolId))
-        .where(and(eq(schoolMemberships.userId, who.userId), isNull(schoolMemberships.endedAt)));
+        .where(
+          and(
+            eq(schoolMemberships.userId, who.userId),
+            isNull(schoolMemberships.endedAt),
+            isNull(schools.archivedAt),
+          ),
+        );
       // A learner's classes, under the nickname they have in each.
       const enrolled = await database.db
         .select({

@@ -3,6 +3,7 @@ import { and, asc, eq, gt, isNull, sql } from 'drizzle-orm';
 import type { AppDependencies } from '../app';
 import { adminOf, requireUser } from '../auth/access';
 import { hashCode, makeCode } from '../auth/codes';
+import { issueEmailToken } from '../auth/email-tokens';
 import { audit } from '../auth/session';
 import type { Database } from '../db/client';
 import { classes, schoolMemberships, teacherInvites, users } from '../db/schema';
@@ -241,6 +242,50 @@ export function schoolRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
           targetId: user,
         });
         return { classesMoved: moved.length };
+      },
+    );
+
+    /**
+     * A one-time link for a teacher of the school to set a new password, for the
+     * admin to hand on when email does not arrive (D-098). It works for 24 hours.
+     * Not for the admin themself (who can change their own password), and not
+     * for another school's teachers.
+     */
+    app.post(
+      '/v1/schools/:id/teachers/:user/reset-link',
+      { schema: { params: TeacherParams } },
+      async (request, reply) => {
+        const who = await requireUser(database, request, reply);
+        if (!who) return;
+        const { id: schoolId, user } = request.params;
+        if (!(await adminOf(database, who.userId, schoolId))) {
+          return reply.code(403).send({ error: 'not-an-admin-here' });
+        }
+        if (user === who.userId) return reply.code(409).send({ error: 'use-change-password' });
+        const roles = await rolesIn(schoolId, user);
+        if (!roles.has('teacher')) return reply.code(404).send({ error: 'no-such-teacher' });
+        const [teacher] = await database.db
+          .select({ email: users.email })
+          .from(users)
+          .where(eq(users.id, user));
+        const lifetimeMs = 24 * 60 * 60 * 1000;
+        const token = await issueEmailToken(database.db, {
+          userId: user,
+          purpose: 'reset-password',
+          email: teacher?.email ?? 'given-by-admin',
+          lifetimeMs,
+        });
+        await audit(database, {
+          actorId: who.userId,
+          schoolId,
+          action: 'school.teacher-reset-link',
+          targetType: 'user',
+          targetId: user,
+        });
+        return {
+          link: `${deps.config.webOrigin}/account/reset#${token}`,
+          expiresAt: new Date(Date.now() + lifetimeMs).toISOString(),
+        };
       },
     );
 

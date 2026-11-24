@@ -6,6 +6,7 @@ import { loadConfig } from '../config';
 import type { Database } from '../db/client';
 import { consentRecords, guardianLinks, users } from '../db/schema';
 import { LocalMailbox } from '../mail';
+import { signUpTeacher } from '../test-accounts';
 import { freshDatabase } from '../test-database';
 
 /**
@@ -18,6 +19,7 @@ const config = loadConfig({
   LOG_LEVEL: 'silent',
   WEB_ORIGIN: 'http://localhost:4174',
   SIGN_INS_PER_MINUTE: '1000',
+  SCHOOL_APPROVAL: 'automatic',
 });
 let database: Database;
 let app: Awaited<ReturnType<typeof buildApp>>;
@@ -333,18 +335,12 @@ describe('learners on their own', () => {
   });
 
   it('joins a class on its own account, and keeps the account when taken out of it', async () => {
-    const teacher = cookieOf(
-      await app.inject({
-        method: 'POST',
-        url: '/v1/auth/sign-up',
-        payload: {
-          email: 'teacher@example.test',
-          password: 'a long pass phrase',
-          displayName: 'শিক্ষক',
-          schoolName: 'বিদ্যালয়',
-        },
-      }),
-    );
+    const teacher = await signUpTeacher(app, mailbox, {
+      email: 'teacher@example.test',
+      password: 'a long pass phrase',
+      displayName: 'শিক্ষক',
+      schoolName: 'বিদ্যালয়',
+    });
     const schoolId = (await app.inject({ method: 'GET', url: '/v1/me', ...as(teacher) })).json()
       .schools[0].schoolId;
     const made = await app.inject({

@@ -2,22 +2,29 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../app';
 import { loadConfig } from '../config';
 import type { Database } from '../db/client';
+import { LocalMailbox } from '../mail';
+import { signUpTeacher } from '../test-accounts';
 import { freshDatabase } from '../test-database';
 
 /** Projects in the cloud, against a real PostgreSQL 18. */
-const config = loadConfig({ LOG_LEVEL: 'silent', WEB_ORIGIN: 'http://localhost:4174' });
+const config = loadConfig({
+  LOG_LEVEL: 'silent',
+  WEB_ORIGIN: 'http://localhost:4174',
+  SCHOOL_APPROVAL: 'automatic',
+});
+const mailbox = new LocalMailbox();
 let database: Database;
 let app: Awaited<ReturnType<typeof buildApp>>;
-const cookieOf = (response: { headers: Record<string, unknown> }) =>
-  String(response.headers['set-cookie']).split(';')[0]!;
 
 async function signUp(email: string) {
-  const response = await app.inject({
-    method: 'POST',
-    url: '/v1/auth/sign-up',
-    payload: { email, password: 'a long pass phrase', displayName: 'x', schoolName: 'y' },
-  });
-  return { cookie: cookieOf(response) };
+  return {
+    cookie: await signUpTeacher(app, mailbox, {
+      email,
+      password: 'a long pass phrase',
+      displayName: 'x',
+      schoolName: 'y',
+    }),
+  };
 }
 const doc = (name: string, resistance: number) => ({
   name,
@@ -27,7 +34,7 @@ const doc = (name: string, resistance: number) => ({
 
 beforeAll(async () => {
   database = await freshDatabase('banglalab_test_projects');
-  app = await buildApp({ config, database, fetch: globalThis.fetch });
+  app = await buildApp({ config, database, fetch: globalThis.fetch, mailer: mailbox });
 });
 afterAll(async () => {
   await app?.close();

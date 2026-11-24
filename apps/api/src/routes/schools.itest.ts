@@ -2,10 +2,17 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../app';
 import { loadConfig } from '../config';
 import type { Database } from '../db/client';
+import { LocalMailbox } from '../mail';
+import { signUpTeacher } from '../test-accounts';
 import { freshDatabase } from '../test-database';
 
 /** A school admin invites other teachers, against a real PostgreSQL 18. */
-const config = loadConfig({ LOG_LEVEL: 'silent', WEB_ORIGIN: 'http://localhost:4174' });
+const config = loadConfig({
+  LOG_LEVEL: 'silent',
+  WEB_ORIGIN: 'http://localhost:4174',
+  SCHOOL_APPROVAL: 'automatic',
+});
+const mailbox = new LocalMailbox();
 let database: Database;
 let app: Awaited<ReturnType<typeof buildApp>>;
 let admin: string;
@@ -22,6 +29,15 @@ const signUp = (email: string, extra: Record<string, string>) =>
     payload: { email, password: 'a long pass phrase', displayName: email.split('@')[0], ...extra },
   });
 
+/** Signs up, confirms the email, and gives the session's cookie. */
+const signedUp = (email: string, extra: Record<string, string>) =>
+  signUpTeacher(app, mailbox, {
+    email,
+    password: 'a long pass phrase',
+    displayName: email.split('@')[0],
+    ...extra,
+  });
+
 const invite = async (cookie = admin) => {
   const made = await app.inject({
     method: 'POST',
@@ -33,8 +49,8 @@ const invite = async (cookie = admin) => {
 
 beforeAll(async () => {
   database = await freshDatabase('banglalab_test_schools');
-  app = await buildApp({ config, database, fetch: globalThis.fetch });
-  admin = cookieOf(await signUp('admin@example.test', { schoolName: 'পরীক্ষা বিদ্যালয়' }));
+  app = await buildApp({ config, database, fetch: globalThis.fetch, mailer: mailbox });
+  admin = await signedUp('admin@example.test', { schoolName: 'পরীক্ষা বিদ্যালয়' });
   const me = await app.inject({ method: 'GET', url: '/v1/me', ...as(admin) });
   schoolId = me.json().schools[0].schoolId;
 });
@@ -64,13 +80,12 @@ describe('teacher invitations', () => {
     expect(JSON.stringify(open.json())).not.toContain(code);
 
     // Typed in lower case and without dashes, as people do.
-    const joined = await signUp('new@example.test', {
+    const joined = await signedUp('new@example.test', {
       inviteCode: code.toLowerCase().replaceAll('-', ''),
     });
-    expect(joined.statusCode).toBe(201);
-    const me = await app.inject({ method: 'GET', url: '/v1/me', ...as(cookieOf(joined)) });
+    const me = await app.inject({ method: 'GET', url: '/v1/me', ...as(joined) });
     expect(me.json().schools).toEqual([
-      { schoolId, schoolName: 'পরীক্ষা বিদ্যালয়', role: 'teacher' },
+      { schoolId, schoolName: 'পরীক্ষা বিদ্যালয়', role: 'teacher', schoolStatus: 'active' },
     ]);
     const after = await app.inject({
       method: 'GET',
@@ -91,11 +106,11 @@ describe('teacher invitations', () => {
     const again = await signUp('again@example.test', { inviteCode: code });
     expect(again.statusCode).toBe(404);
     const retry = await signUp('again@example.test', { schoolName: 'অন্য বিদ্যালয়' });
-    expect(retry.statusCode).toBe(201);
+    expect(retry.statusCode).toBe(202);
   });
 
   it('a teacher of another school joins with a code while signed in', async () => {
-    const other = cookieOf(await signUp('other@example.test', { schoolName: 'দ্বিতীয় বিদ্যালয়' }));
+    const other = await signedUp('other@example.test', { schoolName: 'দ্বিতীয় বিদ্যালয়' });
     const { code } = (await invite()).json();
     const accepted = await app.inject({
       method: 'POST',
@@ -202,7 +217,7 @@ describe('running a school', () => {
 
   it('an admin removes a teacher, whose classes pass to the admin', async () => {
     const { code } = (await invite()).json();
-    const leaving = cookieOf(await signUp('leaving@example.test', { inviteCode: code }));
+    const leaving = await signedUp('leaving@example.test', { inviteCode: code });
     const made = await post('/v1/classes', leaving, {
       schoolId,
       name: 'নবম গ',
@@ -290,7 +305,7 @@ describe('running a school', () => {
     expect(me.json().classes.map((c: { className: string }) => c.className)).toEqual(['সপ্তম ছ']);
 
     // Not into a class of another school, nor into the class it is in.
-    const elsewhere = cookieOf(await signUp('elsewhere@example.test', { schoolName: 'অন্য' }));
+    const elsewhere = await signedUp('elsewhere@example.test', { schoolName: 'অন্য' });
     const elseSchool = (await app.inject({ method: 'GET', url: '/v1/me', ...as(elsewhere) })).json()
       .schools[0].schoolId;
     const theirClass = (

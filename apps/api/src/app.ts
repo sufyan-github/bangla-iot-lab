@@ -29,6 +29,14 @@ export async function buildApp(options: Omit<AppDependencies, 'mailer'> & { mail
   const deps: AppDependencies = { ...options, mailer: options.mailer ?? new LocalMailbox() };
   const app = Fastify({
     logger: { level: deps.config.logLevel },
+    // A number of proxy hops becomes the function Fastify expects for it.
+    trustProxy:
+      typeof deps.config.trustProxy === 'number'
+        ? (
+            (hops: number) => (_address: string, hop: number) =>
+              hop < hops
+          )(deps.config.trustProxy)
+        : deps.config.trustProxy,
     bodyLimit: 256 * 1024,
   }).withTypeProvider<TypeBoxTypeProvider>();
 

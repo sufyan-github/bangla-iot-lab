@@ -11,8 +11,28 @@ export interface ApiConfig {
    * minute, on each of those routes: few, against guessing.
    */
   signInsPerMinute: number;
-  /** How many requests of any kind one address may make in a minute. */
+  /**
+   * How many requests of any kind one address may make in a minute. A school's
+   * computer lab often shares one address, so this is generous.
+   */
   requestsPerMinute: number;
+  /**
+   * How many class joins, and sign-ins with a key, one address may make in a
+   * minute: a whole class joins at once from one address. Codes and keys are
+   * long enough that this still makes guessing hopeless.
+   */
+  classJoinsPerMinute: number;
+  /**
+   * Whether a new school waits for an owner's approval ("required", the
+   * default) or works at once ("automatic", for development and tests).
+   */
+  schoolApproval: 'required' | 'automatic';
+  /**
+   * Behind a reverse proxy, which proxies to believe about the visitor's
+   * address (Fastify's trustProxy): "true", a number of hops, or addresses.
+   * Off by default, so a visitor cannot pretend to be another address.
+   */
+  trustProxy: boolean | number | string;
   logLevel: string;
   /** How email leaves the lab. Only "local" exists until a provider is chosen. */
   mailTransport: 'local';
@@ -47,10 +67,19 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     compileWorkerUrl: env.COMPILE_WORKER_URL ?? 'http://127.0.0.1:4100',
     compilesPerMinute: Number(env.COMPILES_PER_MINUTE ?? 20),
     signInsPerMinute: Number(env.SIGN_INS_PER_MINUTE ?? 10),
-    requestsPerMinute: Number(env.REQUESTS_PER_MINUTE ?? 300),
+    requestsPerMinute: Number(env.REQUESTS_PER_MINUTE ?? 1200),
+    classJoinsPerMinute: Number(env.CLASS_JOINS_PER_MINUTE ?? 120),
+    schoolApproval: env.SCHOOL_APPROVAL === 'automatic' ? 'automatic' : 'required',
+    trustProxy: trustProxy(env.TRUST_PROXY),
     logLevel: env.LOG_LEVEL ?? 'info',
     mailTransport: 'local',
     mailFrom: env.MAIL_FROM ?? 'Bangla IoT Lab <no-reply@localhost>',
     devMailbox: env.DEV_MAILBOX === '1',
   };
+}
+
+function trustProxy(value: string | undefined): boolean | number | string {
+  if (!value || value === 'false') return false;
+  if (value === 'true') return true;
+  return /^\d+$/.test(value) ? Number(value) : value;
 }

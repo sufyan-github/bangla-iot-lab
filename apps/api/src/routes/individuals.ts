@@ -65,7 +65,7 @@ export async function approvedGuardian(database: Database, learnerId: string) {
 }
 
 /** Emails, Bangla first, then English. Links carry the token after #, so it never reaches a server log. */
-function emails(origin: string) {
+export function accountEmails(origin: string) {
   const link = (path: string, token: string) => `${origin}/account/${path}#${token}`;
   return {
     verify: (to: string, name: string, token: string): MailMessage => ({
@@ -131,7 +131,7 @@ function emails(origin: string) {
 export function individualRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
   const { database, config, mailer } = deps;
   const secure = config.webOrigin.startsWith('https:');
-  const mail = emails(config.webOrigin);
+  const mail = accountEmails(config.webOrigin);
   const strict = {
     config: { rateLimit: { max: config.signInsPerMinute, timeWindow: '1 minute' } },
   };
@@ -196,7 +196,7 @@ export function individualRoutes(deps: AppDependencies): FastifyPluginAsyncTypeb
         const displayName = request.body.displayName.trim();
         const existing = await findAccount(email);
         if (existing) {
-          if (existing.emailVerifiedAt === null && !(await isStaff(database, existing.id))) {
+          if (existing.kind === 'adult' && existing.emailVerifiedAt === null) {
             // Signed up before and never confirmed: send the link again.
             const token = await issueEmailToken(database.db, {
               userId: existing.id,
@@ -379,14 +379,12 @@ export function individualRoutes(deps: AppDependencies): FastifyPluginAsyncTypeb
       async (request, reply) => {
         const account = await findAccount(request.body.identifier);
         if (account?.kind === 'adult' && account.email && account.emailVerifiedAt === null) {
-          if (!(await isStaff(database, account.id))) {
-            const token = await issueEmailToken(database.db, {
-              userId: account.id,
-              purpose: 'verify-email',
-              email: account.email,
-            });
-            await send(mail.verify(account.email, account.displayName, token));
-          }
+          const token = await issueEmailToken(database.db, {
+            userId: account.id,
+            purpose: 'verify-email',
+            email: account.email,
+          });
+          await send(mail.verify(account.email, account.displayName, token));
         } else if (account?.kind === 'learner' && account.username) {
           const guardian = await pendingGuardian(account.id);
           if (guardian) {

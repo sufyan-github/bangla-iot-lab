@@ -5,6 +5,7 @@ import { loadConfig } from '../config';
 import type { Database } from '../db/client';
 import { users } from '../db/schema';
 import { LocalMailbox } from '../mail';
+import { signUpTeacher } from '../test-accounts';
 import { freshDatabase } from '../test-database';
 
 /** The lab owner's panel (D-097), against PostgreSQL 18. */
@@ -12,6 +13,7 @@ const config = loadConfig({
   LOG_LEVEL: 'silent',
   WEB_ORIGIN: 'http://localhost:4174',
   SIGN_INS_PER_MINUTE: '1000',
+  SCHOOL_APPROVAL: 'automatic',
 });
 let database: Database;
 let app: Awaited<ReturnType<typeof buildApp>>;
@@ -58,14 +60,12 @@ beforeAll(async () => {
     .where(eq(users.id, ownerId));
   owner = await signIn('owner@example.test');
 
-  teacher = cookieOf(
-    await post('/v1/auth/sign-up', {
-      email: 'teacher@example.test',
-      password: PASSWORD,
-      displayName: 'রিনা আপা',
-      schoolName: 'নদী উচ্চ বিদ্যালয়',
-    }),
-  );
+  teacher = await signUpTeacher(app, mailbox, {
+    email: 'teacher@example.test',
+    password: PASSWORD,
+    displayName: 'রিনা আপা',
+    schoolName: 'নদী উচ্চ বিদ্যালয়',
+  });
   schoolId = (await get('/v1/me', teacher)).json().schools[0].schoolId;
   joinCode = (
     await post('/v1/classes', { schoolId, name: 'সপ্তম ক', grade: 7, schoolConsent: true }, teacher)

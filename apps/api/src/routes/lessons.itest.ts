@@ -3,10 +3,17 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../app';
 import { loadConfig } from '../config';
 import type { Database } from '../db/client';
+import { LocalMailbox } from '../mail';
+import { signUpTeacher } from '../test-accounts';
 import { freshDatabase } from '../test-database';
 
 /** Lessons set for a class, and learners' progress, against a real PostgreSQL 18. */
-const config = loadConfig({ LOG_LEVEL: 'silent', WEB_ORIGIN: 'http://localhost:4174' });
+const config = loadConfig({
+  LOG_LEVEL: 'silent',
+  WEB_ORIGIN: 'http://localhost:4174',
+  SCHOOL_APPROVAL: 'automatic',
+});
+const mailbox = new LocalMailbox();
 let database: Database;
 let app: Awaited<ReturnType<typeof buildApp>>;
 const cookieOf = (response: { headers: Record<string, unknown> }) =>
@@ -17,18 +24,13 @@ const learners: string[] = [];
 
 beforeAll(async () => {
   database = await freshDatabase('banglalab_test_lessons');
-  app = await buildApp({ config, database, fetch: globalThis.fetch });
-  const signUp = await app.inject({
-    method: 'POST',
-    url: '/v1/auth/sign-up',
-    payload: {
-      email: 't@example.test',
-      password: 'a long pass phrase',
-      displayName: 'x',
-      schoolName: 'y',
-    },
+  app = await buildApp({ config, database, fetch: globalThis.fetch, mailer: mailbox });
+  teacher = await signUpTeacher(app, mailbox, {
+    email: 't@example.test',
+    password: 'a long pass phrase',
+    displayName: 'x',
+    schoolName: 'y',
   });
-  teacher = cookieOf(signUp);
   const me = await app.inject({ method: 'GET', url: '/v1/me', headers: { cookie: teacher } });
   const made = await app.inject({
     method: 'POST',
