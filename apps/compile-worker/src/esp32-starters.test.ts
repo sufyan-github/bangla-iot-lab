@@ -14,6 +14,7 @@ describe('shipped ESP32 starter programs', () => {
       'air.ino',
       'airquality.ino',
       'beep.ino',
+      'ble.ino',
       'blink.ino',
       'bluetooth.ino',
       'button.ino',

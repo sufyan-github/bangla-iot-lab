@@ -188,6 +188,13 @@ uint32_t getCpuFrequencyMhz(void);
 // --- time ---
 unsigned long millis(void);
 unsigned long micros(void);
+/**
+ * Work a library has waiting for the program, such as Bluetooth callbacks: run
+ * when the program waits (delay) and between turns of loop(), as the ESP32's
+ * radio task would interrupt it. Set by the library that needs it.
+ */
+extern void (*lab_poll_hook)(void);
+void lab_poll(void);
 void delay(uint32_t milliseconds);
 void delayMicroseconds(uint32_t microseconds);
 void yield(void);

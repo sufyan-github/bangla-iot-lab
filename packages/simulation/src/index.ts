@@ -14,6 +14,7 @@ export * from './library';
 export { IDLE_STATE, buildNetlist, netName, type CircuitState, type Netlist } from './netlist';
 export {
   SimulationSession,
+  type BleNote,
   type BoardStatus,
   type Probe,
   type SignalTrace,
@@ -31,6 +32,6 @@ export type { PhoneMessage } from './uart-devices';
 export { LAB_PHONE_NUMBER } from './uart-modules';
 export type { RadioStatus } from './lora';
 export * from './sheet';
-export type { HttpResponse } from '@banglalab/board-emulators';
+export type { BleCharacteristic, BleStatus, HttpResponse } from '@banglalab/board-emulators';
 export { topicMatches, type MqttMessage } from './mqtt';
 export { LAB_SERVICES, LabWebServices, type WebCall } from './web-services';

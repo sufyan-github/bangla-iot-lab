@@ -61,6 +61,7 @@ import esp32ShiftSource from '@banglalab/board-emulators/fixtures/esp32-starters
 import esp32WebserverSource from '@banglalab/board-emulators/fixtures/esp32-starters/webserver.ino?raw';
 import esp32MqttSource from '@banglalab/board-emulators/fixtures/esp32-starters/mqtt.ino?raw';
 import esp32WebclientSource from '@banglalab/board-emulators/fixtures/esp32-starters/webclient.ino?raw';
+import esp32BleSource from '@banglalab/board-emulators/fixtures/esp32-starters/ble.ino?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -135,6 +136,7 @@ export const ESP32_STARTERS = {
   webserver: { source: esp32WebserverSource },
   mqtt: { source: esp32MqttSource },
   webclient: { source: esp32WebclientSource },
+  ble: { source: esp32BleSource },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

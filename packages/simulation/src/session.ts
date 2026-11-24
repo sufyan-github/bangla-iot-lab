@@ -1,5 +1,6 @@
 import {
   UnoBoard,
+  type BleStatus,
   type HttpResponse,
   type PinDrive,
   type ProgrammableBoard,
@@ -74,6 +75,18 @@ export interface BoardStatus {
   settings?: string;
   /** Answers the board's web server gave since the last frame, when there were any. */
   http?: HttpResponse[];
+  /** The board's Bluetooth Low Energy server, once its program has started one. */
+  ble?: BleStatus;
+  /** Notifications it sent the phone since the last frame. */
+  bleNotes?: BleNote[];
+}
+
+/** A notification a board sent the lab's phone. */
+export interface BleNote {
+  handle: number;
+  value: number[];
+  /** Session time it was sent, milliseconds. */
+  timeMs: number;
 }
 
 /**
@@ -121,6 +134,8 @@ interface RunningBoard {
   serial: string;
   /** Web server answers not yet reported. */
   http: HttpResponse[];
+  /** BLE notifications not yet reported. */
+  bleNotes: BleNote[];
   /** Level last presented to each input, for hysteresis and to avoid redundant updates. */
   inputLevel: (boolean | undefined)[];
   /** Pins the board was last told the circuit does not decide (see `releaseInput`). */
@@ -434,6 +449,7 @@ export class SimulationSession {
       highTime: new Array<number>(model.pinCount).fill(0),
       serial: '',
       http: [],
+      bleNotes: [],
       inputLevel: [],
       inputReleased: [],
       events: [],
@@ -459,6 +475,10 @@ export class SimulationSession {
     });
     emulator.onSerial((text) => (board.serial += text));
     emulator.onHttpResponse?.((response) => board.http.push(response));
+    emulator.onBleNotify?.((handle, value) => {
+      if (board.bleNotes.length < 200)
+        board.bleNotes.push({ handle, value: [...value], timeMs: this.clock });
+    });
     emulator.onMqtt?.({
       connect: (_clientId, deliver) => {
         this.broker.connect(boardId, (message) => deliver(message.topic, message.payload));
@@ -940,6 +960,17 @@ export class SimulationSession {
     return this.broker.publish({ topic, payload, from: 'dashboard', timeMs: this.time }, retained);
   }
 
+  /** The lab's phone connects to a board's BLE server, or leaves it. False when it cannot. */
+  bleConnect(boardId: string, connect: boolean): boolean {
+    return this.boards.get(boardId)?.emulator.bleConnect?.(connect) ?? false;
+  }
+
+  /** The lab's phone writes text to one of a board's BLE characteristics. */
+  bleWrite(boardId: string, handle: number, text: string): boolean {
+    const bytes = new TextEncoder().encode(text);
+    return this.boards.get(boardId)?.emulator.bleWrite?.(handle, bytes) ?? false;
+  }
+
   /**
    * A request from the lab's browser panel to a board's web server. Returns its
    * number, to find the answer by in a later frame, or why it was not sent.
@@ -990,10 +1021,13 @@ export class SimulationSession {
         serial: board.serial,
         ...(this.settingsChanged.has(id) ? { settings: this.settings.get(id) ?? '' } : {}),
         ...(board.http.length > 0 ? { http: board.http } : {}),
+        ...(board.emulator.ble?.() ? { ble: board.emulator.ble()! } : {}),
+        ...(board.bleNotes.length > 0 ? { bleNotes: board.bleNotes } : {}),
       };
       board.highTime.fill(0);
       board.serial = '';
       board.http = [];
+      board.bleNotes = [];
       this.settingsChanged.delete(id);
     }
     const frame: SimulationFrame = { timeMs: this.time, result, boards };

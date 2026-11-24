@@ -1,5 +1,6 @@
 import type {
   HttpResponse,
+  BleStatus,
   MqttHandler,
   WebHandler,
   I2cHandler,
@@ -62,6 +63,13 @@ const MAX_HTTP_QUEUE = 4;
 const MAX_HTTP_BODY = 64 * 1024;
 /** PubSubClient's state for a failed connection, and how many messages may wait for loop(). */
 const MQTT_CONNECT_FAILED = -2;
+/** BLE: how many characteristics, how long a value, and how many phone events may wait. */
+const MAX_BLE_CHARACTERISTICS = 32;
+const MAX_BLE_VALUE = 512;
+const MAX_BLE_INBOX = 64;
+/** The ESP32 library's property bits for writing, with and without a reply. */
+const BLE_WRITE = 1 << 1;
+const BLE_WRITE_NR = 1 << 5;
 const MAX_MQTT_INBOX = 64;
 /** Bytes a UART's receive buffer holds, as Espressif's core sets it by default. */
 const UART_BUFFER_BYTES = 256;
@@ -178,6 +186,22 @@ export class Esp32SketchBoard implements ProgrammableBoard {
   /** The lab's made-up web services, and the body of the answer the program got last. */
   private web: WebHandler | null = null;
   private fetched = new Uint8Array(0);
+
+  /** The board's BLE server, once the program starts it; the phone's events waiting for the program. */
+  private bleState: {
+    name: string;
+    advertising: boolean;
+    connected: boolean;
+    characteristics: {
+      handle: number;
+      service: string;
+      uuid: string;
+      properties: number;
+      value: Uint8Array;
+    }[];
+  } | null = null;
+  private readonly bleInbox: Uint8Array[] = [];
+  private readonly bleListeners = new Set<(handle: number, value: Uint8Array) => void>();
 
   /** The lab's MQTT broker, whether the program is connected, and messages waiting for it. */
   private mqtt: MqttHandler | null = null;
@@ -431,6 +455,58 @@ export class Esp32SketchBoard implements ProgrammableBoard {
         }
         return this.fetched.length;
       },
+      host_ble_begin: (pointer: number, length: number) => {
+        this.bleState = {
+          name: this.text(pointer, length).slice(0, 29),
+          advertising: false,
+          connected: false,
+          characteristics: [],
+        };
+        this.bleInbox.length = 0;
+        return 1;
+      },
+      host_ble_add: (
+        servicePointer: number,
+        serviceLength: number,
+        uuidPointer: number,
+        uuidLength: number,
+        properties: number,
+      ) => {
+        const ble = this.bleState;
+        if (!ble || ble.characteristics.length >= MAX_BLE_CHARACTERISTICS) return -1;
+        const handle = ble.characteristics.length;
+        ble.characteristics.push({
+          handle,
+          service: this.text(servicePointer, serviceLength).toLowerCase(),
+          uuid: this.text(uuidPointer, uuidLength).toLowerCase(),
+          properties,
+          value: new Uint8Array(0),
+        });
+        return handle;
+      },
+      host_ble_set: (handle: number, pointer: number, length: number) => {
+        const characteristic = this.bleState?.characteristics[handle];
+        if (!characteristic) return;
+        const size = Math.min(length >>> 0, MAX_BLE_VALUE);
+        characteristic.value = new Uint8Array(this.exports.memory.buffer, pointer, size).slice();
+      },
+      host_ble_notify: (handle: number) => {
+        const characteristic = this.bleState?.characteristics[handle];
+        if (!characteristic || !this.bleState!.connected) return;
+        for (const listener of this.bleListeners) listener(handle, characteristic.value.slice());
+      },
+      host_ble_advertise: (on: number) => {
+        if (this.bleState) this.bleState.advertising = on !== 0 && !this.bleState.connected;
+      },
+      host_ble_next: (pointer: number, capacity: number) => {
+        const next = this.bleInbox[0];
+        if (!next) return 0;
+        if (pointer && capacity >>> 0 >= next.length) {
+          new Uint8Array(this.exports.memory.buffer, pointer, next.length).set(next);
+          this.bleInbox.shift();
+        }
+        return next.length;
+      },
       host_http_listen: (port: number) => {
         this.httpPort = port;
       },
@@ -536,6 +612,9 @@ export class Esp32SketchBoard implements ProgrammableBoard {
     this.wakeAt = null;
     this.rewinding = false;
     this.started = false;
+    // Asleep, the radio is off: the phone loses the board.
+    this.bleState = null;
+    this.bleInbox.length = 0;
     this.instantiate();
     new Uint8Array(this.exports.memory.buffer, sleep.rtcPointer, sleep.rtc.length).set(sleep.rtc);
     this.wakeCause = timer ? 4 : 2;
@@ -642,6 +721,49 @@ export class Esp32SketchBoard implements ProgrammableBoard {
     const id = this.nextHttpId++;
     this.httpQueue.push({ id, path: path.startsWith('/') ? path : `/${path}` });
     return id;
+  }
+
+  ble(): BleStatus | null {
+    const ble = this.bleState;
+    if (!ble) return null;
+    return {
+      name: ble.name,
+      advertising: ble.advertising,
+      connected: ble.connected,
+      characteristics: ble.characteristics.map((c) => ({ ...c, value: [...c.value] })),
+    };
+  }
+
+  bleConnect(connect: boolean): boolean {
+    const ble = this.bleState;
+    if (!ble) return false;
+    if (connect) {
+      // Only a board that is advertising can be found; once connected it stops.
+      if (ble.connected || !ble.advertising) return false;
+      ble.connected = true;
+      ble.advertising = false;
+      this.bleInbox.push(Uint8Array.of(1, 0));
+    } else {
+      if (!ble.connected) return false;
+      ble.connected = false;
+      this.bleInbox.push(Uint8Array.of(2, 0));
+    }
+    return true;
+  }
+
+  bleWrite(handle: number, bytes: Uint8Array): boolean {
+    const characteristic = this.bleState?.characteristics[handle];
+    if (!characteristic || !this.bleState!.connected) return false;
+    if (!(characteristic.properties & (BLE_WRITE | BLE_WRITE_NR))) return false;
+    const value = bytes.slice(0, MAX_BLE_VALUE);
+    characteristic.value = value;
+    if (this.bleInbox.length < MAX_BLE_INBOX)
+      this.bleInbox.push(Uint8Array.of(3, handle, ...value));
+    return true;
+  }
+
+  onBleNotify(listener: (handle: number, value: Uint8Array) => void): void {
+    this.bleListeners.add(listener);
   }
 
   onWeb(handler: WebHandler): void {

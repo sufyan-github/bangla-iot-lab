@@ -164,6 +164,25 @@ int host_http_fetch(const char* method, size_t method_length, const char* url, s
                     const char* body, size_t body_length);
 size_t host_http_fetched(char* buffer, size_t capacity);
 
+/**
+ * Bluetooth Low Energy, as the lab models it: the board is a GATT server and
+ * the lab's phone panel is the only client. `host_ble_begin` names the device;
+ * `host_ble_add` makes a characteristic in a service and returns its handle (or
+ * -1 when there is no room); `host_ble_set` keeps its value for the phone to
+ * read; `host_ble_notify` sends the value to the phone if it is connected.
+ * `host_ble_next` copies the oldest event from the phone, as a kind byte (1
+ * connected, 2 disconnected, 3 written), a handle byte and any bytes written,
+ * takes it off the queue when it fits, and returns its whole length (0 when
+ * none is waiting).
+ */
+int host_ble_begin(const char* name, size_t name_length);
+int host_ble_add(const char* service, size_t service_length, const char* uuid, size_t uuid_length,
+                 int properties);
+void host_ble_set(int handle, const uint8_t* data, size_t length);
+void host_ble_notify(int handle);
+void host_ble_advertise(int on);
+size_t host_ble_next(uint8_t* buffer, size_t capacity);
+
 uint64_t host_micros(void);
 /** Lets time pass. This is where the world moves on and scripted inputs arrive. */
 void host_delay_micros(uint64_t microseconds);

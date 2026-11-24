@@ -159,6 +159,16 @@ const api = {
     return session?.publishMqtt(topic, payload, retained) ?? false;
   },
 
+  /** The lab's phone connects to a board's BLE server (true) or leaves it. */
+  bleConnect(boardId: string, connect: boolean): boolean {
+    return session?.bleConnect(boardId, connect) ?? false;
+  },
+
+  /** The lab's phone writes text to one of a board's BLE characteristics. */
+  bleWrite(boardId: string, handle: number, text: string): boolean {
+    return session?.bleWrite(boardId, handle, text) ?? false;
+  },
+
   /** Text typed on a module's phone panel: a Bluetooth message or an SMS. */
   phone(partId: string, text: string): void {
     session?.phone(partId, text);

@@ -200,7 +200,20 @@ unsigned long micros(void) {
   host_tick();
   return (unsigned long)host_micros();
 }
-void delay(uint32_t milliseconds) { host_delay_micros((uint64_t)milliseconds * 1000); }
+void (*lab_poll_hook)(void) = nullptr;
+void lab_poll(void) {
+  static bool polling = false;
+  // A callback that waits must not run the callbacks again inside itself.
+  if (!lab_poll_hook || polling) return;
+  polling = true;
+  lab_poll_hook();
+  polling = false;
+}
+
+void delay(uint32_t milliseconds) {
+  host_delay_micros((uint64_t)milliseconds * 1000);
+  lab_poll();
+}
 void delayMicroseconds(uint32_t microseconds) { host_delay_micros(microseconds); }
 void yield(void) { host_tick(); }
 void EspClass::restart() {

@@ -2,6 +2,8 @@ export { parseIntelHex } from './intel-hex';
 export type {
   HttpResponse,
   MqttHandler,
+  BleCharacteristic,
+  BleStatus,
   WebHandler,
   I2cHandler,
   I2cResult,

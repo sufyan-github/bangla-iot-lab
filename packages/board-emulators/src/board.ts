@@ -157,6 +157,14 @@ export interface ProgrammableBoard {
    * program's own HTTP requests. A board that does not offer this cannot make any.
    */
   onWeb?(handler: WebHandler): void;
+  /** Optional. The board's Bluetooth Low Energy server as the phone sees it, or null before it starts. */
+  ble?(): BleStatus | null;
+  /** Optional. The lab's phone connects (true) or leaves (false); false when it cannot. */
+  bleConnect?(connect: boolean): boolean;
+  /** Optional. The phone writes to a characteristic; false when it is not connected or may not write. */
+  bleWrite?(handle: number, bytes: Uint8Array): boolean;
+  /** Optional. Called with each notification the program sends while the phone is connected. */
+  onBleNotify?(listener: (handle: number, value: Uint8Array) => void): void;
   /** Optional. Called with each answer the board's web server gives. */
   onHttpResponse?(listener: (response: HttpResponse) => void): void;
   /** Optional. Frees what the board holds, when it is taken out of a circuit. */
@@ -173,6 +181,25 @@ export interface HttpResponse {
   /** Headers the program set, such as Location. */
   headers: Record<string, string>;
   body: string;
+}
+
+/** A characteristic of the board's BLE server, as the phone sees it. */
+export interface BleCharacteristic {
+  handle: number;
+  service: string;
+  uuid: string;
+  /** READ 1, WRITE 2, NOTIFY 4, BROADCAST 8, INDICATE 16, WRITE_NR 32, as the ESP32 library numbers them. */
+  properties: number;
+  /** Its value, as bytes. */
+  value: number[];
+}
+
+/** The board's BLE server: the name it gives, and whether it can be found or is connected. */
+export interface BleStatus {
+  name: string;
+  advertising: boolean;
+  connected: boolean;
+  characteristics: BleCharacteristic[];
 }
 
 /**

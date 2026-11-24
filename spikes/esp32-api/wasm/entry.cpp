@@ -11,6 +11,7 @@ extern "C" __attribute__((export_name("run"))) void run() {
   for (;;) {
     loop();
     host_tick();
+    lab_poll();
   }
 }
 
