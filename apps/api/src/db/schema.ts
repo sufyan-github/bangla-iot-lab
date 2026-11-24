@@ -219,3 +219,22 @@ export const auditLogs = pgTable(
     index('audit_logs_actor_idx').on(t.actorId, t.occurredAt),
   ],
 );
+
+/**
+ * A signed-in device. The token itself lives only in the browser's cookie; the
+ * database keeps its SHA-256, so a copy of the database cannot sign anyone in.
+ */
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    tokenHash: text('token_hash').notNull().unique(),
+    createdAt: createdAt(),
+    expiresAt: at('expires_at').notNull(),
+    revokedAt: at('revoked_at'),
+  },
+  (t) => [index('sessions_user_idx').on(t.userId)],
+);
