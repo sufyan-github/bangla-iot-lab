@@ -63,7 +63,8 @@ export const bn = {
   'sheet.kind.output': 'বাতি',
   'sheet.kind.clock': 'ঘড়ি',
   'sheet.kind.DFF': 'D ফ্লিপ-ফ্লপ',
-  'sheet.hint.select': 'কিছু টেনে সরাও, সুইচে ট্যাপ করে চালু-বন্ধ করো। একটা আউটপুটের গোল বিন্দু, তারপর একটা ইনপুটের বিন্দুতে ট্যাপ করলে তার জোড়া লাগে।',
+  'sheet.hint.select':
+    'কিছু টেনে সরাও, সুইচে ট্যাপ করে চালু-বন্ধ করো। একটা আউটপুটের গোল বিন্দু, তারপর একটা ইনপুটের বিন্দুতে ট্যাপ করলে তার জোড়া লাগে।',
   'sheet.hint.place': 'শিটের খালি জায়গায় ট্যাপ করে বসাও।',
   'sheet.hint.wire': 'এবার যে বিন্দুতে তার যাবে সেখানে ট্যাপ করো। আউটপুট ডানে, ইনপুট বাঁয়ে।',
   'sheet.delete': '{id} সরাও',
@@ -71,7 +72,8 @@ export const bn = {
   'sheet.floating': '{count}টা ইনপুট কিছুর সঙ্গে জোড়া নেই (লাল বিন্দু); শিট সেগুলোকে LOW ধরে।',
   'sheet.unsettled': 'এই শিট কখনো স্থির হয় না: একটা লুপ নিজেই বারবার বদলাচ্ছে।',
   'sheet.empty': 'ওপরের সারি থেকে একটা সুইচ, একটা গেট আর একটা বাতি নিয়ে শুরু করো।',
-  'sheet.noTable': 'সারণির জন্য ১ থেকে ৪টা সুইচ আর অন্তত একটা বাতি লাগে, আর ঘড়ি বা ফ্লিপ-ফ্লপ থাকলে হয় না: তখন আউটপুট আগের অবস্থার ওপরও নির্ভর করে।',
+  'sheet.noTable':
+    'সারণির জন্য ১ থেকে ৪টা সুইচ আর অন্তত একটা বাতি লাগে, আর ঘড়ি বা ফ্লিপ-ফ্লপ থাকলে হয় না: তখন আউটপুট আগের অবস্থার ওপরও নির্ভর করে।',
   'sheet.error.taken': 'ওখানে আগে থেকেই কিছু আছে।',
   'sheet.error.full': 'শিটে আর জায়গা নেই।',
   'sheet.error.missing': 'সেটা আর শিটে নেই।',
@@ -673,8 +675,10 @@ export const bn = {
   'scope.average': 'গড়',
   'scope.socket': 'পিন {pin}',
   'scope.logic': 'লজিক অ্যানালাইজার',
-  'scope.logicAbout': 'তার লাগানো প্রতিটা বোর্ড-পিন, আর লজিক চিপ ও ক্লক মডিউলের জোড়া লাগানো প্রতিটা পা, একই সময়ে HIGH না LOW ছিল তা দেখায়। ২.৫ V-এর বেশি মানে HIGH।',
-  'scope.logicEmpty': 'বোর্ডের কোনো পিনে তার লাগালে, বা কোনো লজিক চিপের পা কিছুর সঙ্গে জুড়লে, সেটা এখানে দেখা যাবে।',
+  'scope.logicAbout':
+    'তার লাগানো প্রতিটা বোর্ড-পিন, আর লজিক চিপ ও ক্লক মডিউলের জোড়া লাগানো প্রতিটা পা, একই সময়ে HIGH না LOW ছিল তা দেখায়। ২.৫ V-এর বেশি মানে HIGH।',
+  'scope.logicEmpty':
+    'বোর্ডের কোনো পিনে তার লাগালে, বা কোনো লজিক চিপের পা কিছুর সঙ্গে জুড়লে, সেটা এখানে দেখা যাবে।',
   'code.starter': 'তৈরি প্রোগ্রাম',
   'code.starter.custom': 'নিজের লেখা',
   'code.starter.blink': 'LED জ্বালাও-নেভাও',
@@ -837,15 +841,19 @@ export const en: Record<MessageKey, string> = {
   'sheet.kind.output': 'Lamp',
   'sheet.kind.clock': 'Clock',
   'sheet.kind.DFF': 'D flip-flop',
-  'sheet.hint.select': 'Drag things to move them; tap a switch to turn it over. Tap an output’s dot, then an input’s dot, to wire them.',
+  'sheet.hint.select':
+    'Drag things to move them; tap a switch to turn it over. Tap an output’s dot, then an input’s dot, to wire them.',
   'sheet.hint.place': 'Tap an empty spot on the sheet to put it there.',
-  'sheet.hint.wire': 'Now tap the dot the wire goes to. Outputs are on the right, inputs on the left.',
+  'sheet.hint.wire':
+    'Now tap the dot the wire goes to. Outputs are on the right, inputs on the left.',
   'sheet.delete': 'Remove {id}',
   'sheet.hz': 'Clock: {count} Hz',
-  'sheet.floating': '{count} inputs are joined to nothing (the red dots); the sheet reads them as LOW.',
+  'sheet.floating':
+    '{count} inputs are joined to nothing (the red dots); the sheet reads them as LOW.',
   'sheet.unsettled': 'This sheet never settles: a loop keeps changing by itself.',
   'sheet.empty': 'Start with a switch, a gate and a lamp from the row above.',
-  'sheet.noTable': 'A table needs 1 to 4 switches and at least one lamp, and no clock or flip-flop: with those, the outputs also depend on what came before.',
+  'sheet.noTable':
+    'A table needs 1 to 4 switches and at least one lamp, and no clock or flip-flop: with those, the outputs also depend on what came before.',
   'sheet.error.taken': 'Something is already there.',
   'sheet.error.full': 'The sheet has no more room.',
   'sheet.error.missing': 'That is no longer on the sheet.',
@@ -1453,8 +1461,10 @@ export const en: Record<MessageKey, string> = {
   'scope.average': 'Average',
   'scope.socket': 'pin {pin}',
   'scope.logic': 'Logic analyser',
-  'scope.logicAbout': 'Each wired board pin, and each joined leg of a logic chip or clock module, as HIGH or LOW over the same time. Above 2.5 V counts as HIGH.',
-  'scope.logicEmpty': 'Plug a wire into a board pin, or join a logic chip’s leg to something, to see it here.',
+  'scope.logicAbout':
+    'Each wired board pin, and each joined leg of a logic chip or clock module, as HIGH or LOW over the same time. Above 2.5 V counts as HIGH.',
+  'scope.logicEmpty':
+    'Plug a wire into a board pin, or join a logic chip’s leg to something, to see it here.',
   'code.starter': 'Ready-made program',
   'code.starter.custom': 'My own',
   'code.starter.blink': 'Blink an LED',
