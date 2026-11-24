@@ -1796,3 +1796,35 @@ before the next.
   per bit underneath, drawn as one thick line with its width and value. Only
   groups of the same width, outputs to inputs. **Not done:** buses on blocks'
   own pins, splitting a bus, and keeping bus labels clear of elements.
+
+## D-089 — IoT, part 3: data logs, HTTPS and Bluetooth Low Energy
+
+Built on 24 November 2026 at the owner's request, in segments, each tested.
+
+- **Data logs.** The serial plotter downloads every line the monitor still
+  holds as a CSV (one column per value); the IoT dashboard keeps the run's MQTT
+  messages (the last 5000) and downloads them as a CSV of time, sender, topic
+  and payload. Files are made in the browser; nothing leaves the device. A
+  byte-order mark lets spreadsheets read Bangla.
+- **HTTPS.** `WiFiClientSecure.h`, written for the lab from the documented
+  API. With no real network there is nothing to encrypt: certificate calls are
+  accepted and kept nowhere, so a program written for a real HTTPS service runs
+  against the lab's made-up services. Tested by compiling and running such a
+  sketch in the sandbox.
+- **Bluetooth Low Energy.** `BLEDevice.h` and its companions, written for the
+  lab from the documented API of the ESP32 core's BLE library, following core
+  3.x (`getValue()` gives a `String`). The board is a GATT server: services,
+  characteristics (read, write, write without reply, notify, indicate),
+  server and characteristic callbacks, advertising. The lab's **phone** is the
+  only client, in a "BLE phone" view of the network panel: it connects to a
+  board that advertises (which then stops advertising, as on a real board),
+  reads values, writes text, and receives notifications. Callbacks run when the
+  program waits (`delay`) or between turns of `loop()`, as the radio task would
+  interrupt it. Deep sleep turns the radio off. New starter `ble`.
+- **Not done, on purpose:** one board's program calling another board's web
+  page. A program waiting for another board's answer would need the boards to
+  pause for one another, a deep change to how they take turns, for little gain:
+  boards already talk to each other through MQTT. **Not modelled:** scanning
+  for other devices, the board as a BLE client, pairing and security, more than
+  one phone, and the phone switching notifications on (it receives them as soon
+  as it connects).

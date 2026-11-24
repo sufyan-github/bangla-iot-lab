@@ -21,6 +21,12 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Bluetooth Low Energy for the ESP32**: `BLEDevice.h` and its companions in
+  the board library, and a BLE phone in the network panel that connects, reads,
+  writes and receives notifications. Ready-made program `ble`.
+- **HTTPS**: `WiFiClientSecure.h`, so programs written for real HTTPS services
+  run against the lab's made-up ones.
+- **Data logs as CSV**: from the serial plotter and from the IoT dashboard.
 - **Logic sheet, part 3**: names for elements; choosing several with a box,
   and copy, paste, move and remove together; a decoder, counter, register and
   16 × 4 RAM; a Karnaugh map for each lamp; blocks of your own made from part
