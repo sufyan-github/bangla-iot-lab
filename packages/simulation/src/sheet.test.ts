@@ -726,3 +726,36 @@ describe('logic sheet, part 3: buses', () => {
     expect(isLogicSheet(pasted)).toBe(true);
   });
 });
+
+describe('logic sheet, part 4: buses on blocks', () => {
+  it('a block with four inputs takes a counter’s four outputs by one bus', () => {
+    // A block of four switches straight to four lamps: a 4-bit "buffer".
+    let sheet = emptySheet();
+    for (let i = 0; i < 4; i++) sheet = ok(addSheetElement(sheet, 'input', 0, 4 * i));
+    for (let i = 0; i < 4; i++) sheet = ok(addSheetElement(sheet, 'output', 6, 4 * i));
+    for (let i = 1; i <= 4; i++) sheet = ok(connectSheet(sheet, `IN${i}.q`, `OUT${i}.a`));
+    sheet = ok(
+      makeBlock(
+        sheet,
+        sheet.elements.map((e) => e.id),
+        'Pass',
+      ),
+    );
+    sheet = { ...sheet, elements: [], wires: [] };
+    sheet = ok(addSheetElement(sheet, 'CNT', 0, 0));
+    sheet = ok(addSheetElement(sheet, 'SUB', 8, 0, 'B1'));
+    sheet = ok(addSheetElement(sheet, 'HEX', 16, 0));
+    sheet = ok(connectBus(sheet, 'CNT1.q', 'U1.i'));
+    sheet = ok(connectBus(sheet, 'U1.o', 'HEX1.d'));
+    expect(sheet.wires.filter((w) => w.to.startsWith('U1.'))).toHaveLength(4);
+    expect(isLogicSheet(sheet)).toBe(true);
+    // A two-input group does not fit a four-pin one.
+    const two = ok(addSheetElement(emptySheet(), 'DEC', 0, 0));
+    expect(
+      connectBus({ ...sheet, elements: [...sheet.elements, ...two.elements] }, 'U1.o', 'DEC1.a'),
+    ).toEqual({
+      ok: false,
+      error: 'not-bus',
+    });
+  });
+});

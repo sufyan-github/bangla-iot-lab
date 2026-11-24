@@ -735,6 +735,14 @@ const GROUPS: Partial<Record<SheetKind, { letter: string; side: 'input' | 'outpu
 /** The element's pin groups that a bus can join. */
 export function sheetPinGroups(element: SheetElement): SheetPinGroup[] {
   const ports = sheetPorts(element);
+  // A block's inputs, in order, are one group, and its outputs another, when there are two or more.
+  if (element.kind === 'SUB') {
+    const group = (letter: 'i' | 'o', list: readonly string[], side: 'input' | 'output') =>
+      list.length >= 2
+        ? [{ name: `${element.id}.${letter}`, ports: list.map((p) => `${element.id}.${p}`), side }]
+        : [];
+    return [...group('i', ports.inputs, 'input'), ...group('o', ports.outputs, 'output')];
+  }
   return (GROUPS[element.kind] ?? []).map(({ letter, side }) => ({
     name: `${element.id}.${letter}`,
     ports: (side === 'input' ? ports.inputs : ports.outputs)
