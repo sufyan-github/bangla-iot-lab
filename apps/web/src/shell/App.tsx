@@ -46,7 +46,7 @@ function Header() {
       <div className="flex h-12 items-center gap-1 px-3">
         <NavLink to="/" className="mr-3 flex shrink-0 items-center gap-2 font-semibold">
           <img src="/favicon.svg" alt="" width={26} height={26} />
-          <span className="text-lg">{t('app.name')}</span>
+          <span className="text-lg max-[420px]:sr-only">{t('app.name')}</span>
         </NavLink>
         <nav className="hidden gap-0.5 md:flex">{links}</nav>
         <div className="ml-auto flex items-center gap-2">
@@ -54,7 +54,7 @@ function Header() {
             to="/account"
             data-testid="nav-account"
             className={({ isActive }) =>
-              `flex min-h-9 max-w-40 items-center gap-2 truncate rounded-full border px-3 text-sm font-medium ${
+              `flex min-h-9 max-w-32 items-center gap-2 truncate rounded-full sm:max-w-40 border px-3 text-sm font-medium ${
                 isActive
                   ? 'border-paper bg-paper text-mat-deep'
                   : 'border-paper/35 hover:bg-paper/10'

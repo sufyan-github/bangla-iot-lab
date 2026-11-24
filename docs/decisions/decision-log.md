@@ -1642,3 +1642,33 @@ diagram as a DC source does. Older circuits are unchanged.
   square wave and 32 times a period for the others, so the oscilloscope draws
   them; a sine is therefore drawn in 32 straight steps. New ones start as a
   0 to 5 V square wave at 1 Hz.
+
+## D-085 — A refreshed interface, built for phones first
+
+The owner asked (24 November 2026) for the interface to be reviewed screen by
+screen and improved. The workbench look stays (a green cutting mat, quiet
+paper, amber for what is being acted on, Anek Bangla); the changes are about
+layout and consistency.
+
+- **Rules.** One amber action a screen; green and red only for states. A type
+  scale of 1.2 from 16 px, nothing below 13 px, for Bangla's vowel signs.
+  Corners grow with size (control, card, sheet). One style for every slider,
+  choice chip, button and field, so the panels match. The variable font's
+  width axis was left out: it would add about 290 KB for phones to download.
+- **Lab.** One bar for the way back, the name, the view and Run. The 61 parts
+  are in a **drawer of labelled compartments** (boards, basics, outputs,
+  displays, sensors, measuring, logic, power, communication) with search,
+  beside the board on a wide screen. The side tabs are Circuit, Code,
+  Instruments and Network (the web page and IoT). The hint is a small note
+  low on the board.
+- **Phones.** The app's header steps aside in the lab; the board fills the
+  first screen, with the tools and the view over it and the parts in a sheet
+  that closes once one is picked; the panels follow below. The header has a
+  menu, a বাং/EN switch and an account chip.
+- **Pages.** Home keeps one main action and shows three examples as pictures
+  of their circuits. Lessons are in tracks with progress, with a card for the
+  lesson last worked on. Instruments look like instruments (a dark screen, a
+  green trace). The logic sheet's toolbar is grouped, with gate symbols. A
+  class's join code is written in chalk on a slate, to copy onto the board.
+
+Not done: a dark mode, and measuring the lab on a low-end Android phone.
