@@ -111,7 +111,7 @@ export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetS
       const clock = input(element, 'clk');
       if (!clocks[element.id] && clock) {
         const q = memory[element.id]!;
-        let next = q;
+        let next: boolean;
         if (element.kind === 'DFF') next = input(element, 'd');
         else if (element.kind === 'TFF') next = input(element, 't') ? !q : q;
         else {
