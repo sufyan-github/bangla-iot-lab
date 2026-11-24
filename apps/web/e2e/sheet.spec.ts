@@ -86,4 +86,21 @@ test('a clock and a D flip-flop with Q̅ to D: the flip-flop turns over by itsel
   // With a clock there is no truth table.
   await page.getByTestId('sheet-table').click();
   await expect(page.getByTestId('sheet-no-table')).toBeVisible();
+
+  // The timing diagram: the clock's line, and Q changing at half its rate.
+  await page.getByTestId('sheet-timing').click();
+  const rows = page.getByTestId('timing-row');
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toHaveAttribute('data-signal', 'CLK1');
+  await expect(rows.last()).toHaveAttribute('data-signal', 'FF1.Q');
+  const changes = async (i: number) => Number(await rows.nth(i).getAttribute('data-changes'));
+  await expect.poll(() => changes(0), { timeout: 4000 }).toBeGreaterThanOrEqual(5);
+  expect(await changes(1)).toBeGreaterThanOrEqual(2);
+  expect(await changes(1)).toBeLessThan(await changes(0));
+
+  // Held still, the lines stop moving.
+  await page.getByTestId('timing-hold').click();
+  const held = await changes(0);
+  await page.waitForTimeout(1200);
+  expect(await changes(0)).toBe(held);
 });

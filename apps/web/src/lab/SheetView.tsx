@@ -22,9 +22,11 @@ import {
   type SheetState,
   type SheetTruthTable,
 } from '@banglalab/simulation';
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react';
 import { useT } from '../i18n';
 import { useLab } from './store';
+import { TimingDiagram } from './TimingDiagram';
+import { TimingTrace, timingSignals } from './timing';
 
 /** One grid step, in drawing units. Each element is three steps square. */
 const CELL = 24;
@@ -44,12 +46,20 @@ function portPoint(element: SheetElement, port: string): { x: number; y: number 
   return { x: inputs.includes(port) ? element.x : element.x + SIZE, y };
 }
 
-/** Works the sheet out as time passes, stopping at every clock change so no edge is lost. */
-function useSheetState(sheet: LogicSheet): SheetState {
-  const start = useRef(performance.now());
+/**
+ * Works the sheet out as time passes, stopping at every clock change so no
+ * edge is lost, and notes each moment's levels for the timing diagram.
+ */
+function useSheetState(sheet: LogicSheet, trace: TimingTrace, clock: () => number): SheetState {
   const last = useRef<SheetState | undefined>(undefined);
   const [state, setState] = useState<SheetState>(() => evaluateSheet(sheet, 0));
   useEffect(() => {
+    const ports = timingSignals(sheet).map((signal) => signal.port);
+    const work = (at: number, before: SheetState | undefined) => {
+      const next = evaluateSheet(sheet, at, before);
+      trace.record(at, next.levels, ports);
+      return next;
+    };
     let key = '';
     const publish = (next: SheetState) => {
       last.current = next;
@@ -59,24 +69,24 @@ function useSheetState(sheet: LogicSheet): SheetState {
         setState(next);
       }
     };
-    let time = performance.now() - start.current;
-    publish(evaluateSheet(sheet, time, last.current));
+    let time = clock();
+    publish(work(time, last.current));
     if (!sheet.elements.some((e) => e.kind === 'clock')) return;
     let frame = 0;
     const tick = () => {
-      const now = performance.now() - start.current;
+      const now = clock();
       let current = last.current;
       for (let at = nextSheetClockChange(sheet, time); at <= now;) {
-        current = evaluateSheet(sheet, at, current);
+        current = work(at, current);
         at = nextSheetClockChange(sheet, at);
       }
       time = now;
-      publish(evaluateSheet(sheet, now, current));
+      publish(work(now, current));
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [sheet]);
+  }, [sheet, trace, clock]);
   return state;
 }
 
@@ -421,7 +431,12 @@ export function SheetView() {
   const canUndo = useLab((s) => s.sheetPast.length > 0);
   const canRedo = useLab((s) => s.sheetFuture.length > 0);
   const { t } = useT();
-  const state = useSheetState(sheet);
+  // The sheet's own time, from when it was opened; the timing diagram counts in it.
+  const start = useRef(performance.now());
+  const clock = useCallback(() => performance.now() - start.current, []);
+  const [trace] = useState(() => new TimingTrace());
+  const state = useSheetState(sheet, trace, clock);
+  const [timing, setTiming] = useState(false);
   const [tool, setTool] = useState<SheetTool>('select');
   const [selected, setSelected] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
@@ -805,7 +820,19 @@ export function SheetView() {
             >
               {t('table.make')}
             </button>
+            <button
+              type="button"
+              data-testid="sheet-timing"
+              aria-pressed={timing}
+              onClick={() => setTiming(!timing)}
+              className={`min-h-11 rounded-lg border-2 px-3 font-medium hover:border-ink-soft ${
+                timing ? 'border-amber bg-amber-soft' : 'border-line'
+              }`}
+            >
+              {t('sheet.timing')}
+            </button>
           </div>
+          {timing && <TimingDiagram sheet={sheet} trace={trace} clock={clock} />}
           {table && table !== 'none' && (
             <table className="tabular-nums" data-testid="sheet-truth-table">
               <thead>
