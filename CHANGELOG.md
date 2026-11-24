@@ -8,6 +8,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Four logic lessons**, each checked step by step by the lab: AND and OR
+  gates, the flip-flop, counting by itself with a seven-segment display, and
+  the shift register.
 - **74HC595 shift register** (circuit format version 25), with `shiftOut()`
   and `shiftIn()` in the ESP32 board library, so three pins drive eight LEDs.
   Ready-made program `shift`.

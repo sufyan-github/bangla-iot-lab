@@ -1,0 +1,249 @@
+{
+  "id": "logic-gates",
+  "order": 44,
+  "parts": ["74hc08", "slide-switch", "resistor", "led-5mm"],
+  "title": {
+    "bn": "লজিক গেট: AND আর OR",
+    "en": "Logic gates: AND and OR"
+  },
+  "summary": {
+    "bn": "দুটো সুইচ আর একটা চিপ দিয়ে দেখো, AND গেট কখন HIGH দেয় আর OR গেট কখন।",
+    "en": "With two switches and a chip, see when an AND gate gives HIGH, and when an OR gate does."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "steps": [
+    {
+      "text": {
+        "bn": "লজিক গেট দুটো ইনপুট দেখে একটা আউটপুট দেয়। **AND** গেটের আউটপুট HIGH হয় শুধু তখন, যখন দুটো ইনপুটই HIGH।\n\nপ্যালেট থেকে একটা **লজিক চিপ** নিয়ে বোর্ডের মাঝের খাঁজের ওপর বসাও। ডানের প্যানেলে দেখো, এটা **74HC08**: এর ভেতরে চারটা AND গেট।",
+        "en": "A logic gate looks at two inputs and gives one output. An **AND** gate’s output is HIGH only when both inputs are HIGH.\n\nTake a **logic chip** from the palette and place it across the breadboard’s middle gap. In the panel on the right you can see it is a **74HC08**: four AND gates inside."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "logic"
+        },
+        {
+          "kind": "prop",
+          "part": "logic",
+          "prop": "chip",
+          "equals": "74HC08"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "চিপেরও বিদ্যুৎ লাগে। খাঁজের ওপরের সারির বাঁয়ের পা **১৪ (VCC)**: তার দিয়ে বোর্ডের **3V3**-এ লাগাও। নিচের সারির ডানের পা **৭ (GND)**: তার দিয়ে **GND**-তে।\n\nপা গোনা শুরু হয় নিচের বাঁ কোণ থেকে (১), নিচের সারি ধরে ডানে (৭), তারপর ওপরের সারি ধরে বাঁয়ে ফিরে (৮ থেকে ১৪)।",
+        "en": "The chip needs power too. The leftmost leg of the row above the gap is **14 (VCC)**: wire it to the board’s **3V3**. The rightmost leg of the row below is **7 (GND)**: wire it to **GND**.\n\nLegs are counted from the bottom left corner (1), along the bottom row to the right (7), then back to the left along the top row (8 to 14)."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p14"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p7"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "প্রথম গেটের ইনপুট পা **১** আর **২**। প্রতিটার জন্য একটা **সুইচ** আর একটা **১০ kΩ রেজিস্টর** নাও:\n\n- সুইচের এক পা ইনপুটে, অন্য পা **3V3**-এ: সুইচ চালু করলে ইনপুট HIGH।\n- রেজিস্টর ইনপুট থেকে **GND**-তে: সুইচ বন্ধ থাকলে এটা ইনপুটকে LOW-তে টেনে রাখে (পুল-ডাউন)। এটা না থাকলে ইনপুট কিছুর সঙ্গে জোড়া থাকে না, আর চিপ ঠিক করতে পারে না সেটা HIGH না LOW।",
+        "en": "The first gate’s inputs are legs **1** and **2**. For each, take a **switch** and a **10 kΩ resistor**:\n\n- one leg of the switch to the input, the other to **3V3**: switching it on makes the input HIGH.\n- the resistor from the input to **GND**: while the switch is off it pulls the input LOW (a pull-down). Without it the input is joined to nothing, and the chip cannot tell whether it is HIGH or LOW."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "switch"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p1"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [4700, 47000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p2"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [4700, 47000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "switch",
+            "pin": "*"
+          },
+          "to": {
+            "part": "logic",
+            "pin": "p1"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "switch",
+            "pin": "*"
+          },
+          "to": {
+            "part": "logic",
+            "pin": "p2"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "switch",
+            "pin": "*"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "গেটের আউটপুট পা **৩**। সেখান থেকে একটা **রেজিস্টর** (২২০ Ω থেকে ১ kΩ) হয়ে একটা **LED**-র লম্বা পায়ে (+) যাও, LED-র ছোট পা (−) **GND**-তে।",
+        "en": "The gate’s output is leg **3**. From there go through a **resistor** (220 Ω to 1 kΩ) to an **LED**’s long leg (+), and the LED’s short leg (−) to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p3"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [220, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সার্কিট চালু করো। একটা সুইচ চালু করো: LED জ্বলে না। এবার দুটোই চালু করো: এখন LED জ্বলবে, কারণ AND চায় দুটো ইনপুটই HIGH।",
+        "en": "Switch the circuit on. Turn one switch on: the LED stays dark. Now turn both on: the LED lights, because AND wants both inputs HIGH."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "no-errors"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on",
+          "label": {
+            "bn": "দুটো সুইচ চালু করলে LED জ্বলেছে",
+            "en": "The LED lit with both switches on"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা সুইচ আবার বন্ধ করো। AND গেটের একটা ইনপুট LOW হলেই আউটপুট LOW, তাই LED নিভে যাবে।",
+        "en": "Turn one switch off again. With one input of the AND gate LOW the output is LOW, so the LED goes out."
+      },
+      "checks": [
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "off",
+          "label": {
+            "bn": "একটা সুইচ বন্ধ করলে LED নিভেছে",
+            "en": "The LED went out with one switch off"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "চিপটা বদলাও: ডানের প্যানেলে **74HC32** বেছে নাও। এর পা একই জায়গায়, কিন্তু গেটগুলো **OR**: যেকোনো একটা ইনপুট HIGH হলেই আউটপুট HIGH। তার একটাও না সরিয়ে দেখো, একটা সুইচ চালু থাকাতেই LED জ্বলে উঠেছে।\n\n**সারণি বানাও** বোতাম চাপলে ল্যাব সুইচ দুটোর চারটা অবস্থাই চালিয়ে দেখায়: এটাই OR গেটের সত্যক সারণি।",
+        "en": "Swap the chip: choose **74HC32** in the panel on the right. Its legs are in the same places, but its gates are **OR**: the output is HIGH when either input is. Without moving a single wire, see the LED light with just one switch on.\n\nPress **Make the table** and the lab runs all four combinations of the switches: that is the OR gate’s truth table."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "logic",
+          "prop": "chip",
+          "equals": "74HC32"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on",
+          "label": {
+            "bn": "OR চিপে একটা সুইচেই LED জ্বলেছে",
+            "en": "With the OR chip the LED lit from one switch"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "AND গেটের আউটপুট HIGH শুধু দুটো ইনপুটই HIGH হলে; OR গেটের, যেকোনো একটা HIGH হলে।",
+      "চিপের পা ১ নিচের বাঁ কোণে; ১৪ নম্বর পা VCC, ৭ নম্বর GND।",
+      "খালি ইনপুট ভরসার নয়: পুল-ডাউন রেজিস্টর সেটাকে LOW-তে রাখে।"
+    ],
+    "en": [
+      "An AND gate’s output is HIGH only when both inputs are HIGH; an OR gate’s when either is.",
+      "Pin 1 of a chip is at the bottom left; pin 14 is VCC and pin 7 GND.",
+      "An input joined to nothing cannot be trusted: a pull-down resistor keeps it LOW."
+    ]
+  },
+  "tryNext": {
+    "bn": "চিপটা **74HC86 (XOR)** করে দেখো: দুটো সুইচ চালু থাকলে LED জ্বলে কি? সারণি বানিয়ে মিলিয়ে নাও।",
+    "en": "Try the **74HC86 (XOR)**: does the LED light with both switches on? Check with the truth table."
+  }
+}

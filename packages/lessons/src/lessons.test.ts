@@ -123,7 +123,180 @@ const lampWires: [string, string][] = [
   ['ESP1.gnd2', 'BB1.j25'],
 ];
 
+/** A 14- or 16-pin chip with pin 1 at f10: pins along row f, then back along row e. */
+const dip = (id: string, type: 'logic' | 'logic16', chip: string, pins: 14 | 16) =>
+  part(
+    id,
+    type,
+    Object.fromEntries(
+      Array.from({ length: pins }, (_, i) => {
+        const n = i + 1;
+        const half = pins / 2;
+        return [`p${n}`, n <= half ? `BB1.f${9 + n}` : `BB1.e${10 + pins - n}`];
+      }),
+    ),
+    { chip },
+  );
+
 const WALKTHROUGHS: Record<string, Walkthrough> = {
+  'shift-register': {
+    // The 74HC595 at f10: pins 1-8 f10-f17 (Q1-Q7, GND), 16-9 e10-e17 (VCC, Q0, DS, OE̅,
+    // STCP, SHCP, MR̅, Q7S). LEDs on Q0 (column 11, top) and Q1 (column 10, bottom).
+    components: [
+      esp32,
+      dip('U1', 'logic16', '74HC595', 16),
+      part('R0', 'resistor', { a: 'BB1.c11', b: 'BB1.c22' }, { resistance: 330 }),
+      part('LED0', 'led', { anode: 'BB1.b22', cathode: 'BB1.b23' }, { color: 'red' }),
+      part('R1', 'resistor', { a: 'BB1.g10', b: 'BB1.g24' }, { resistance: 330 }),
+      part('LED1', 'led', { anode: 'BB1.h24', cathode: 'BB1.h25' }, { color: 'green' }),
+    ],
+    wires: [
+      ['ESP1.3v3', 'BB1.a10'],
+      ['ESP1.gnd1', 'BB1.j17'],
+      ['ESP1.3v3', 'BB1.a16'],
+      ['ESP1.gnd1', 'BB1.a13'],
+      ['ESP1.d23', 'BB1.a12'],
+      ['ESP1.d18', 'BB1.a15'],
+      ['ESP1.d5', 'BB1.a14'],
+      ['ESP1.gnd2', 'BB1.a23'],
+      ['ESP1.gnd2', 'BB1.j25'],
+    ],
+  },
+  'counter-display': {
+    // On a full breadboard. The clock module at c2-c4; the 74HC393 at f10 (pins 1-7 f10-f16,
+    // 14-8 e10-e16); the CD4511 at f20 (pins 1-8 f20-f27, 16-9 e20-e27); the display at
+    // h30-h34 (e, d, COM, c, DP) and d34-d30 (b, a, COM, f, g).
+    components: [
+      esp32,
+      part('CLK1', 'clock', { vcc: 'BB1.c2', out: 'BB1.c3', gnd: 'BB1.c4' }, { hz: 1 }),
+      dip('U1', 'logic', '74HC393', 14),
+      part(
+        'U2',
+        'logic16',
+        Object.fromEntries(
+          Array.from({ length: 16 }, (_, i) => [
+            `p${i + 1}`,
+            i < 8 ? `BB1.f${20 + i}` : `BB1.e${35 - i}`,
+          ]),
+        ),
+        { chip: 'CD4511' },
+      ),
+      part(
+        'DS1',
+        'sevenseg',
+        {
+          e: 'BB1.h30',
+          d: 'BB1.h31',
+          com: 'BB1.h32',
+          c: 'BB1.h33',
+          dp: 'BB1.h34',
+          b: 'BB1.d34',
+          a: 'BB1.d33',
+          com2: 'BB1.d32',
+          f: 'BB1.d31',
+          g: 'BB1.d30',
+        },
+        { kind: 'cathode' },
+      ),
+      // A resistor from each output's column to the segment's column, or to a free column
+      // wired across the gap to it.
+      part('RG', 'resistor', { a: 'BB1.c22', b: 'BB1.c30' }, { resistance: 470 }),
+      part('RF', 'resistor', { a: 'BB1.b21', b: 'BB1.b31' }, { resistance: 470 }),
+      part('RA', 'resistor', { a: 'BB1.a23', b: 'BB1.a33' }, { resistance: 470 }),
+      part('RB', 'resistor', { a: 'BB1.c24', b: 'BB1.c34' }, { resistance: 470 }),
+      part('RC', 'resistor', { a: 'BB1.c25', b: 'BB1.c35' }, { resistance: 470 }),
+      part('RD', 'resistor', { a: 'BB1.c26', b: 'BB1.c36' }, { resistance: 470 }),
+      part('RE', 'resistor', { a: 'BB1.c27', b: 'BB1.c37' }, { resistance: 470 }),
+    ],
+    wires: [
+      ['ESP1.vin', 'BB1.a2'],
+      ['ESP1.gnd1', 'BB1.a4'],
+      ['ESP1.vin', 'BB1.a10'], // 393 VCC
+      ['ESP1.gnd1', 'BB1.j16'], // 393 GND
+      ['ESP1.gnd1', 'BB1.j11'], // 1MR
+      ['BB1.a3', 'BB1.j10'], // clock to 1CP
+      ['ESP1.vin', 'BB1.a20'], // 4511 VDD
+      ['ESP1.gnd2', 'BB1.j27'], // 4511 VSS
+      ['ESP1.vin', 'BB1.j22'], // LT̅
+      ['ESP1.vin', 'BB1.j23'], // BL̅
+      ['ESP1.gnd2', 'BB1.j24'], // LE
+      ['BB1.j12', 'BB1.j26'], // Q0 to A
+      ['BB1.i13', 'BB1.i20'], // Q1 to B
+      ['BB1.i14', 'BB1.i21'], // Q2 to C
+      ['BB1.i15', 'BB1.i25'], // Q3 to D
+      ['BB1.a35', 'BB1.j33'], // to segment c
+      ['BB1.a36', 'BB1.j31'], // to segment d
+      ['BB1.a37', 'BB1.j30'], // to segment e
+      ['ESP1.gnd2', 'BB1.j32'], // COM
+    ],
+    actions: { 5: [{ set: 'CLK1', props: { hz: 5 }, afterMs: 100 }] },
+  },
+  'flip-flop': {
+    // The 74HC74 at f10: pin 1 f10 … pin 7 f16, pin 14 e10 … pin 8 e16.
+    components: [
+      esp32,
+      dip('U1', 'logic', '74HC74', 14),
+      // The clock button from pin 3 (column 12) to column 8 (3V3), and 10 kΩ to column 6 (GND).
+      part('SW1', 'button', { a: 'BB1.i12', b: 'BB1.i8' }),
+      part('R1', 'resistor', { a: 'BB1.h12', b: 'BB1.h6' }, { resistance: 10_000 }),
+      // Q (pin 5, column 14) through 330 Ω to the LED, whose − goes to pin 7's column (GND).
+      part('R2', 'resistor', { a: 'BB1.g14', b: 'BB1.g22' }, { resistance: 330 }),
+      part('LED1', 'led', { anode: 'BB1.h22', cathode: 'BB1.h23' }, { color: 'red' }),
+    ],
+    wires: [
+      ['ESP1.3v3', 'BB1.a10'],
+      ['ESP1.gnd1', 'BB1.j16'],
+      ['ESP1.3v3', 'BB1.j8'],
+      ['ESP1.gnd2', 'BB1.j6'],
+      ['ESP1.3v3', 'BB1.j10'], // CLR
+      ['ESP1.3v3', 'BB1.j13'], // PRE
+      ['BB1.j15', 'BB1.j11'], // Q̅ to D
+      ['BB1.j23', 'BB1.i16'],
+    ],
+    actions: {
+      5: [
+        { press: 'SW1', afterMs: 200 },
+        { release: 'SW1', afterMs: 200 },
+      ],
+      6: [
+        { press: 'SW1', afterMs: 200 },
+        { release: 'SW1', afterMs: 200 },
+      ],
+    },
+  },
+  'logic-gates': {
+    // The 74HC08 at f10: pin 1 f10 … pin 7 f16, pin 14 e10 … pin 8 e16.
+    components: [
+      esp32,
+      dip('U1', 'logic', '74HC08', 14),
+      // Pull-downs from pins 1 and 2 (columns 10, 11) to columns 6 and 7, which are GND.
+      part('R1', 'resistor', { a: 'BB1.g10', b: 'BB1.g6' }, { resistance: 10_000 }),
+      part('R2', 'resistor', { a: 'BB1.h11', b: 'BB1.h7' }, { resistance: 10_000 }),
+      // Switches from pins 1 and 2 to columns 8 and 9, which are 3V3.
+      part('S1', 'switch', { a: 'BB1.i10', b: 'BB1.i8' }, { closed: false }),
+      part('S2', 'switch', { a: 'BB1.j11', b: 'BB1.j9' }, { closed: false }),
+      // Pin 3 (column 12) through 330 Ω to the LED, whose − goes to pin 7's column (GND).
+      part('R3', 'resistor', { a: 'BB1.g12', b: 'BB1.g20' }, { resistance: 330 }),
+      part('LED1', 'led', { anode: 'BB1.h20', cathode: 'BB1.h21' }, { color: 'red' }),
+    ],
+    wires: [
+      ['ESP1.3v3', 'BB1.a10'],
+      ['ESP1.gnd1', 'BB1.j16'],
+      ['ESP1.gnd2', 'BB1.j6'],
+      ['BB1.i6', 'BB1.i7'],
+      ['ESP1.3v3', 'BB1.j8'],
+      ['BB1.h8', 'BB1.h9'],
+      ['BB1.j21', 'BB1.i16'],
+    ],
+    actions: {
+      4: [
+        { set: 'S1', props: { closed: true }, afterMs: 200 },
+        { set: 'S2', props: { closed: true }, afterMs: 200 },
+      ],
+      5: [{ set: 'S2', props: { closed: false }, afterMs: 200 }],
+      6: [{ set: 'U1', props: { chip: '74HC32' }, afterMs: 200 }],
+    },
+  },
   'esp32-blink': { components: [esp32, ...lamp], wires: lampWires },
   'led-resistor': {
     components: [esp32, ...lamp],

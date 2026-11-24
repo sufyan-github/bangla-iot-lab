@@ -1443,3 +1443,26 @@ Ready-made program `shift` (a running light on eight LEDs, from three pins).
 Tests: by hand, three SHCP pulses with DS HIGH show nothing until STCP, then
 0b111, and a LOW shifts in at Q0; on the ESP32 the program lights Q0 to Q7 in
 turn, 300 ms each, and starts again.
+
+## D-077 — Four logic lessons
+
+The fourth logic segment (L4): lessons 44 to 47, written for the lab (CC BY 4.0
+like the other lessons) and each walked through against the real simulation.
+
+1. **Logic gates: AND and OR.** A 74HC08 with two switches, each with a 10 kΩ
+   pull-down, and an LED on the output; then the chip swapped for a 74HC32
+   without moving a wire, and the truth-table tool.
+2. **The flip-flop.** A 74HC74 with Q̅ wired to D and a button on the clock:
+   one press lights the LED, the next puts it out. The text says that a real
+   button bounces and the lab's does not.
+3. **Counting by itself** (a project). A 555 clock module, a 74HC393, a
+   CD4511 and a common-cathode display on a full breadboard, powered from the
+   board's VIN, with no program; at 5 Hz the display goes dark for 10 to 15.
+4. **The shift register.** A 74HC595 on three ESP32 pins with the ready-made
+   program `shift`.
+
+The board only gives power in the first three. The lesson format did not need
+to change: a lesson still starts with the ESP32 board, which is the supply.
+
+**Not checked.** That the lessons read well to students; that is for the team's
+classroom trials, like the other lessons.
