@@ -36,6 +36,8 @@ const KNOWN_ERRORS = [
   'link-not-working',
   'account-suspended',
   'wrong-password',
+  'admin-stays',
+  'owner-stays',
 ];
 
 export function Problem({ error }: { error: string | null }) {

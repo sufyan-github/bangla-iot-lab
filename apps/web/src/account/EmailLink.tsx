@@ -11,7 +11,7 @@ import { Field, Problem, input, primary, useSubmit } from './ui';
  * it never reaches a server log; the page takes it out of the address bar at
  * once, then asks the API what the link is for before anything is done.
  */
-type Purpose = 'verify-email' | 'approve-learner' | 'reset-password';
+type Purpose = 'verify-email' | 'approve-learner' | 'reset-password' | 'close-account';
 
 interface LinkInfo {
   purpose: Purpose;
@@ -60,6 +60,8 @@ export function EmailLinkPage({ expected }: { expected: Purpose }) {
           <Verify token={token} info={info} />
         ) : expected === 'approve-learner' ? (
           <Approve token={token} info={info} />
+        ) : expected === 'close-account' ? (
+          <CloseByLink token={token} info={info} />
         ) : (
           <Reset token={token} info={info} />
         )}
@@ -198,5 +200,106 @@ function Reset({ token, info }: { token: string; info: LinkInfo }) {
         {t('link.savePassword')}
       </button>
     </form>
+  );
+}
+
+/** A guardian's link to close a learner's own account. */
+function CloseByLink({ token, info }: { token: string; info: LinkInfo }) {
+  const { t } = useT();
+  const [done, setDone] = useState(false);
+  const close = useSubmit();
+  if (done) {
+    return (
+      <p role="status" data-testid="account-closed" className="text-lg font-semibold">
+        {t('link.closed', { name: info.displayName })}
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">{t('link.closeTitle')}</h1>
+      <p>{t('link.closeAbout', { name: info.displayName, username: info.username ?? '' })}</p>
+      <Problem error={close.error} />
+      <button
+        type="button"
+        data-testid="close-by-link"
+        disabled={close.busy}
+        className="btn bg-danger px-4 text-paper"
+        onClick={async () => {
+          if (await close.submit('/v1/auth/close-account', { token })) setDone(true);
+        }}
+      >
+        {t('link.close')}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * For a parent or guardian: ask for a link to close a child's own account. The
+ * answer is the same whatever is found; the link goes only to the email that
+ * approved the account.
+ */
+export function GuardianPage() {
+  const { t } = useT();
+  const [username, setUsername] = useState('');
+  const [guardianEmail, setGuardianEmail] = useState('');
+  const [sent, setSent] = useState(false);
+  const ask = useSubmit();
+  return (
+    <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-6" data-testid="guardian-page">
+      <section className="space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
+        <h1 className="text-2xl font-bold">{t('guardian.title')}</h1>
+        <p>{t('guardian.about')}</p>
+        <form
+          className="space-y-3"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (await ask.submit('/v1/auth/guardian-close', { username, guardianEmail })) {
+              setSent(true);
+            }
+          }}
+        >
+          <Field label={t('account.username')}>
+            <input
+              data-testid="guardian-username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              autoCapitalize="none"
+              spellCheck={false}
+              className={`${input} font-mono`}
+            />
+          </Field>
+          <Field label={t('guardian.yourEmail')}>
+            <input
+              data-testid="guardian-email"
+              type="email"
+              autoComplete="email"
+              value={guardianEmail}
+              onChange={(e) => setGuardianEmail(e.target.value)}
+              required
+              className={input}
+            />
+          </Field>
+          <Problem error={ask.error} />
+          {sent ? (
+            <p role="status" data-testid="guardian-sent" className="font-medium text-accent">
+              {t('guardian.sent')}
+            </p>
+          ) : (
+            <button
+              type="submit"
+              data-testid="guardian-submit"
+              disabled={ask.busy}
+              className={primary}
+            >
+              {t('guardian.send')}
+            </button>
+          )}
+        </form>
+        <p className="text-sm text-ink-soft">{t('guardian.classNote')}</p>
+      </section>
+    </main>
   );
 }
