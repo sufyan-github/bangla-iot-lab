@@ -141,5 +141,57 @@
   "tryNext": {
     "bn": "সবচেয়ে বেশি তাপমাত্রা জমা রাখো: DHT11-এর মান আগের সর্বোচ্চের চেয়ে বেশি হলে `putFloat()` দিয়ে লিখে রাখো।",
     "en": "Save the highest temperature: when the DHT11 reads more than the saved highest, write it with `putFloat()`."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "বিদ্যুৎ চলে গেলে সাধারণ ভেরিয়েবলের (int count) কী হয়?",
+        "en": "What happens to an ordinary variable (int count) when the power goes?"
+      },
+      "choices": [
+        {
+          "bn": "হারিয়ে যায়",
+          "en": "It is lost"
+        },
+        {
+          "bn": "ফ্ল্যাশে থেকে যায়",
+          "en": "It stays in flash"
+        },
+        {
+          "bn": "দ্বিগুণ হয়",
+          "en": "It doubles"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "ভেরিয়েবল সাধারণ মেমরিতে থাকে; ফ্ল্যাশে যা লেখা হয়, শুধু সেটাই থাকে।",
+        "en": "Variables live in ordinary memory; only what is written to flash stays."
+      }
+    },
+    {
+      "question": {
+        "bn": "কিছু সেভ না থাকলে memory.getInt(\"starts\", 0) কী দেয়?",
+        "en": "With nothing saved yet, what does memory.getInt(\"starts\", 0) give?"
+      },
+      "choices": [
+        {
+          "bn": "-1",
+          "en": "-1"
+        },
+        {
+          "bn": "0",
+          "en": "0"
+        },
+        {
+          "bn": "একটা এরর",
+          "en": "An error"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "দ্বিতীয় সংখ্যাটা ডিফল্ট: কিছু না থাকলে সেটাই ফেরত আসে।",
+        "en": "The second number is the default: it is what comes back when nothing is saved."
+      }
+    }
+  ]
 }

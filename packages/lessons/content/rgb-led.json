@@ -134,5 +134,57 @@
   "tryNext": {
     "bn": "`showColour(255, 100, 0)` যোগ করে কমলা রং বানাও।",
     "en": "Add `showColour(255, 100, 0)` to make orange."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "লাল পিনে analogWrite(…, 255), সবুজ আর নীলে 0 দিলে কী রঙ?",
+        "en": "Red at analogWrite(…, 255), green and blue at 0: what colour?"
+      },
+      "choices": [
+        {
+          "bn": "সাদা",
+          "en": "White"
+        },
+        {
+          "bn": "লাল",
+          "en": "Red"
+        },
+        {
+          "bn": "কোনো আলো নেই",
+          "en": "No light"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "শুধু লাল LED পুরো উজ্জ্বল, বাকি দুটো নেভা: তাই লাল।",
+        "en": "Only the red LED is fully on and the others are off, so it is red."
+      }
+    },
+    {
+      "question": {
+        "bn": "কোন দুটো রঙের আলো মেশালে হলুদ দেখায়?",
+        "en": "Which two colours of light mix into yellow?"
+      },
+      "choices": [
+        {
+          "bn": "লাল আর নীল",
+          "en": "Red and blue"
+        },
+        {
+          "bn": "সবুজ আর নীল",
+          "en": "Green and blue"
+        },
+        {
+          "bn": "লাল আর সবুজ",
+          "en": "Red and green"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "আলো যোগ হয়: লাল আর সবুজ মিলে হলুদ; লাল আর নীলে বেগুনি, সবুজ আর নীলে সায়ান।",
+        "en": "Light adds up: red and green make yellow; red and blue make purple, green and blue make cyan."
+      }
+    }
+  ]
 }

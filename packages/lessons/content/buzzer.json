@@ -104,5 +104,57 @@
   "tryNext": {
     "bn": "প্রোগ্রাম বদলে একটা লম্বা আর দুটো ছোট বিপ বাজাও।",
     "en": "Change the program to play one long beep and two short ones."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "অ্যাকটিভ বাজার কেন শুধু ভোল্টেজ পেলেই বাজে?",
+        "en": "Why does an active buzzer sound as soon as it gets a voltage?"
+      },
+      "choices": [
+        {
+          "bn": "ভেতরে তার নিজের অসিলেটর আছে",
+          "en": "It has its own oscillator inside"
+        },
+        {
+          "bn": "বোর্ড তাকে গান পাঠায়",
+          "en": "The board sends it a tune"
+        },
+        {
+          "bn": "এটা শুধু ৫ V-এ চলে",
+          "en": "It only works on 5 V"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "অ্যাকটিভ বাজারের ভেতরের অসিলেটর নিজেই কাঁপুনি তৈরি করে, তাই একটা স্থির ভোল্টেজই যথেষ্ট।",
+        "en": "The oscillator inside makes the vibration itself, so a steady voltage is enough."
+      }
+    },
+    {
+      "question": {
+        "bn": "বাজারের + পা D25-এ। − পা কোথায় যাবে?",
+        "en": "The buzzer’s + leg goes to D25. Where does its − leg go?"
+      },
+      "choices": [
+        {
+          "bn": "3V3-এ",
+          "en": "To 3V3"
+        },
+        {
+          "bn": "আরেকটা পিন D26-এ",
+          "en": "To another pin, D26"
+        },
+        {
+          "bn": "GND-এ",
+          "en": "To GND"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "কারেন্ট পিন থেকে বাজার হয়ে GND-এ ফেরে; তাই − পা GND-এ।",
+        "en": "Current flows from the pin through the buzzer back to GND, so the − leg goes to GND."
+      }
+    }
+  ]
 }

@@ -169,5 +169,57 @@
   "tryNext": {
     "bn": "সেন্সরে ট্যাপ করে ধরে রাখার সময় ১০ সেকেন্ড করো। এখন LED কতক্ষণ জ্বলে থাকে?",
     "en": "Tap the sensor and set the hold time to 10 seconds. How long does the LED stay on now?"
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "নড়াচড়া থেমে গেলে OUT কী করে?",
+        "en": "What does OUT do after the movement stops?"
+      },
+      "choices": [
+        {
+          "bn": "সঙ্গে সঙ্গে LOW হয়",
+          "en": "Goes LOW at once"
+        },
+        {
+          "bn": "ধরে রাখার সময়টুকু HIGH থাকে, তারপর LOW",
+          "en": "Stays HIGH for its hold time, then goes LOW"
+        },
+        {
+          "bn": "সবসময় HIGH থাকে",
+          "en": "Stays HIGH for ever"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "HC-SR501 নড়াচড়া থামার পরও কিছুক্ষণ (এখানে 3 সেকেন্ড) HIGH থাকে।",
+        "en": "The HC-SR501 stays HIGH for a while (3 seconds here) after the movement stops."
+      }
+    },
+    {
+      "question": {
+        "bn": "সেন্সর 5 V-এ চলে, তবু OUT-এ ভোল্টেজ ডিভাইডার লাগে না কেন?",
+        "en": "The sensor runs on 5 V, so why does OUT need no voltage divider?"
+      },
+      "choices": [
+        {
+          "bn": "OUT 3.3 V দেয়",
+          "en": "OUT gives 3.3 V"
+        },
+        {
+          "bn": "ESP32-এর সব পিন 5 V নেয়",
+          "en": "All ESP32 pins take 5 V"
+        },
+        {
+          "bn": "ডিভাইডার বোর্ডের ভেতরে আছে",
+          "en": "The divider is inside the board"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "সেন্সরের OUT নিজেই 3.3 V দেয়, যা ESP32-এর পিনের জন্য নিরাপদ।",
+        "en": "The sensor’s OUT itself gives 3.3 V, which is safe for an ESP32 pin."
+      }
+    }
+  ]
 }

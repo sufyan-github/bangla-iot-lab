@@ -179,5 +179,57 @@
   "tryNext": {
     "bn": "LED-টা NO থেকে সরিয়ে NC-তে লাগাও। এখন কখন জ্বলে?",
     "en": "Move the LED from NO to NC. When does it light now?"
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "রিলে চালু হলে COM কার সঙ্গে জোড়া লাগে?",
+        "en": "When the relay is on, COM is joined to…"
+      },
+      "choices": [
+        {
+          "bn": "NC",
+          "en": "NC"
+        },
+        {
+          "bn": "NO",
+          "en": "NO"
+        },
+        {
+          "bn": "GND",
+          "en": "GND"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "NO মানে \"সাধারণত খোলা\": রিলে চালু হলে COM আর NO জোড়া লাগে, বাতি জ্বলে।",
+        "en": "NO means “normally open”: when the relay is on, COM joins NO and the lamp lights."
+      }
+    },
+    {
+      "question": {
+        "bn": "রিলে চালাতে বোর্ডের পিন কতটা কারেন্ট দেয়?",
+        "en": "How much current does the board’s pin give to work the relay?"
+      },
+      "choices": [
+        {
+          "bn": "প্রায় 2 mA",
+          "en": "About 2 mA"
+        },
+        {
+          "bn": "প্রায় 70 mA",
+          "en": "About 70 mA"
+        },
+        {
+          "bn": "প্রায় 1 A",
+          "en": "About 1 A"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "মডিউলের ট্রানজিস্টর আর অপটোকাপলার কয়েলের কারেন্ট দেয়; পিন শুধু প্রায় 2 mA।",
+        "en": "The module’s transistor and optocoupler drive the coil; the pin gives only about 2 mA."
+      }
+    }
+  ]
 }

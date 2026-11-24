@@ -193,5 +193,57 @@
   "tryNext": {
     "bn": "দ্বিতীয় মোটর OUT3 আর OUT4-এ লাগাও, আর IN3, IN4 দিয়ে উল্টো দিকে ঘোরাও: রোবটের দুই চাকা।",
     "en": "Connect a second motor to OUT3 and OUT4 and turn it the other way with IN3 and IN4: a robot's two wheels."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "মোটর সরাসরি বোর্ডের পিন থেকে চালানো যায় না কেন?",
+        "en": "Why can a motor not be run straight from a board pin?"
+      },
+      "choices": [
+        {
+          "bn": "পিন মোটরের দরকারি কারেন্ট দিতে পারে না",
+          "en": "A pin cannot give the current a motor needs"
+        },
+        {
+          "bn": "মোটরে AC লাগে",
+          "en": "The motor needs AC"
+        },
+        {
+          "bn": "পিন খুব ধীর",
+          "en": "The pin is too slow"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "L298N ব্যাটারির কারেন্ট মোটরে দেয়; পিন শুধু দিক আর জোর বলে দেয়।",
+        "en": "The L298N passes the battery’s current to the motor; the pins only say which way and how hard."
+      }
+    },
+    {
+      "question": {
+        "bn": "ব্যাটারি 7.2 V, কিন্তু মোটর পায় প্রায় 5.5 V। কেন?",
+        "en": "The battery is 7.2 V but the motor gets about 5.5 V. Why?"
+      },
+      "choices": [
+        {
+          "bn": "ব্যাটারির চার্জ শেষ",
+          "en": "The battery is flat"
+        },
+        {
+          "bn": "ড্রাইভারের ভেতরে প্রায় 1.6 V খরচ হয়",
+          "en": "About 1.6 V is lost inside the driver"
+        },
+        {
+          "bn": "মোটর নিজে কম চায়",
+          "en": "The motor asks for less"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "L298N-এর ভেতরের ট্রানজিস্টরগুলোয় কিছু ভোল্টেজ পড়ে, তাই মোটর কম পায়।",
+        "en": "Some voltage is lost across the transistors inside the L298N, so the motor gets less."
+      }
+    }
+  ]
 }

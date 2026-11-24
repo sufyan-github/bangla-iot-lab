@@ -141,5 +141,53 @@
   "tryNext": {
     "bn": "বাধা এলে LED-র বদলে বাজার বাজাও।",
     "en": "Sound a buzzer instead of lighting the LED when there is an obstacle."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "সামনে কিছু এলে সেন্সরের OUT পিন কী করে?",
+        "en": "What does the sensor’s OUT pin do when something comes in front?"
+      },
+      "choices": [
+        {
+          "bn": "HIGH হয়",
+          "en": "Goes HIGH"
+        },
+        {
+          "bn": "LOW হয়",
+          "en": "Goes LOW"
+        },
+        {
+          "bn": "দূরত্ব পাঠায়",
+          "en": "Sends the distance"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "ইনফ্রারেড আলো ফিরে এলে OUT LOW হয়; প্রোগ্রাম LOW দেখে বোঝে বাধা আছে।",
+        "en": "When the infrared light bounces back, OUT goes LOW; the program reads LOW as an obstacle."
+      }
+    },
+    {
+      "question": {
+        "bn": "ল্যাবের এই সেন্সর কি বাধা কত দূরে, তা বলতে পারে?",
+        "en": "Can this sensor in the lab tell how far away the obstacle is?"
+      },
+      "choices": [
+        {
+          "bn": "হ্যাঁ, সেন্টিমিটারে",
+          "en": "Yes, in centimetres"
+        },
+        {
+          "bn": "না, শুধু আছে কি নেই",
+          "en": "No, only whether something is there"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "এটা শুধু হ্যাঁ বা না বলে; দূরত্ব মাপতে আল্ট্রাসনিক সেন্সর লাগে।",
+        "en": "It only says yes or no; measuring distance needs the ultrasonic sensor."
+      }
+    }
+  ]
 }

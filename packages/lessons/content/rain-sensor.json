@@ -171,5 +171,53 @@
   "tryNext": {
     "bn": "বৃষ্টি হলে LED-র বদলে বাজার বাজাও (বাজারের পাঠ দেখো)।",
     "en": "Sound a buzzer instead of the LED when it rains (see the buzzer lesson)."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "বোর্ড যত ভেজে, AO-র ভোল্টেজের কী হয়?",
+        "en": "As the board gets wetter, what happens to AO’s voltage?"
+      },
+      "choices": [
+        {
+          "bn": "বাড়ে",
+          "en": "It rises"
+        },
+        {
+          "bn": "কমে",
+          "en": "It falls"
+        },
+        {
+          "bn": "একই থাকে",
+          "en": "It stays the same"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "পানি তামার দাগগুলো জোড়ে; যত ভেজা, AO-র ভোল্টেজ তত কম।",
+        "en": "Water joins the copper tracks: the wetter the board, the lower AO’s voltage."
+      }
+    },
+    {
+      "question": {
+        "bn": "যথেষ্ট ভিজলে DO কী হয়?",
+        "en": "When the board is wet enough, what does DO do?"
+      },
+      "choices": [
+        {
+          "bn": "HIGH হয়",
+          "en": "Goes HIGH"
+        },
+        {
+          "bn": "LOW হয়",
+          "en": "Goes LOW"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "যথেষ্ট পানি পেলে DO LOW হয়; প্রোগ্রাম সেটা দেখে বৃষ্টির সতর্কতা দেয়।",
+        "en": "When there is enough water DO goes LOW, and the program gives the rain warning."
+      }
+    }
+  ]
 }

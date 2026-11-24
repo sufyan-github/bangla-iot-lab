@@ -165,5 +165,57 @@
   "tryNext": {
     "bn": "`dryLevel` বদলে ২৫০০ করো। এখন কখন LED জ্বলে?",
     "en": "Change `dryLevel` to 2500. When does the LED light now?"
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "মাটি শুকালে সেন্সরের আউটপুট ভোল্টেজের কী হয়?",
+        "en": "As the soil dries, what happens to the sensor’s output voltage?"
+      },
+      "choices": [
+        {
+          "bn": "বাড়ে",
+          "en": "It rises"
+        },
+        {
+          "bn": "কমে",
+          "en": "It falls"
+        },
+        {
+          "bn": "শূন্য হয়ে যায়",
+          "en": "It drops to zero"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "এই সেন্সরে মাটি যত শুকনো, আউটপুট ভোল্টেজ তত বেশি।",
+        "en": "With this sensor, the drier the soil, the higher the output voltage."
+      }
+    },
+    {
+      "question": {
+        "bn": "প্রোগ্রামের dryLevel 3000। কোন মানে LED জ্বলবে?",
+        "en": "The program’s dryLevel is 3000. At which reading does the LED light?"
+      },
+      "choices": [
+        {
+          "bn": "1000",
+          "en": "1000"
+        },
+        {
+          "bn": "2500",
+          "en": "2500"
+        },
+        {
+          "bn": "3200",
+          "en": "3200"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "মান 3000 পেরোলে মাটি শুকনো ধরা হয়; 3200 তার বেশি।",
+        "en": "Once the reading passes 3000 the soil counts as dry; 3200 is above it."
+      }
+    }
+  ]
 }

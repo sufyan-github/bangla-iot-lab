@@ -110,5 +110,57 @@
   "tryNext": {
     "bn": "সার্ভো শুধু ০°, ৯০° আর ১৮০°-তে থামুক: প্রতিটায় এক সেকেন্ড।",
     "en": "Make the servo stop only at 0°, 90° and 180°, for a second at each."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "প্রোগ্রাম সার্ভোকে কোণ জানায় কীভাবে?",
+        "en": "How does the program tell a servo which angle to turn to?"
+      },
+      "choices": [
+        {
+          "bn": "সিগন্যাল পিনে পালস কতটা লম্বা, তা দিয়ে",
+          "en": "By how long the pulses on its signal pin are"
+        },
+        {
+          "bn": "VCC-র ভোল্টেজ দিয়ে",
+          "en": "By the voltage on VCC"
+        },
+        {
+          "bn": "কতক্ষণ চালু রাখা হলো, তা দিয়ে",
+          "en": "By how long it is switched on"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "সার্ভো সিগন্যাল পিনের পালসের দৈর্ঘ্য দেখে কোণ ঠিক করে, আর সেখানে ধরে রাখে।",
+        "en": "The servo reads the length of the pulses on its signal pin, turns to that angle and holds it."
+      }
+    },
+    {
+      "question": {
+        "bn": "এই সার্ভো কোন কোণগুলোয় ঘোরে?",
+        "en": "Which angles does this servo turn to?"
+      },
+      "choices": [
+        {
+          "bn": "0° থেকে 90°",
+          "en": "0° to 90°"
+        },
+        {
+          "bn": "0° থেকে 180°",
+          "en": "0° to 180°"
+        },
+        {
+          "bn": "যেকোনো দিকে পুরো ঘুরে, থামে না",
+          "en": "Round and round, without stopping"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "পাঠের সার্ভো 0° থেকে 180°-এর মধ্যে যেকোনো কোণে যায় আর থামে।",
+        "en": "The lesson’s servo goes to any angle from 0° to 180° and stops there."
+      }
+    }
+  ]
 }

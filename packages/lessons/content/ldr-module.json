@@ -179,5 +179,57 @@
   "tryNext": {
     "bn": "DO বাদ দিয়ে শুধু AO-র মান দিয়ে বাতি জ্বালাও: মান ২০০০-এর বেশি হলে জ্বলবে।",
     "en": "Use only AO, not DO: light the lamp when the value is above 2000."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "আলো বাড়লে LDR-এর রোধের কী হয়?",
+        "en": "What happens to an LDR’s resistance as the light grows?"
+      },
+      "choices": [
+        {
+          "bn": "বাড়ে",
+          "en": "It rises"
+        },
+        {
+          "bn": "কমে",
+          "en": "It falls"
+        },
+        {
+          "bn": "একই থাকে",
+          "en": "It stays the same"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "LDR-এ আলো যত বেশি, রোধ তত কম।",
+        "en": "The more light on an LDR, the lower its resistance."
+      }
+    },
+    {
+      "question": {
+        "bn": "কোন আলোয় DO বদলাবে, সেটা কে ঠিক করে?",
+        "en": "What sets the light level at which DO changes?"
+      },
+      "choices": [
+        {
+          "bn": "মডিউলের ট্রিমার",
+          "en": "The trimmer on the module"
+        },
+        {
+          "bn": "প্রোগ্রাম",
+          "en": "The program"
+        },
+        {
+          "bn": "বোর্ডের ঘড়ি",
+          "en": "The board’s clock"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "মডিউলের ছোট ট্রিমার ঘুরিয়ে সীমাটা ঠিক করা হয়; প্রোগ্রাম শুধু DO পড়ে।",
+        "en": "Turning the module’s small trimmer sets the level; the program only reads DO."
+      }
+    }
+  ]
 }

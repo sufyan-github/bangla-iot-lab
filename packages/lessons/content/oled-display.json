@@ -113,5 +113,57 @@
   "tryNext": {
     "bn": "`display.drawCircle(64, 40, 10, SSD1306_WHITE);` যোগ করে একটা বৃত্ত আঁকো।",
     "en": "Add `display.drawCircle(64, 40, 10, SSD1306_WHITE);` to draw a circle."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "I2C কোন দুটো তার দিয়ে চলে?",
+        "en": "Which two wires does I2C use?"
+      },
+      "choices": [
+        {
+          "bn": "TX আর RX",
+          "en": "TX and RX"
+        },
+        {
+          "bn": "SCL আর SDA",
+          "en": "SCL and SDA"
+        },
+        {
+          "bn": "MOSI আর MISO",
+          "en": "MOSI and MISO"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "SCL ঘড়ির তাল দেয়, SDA দিয়ে ডেটা যায়।",
+        "en": "SCL carries the clock and SDA the data."
+      }
+    },
+    {
+      "question": {
+        "bn": "ডিসপ্লেতে আঁকলে কিন্তু কিছু দেখা গেল না। কী বাকি?",
+        "en": "You drew on the display, but nothing shows. What is missing?"
+      },
+      "choices": [
+        {
+          "bn": "display.display()",
+          "en": "display.display()"
+        },
+        {
+          "bn": "Serial.begin()",
+          "en": "Serial.begin()"
+        },
+        {
+          "bn": "আরও delay()",
+          "en": "More delay()"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "প্রোগ্রাম আগে মেমরিতে আঁকে; display.display() ডাকলে তবে সব একসঙ্গে স্ক্রিনে যায়।",
+        "en": "The program draws in memory first; display.display() sends it all to the screen at once."
+      }
+    }
+  ]
 }

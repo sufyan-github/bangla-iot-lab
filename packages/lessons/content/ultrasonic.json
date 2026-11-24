@@ -161,5 +161,57 @@
   "tryNext": {
     "bn": "একটা LED যোগ করো যেটা বাধা ২০ সেন্টিমিটারের কাছে এলে জ্বলে।",
     "en": "Add an LED that lights when the obstacle is closer than 20 centimetres."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "Echo 1160 মাইক্রোসেকেন্ড HIGH থাকল। বাধা কত দূরে?",
+        "en": "Echo stayed HIGH for 1160 microseconds. How far is the obstacle?"
+      },
+      "choices": [
+        {
+          "bn": "10 সেমি",
+          "en": "10 cm"
+        },
+        {
+          "bn": "20 সেমি",
+          "en": "20 cm"
+        },
+        {
+          "bn": "58 সেমি",
+          "en": "58 cm"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "প্রতি সেন্টিমিটারে 58 মাইক্রোসেকেন্ড: 1160 ÷ 58 = 20 সেমি।",
+        "en": "58 microseconds for every centimetre: 1160 ÷ 58 = 20 cm."
+      }
+    },
+    {
+      "question": {
+        "bn": "Echo-র তারে 1 kΩ আর 2 kΩ কেন?",
+        "en": "Why are 1 kΩ and 2 kΩ on the Echo wire?"
+      },
+      "choices": [
+        {
+          "bn": "শব্দ জোরে করতে",
+          "en": "To make the sound louder"
+        },
+        {
+          "bn": "Echo-র 5 V নামিয়ে ESP32-এর জন্য প্রায় 3.3 V করতে",
+          "en": "To bring Echo’s 5 V down to about 3.3 V for the ESP32"
+        },
+        {
+          "bn": "পালস ধীর করতে",
+          "en": "To slow the pulse down"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "এটা ভোল্টেজ ডিভাইডার: ESP32-এর পিন 3.3 V-এর বেশি নিতে পারে না।",
+        "en": "It is a voltage divider: the ESP32’s pins must not get more than 3.3 V."
+      }
+    }
+  ]
 }

@@ -123,5 +123,57 @@
   "tryNext": {
     "bn": "একটা LED যোগ করো যেটা তাপমাত্রা ৩০ °C-র বেশি হলে জ্বলে।",
     "en": "Add an LED that lights when the temperature is above 30 °C."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "DHT11 কী কী মাপে?",
+        "en": "What does the DHT11 measure?"
+      },
+      "choices": [
+        {
+          "bn": "আলো আর শব্দ",
+          "en": "Light and sound"
+        },
+        {
+          "bn": "দূরত্ব",
+          "en": "Distance"
+        },
+        {
+          "bn": "তাপমাত্রা আর আর্দ্রতা",
+          "en": "Temperature and humidity"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "DHT11 বাতাসের তাপমাত্রা আর আর্দ্রতা মাপে।",
+        "en": "The DHT11 measures the air’s temperature and humidity."
+      }
+    },
+    {
+      "question": {
+        "bn": "DHT11 সংখ্যাগুলো কয়টা ডেটা তার দিয়ে পাঠায়?",
+        "en": "Over how many data wires does the DHT11 send its numbers?"
+      },
+      "choices": [
+        {
+          "bn": "একটা",
+          "en": "One"
+        },
+        {
+          "bn": "দুটো",
+          "en": "Two"
+        },
+        {
+          "bn": "চারটা",
+          "en": "Four"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "DATA নামের একটা তারেই দুটো সংখ্যা পরপর আসে।",
+        "en": "Both numbers come one after the other on a single wire, DATA."
+      }
+    }
+  ]
 }
