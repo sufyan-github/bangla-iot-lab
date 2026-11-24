@@ -1397,7 +1397,7 @@ export function TruthTablePanel() {
                   {row.outputs.map((on, j) => (
                     <td
                       key={j}
-                      className={`border-l-2 border-line px-1 py-0.5 font-bold ${on ? 'text-mat' : ''}`}
+                      className={`border-l-2 border-line px-1 py-0.5 font-bold ${on ? 'text-accent' : ''}`}
                     >
                       {bit(on)}
                     </td>

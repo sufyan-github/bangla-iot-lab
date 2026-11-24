@@ -131,12 +131,12 @@ export function HomePage() {
 
   return (
     <main className="flex-1">
-      <div className="bg-mat text-paper">
+      <div className="bg-mat text-chalk">
         <div className="mx-auto max-w-5xl px-4 pt-8 pb-20 sm:pt-12">
           <h1 className="text-3xl font-bold sm:text-[2.5rem] sm:leading-tight">
             {t('home.title')}
           </h1>
-          <p className="mt-2 max-w-xl text-lg text-paper/80">{t('home.intro')}</p>
+          <p className="mt-2 max-w-xl text-lg text-chalk/80">{t('home.intro')}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               type="button"
@@ -152,7 +152,7 @@ export function HomePage() {
             <Link
               to="/lessons"
               data-testid="home-lessons"
-              className="btn min-h-12 border-2 border-paper/50 px-6 text-lg text-paper hover:bg-paper/10"
+              className="btn min-h-12 border-2 border-chalk/50 px-6 text-lg text-chalk hover:bg-chalk/10"
             >
               {t('home.lessons')}
             </Link>
@@ -176,10 +176,10 @@ export function HomePage() {
                 type="button"
                 data-testid={example.id}
                 onClick={example.open}
-                className="group rounded-[var(--radius-card)] border-2 border-line p-2 text-left transition hover:border-mat"
+                className="group rounded-[var(--radius-card)] border-2 border-line p-2 text-left transition hover:border-accent"
               >
                 <Thumbnail circuit={example.circuit} />
-                <span className="mt-2 block px-1 font-semibold leading-snug group-hover:text-mat">
+                <span className="mt-2 block px-1 font-semibold leading-snug group-hover:text-accent">
                   {example.title}
                 </span>
                 <span className="block px-1 pb-1 text-sm text-ink-soft">{example.kind}</span>
@@ -254,7 +254,7 @@ export function HomePage() {
               <div className="mt-auto flex items-center gap-1 px-1.5 pt-1 pb-1.5">
                 {project.cloudVersion && (
                   <span
-                    className="ml-1.5 rounded-full bg-mat-soft px-2 py-0.5 text-xs font-semibold text-mat tabular-nums"
+                    className="ml-1.5 rounded-full bg-mat-soft px-2 py-0.5 text-xs font-semibold text-accent tabular-nums"
                     data-testid="cloud-badge"
                     title={t('cloud.savedVersion', { version: project.cloudVersion })}
                   >

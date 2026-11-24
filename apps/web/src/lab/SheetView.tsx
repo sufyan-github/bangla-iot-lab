@@ -909,7 +909,7 @@ export function SheetView() {
           data-testid="sheet-block-open"
           className="flex flex-wrap items-center gap-2 border-b border-line bg-mat-soft px-4 py-2 text-sm"
         >
-          <span className="flex-1 text-mat-deep">
+          <span className="flex-1 text-accent">
             {t('sheet.insideBlock', { name: openName ?? '' })}
           </span>
           <button

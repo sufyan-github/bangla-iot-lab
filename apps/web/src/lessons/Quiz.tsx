@@ -17,7 +17,7 @@ export function Quiz({ quiz }: { quiz: NonNullable<Lesson['quiz']> }) {
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-sm font-semibold text-ink-soft">{t('quiz.title')}</p>
         {answered === quiz.length && (
-          <p className="text-sm font-semibold text-mat tabular-nums" data-testid="quiz-score">
+          <p className="text-sm font-semibold text-accent tabular-nums" data-testid="quiz-score">
             {t('quiz.score', { right: number(right), total: number(quiz.length) })}
           </p>
         )}

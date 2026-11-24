@@ -362,7 +362,7 @@ export function LabPage() {
       <main className="mx-auto max-w-xl px-4 py-16 text-center">
         <p className="text-lg">{t(status === 'loading' ? 'lab.loading' : 'lab.notFound')}</p>
         {status === 'missing' && (
-          <Link to="/" className="mt-4 inline-block font-semibold text-mat underline">
+          <Link to="/" className="mt-4 inline-block font-semibold text-accent underline">
             {t('lab.back')}
           </Link>
         )}
@@ -482,7 +482,7 @@ export function LabPage() {
                   type="button"
                   data-testid="parts-open"
                   onClick={() => setPartsOpen(true)}
-                  className="btn min-h-10 bg-mat px-3 text-sm text-paper"
+                  className="btn min-h-10 bg-mat px-3 text-sm text-chalk"
                 >
                   <span aria-hidden className="text-base leading-none">
                     ＋
@@ -554,7 +554,7 @@ export function LabPage() {
           <button
             type="button"
             aria-label={t('drawer.close')}
-            className="absolute inset-0 bg-ink/40"
+            className="absolute inset-0 bg-graphite/50"
             onClick={() => setPartsOpen(false)}
           />
           <div className="relative flex max-h-[78dvh] flex-col rounded-t-[var(--radius-sheet)] bg-surface shadow-[var(--shadow-raised)]">
@@ -596,7 +596,7 @@ export function LabPage() {
               onClick={() => chooseTab(id)}
               className={`min-h-11 flex-1 rounded-t-lg border-b-[3px] px-1 text-sm font-semibold ${
                 tab === id
-                  ? 'border-mat text-ink'
+                  ? 'border-accent text-ink'
                   : 'border-transparent text-ink-soft hover:bg-paper hover:text-ink'
               }`}
             >

@@ -4,7 +4,8 @@ import { useT } from '../i18n';
 import { kmapLayout } from './kmap';
 
 /** A colour for each group, easy to tell apart on paper and in either language's text. */
-const GROUP_COLOURS = ['#c2410c', '#1d4ed8', '#15803d', '#a21caf', '#b45309', '#0e7490', '#be123c'];
+/** The groups' colours, from the theme, so they stay readable in dark mode. */
+const GROUP_COLOURS = [1, 2, 3, 4, 5, 6, 7].map((n) => `var(--color-group-${n})`);
 
 /**
  * One lamp's Karnaugh map: the truth table's rows in Gray-code order, with
@@ -100,7 +101,8 @@ export function KMap({
                 style={{
                   borderColor: GROUP_COLOURS[i % GROUP_COLOURS.length],
                   background: active === i ? GROUP_COLOURS[i % GROUP_COLOURS.length] : undefined,
-                  color: active === i ? '#fff' : GROUP_COLOURS[i % GROUP_COLOURS.length],
+                  color:
+                    active === i ? 'var(--color-surface)' : GROUP_COLOURS[i % GROUP_COLOURS.length],
                 }}
                 onClick={() => setActive(active === i ? null : i)}
               >

@@ -90,7 +90,7 @@ export function TimingDiagram({
               data-changes={rows[i]!.length}
               data-level={rows[i]!.at(-1)?.level ? 'high' : 'low'}
             >
-              <span className="w-14 shrink-0 font-mono text-xs text-paper/75">{signal.label}</span>
+              <span className="w-14 shrink-0 font-mono text-xs text-chalk/75">{signal.label}</span>
               <svg
                 viewBox={`0 0 ${SPAN} ${ROW}`}
                 preserveAspectRatio="none"
@@ -118,7 +118,7 @@ export function TimingDiagram({
               </svg>
             </div>
           ))}
-          <div className="ml-16 flex justify-between font-mono text-xs text-paper/60">
+          <div className="ml-16 flex justify-between font-mono text-xs text-chalk/60">
             <span>{t('sheet.secondsAgo', { count: number(TIMING_WINDOW_MS / 1000) })}</span>
             <span>{t('sheet.now')}</span>
           </div>

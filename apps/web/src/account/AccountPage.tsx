@@ -59,15 +59,15 @@ function ShownOnce({
 }) {
   const { t } = useT();
   return (
-    <div className="rounded-[var(--radius-card)] border-[6px] border-[#8a6a43] bg-[#23332d] p-4 text-paper shadow-[var(--shadow-raised)]">
-      <p className="text-sm text-paper/75">{label}</p>
+    <div className="rounded-[var(--radius-card)] border-[6px] border-[#8a6a43] bg-[#23332d] p-4 text-chalk shadow-[var(--shadow-raised)]">
+      <p className="text-sm text-chalk/75">{label}</p>
       <p
         data-testid={testId}
         className="my-2 font-mono text-3xl font-bold tracking-[0.18em] text-[#f4f1e8] [text-shadow:0_0_1px_rgb(255_255_255/0.6)] sm:text-4xl"
       >
         {value}
       </p>
-      <p className="text-sm text-paper/70">{note ?? t('account.shownOnce')}</p>
+      <p className="text-sm text-chalk/70">{note ?? t('account.shownOnce')}</p>
     </div>
   );
 }
@@ -223,7 +223,7 @@ function TeacherSignIn() {
           type="submit"
           data-testid="teacher-submit"
           disabled={busy}
-          className="btn bg-mat px-5 text-paper hover:bg-mat-deep"
+          className="btn bg-mat px-5 text-chalk hover:bg-mat-deep"
         >
           {t(signUp ? 'account.signUp' : 'account.signIn')}
         </button>
@@ -681,15 +681,16 @@ function SchoolTeachers({ schoolId, schoolName }: { schoolId: string; schoolName
             >
               <span className="flex-1">{teacher.displayName}</span>
               {teacher.admin ? (
-                <span className="rounded-full bg-mat-soft px-2 py-0.5 text-xs font-medium text-mat-deep">
+                <span className="rounded-full bg-mat-soft px-2 py-0.5 text-xs font-medium text-accent">
                   {t('account.admin')}
                 </span>
               ) : confirming?.id === teacher.userId ? (
                 <button
                   type="button"
                   data-testid={`confirm-${confirming.what === 'admin' ? 'make-admin' : 'remove-teacher'}`}
-                  className={`btn min-h-9 px-3 text-sm text-paper ${
-                    confirming.what === 'admin' ? 'bg-mat' : 'bg-danger'
+                  className={`btn min-h-9 px-3 text-sm ${
+                    // Light text on the dark green; dark text on red, which is light in dark mode.
+                    confirming.what === 'admin' ? 'bg-mat text-chalk' : 'bg-danger text-paper'
                   }`}
                   onClick={async () => {
                     const action = confirming.what === 'admin' ? 'make-admin' : 'remove';
@@ -1140,7 +1141,7 @@ function LearnerHome() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="flex-1 font-semibold">{title(row.lessonId)}</span>
                     {row.done ? (
-                      <span className="rounded-full bg-mat-soft px-2 py-0.5 text-xs font-medium text-mat-deep">
+                      <span className="rounded-full bg-mat-soft px-2 py-0.5 text-xs font-medium text-accent">
                         {t('account.lessonDone')}
                       </span>
                     ) : (
@@ -1150,7 +1151,7 @@ function LearnerHome() {
                     )}
                     <Link
                       to={`/lessons#${row.lessonId}`}
-                      className="font-medium text-mat underline"
+                      className="font-medium text-accent underline"
                     >
                       {t('account.openLesson')}
                     </Link>
@@ -1201,7 +1202,10 @@ function LearnerHome() {
                       {t('account.dueBy', { date: new Date(item.dueAt).toLocaleDateString() })}
                     </span>
                   )}
-                  <Link to={`/lessons#${item.lessonId}`} className="font-medium text-mat underline">
+                  <Link
+                    to={`/lessons#${item.lessonId}`}
+                    className="font-medium text-accent underline"
+                  >
                     {t('account.openLesson')}
                   </Link>
                 </li>
@@ -1253,7 +1257,7 @@ function LearnerHome() {
         </div>
         <Problem error={join.error} />
         {joinedClass && (
-          <p role="status" className="text-sm font-medium text-mat-deep">
+          <p role="status" className="text-sm font-medium text-accent">
             {t('account.joinedClass', { name: joinedClass })}
           </p>
         )}

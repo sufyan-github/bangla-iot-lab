@@ -193,10 +193,10 @@ export function LicencesPage() {
             <p className="text-sm font-medium text-amber-deep">{notice.licence}</p>
             <p className="mt-2 text-sm">{notice.text}</p>
             <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium">
-              <a className="text-mat underline" href={`/licences/${notice.file}`}>
+              <a className="text-accent underline" href={`/licences/${notice.file}`}>
                 {notice.file}
               </a>
-              <a className="text-mat underline" href={notice.source} rel="noreferrer">
+              <a className="text-accent underline" href={notice.source} rel="noreferrer">
                 {t('licences.source')}
               </a>
             </p>
@@ -206,7 +206,7 @@ export function LicencesPage() {
 
       <p className="mt-6 text-sm">
         <a
-          className="font-medium text-mat underline"
+          className="font-medium text-accent underline"
           href="/licences/THIRD_PARTY_LICENSES.md"
           data-testid="licences-full"
         >

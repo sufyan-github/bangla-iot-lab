@@ -82,8 +82,8 @@ export function IotPanel() {
               data-topic={item.topic}
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate font-mono text-sm text-paper/85">{item.topic}</p>
-                <p className="text-xs text-paper/50">
+                <p className="truncate font-mono text-sm text-chalk/85">{item.topic}</p>
+                <p className="text-xs text-chalk/50">
                   {t('iot.from', {
                     from: item.from === 'dashboard' ? t('iot.dashboard') : item.from,
                     count: number(item.count),

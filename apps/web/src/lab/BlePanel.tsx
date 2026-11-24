@@ -53,20 +53,20 @@ function Characteristic({
       data-handle={characteristic.handle}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-xs text-paper/70" title={characteristic.uuid}>
+        <span className="font-mono text-xs text-chalk/70" title={characteristic.uuid}>
           {characteristic.uuid.slice(0, 8)}…
         </span>
         {tags.map((tag) => (
-          <span key={tag} className="rounded-full bg-paper/10 px-2 py-0.5 text-xs text-paper/80">
+          <span key={tag} className="rounded-full bg-chalk/10 px-2 py-0.5 text-xs text-chalk/80">
             {tag}
           </span>
         ))}
       </div>
       {p & READ ? (
-        <p className="font-mono text-paper" data-testid="ble-value">
+        <p className="font-mono text-chalk" data-testid="ble-value">
           {value.text ?? value.hex}
           {value.text !== null && value.hex && (
-            <span className="ml-2 text-xs text-paper/50">{value.hex}</span>
+            <span className="ml-2 text-xs text-chalk/50">{value.hex}</span>
           )}
         </p>
       ) : null}
@@ -133,8 +133,8 @@ export function BlePanel({ boardId }: { boardId: string }) {
           data-advertising={ble.advertising}
         >
           <div className="flex flex-wrap items-center gap-2">
-            <span className="flex-1 font-semibold text-paper">{ble.name || boardId}</span>
-            <span className="text-xs text-paper/70">
+            <span className="flex-1 font-semibold text-chalk">{ble.name || boardId}</span>
+            <span className="text-xs text-chalk/70">
               {ble.connected
                 ? t('ble.connected')
                 : ble.advertising

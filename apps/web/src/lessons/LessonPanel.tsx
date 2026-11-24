@@ -76,7 +76,7 @@ export function LessonPanel() {
                 onClick={() => goTo(index)}
                 className={`min-h-11 min-w-11 rounded-full border-2 text-sm font-semibold ${
                   current ? 'border-ink' : 'border-transparent'
-                } ${done ? 'bg-mat text-paper' : 'bg-paper text-ink-soft'}`}
+                } ${done ? 'bg-mat text-chalk' : 'bg-paper text-ink-soft'}`}
               >
                 {done ? '✓' : number(index + 1)}
               </button>
@@ -96,7 +96,7 @@ export function LessonPanel() {
             data-testid="lesson-program"
             disabled={!boardId}
             onClick={() => void putProgram()}
-            className="mt-3 min-h-11 rounded-lg bg-amber px-4 font-semibold text-ink hover:brightness-105 disabled:opacity-50"
+            className="mt-3 min-h-11 rounded-lg bg-amber px-4 font-semibold text-graphite hover:brightness-105 disabled:opacity-50"
           >
             {unit === 2 ? t('lesson.program2') : t('lesson.program')}
           </button>
@@ -119,7 +119,7 @@ export function LessonPanel() {
                   <span
                     aria-hidden
                     className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                      passed ? 'bg-mat text-paper' : 'border-2 border-line'
+                      passed ? 'bg-mat text-chalk' : 'border-2 border-line'
                     }`}
                   >
                     {passed ? '✓' : ''}
@@ -138,7 +138,7 @@ export function LessonPanel() {
       )}
 
       {stepDone && !finished && (
-        <p role="status" className="rounded-lg bg-mat/10 px-3 py-2 font-semibold text-mat">
+        <p role="status" className="rounded-lg bg-accent/10 px-3 py-2 font-semibold text-accent">
           {t('lesson.stepDone')}
         </p>
       )}
@@ -160,7 +160,7 @@ export function LessonPanel() {
             onClick={() => goTo(progress.step + 1)}
             className={`min-h-11 flex-1 rounded-lg px-4 font-semibold ${
               stepDone || step.checks.length === 0
-                ? 'bg-amber text-ink hover:brightness-105'
+                ? 'bg-amber text-graphite hover:brightness-105'
                 : 'border-2 border-line text-ink-soft hover:border-ink-soft'
             }`}
           >
@@ -172,7 +172,7 @@ export function LessonPanel() {
       {finished && (
         <div
           data-testid="lesson-finished"
-          className="space-y-3 rounded-xl border-2 border-mat bg-mat/5 p-4"
+          className="space-y-3 rounded-xl border-2 border-accent bg-accent/5 p-4"
         >
           <p className="text-lg font-semibold">{t('lesson.finished')}</p>
           <div>
@@ -195,7 +195,7 @@ export function LessonPanel() {
               type="button"
               data-testid="lesson-open-next"
               onClick={() => void openNext()}
-              className="min-h-11 w-full rounded-lg bg-amber px-4 font-semibold text-ink hover:brightness-105"
+              className="min-h-11 w-full rounded-lg bg-amber px-4 font-semibold text-graphite hover:brightness-105"
             >
               {t('lesson.nextLesson', { title: next.title[locale] })}
             </button>

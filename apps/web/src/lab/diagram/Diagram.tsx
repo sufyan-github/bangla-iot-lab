@@ -7,7 +7,7 @@ import { currentFlows } from './flow';
 import { layoutDiagram, type DiagramNet, type DiagramPart } from './layout';
 import { PartSymbol, type SymbolState } from './symbols';
 
-const INK = '#13231f';
+const INK = 'var(--color-ink)';
 const SELECTION = '#e8a21a';
 /** Which way a flag's stem leaves the wire. */
 const STEM = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] } as const;
@@ -131,7 +131,7 @@ export function Diagram() {
                   fontSize={12}
                   fontWeight={700}
                   stroke="none"
-                  fill={net.kind === 'supply' ? '#b8281f' : '#2f6fd0'}
+                  fill={net.kind === 'supply' ? 'var(--color-danger)' : '#2f6fd0'}
                 >
                   {railName(net)}
                 </text>
@@ -173,7 +173,7 @@ export function Diagram() {
             if (terminal.kind === 'supply') {
               return (
                 <g key={index} data-terminal="supply">
-                  <path d={`M${x} ${y}v-8m-8 0h16`} stroke="#b8281f" />
+                  <path d={`M${x} ${y}v-8m-8 0h16`} stroke="var(--color-danger)" />
                   <text
                     x={x}
                     y={y - 13}
@@ -181,7 +181,7 @@ export function Diagram() {
                     fontSize={11}
                     fontWeight={700}
                     stroke="none"
-                    fill="#b8281f"
+                    fill="var(--color-danger)"
                   >
                     {railName(net)}
                   </text>
@@ -204,7 +204,7 @@ export function Diagram() {
                   height={16}
                   rx={4}
                   fill="var(--color-amber-soft)"
-                  stroke="#8a5a00"
+                  stroke="var(--color-amber-deep)"
                   strokeWidth={1.2}
                 />
                 <text
@@ -214,7 +214,7 @@ export function Diagram() {
                   fontSize={10.5}
                   fontWeight={700}
                   stroke="none"
-                  fill="#8a5a00"
+                  fill="var(--color-amber-deep)"
                 >
                   {text}
                 </text>
@@ -264,7 +264,7 @@ export function Diagram() {
                     <tspan fontWeight={700}>{part.id}</tspan>
                     {value && (
                       <tspan
-                        fill="#4b5d57"
+                        fill="var(--color-ink-soft)"
                         {...(part.component.type === 'battery'
                           ? { x: place.x, dy: 14 }
                           : { dx: 5 })}

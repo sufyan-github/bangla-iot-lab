@@ -75,12 +75,12 @@ export function LessonsPage() {
 
   return (
     <main className="flex-1">
-      <div className="bg-mat text-paper">
+      <div className="bg-mat text-chalk">
         <div className="mx-auto max-w-4xl px-4 pt-8 pb-10 sm:pt-12">
           <h1 className="text-3xl font-bold sm:text-[2.5rem] sm:leading-tight">
             {t('lessons.title')}
           </h1>
-          <p className="mt-2 max-w-xl text-lg text-paper/80">{t('lessons.intro')}</p>
+          <p className="mt-2 max-w-xl text-lg text-chalk/80">{t('lessons.intro')}</p>
         </div>
       </div>
 
@@ -164,7 +164,7 @@ function LessonCard(props: {
         aria-hidden
         className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold tabular-nums ${
           state === 'done'
-            ? 'bg-mat text-paper'
+            ? 'bg-mat text-chalk'
             : state === 'started'
               ? 'bg-amber-soft text-amber-deep ring-2 ring-amber'
               : 'bg-paper text-ink-soft'

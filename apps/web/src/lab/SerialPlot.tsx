@@ -16,7 +16,7 @@ export function SerialPlot({ text }: { text: string }) {
   if (values.length === 0) {
     return (
       <div
-        className="screen grid h-44 place-items-center p-3 text-center text-sm text-paper/60"
+        className="screen grid h-44 place-items-center p-3 text-center text-sm text-chalk/60"
         data-testid="serial-plot"
       >
         {t('code.plotEmpty')}
@@ -43,7 +43,7 @@ export function SerialPlot({ text }: { text: string }) {
 
   return (
     <div className="screen p-2" data-testid="serial-plot" data-series={plot.names.length}>
-      <div className="flex justify-between px-1 font-mono text-xs text-paper/60 tabular-nums">
+      <div className="flex justify-between px-1 font-mono text-xs text-chalk/60 tabular-nums">
         <span>{number(Math.round(high * 100) / 100)}</span>
         <span>{t('code.plotPoints', { count: number(points) })}</span>
       </div>
@@ -78,13 +78,13 @@ export function SerialPlot({ text }: { text: string }) {
           />
         ))}
       </svg>
-      <div className="flex justify-between px-1 font-mono text-xs text-paper/60 tabular-nums">
+      <div className="flex justify-between px-1 font-mono text-xs text-chalk/60 tabular-nums">
         <span>{number(Math.round(low * 100) / 100)}</span>
       </div>
       <button
         type="button"
         data-testid="plot-csv"
-        className="float-right mt-1 rounded-md px-2 py-1 text-xs text-paper/80 hover:bg-paper/10"
+        className="float-right mt-1 rounded-md px-2 py-1 text-xs text-chalk/80 hover:bg-chalk/10"
         onClick={() => {
           // Every line still in the monitor, not only those drawn.
           const all = parsePlot(text, Infinity);
@@ -100,8 +100,8 @@ export function SerialPlot({ text }: { text: string }) {
           return (
             <li key={name} className="flex items-center gap-1.5 font-mono">
               <span className="h-2 w-3 rounded-sm" style={{ background: COLOURS[s] }} />
-              <span className="text-paper/70">{name}</span>
-              <span className="font-semibold text-paper tabular-nums">
+              <span className="text-chalk/70">{name}</span>
+              <span className="font-semibold text-chalk tabular-nums">
                 {latest === undefined ? '–' : number(latest)}
               </span>
             </li>

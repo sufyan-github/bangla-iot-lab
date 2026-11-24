@@ -13,7 +13,7 @@ function List({ items, mark }: { items: MessageKey[]; mark: string }) {
     <ul className="mt-3 space-y-2">
       {items.map((item) => (
         <li key={item} className="flex gap-3">
-          <span aria-hidden="true" className="w-4 shrink-0 font-semibold text-mat">
+          <span aria-hidden="true" className="w-4 shrink-0 font-semibold text-accent">
             {mark}
           </span>
           <span>{t(item)}</span>
@@ -85,7 +85,7 @@ export function Esp32Page() {
       </section>
 
       <p className="mt-6">
-        <a className="font-medium text-mat underline" href={STUDY} rel="noreferrer">
+        <a className="font-medium text-accent underline" href={STUDY} rel="noreferrer">
           {t('esp32.full')}
         </a>
       </p>

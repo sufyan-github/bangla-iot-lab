@@ -5,6 +5,8 @@ import { BrowserRouter } from 'react-router';
 import { registerSW } from 'virtual:pwa-register';
 import './app.css';
 import { useLocale } from './i18n';
+// Applies a remembered light or dark choice as soon as the app starts.
+import './theme';
 import { App } from './shell/App';
 
 document.documentElement.lang = useLocale.getState().locale;

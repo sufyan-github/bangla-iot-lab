@@ -642,7 +642,7 @@ export function PartsDrawer({ onChosen }: { onChosen?: () => void }) {
             className="rounded-[var(--radius-card)] bg-mat-soft p-1.5 pt-0"
           >
             {/* The compartment's label, like a strip of tape on the box. */}
-            <h3 className="px-1.5 pt-1.5 pb-1 text-xs font-bold text-mat">
+            <h3 className="px-1.5 pt-1.5 pb-1 text-xs font-bold text-accent">
               {t(`drawer.bin.${bin.id}` as MessageKey)}
             </h3>
             <div className="grid grid-cols-3 gap-1">

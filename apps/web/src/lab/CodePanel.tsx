@@ -127,7 +127,7 @@ export function CodePanel({ boardId }: { boardId: string }) {
           data-testid="esp32-note"
         >
           {t(engine === 'emulator' ? 'code.esp32.emulatorNote' : 'code.esp32.note')}{' '}
-          <Link to="/esp32" className="font-medium text-mat underline" data-testid="esp32-more">
+          <Link to="/esp32" className="font-medium text-accent underline" data-testid="esp32-more">
             {t('code.esp32.more')}
           </Link>
         </p>
@@ -140,7 +140,7 @@ export function CodePanel({ boardId }: { boardId: string }) {
               <label
                 key={choice}
                 className={`flex cursor-pointer gap-3 rounded-lg border-2 px-3 py-2 ${
-                  engine === choice ? 'border-mat bg-paper' : 'border-line bg-surface'
+                  engine === choice ? 'border-accent bg-paper' : 'border-line bg-surface'
                 }`}
               >
                 <input
@@ -254,7 +254,7 @@ export function CodePanel({ boardId }: { boardId: string }) {
           data-testid="upload"
           disabled={!online || build.isPending || upToDate}
           onClick={() => build.mutate({ source, files })}
-          className="min-h-12 w-full rounded-xl bg-amber px-4 text-lg font-semibold text-ink hover:brightness-105 disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-soft"
+          className="min-h-12 w-full rounded-xl bg-amber px-4 text-lg font-semibold text-graphite hover:brightness-105 disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-soft"
         >
           {t(build.isPending ? 'code.uploading' : 'code.upload')}
         </button>
@@ -340,9 +340,9 @@ export function CodePanel({ boardId }: { boardId: string }) {
           hidden={serialMode === 'plot'}
           ref={serialBox}
           data-testid="serial"
-          className="h-36 overflow-auto rounded-xl bg-ink p-3 font-mono text-sm whitespace-pre-wrap text-paper"
+          className="h-36 overflow-auto rounded-xl bg-graphite p-3 font-mono text-sm whitespace-pre-wrap text-chalk"
         >
-          {serial || <span className="text-paper/60">{t('code.serialEmpty')}</span>}
+          {serial || <span className="text-chalk/60">{t('code.serialEmpty')}</span>}
         </pre>
       </div>
     </div>

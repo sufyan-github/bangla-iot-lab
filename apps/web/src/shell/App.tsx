@@ -4,15 +4,48 @@ import { AccountPage } from '../account/AccountPage';
 import { useAccount } from '../account/client';
 import { HomePage } from '../home/HomePage';
 import { useLocale, useT } from '../i18n';
+import { THEME_ORDER, useTheme, type ThemeChoice } from '../theme';
 import { LabPage } from '../lab/LabPage';
 import { LessonsPage } from '../lessons/LessonsPage';
 import { Esp32Page } from './Esp32Page';
 import { LicencesPage } from './LicencesPage';
 import { useOnline } from './useOnline';
 
+/** Sun for light, moon for dark, and a half-filled circle for following the device. */
+function ThemeIcon({ choice }: { choice: ThemeChoice }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      aria-hidden
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      {choice === 'light' && (
+        <>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
+        </>
+      )}
+      {choice === 'dark' && <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />}
+      {choice === 'system' && (
+        <>
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 function Header() {
   const { t, locale } = useT();
   const setLocale = useLocale((s) => s.setLocale);
+  const theme = useTheme((s) => s.choice);
+  const setTheme = useTheme((s) => s.setChoice);
   const online = useOnline();
   const me = useAccount((s) => s.me);
   const refresh = useAccount((s) => s.refresh);
@@ -25,7 +58,7 @@ function Header() {
   const inLab = pathname.startsWith('/lab/');
   const link = ({ isActive }: { isActive: boolean }) =>
     `flex min-h-11 items-center rounded-lg px-3 text-sm font-medium ${
-      isActive ? 'bg-paper/15 text-paper' : 'text-paper/75 hover:bg-paper/10 hover:text-paper'
+      isActive ? 'bg-chalk/15 text-chalk' : 'text-chalk/75 hover:bg-chalk/10 hover:text-chalk'
     }`;
   const links = (
     <>
@@ -43,7 +76,7 @@ function Header() {
 
   return (
     <>
-      <header className={`bg-mat-deep text-paper ${inLab ? 'max-lg:hidden' : ''}`}>
+      <header className={`bg-mat-deep text-chalk ${inLab ? 'max-lg:hidden' : ''}`}>
         <div className="flex h-12 items-center gap-1 px-3">
           <NavLink to="/" className="mr-3 flex shrink-0 items-center gap-2 font-semibold">
             <img src="/favicon.svg" alt="" width={26} height={26} />
@@ -57,15 +90,15 @@ function Header() {
               className={({ isActive }) =>
                 `flex min-h-9 max-w-32 items-center gap-2 truncate rounded-full sm:max-w-40 border px-3 text-sm font-medium ${
                   isActive
-                    ? 'border-paper bg-paper text-mat-deep'
-                    : 'border-paper/35 hover:bg-paper/10'
+                    ? 'border-chalk bg-chalk text-mat-deep'
+                    : 'border-chalk/35 hover:bg-chalk/10'
                 }`
               }
             >
               {me && (
                 <span
                   aria-hidden
-                  className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-amber text-xs font-bold text-ink"
+                  className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-amber text-xs font-bold text-graphite"
                 >
                   {[...me.user.displayName][0]}
                 </span>
@@ -78,18 +111,31 @@ function Header() {
               lang={locale === 'bn' ? 'en' : 'bn'}
               aria-label={t('nav.language')}
               onClick={() => setLocale(locale === 'bn' ? 'en' : 'bn')}
-              className="flex min-h-9 overflow-hidden rounded-full border border-paper/35 text-xs font-semibold"
+              className="flex min-h-9 overflow-hidden rounded-full border border-chalk/35 text-xs font-semibold"
             >
               <span
-                className={`grid place-items-center px-2.5 ${locale === 'bn' ? 'bg-paper text-mat-deep' : ''}`}
+                className={`grid place-items-center px-2.5 ${locale === 'bn' ? 'bg-chalk text-mat-deep' : ''}`}
               >
                 বাং
               </span>
               <span
-                className={`grid place-items-center px-2.5 ${locale === 'en' ? 'bg-paper text-mat-deep' : ''}`}
+                className={`grid place-items-center px-2.5 ${locale === 'en' ? 'bg-chalk text-mat-deep' : ''}`}
               >
                 EN
               </span>
+            </button>
+            <button
+              type="button"
+              data-testid="theme"
+              data-theme-choice={theme}
+              aria-label={t('nav.theme', { mode: t(`theme.${theme}`) })}
+              title={t('nav.theme', { mode: t(`theme.${theme}`) })}
+              onClick={() =>
+                setTheme(THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length]!)
+              }
+              className="grid h-9 w-9 place-items-center rounded-full border border-chalk/35 hover:bg-chalk/10"
+            >
+              <ThemeIcon choice={theme} />
             </button>
             <button
               type="button"
@@ -97,7 +143,7 @@ function Header() {
               aria-expanded={menu}
               aria-label={t('nav.menu')}
               onClick={() => setMenu(!menu)}
-              className="grid h-11 w-11 place-items-center rounded-lg hover:bg-paper/10 md:hidden"
+              className="grid h-11 w-11 place-items-center rounded-lg hover:bg-chalk/10 md:hidden"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -115,7 +161,7 @@ function Header() {
           </div>
         </div>
         {menu && (
-          <nav className="flex flex-col gap-0.5 border-t border-paper/15 px-3 py-2 md:hidden">
+          <nav className="flex flex-col gap-0.5 border-t border-chalk/15 px-3 py-2 md:hidden">
             {links}
           </nav>
         )}
@@ -125,7 +171,7 @@ function Header() {
         <p
           role="status"
           data-testid="offline-banner"
-          className="bg-amber px-3 py-1 text-center text-sm font-medium text-ink"
+          className="bg-amber px-3 py-1 text-center text-sm font-medium text-graphite"
         >
           {t('status.offline')}
         </p>
