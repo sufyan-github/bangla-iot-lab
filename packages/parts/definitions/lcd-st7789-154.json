@@ -16,7 +16,7 @@
   "model": {
     "level": "behaviour",
     "simplified": [
-      "It works with the ESP32 board and the lab's own model of that board only, with the display on the bus's own pins (SCL on D18, SDA on D23 for the usual bus). The UNO-compatible board and the chip emulator cannot drive it yet, and nor can a program that moves the bus pins by hand (software SPI).",
+      "It works with the ESP32 board (the lab's own model of it), with the display on the bus's own pins (SCL on D18, SDA on D23 for the usual bus), and with the UNO-compatible board on its SPI pins (SCL on D13, SDA on D11). On the 5 V UNO the lab does not check whether the module takes 5 V signals; many need 3.3 V. The ESP32's chip emulator and programs that move the bus pins by hand (software SPI) cannot drive it.",
       "The program and the display exchange whole bytes; the clock and data pulses are not produced, so the oscilloscope and logic analyser show those lines resting. The chip-select and DC lines are read at the moment each group of bytes is sent.",
       "The chip's commands for drawing are modelled: reset, sleep, display on and off, colour inversion, the drawing window, memory write, the memory's orientation and the colour format (16 and 18 bits). Scrolling, partial mode, reading back from the display and the chip's other settings are left out.",
       "Like the real IPS panels, it shows colours inverted until the program turns inversion on, as Adafruit's library does when it starts the display.",

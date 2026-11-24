@@ -2,6 +2,8 @@ import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { UnoBoard } from '@banglalab/board-emulators';
+import { CIRCUIT_SCHEMA_VERSION, type CircuitDocument } from '@banglalab/shared';
+import { SimulationSession } from '@banglalab/simulation';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { loadConfig } from './config';
 import { buildServer } from './server';
@@ -234,6 +236,118 @@ void loop() {}
     expect(total).toBeGreaterThan(1024);
     // Without a device answering, begin() still works (the display is write-only),
     // but nothing is sent anywhere.
+  }, 120_000);
+
+  it('lights the lab’s OLED part on A4 and A5, through the circuit', async () => {
+    const result = await compile(`#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
+void setup() {
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+  display.fillRect(0, 0, 10, 10, SSD1306_WHITE);
+  display.display();
+}
+void loop() {}
+`);
+    expect(result.ok).toBe(true);
+    const document: CircuitDocument = {
+      schemaVersion: CIRCUIT_SCHEMA_VERSION,
+      components: [
+        { id: 'UNO1', type: 'uno', props: {} },
+        {
+          id: 'OLED1',
+          type: 'oled',
+          pins: { gnd: 'BB1.c10', vcc: 'BB1.c11', scl: 'BB1.c12', sda: 'BB1.c13' },
+          props: {},
+        } as unknown as CircuitDocument['components'][number],
+      ],
+      wires: (
+        [
+          ['UNO1.gnd', 'BB1.a10'],
+          ['UNO1.5v', 'BB1.a11'],
+          ['UNO1.a5', 'BB1.a12'],
+          ['UNO1.a4', 'BB1.a13'],
+        ] as const
+      ).map(([from, to], i) => ({ id: `W${i + 1}`, from, to, color: '#000000' })),
+    };
+    const session = new SimulationSession(document);
+    session.loadFirmware('UNO1', result.hex);
+    let frame = session.frame();
+    for (let t = 0; t < 1500; t += 50) {
+      session.advance(50);
+      frame = session.frame();
+    }
+    const display = frame.result.readings.OLED1!.oled!;
+    expect(display.lit).toBe(true);
+    const bytes = Uint8Array.from(atob(display.pixels!), (c) => c.charCodeAt(0));
+    const pixel = (x: number, y: number) =>
+      ((bytes[y * 16 + (x >> 3)]! >> (7 - (x & 7))) & 1) === 1;
+    // The 10 × 10 square in the top left, and nothing beside it.
+    expect(pixel(0, 0) && pixel(9, 9)).toBe(true);
+    expect(pixel(10, 0) || pixel(0, 10)).toBe(false);
+  }, 120_000);
+
+  it('draws on the lab’s ST7789 colour display over SPI', async () => {
+    const result = await compile(`#include <Adafruit_GFX.h>
+#include <Adafruit_ST7789.h>
+#include <SPI.h>
+Adafruit_ST7789 tft(10, 9, 8);
+void setup() {
+  tft.init(240, 240);
+  tft.fillScreen(ST77XX_BLACK);
+  tft.fillRect(40, 100, 40, 40, ST77XX_RED);
+}
+void loop() {}
+`);
+    expect(result.ok).toBe(true);
+    const document: CircuitDocument = {
+      schemaVersion: CIRCUIT_SCHEMA_VERSION,
+      components: [
+        { id: 'UNO1', type: 'uno', props: {} },
+        {
+          id: 'TFT1',
+          type: 'tft',
+          pins: {
+            gnd: 'BB1.c10',
+            vcc: 'BB1.c11',
+            scl: 'BB1.c12',
+            sda: 'BB1.c13',
+            res: 'BB1.c14',
+            dc: 'BB1.c15',
+            cs: 'BB1.c16',
+            blk: 'BB1.c17',
+          },
+          props: {},
+        } as unknown as CircuitDocument['components'][number],
+      ],
+      wires: (
+        [
+          ['UNO1.gnd', 'BB1.a10'],
+          ['UNO1.5v', 'BB1.a11'],
+          ['UNO1.d13', 'BB1.a12'],
+          ['UNO1.d11', 'BB1.a13'],
+          ['UNO1.d8', 'BB1.a14'],
+          ['UNO1.d9', 'BB1.a15'],
+          ['UNO1.d10', 'BB1.a16'],
+        ] as const
+      ).map(([from, to], i) => ({ id: `W${i + 1}`, from, to, color: '#000000' })),
+    };
+    const session = new SimulationSession(document);
+    session.loadFirmware('UNO1', result.hex);
+    let frame = session.frame();
+    for (let t = 0; t < 3000; t += 50) {
+      session.advance(50);
+      frame = session.frame();
+    }
+    const shown = frame.result.readings.TFT1!.tft!;
+    expect(shown.lit).toBe(true);
+    const bytes = Buffer.from(shown.pixels!, 'base64');
+    const at = (x: number, y: number) =>
+      (bytes[(y * 240 + x) * 2]! << 8) | bytes[(y * 240 + x) * 2 + 1]!;
+    expect(at(60, 120)).toBe(0xf800);
+    expect(at(10, 10)).toBe(0x0000);
   }, 120_000);
 
   it('talks SPI: each byte out on MOSI comes back from the device on MISO', async () => {
