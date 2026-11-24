@@ -3,6 +3,7 @@ import { PART_DEFINITIONS } from '@banglalab/parts';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { useT } from '../i18n';
+import { useHashScroll } from '../shell/useHashScroll';
 import { projectStore, type ProjectRecord } from '../storage/projects';
 import { lessonProjects, startLesson } from './start';
 
@@ -15,6 +16,8 @@ export function LessonsPage() {
   const navigate = useNavigate();
   const projects = useQuery({ queryKey: ['projects'], queryFn: projectStore.list });
   const latest = lessonProjects(projects.data ?? []);
+  // A link from the glossary names a lesson: go to it once the list is drawn.
+  useHashScroll(!projects.isPending);
   const start = useMutation({
     mutationFn: (lesson: Lesson) => startLesson(lesson, lesson.title[locale]),
     onSuccess: (project) => navigate(`/lab/${project.id}`),

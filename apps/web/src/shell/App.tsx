@@ -10,6 +10,7 @@ import { LabPage } from '../lab/LabPage';
 import { LessonsPage } from '../lessons/LessonsPage';
 import { Esp32Page } from './Esp32Page';
 import { LicencesPage } from './LicencesPage';
+import { GlossaryPage } from '../lessons/GlossaryPage';
 // The lab office and its component library load only when an owner opens it.
 const OwnerPage = lazy(() => import('../owner/OwnerPage'));
 import { useOnline } from './useOnline';
@@ -70,6 +71,9 @@ function Header() {
       </NavLink>
       <NavLink to="/lessons" className={link} data-testid="nav-lessons">
         {t('nav.lessons')}
+      </NavLink>
+      <NavLink to="/glossary" className={link} data-testid="nav-glossary">
+        {t('nav.glossary')}
       </NavLink>
       <NavLink to="/licences" className={link} data-testid="nav-licences">
         {t('nav.licences')}
@@ -197,6 +201,7 @@ export function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/lab/:projectId" element={<LabPage />} />
           <Route path="/lessons" element={<LessonsPage />} />
+          <Route path="/glossary" element={<GlossaryPage />} />
           <Route path="/licences" element={<LicencesPage />} />
           <Route path="/esp32" element={<Esp32Page />} />
           <Route path="/account" element={<AccountPage />} />

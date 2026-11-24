@@ -6,6 +6,7 @@ import { LessonSchema, type Check, type Lesson } from './schema';
 
 export * from './checks';
 export * from './schema';
+export * from './glossary';
 
 /**
  * Everything wrong with a lesson file: its shape, and references that the

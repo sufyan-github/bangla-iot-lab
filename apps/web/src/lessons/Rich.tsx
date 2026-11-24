@@ -1,11 +1,18 @@
+import { termNamed } from '@banglalab/lessons';
 import { Fragment, type ReactNode } from 'react';
+import { Term } from './Term';
 
 /**
  * Shows lesson text written in a small part of Markdown: paragraphs, line
  * breaks, lists, headings, code blocks, **bold** and `code`. Pictures and the
  * targets of links are left out; tables are shown as they are typed.
+ *
+ * With `terms`, a bold word that names a glossary term is shown as one (Term):
+ * only its first time in the text, so a step is not crowded with them.
  */
-function inline(text: string): ReactNode[] {
+type Terms = Set<string> | null;
+
+function inline(text: string, terms: Terms): ReactNode[] {
   const parts: ReactNode[] = [];
   // Pictures go; a link keeps its words.
   const plain = text.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
@@ -14,6 +21,13 @@ function inline(text: string): ReactNode[] {
   for (const match of plain.matchAll(pattern)) {
     if (match.index > last) parts.push(plain.slice(last, match.index));
     const token = match[0];
+    const term = terms && token.startsWith('**') ? termNamed(token.slice(2, -2)) : undefined;
+    if (term && terms && !terms.has(term.id)) {
+      terms.add(term.id);
+      parts.push(<Term key={parts.length} text={token.slice(2, -2)} term={term} />);
+      last = match.index + token.length;
+      continue;
+    }
     parts.push(
       token.startsWith('**') ? (
         <strong key={parts.length}>{token.slice(2, -2)}</strong>
@@ -29,16 +43,25 @@ function inline(text: string): ReactNode[] {
   return parts;
 }
 
-function lines(text: string): ReactNode {
+function lines(text: string, terms: Terms): ReactNode {
   return text.split('\n').map((line, i) => (
     <Fragment key={i}>
       {i > 0 && <br />}
-      {inline(line)}
+      {inline(line, terms)}
     </Fragment>
   ));
 }
 
-export function Rich({ text, className }: { text: string; className?: string }) {
+export function Rich({
+  text,
+  className,
+  terms = false,
+}: {
+  text: string;
+  className?: string;
+  terms?: boolean;
+}) {
+  const seen: Terms = terms ? new Set() : null;
   const blocks: ReactNode[] = [];
   const source = text.replace(/\r\n/g, '\n');
   // Code blocks first, so that blank lines inside them do not split them.
@@ -63,14 +86,14 @@ export function Rich({ text, className }: { text: string; className?: string }) 
       if (heading && !trimmed.includes('\n')) {
         blocks.push(
           <p key={key} className="font-semibold">
-            {inline(heading[2]!)}
+            {inline(heading[2]!, seen)}
           </p>,
         );
       } else if (trimmed.split('\n').every((line) => /^\s*[-*]\s+/.test(line))) {
         blocks.push(
           <ul key={key} className="list-disc space-y-1 pl-5">
             {trimmed.split('\n').map((line, i) => (
-              <li key={i}>{inline(line.replace(/^\s*[-*]\s+/, ''))}</li>
+              <li key={i}>{inline(line.replace(/^\s*[-*]\s+/, ''), seen)}</li>
             ))}
           </ul>,
         );
@@ -81,7 +104,7 @@ export function Rich({ text, className }: { text: string; className?: string }) 
           </pre>,
         );
       } else {
-        blocks.push(<p key={key}>{lines(trimmed)}</p>);
+        blocks.push(<p key={key}>{lines(trimmed, seen)}</p>);
       }
     }
   });

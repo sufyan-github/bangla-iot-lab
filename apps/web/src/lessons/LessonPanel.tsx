@@ -89,7 +89,7 @@ export function LessonPanel() {
         <p className="mb-2 text-sm font-semibold text-ink-soft">
           {t('lesson.stepOf', { n: number(progress.step + 1), total: number(total) })}
         </p>
-        <Rich text={step.text[locale]} className="leading-relaxed" />
+        <Rich text={step.text[locale]} className="leading-relaxed" terms />
         {step.program && (
           <button
             type="button"
@@ -180,14 +180,14 @@ export function LessonPanel() {
             <ul className="list-disc space-y-1 pl-5">
               {lesson.learned[locale].map((point) => (
                 <li key={point}>
-                  <Rich text={point} />
+                  <Rich text={point} terms />
                 </li>
               ))}
             </ul>
           </div>
           <div>
             <p className="mb-1 text-sm font-semibold text-ink-soft">{t('lesson.tryNext')}</p>
-            <Rich text={lesson.tryNext[locale]} />
+            <Rich text={lesson.tryNext[locale]} terms />
           </div>
           {lesson.quiz && <Quiz quiz={lesson.quiz} />}
           {next && (

@@ -1,0 +1,696 @@
+{
+  "terms": [
+    {
+      "id": "voltage",
+      "topic": "basics",
+      "term": {
+        "bn": "ভোল্টেজ",
+        "en": "voltage"
+      },
+      "also": {
+        "bn": ["বিভব পার্থক্য"],
+        "en": ["potential difference"]
+      },
+      "unit": "V",
+      "meaning": {
+        "bn": "দুই বিন্দুর মধ্যে বিদ্যুতের “চাপ”। এই চাপই তারের ভেতর দিয়ে কারেন্ট ঠেলে নেয়। ব্যাটারির + আর − প্রান্তের মধ্যে ভোল্টেজ থাকে।",
+        "en": "The electrical “push” between two points. It is what drives a current through a wire. A battery has a voltage between its + and − terminals."
+      },
+      "see": ["current", "ground", "ohms-law"]
+    },
+    {
+      "id": "current",
+      "topic": "basics",
+      "term": {
+        "bn": "কারেন্ট",
+        "en": "current"
+      },
+      "also": {
+        "bn": ["তড়িৎ প্রবাহ", "বিদ্যুৎ প্রবাহ"]
+      },
+      "unit": "A, mA",
+      "meaning": {
+        "bn": "সার্কিটের ভেতর দিয়ে প্রতি সেকেন্ডে কতটা বিদ্যুৎ বয়ে যায়। কারেন্ট বয় শুধু পুরো একটা ঘেরা পথ থাকলে।",
+        "en": "How much electricity flows through a circuit each second. A current flows only around a complete, closed path."
+      },
+      "see": ["voltage", "circuit", "ohms-law"]
+    },
+    {
+      "id": "circuit",
+      "topic": "basics",
+      "term": {
+        "bn": "সার্কিট",
+        "en": "circuit"
+      },
+      "also": {
+        "bn": ["বর্তনী"]
+      },
+      "meaning": {
+        "bn": "উৎস (যেমন ব্যাটারি) থেকে পার্টসের ভেতর দিয়ে আবার উৎসে ফেরার ঘেরা পথ। পথ কোথাও কাটা থাকলে কারেন্ট বয় না।",
+        "en": "A closed path from a source (such as a battery), through the parts and back to the source. If the path is broken anywhere, no current flows."
+      },
+      "see": ["current", "short-circuit"]
+    },
+    {
+      "id": "ohms-law",
+      "topic": "basics",
+      "term": {
+        "bn": "ওহমের সূত্র",
+        "en": "Ohm's law"
+      },
+      "meaning": {
+        "bn": "কারেন্ট = ভোল্টেজ ÷ রেজিস্ট্যান্স (I = V ÷ R)। একই ভোল্টেজে রেজিস্টর যত বড়, কারেন্ট তত কম। LED-এর জন্য রেজিস্টর বাছতে এটা লাগে।",
+        "en": "Current = voltage ÷ resistance (I = V ÷ R). For the same voltage, the larger the resistor, the smaller the current. It is how you choose a resistor for an LED."
+      },
+      "see": ["resistor", "voltage", "current"]
+    },
+    {
+      "id": "short-circuit",
+      "topic": "basics",
+      "term": {
+        "bn": "শর্ট সার্কিট",
+        "en": "short circuit"
+      },
+      "meaning": {
+        "bn": "কারেন্ট যখন কোনো পার্টসের ভেতর দিয়ে না গিয়ে প্রায় বাধা ছাড়া সোজা পথে উৎসে ফিরে যায়। তখন অনেক বেশি কারেন্ট বয়, ব্যাটারি গরম হয়, তার পুড়তে পারে। ল্যাব এটা দেখলে সাবধান করে দেয়।",
+        "en": "When current goes back to the source by an almost unresisted path instead of through the parts. A very large current then flows, the battery heats up and wires can burn. The lab warns you when it sees one."
+      },
+      "see": ["circuit"]
+    },
+    {
+      "id": "power",
+      "topic": "basics",
+      "term": {
+        "bn": "ক্ষমতা",
+        "en": "power"
+      },
+      "also": {
+        "bn": ["পাওয়ার"]
+      },
+      "unit": "W, mW",
+      "meaning": {
+        "bn": "প্রতি সেকেন্ডে কতটা শক্তি খরচ হয়। ক্ষমতা = ভোল্টেজ × কারেন্ট (P = V × I)।",
+        "en": "How much energy is used each second. Power = voltage × current (P = V × I)."
+      },
+      "see": ["voltage", "current"]
+    },
+    {
+      "id": "ground",
+      "topic": "basics",
+      "term": {
+        "bn": "GND",
+        "en": "ground"
+      },
+      "also": {
+        "bn": ["গ্রাউন্ড"],
+        "en": ["GND"]
+      },
+      "meaning": {
+        "bn": "সার্কিটের সাধারণ ফেরার পথ, যাকে ০ V ধরা হয়; অন্য সব ভোল্টেজ এর তুলনায় মাপা হয়। দুটো বোর্ড একসঙ্গে কাজ করলে তাদের GND জোড়া থাকতে হয়।",
+        "en": "The common return path of a circuit, taken as 0 V; every other voltage is measured against it. When two boards work together, their GNDs must be joined."
+      },
+      "see": ["voltage"]
+    },
+    {
+      "id": "voltage-divider",
+      "topic": "basics",
+      "term": {
+        "bn": "ভোল্টেজ ভাগ",
+        "en": "voltage divider"
+      },
+      "meaning": {
+        "bn": "দুটো রেজিস্টর পরপর জুড়ে মাঝখান থেকে কম একটা ভোল্টেজ নেওয়া। যেমন 1 kΩ আর 2 kΩ দিয়ে 5 V-কে প্রায় ৩.৩ V-এ নামানো, যাতে ESP32-এর পিন নিরাপদ থাকে।",
+        "en": "Two resistors in a row, with a smaller voltage taken from the point between them. For example, 1 kΩ and 2 kΩ bring 5 V down to about 3.3 V, safe for an ESP32 pin."
+      },
+      "see": ["resistor", "voltage"]
+    },
+    {
+      "id": "battery",
+      "topic": "basics",
+      "term": {
+        "bn": "ব্যাটারি",
+        "en": "battery"
+      },
+      "meaning": {
+        "bn": "রাসায়নিক শক্তি থেকে ভোল্টেজ দেয় এমন উৎস। এর দুটো প্রান্ত: + আর −।",
+        "en": "A source that makes a voltage from chemical energy. It has two terminals: + and −."
+      },
+      "see": ["voltage"]
+    },
+    {
+      "id": "resistor",
+      "topic": "parts",
+      "term": {
+        "bn": "রেজিস্টর",
+        "en": "resistor"
+      },
+      "also": {
+        "bn": ["রোধক"]
+      },
+      "unit": "Ω, kΩ",
+      "meaning": {
+        "bn": "কারেন্টের পথে বাধা দেয়, ফলে কারেন্ট কমে। বাধার মাপ (রেজিস্ট্যান্স) ওহমে, Ω। গায়ের রঙের দাগ দেখে মান পড়া যায়।",
+        "en": "Opposes the current, so less current flows. Its resistance is measured in ohms, Ω. The coloured bands on it give its value."
+      },
+      "see": ["ohms-law", "led"]
+    },
+    {
+      "id": "led",
+      "topic": "parts",
+      "term": {
+        "bn": "LED",
+        "en": "LED"
+      },
+      "also": {
+        "en": ["light-emitting diode"]
+      },
+      "meaning": {
+        "bn": "কারেন্ট বইলে আলো দেয়, কিন্তু শুধু একদিকে: লম্বা পা (অ্যানোড) + দিকে। সবসময় সঙ্গে একটা রেজিস্টর দাও, নইলে বেশি কারেন্টে নষ্ট হয়ে যায়।",
+        "en": "Gives light when a current flows, but in one direction only: the longer leg (the anode) goes to +. Always give it a resistor, or too much current ruins it."
+      },
+      "see": ["resistor"]
+    },
+    {
+      "id": "capacitor",
+      "topic": "parts",
+      "term": {
+        "bn": "ক্যাপাসিটর",
+        "en": "capacitor"
+      },
+      "also": {
+        "bn": ["ধারক"]
+      },
+      "unit": "µF",
+      "meaning": {
+        "bn": "অল্প সময়ের জন্য বিদ্যুৎ জমা রাখে, তারপর ছেড়ে দেয়। ভোল্টেজের হঠাৎ ওঠানামা মসৃণ করতে কাজে লাগে।",
+        "en": "Stores electricity for a short time and then gives it back. It is used to smooth sudden rises and falls in a voltage."
+      }
+    },
+    {
+      "id": "transistor",
+      "topic": "parts",
+      "term": {
+        "bn": "ট্রানজিস্টর",
+        "en": "transistor"
+      },
+      "meaning": {
+        "bn": "ছোট একটা কারেন্ট দিয়ে বড় কারেন্ট চালু-বন্ধ করার সুইচ। মোটর বোর্ডের পিনের চেয়ে অনেক বেশি কারেন্ট চায়, তাই ট্রানজিস্টর দিয়ে চালাতে হয়।",
+        "en": "A switch that turns a large current on and off with a small one. A motor needs much more current than a board pin can give, so a transistor drives it."
+      },
+      "see": ["motor-driver", "relay"]
+    },
+    {
+      "id": "breadboard",
+      "topic": "parts",
+      "term": {
+        "bn": "ব্রেডবোর্ড",
+        "en": "breadboard"
+      },
+      "meaning": {
+        "bn": "ঝালাই ছাড়া সার্কিট বানানোর ছিদ্রওয়ালা বোর্ড। ভেতরে ছোট সারির ছিদ্রগুলো ধাতুর পাতে জোড়া; লম্বা পাশের রেল দুটো সাধারণত + আর −-এর জন্য।",
+        "en": "A board full of holes for building circuits without soldering. Inside, each short row of holes is joined by a metal strip; the long rails along the sides are usually for + and −."
+      },
+      "see": ["circuit"]
+    },
+    {
+      "id": "sensor",
+      "topic": "parts",
+      "term": {
+        "bn": "সেন্সর",
+        "en": "sensor"
+      },
+      "meaning": {
+        "bn": "চারপাশের কিছু একটা মাপে (আলো, তাপমাত্রা, দূরত্ব, আর্দ্রতা) আর বোর্ডকে সংকেত দিয়ে জানায়।",
+        "en": "Measures something around it (light, temperature, distance, humidity) and tells the board with a signal."
+      },
+      "see": ["module", "analog", "digital"]
+    },
+    {
+      "id": "module",
+      "topic": "parts",
+      "term": {
+        "bn": "মডিউল",
+        "en": "module"
+      },
+      "meaning": {
+        "bn": "একটা চিপ বা সেন্সর, তার দরকারি ছোট পার্টস সহ, ছোট একটা বোর্ডে বসানো, পিনগুলো সহজে জোড়ার মতো করে।",
+        "en": "A chip or sensor with the small parts it needs, on a little board, with pins that are easy to connect."
+      },
+      "see": ["sensor", "chip"]
+    },
+    {
+      "id": "chip",
+      "topic": "parts",
+      "term": {
+        "bn": "চিপ",
+        "en": "chip"
+      },
+      "also": {
+        "en": ["integrated circuit", "IC"]
+      },
+      "meaning": {
+        "bn": "সিলিকনের ছোট একটা টুকরোয় বানানো অনেক ট্রানজিস্টরের সার্কিট, পা-ওয়ালা প্লাস্টিকের খোলে ভরা। যেমন 74HC08 লজিক চিপ।",
+        "en": "A circuit of many transistors made on a small piece of silicon, in a plastic case with legs. The 74HC08 logic chip is one."
+      },
+      "see": ["transistor", "logic-gate"]
+    },
+    {
+      "id": "potentiometer",
+      "topic": "parts",
+      "term": {
+        "bn": "পটেনশিওমিটার",
+        "en": "potentiometer"
+      },
+      "meaning": {
+        "bn": "ঘোরানো যায় এমন রেজিস্টর। মাঝের পা থেকে দুই প্রান্তের মাঝামাঝি যেকোনো ভোল্টেজ পাওয়া যায়, তাই নব হিসেবে কাজ করে।",
+        "en": "A resistor you can turn. Its middle leg gives any voltage between those of its two ends, so it works as a knob."
+      },
+      "see": ["resistor", "voltage-divider", "analog"]
+    },
+    {
+      "id": "relay",
+      "topic": "parts",
+      "term": {
+        "bn": "রিলে",
+        "en": "relay"
+      },
+      "meaning": {
+        "bn": "বিদ্যুতে চলা সুইচ: ছোট কারেন্টে ভেতরের চুম্বক একটা আলাদা সার্কিটের সুইচ খোলে বা বন্ধ করে। পাম্প বা বাতির মতো বড় যন্ত্র চালাতে লাগে। এর পিন COM, NO আর NC।",
+        "en": "A switch worked by electricity: a small current lets a magnet inside open or close the switch of a separate circuit. It runs larger things such as a pump or a lamp. Its pins are COM, NO and NC."
+      },
+      "see": ["transistor"]
+    },
+    {
+      "id": "servo",
+      "topic": "parts",
+      "term": {
+        "bn": "সার্ভো",
+        "en": "servo"
+      },
+      "meaning": {
+        "bn": "এমন মোটর যা বলে দেওয়া কোণে (০° থেকে ১৮০°) ঘুরে থেমে থাকে। কোণটা বলা হয় সংকেতের পালস কতক্ষণ থাকে তা দিয়ে।",
+        "en": "A motor that turns to the angle it is told (0° to 180°) and stays there. The angle is given by how long the pulses of its signal last."
+      },
+      "see": ["pwm"]
+    },
+    {
+      "id": "motor-driver",
+      "topic": "parts",
+      "term": {
+        "bn": "মোটর ড্রাইভার",
+        "en": "motor driver"
+      },
+      "meaning": {
+        "bn": "বোর্ডের দুর্বল সংকেত নিয়ে আলাদা উৎস থেকে মোটরকে বেশি কারেন্ট দেয়, আর ঘোরার দিক বদলাতে দেয়। যেমন L298N।",
+        "en": "Takes the board’s weak signal and gives a motor a larger current from a separate supply, and lets its direction change. The L298N is one."
+      },
+      "see": ["transistor", "pwm"]
+    },
+    {
+      "id": "buzzer",
+      "topic": "parts",
+      "term": {
+        "bn": "বাজার",
+        "en": "buzzer"
+      },
+      "meaning": {
+        "bn": "কারেন্ট বা সংকেত পেলে শব্দ করে।",
+        "en": "Makes a sound when it gets a current or a signal."
+      }
+    },
+    {
+      "id": "board",
+      "topic": "boards",
+      "term": {
+        "bn": "বোর্ড",
+        "en": "board"
+      },
+      "also": {
+        "bn": ["মাইক্রোকন্ট্রোলার বোর্ড"],
+        "en": ["microcontroller board"]
+      },
+      "meaning": {
+        "bn": "এই ল্যাবে “বোর্ড” মানে প্রোগ্রাম চালানো যায় এমন ছোট কম্পিউটার, যেমন ESP32 বা UNO-সামঞ্জস্যপূর্ণ বোর্ড। এর ভেতরের মূল চিপকে মাইক্রোকন্ট্রোলার বলে।",
+        "en": "In this lab, “board” means a small computer that runs a program, such as the ESP32 or a UNO-compatible board. Its main chip is called a microcontroller."
+      },
+      "see": ["pin", "program"]
+    },
+    {
+      "id": "pin",
+      "topic": "boards",
+      "term": {
+        "bn": "পিন",
+        "en": "pin"
+      },
+      "meaning": {
+        "bn": "বোর্ড বা পার্টসের যে পা বা খুঁটিতে তার জোড়া হয়। বোর্ডের প্রতিটা পিনের একটা নাম থাকে, যেমন D2 বা GND।",
+        "en": "A leg or post of a board or part that a wire connects to. Each pin of a board has a name, such as D2 or GND."
+      },
+      "see": ["input", "output"]
+    },
+    {
+      "id": "input",
+      "topic": "boards",
+      "term": {
+        "bn": "ইনপুট",
+        "en": "input"
+      },
+      "meaning": {
+        "bn": "বোর্ড যে পিন দিয়ে বাইরের খবর পড়ে, যেমন বোতাম চাপা কি না বা সেন্সরের মান।",
+        "en": "A pin through which the board reads the outside world, such as whether a button is pressed or what a sensor says."
+      },
+      "see": ["output", "pull-up"]
+    },
+    {
+      "id": "output",
+      "topic": "boards",
+      "term": {
+        "bn": "আউটপুট",
+        "en": "output"
+      },
+      "meaning": {
+        "bn": "বোর্ড যে পিন দিয়ে কিছু চালায়, যেমন LED জ্বালায় বা বাজার বাজায়।",
+        "en": "A pin through which the board drives something, such as lighting an LED or sounding a buzzer."
+      },
+      "see": ["input"]
+    },
+    {
+      "id": "program",
+      "topic": "boards",
+      "term": {
+        "bn": "প্রোগ্রাম",
+        "en": "program"
+      },
+      "also": {
+        "en": ["sketch"]
+      },
+      "meaning": {
+        "bn": "বোর্ডকে ধাপে ধাপে কী করতে হবে তার নির্দেশ। ESP32-এর প্রোগ্রামে setup() একবার চলে, তারপর loop() বারবার চলতে থাকে।",
+        "en": "The step-by-step instructions for what the board should do. In an ESP32 program, setup() runs once and then loop() runs again and again."
+      },
+      "see": ["variable", "library"]
+    },
+    {
+      "id": "variable",
+      "topic": "boards",
+      "term": {
+        "bn": "চলক",
+        "en": "variable"
+      },
+      "also": {
+        "bn": ["ভেরিয়েবল"]
+      },
+      "meaning": {
+        "bn": "প্রোগ্রামের ভেতরে নাম দেওয়া একটা জায়গা, যেখানে একটা মান রাখা আর বদলানো যায়, যেমন int count = 0;। বোর্ডের বিদ্যুৎ চলে গেলে চলক মুছে যায়।",
+        "en": "A named place in a program where a value is kept and can change, such as int count = 0;. A variable is lost when the board loses power."
+      },
+      "see": ["program"]
+    },
+    {
+      "id": "library",
+      "topic": "boards",
+      "term": {
+        "bn": "লাইব্রেরি",
+        "en": "library"
+      },
+      "meaning": {
+        "bn": "আগে থেকে লেখা কোড যা একটা কাজ সহজ করে দেয়। যেমন DHT লাইব্রেরি সেন্সর পড়ে, Adafruit_SSD1306 ডিসপ্লেতে আঁকে।",
+        "en": "Code written beforehand that makes a job easier. The DHT library reads the sensor, for example, and Adafruit_SSD1306 draws on the display."
+      },
+      "see": ["program"]
+    },
+    {
+      "id": "digital",
+      "topic": "boards",
+      "term": {
+        "bn": "ডিজিটাল",
+        "en": "digital"
+      },
+      "meaning": {
+        "bn": "শুধু দুটো অবস্থা: HIGH (চালু) বা LOW (বন্ধ, ০ V)। বোতাম চাপা কি না, LED জ্বলছে কি না, এগুলো ডিজিটাল।",
+        "en": "Only two states: HIGH (on) or LOW (off, 0 V). Whether a button is pressed or an LED is lit is digital."
+      },
+      "see": ["analog", "logic-gate"]
+    },
+    {
+      "id": "analog",
+      "topic": "boards",
+      "term": {
+        "bn": "অ্যানালগ",
+        "en": "analog"
+      },
+      "also": {
+        "en": ["analogue"]
+      },
+      "meaning": {
+        "bn": "মাঝামাঝি যেকোনো মান হতে পারে, যেমন ০ থেকে ৩.৩ V-এর যেকোনো ভোল্টেজ। ESP32 অ্যানালগ ইনপুট পড়ে ০ থেকে ৪০৯৫-এর একটা সংখ্যায় বদলায়।",
+        "en": "Can take any value in between, such as any voltage from 0 to 3.3 V. The ESP32 reads an analog input as a number from 0 to 4095."
+      },
+      "see": ["digital", "sensor"]
+    },
+    {
+      "id": "pwm",
+      "topic": "boards",
+      "term": {
+        "bn": "PWM",
+        "en": "PWM"
+      },
+      "also": {
+        "en": ["pulse-width modulation"]
+      },
+      "meaning": {
+        "bn": "খুব দ্রুত চালু-বন্ধ করে গড়ে কম বা বেশি শক্তি দেওয়া। চালু থাকার ভাগ যত বেশি, LED তত উজ্জ্বল বা মোটর তত জোরে।",
+        "en": "Switching on and off very quickly to give more or less power on average. The larger the share of time it is on, the brighter the LED or the faster the motor."
+      },
+      "see": ["digital", "servo"]
+    },
+    {
+      "id": "pull-up",
+      "topic": "boards",
+      "term": {
+        "bn": "পুল-আপ",
+        "en": "pull-up"
+      },
+      "also": {
+        "bn": ["পুল-আপ রেজিস্টর"],
+        "en": ["pull-up resistor"]
+      },
+      "meaning": {
+        "bn": "একটা রেজিস্টর যা পিনে কিছু জোড়া না থাকলে পিনকে HIGH-এ টেনে রাখে, যাতে পিন “ভাসমান” হয়ে এলোমেলো মান না পড়ে। বোতাম আর 1-Wire লাইনে লাগে।",
+        "en": "A resistor that holds a pin HIGH when nothing else drives it, so the pin does not “float” and read random values. Buttons and 1-Wire lines need one."
+      },
+      "see": ["input", "resistor"]
+    },
+    {
+      "id": "i2c",
+      "topic": "boards",
+      "term": {
+        "bn": "I2C",
+        "en": "I2C"
+      },
+      "also": {
+        "en": ["I²C"]
+      },
+      "meaning": {
+        "bn": "দুটো তারে (SDA আর SCL) অনেক যন্ত্রকে বোর্ডের সঙ্গে কথা বলানোর নিয়ম। প্রতিটা যন্ত্রের একটা ঠিকানা থাকে, যেমন OLED ডিসপ্লের 0x3C।",
+        "en": "A way for many devices to talk to the board over two wires (SDA and SCL). Each device has an address, such as 0x3C for the OLED display."
+      },
+      "see": ["bus"]
+    },
+    {
+      "id": "bus",
+      "topic": "boards",
+      "term": {
+        "bn": "বাস",
+        "en": "bus"
+      },
+      "meaning": {
+        "bn": "অনেক যন্ত্র বা অনেক তারের ভাগ করে নেওয়া একই পথ। I2C বাসে অনেক যন্ত্র একই দুটো তার ব্যবহার করে; লজিক শিটে বাস একবারে অনেক পিন জোড়ে।",
+        "en": "One path shared by many devices or many wires. On an I2C bus, many devices use the same two wires; on the logic sheet, a bus joins many pins at once."
+      },
+      "see": ["i2c"]
+    },
+    {
+      "id": "logic-gate",
+      "topic": "logic",
+      "term": {
+        "bn": "লজিক গেট",
+        "en": "logic gate"
+      },
+      "also": {
+        "bn": ["গেট"],
+        "en": ["gate"]
+      },
+      "meaning": {
+        "bn": "এক বা একাধিক ইনপুট (০ বা ১) দেখে নিয়ম অনুযায়ী একটা আউটপুট দেয়। AND: সব ইনপুট ১ হলে ১। OR: যেকোনো একটা ১ হলে ১। NOT: উল্টে দেয়।",
+        "en": "Looks at one or more inputs (0 or 1) and gives one output by a rule. AND: 1 when every input is 1. OR: 1 when any input is 1. NOT: turns it round."
+      },
+      "see": ["truth-table", "digital"]
+    },
+    {
+      "id": "truth-table",
+      "topic": "logic",
+      "term": {
+        "bn": "সত্যক সারণি",
+        "en": "truth table"
+      },
+      "meaning": {
+        "bn": "ইনপুটের প্রতিটা সম্ভাব্য মিলের জন্য আউটপুট কী হয়, তার পুরো তালিকা।",
+        "en": "The full list of what the output is for every possible combination of inputs."
+      },
+      "see": ["logic-gate"]
+    },
+    {
+      "id": "flip-flop",
+      "topic": "logic",
+      "term": {
+        "bn": "ফ্লিপ-ফ্লপ",
+        "en": "flip-flop"
+      },
+      "meaning": {
+        "bn": "এক বিট মনে রাখে এমন সার্কিট। যেমন D ফ্লিপ-ফ্লপ ক্লকের ওঠার মুহূর্তে ইনপুটের মান তুলে নেয় আর পরের বার পর্যন্ত ধরে রাখে।",
+        "en": "A circuit that remembers one bit. A D flip-flop, for example, takes its input’s value at the moment the clock rises and holds it until the next time."
+      },
+      "see": ["clock", "counter"]
+    },
+    {
+      "id": "clock",
+      "topic": "logic",
+      "term": {
+        "bn": "ক্লক",
+        "en": "clock"
+      },
+      "also": {
+        "bn": ["ঘড়ি"]
+      },
+      "meaning": {
+        "bn": "নিয়মিত তালে HIGH আর LOW হতে থাকা সংকেত, যা ফ্লিপ-ফ্লপ আর কাউন্টারকে একসঙ্গে তালে তালে চালায়। ল্যাবে 555 ক্লক মডিউল এটা দেয়।",
+        "en": "A signal that keeps going HIGH and LOW at a steady beat, keeping flip-flops and counters in step. In the lab, the 555 clock module gives one."
+      },
+      "see": ["flip-flop", "counter"]
+    },
+    {
+      "id": "counter",
+      "topic": "logic",
+      "term": {
+        "bn": "কাউন্টার",
+        "en": "counter"
+      },
+      "meaning": {
+        "bn": "প্রতিটা ক্লক পালসে এক করে বাড়ে এমন সার্কিট; বাইনারিতে গোনে। যেমন 74HC393।",
+        "en": "A circuit that goes up by one at each clock pulse, counting in binary. The 74HC393 is one."
+      },
+      "see": ["clock", "flip-flop"]
+    },
+    {
+      "id": "shift-register",
+      "topic": "logic",
+      "term": {
+        "bn": "শিফট রেজিস্টার",
+        "en": "shift register"
+      },
+      "meaning": {
+        "bn": "বিটগুলো একটা একটা করে ঢুকিয়ে ভেতরে সারি করে রাখে, তারপর একসঙ্গে অনেক পিনে বের করে। কম পিনে অনেক LED চালাতে লাগে। যেমন 74HC595।",
+        "en": "Takes bits in one at a time, lines them up inside, then puts them out on many pins at once. It drives many LEDs from few pins. The 74HC595 is one."
+      },
+      "see": ["flip-flop"]
+    },
+    {
+      "id": "decoder",
+      "topic": "logic",
+      "term": {
+        "bn": "ডিকোডার",
+        "en": "decoder"
+      },
+      "meaning": {
+        "bn": "একটা বাইনারি সংখ্যা নিয়ে ঠিক কোন আউটপুটগুলো চালু হবে তা বেছে দেয়। CD4511 চার বিটের সংখ্যাকে সাত ভাগের ডিসপ্লের অঙ্কে বদলায়।",
+        "en": "Takes a binary number and chooses exactly which outputs to turn on. The CD4511 turns a four-bit number into a digit on a seven-segment display."
+      },
+      "see": ["logic-gate"]
+    },
+    {
+      "id": "oscilloscope",
+      "topic": "instruments",
+      "term": {
+        "bn": "অসিলোস্কোপ",
+        "en": "oscilloscope"
+      },
+      "meaning": {
+        "bn": "সময়ের সঙ্গে একটা ভোল্টেজ কীভাবে বদলায়, তা রেখার ছবি হিসেবে দেখায়।",
+        "en": "Shows how a voltage changes over time, as a line drawn across the screen."
+      },
+      "see": ["voltage", "logic-analyser"]
+    },
+    {
+      "id": "logic-analyser",
+      "topic": "instruments",
+      "term": {
+        "bn": "লজিক অ্যানালাইজার",
+        "en": "logic analyser"
+      },
+      "also": {
+        "en": ["logic analyzer"]
+      },
+      "meaning": {
+        "bn": "অনেকগুলো ডিজিটাল লাইনের HIGH আর LOW সময়ের সঙ্গে পাশাপাশি দেখায়, যাতে কোনটা কখন বদলাল বোঝা যায়।",
+        "en": "Shows many digital lines going HIGH and LOW side by side over time, so you can see which changed when."
+      },
+      "see": ["digital", "oscilloscope"]
+    },
+    {
+      "id": "iot",
+      "topic": "iot",
+      "term": {
+        "bn": "IoT",
+        "en": "IoT"
+      },
+      "also": {
+        "en": ["Internet of Things"]
+      },
+      "meaning": {
+        "bn": "ইন্টারনেট অব থিংস: সেন্সর আর যন্ত্র নেটওয়ার্কে যুক্ত হয়ে নিজেরাই তথ্য পাঠায় আর নির্দেশ নেয়।",
+        "en": "The Internet of Things: sensors and devices joined to a network, sending readings and taking commands by themselves."
+      },
+      "see": ["wifi", "mqtt"]
+    },
+    {
+      "id": "wifi",
+      "topic": "iot",
+      "term": {
+        "bn": "Wi-Fi",
+        "en": "Wi-Fi"
+      },
+      "meaning": {
+        "bn": "তার ছাড়া রেডিওতে নেটওয়ার্কে যুক্ত হওয়ার উপায়। ল্যাবের Wi-Fi ল্যাবেরই বানানো, আসল ইন্টারনেটে যায় না।",
+        "en": "A way to join a network by radio, without wires. The lab’s Wi-Fi is the lab’s own made-up network and does not reach the real internet."
+      },
+      "see": ["iot", "mqtt"]
+    },
+    {
+      "id": "mqtt",
+      "topic": "iot",
+      "term": {
+        "bn": "MQTT",
+        "en": "MQTT"
+      },
+      "meaning": {
+        "bn": "ছোট ছোট বার্তা পাঠানোর নিয়ম। যন্ত্রগুলো একটা ব্রোকারে কোনো বিষয়ের নামে বার্তা পাঠায়, আর যারা সেই বিষয় শুনছে তারা বার্তাটা পায়।",
+        "en": "A way to send short messages. Devices send messages under a topic to a broker, and whoever listens to that topic receives them."
+      },
+      "see": ["wifi", "dashboard"]
+    },
+    {
+      "id": "dashboard",
+      "topic": "iot",
+      "term": {
+        "bn": "ড্যাশবোর্ড",
+        "en": "dashboard"
+      },
+      "meaning": {
+        "bn": "একটা পাতা, যেখানে যন্ত্রের পাঠানো মান দেখা যায় আর বোতাম চেপে যন্ত্রকে নির্দেশ পাঠানো যায়।",
+        "en": "A page that shows the values devices send, with buttons to send them commands."
+      },
+      "see": ["mqtt"]
+    }
+  ]
+}
