@@ -71,6 +71,13 @@
       "when": 1795541602936,
       "tag": "0009_close_account",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795543772195,
+      "tag": "0010_retention",
+      "breakpoints": true
     }
   ]
 }

@@ -89,6 +89,11 @@ export const users = pgTable(
     deactivatedAt: at('deactivated_at'),
     /** Stopped for now by the lab's owner, and can be started again. */
     suspendedAt: at('suspended_at'),
+    /**
+     * When the retention job emptied this closed account of personal data. The
+     * row stays, as other records point to it; its name and contact are gone.
+     */
+    erasedAt: at('erased_at'),
   },
   (t) => [
     uniqueIndex('users_email_unique').on(sql`lower(${t.email})`),

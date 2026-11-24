@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=../../.env src/db/migrate.ts",
-    "owner:grant": "tsx --env-file-if-exists=../../.env src/db/grant-owner.ts"
+    "owner:grant": "tsx --env-file-if-exists=../../.env src/db/grant-owner.ts",
+    "retention": "tsx --env-file-if-exists=../../.env src/db/retention-run.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.4.3",
