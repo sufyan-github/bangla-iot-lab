@@ -29,6 +29,13 @@
       "when": 1795508934403,
       "tag": "0003_lessons_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795514984617,
+      "tag": "0004_teacher_invites",
+      "breakpoints": true
     }
   ]
 }

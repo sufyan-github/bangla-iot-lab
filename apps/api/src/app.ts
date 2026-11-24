@@ -9,6 +9,7 @@ import { classRoutes } from './routes/classes';
 import { learnerRoutes } from './routes/learners';
 import { lessonRoutes } from './routes/lessons';
 import { projectRoutes } from './routes/projects';
+import { schoolRoutes } from './routes/schools';
 import { compileRoutes } from './routes/compile';
 import { registerHealthRoutes } from './routes/health';
 
@@ -59,5 +60,6 @@ export async function buildApp(deps: AppDependencies) {
   await app.register(learnerRoutes(deps));
   await app.register(projectRoutes(deps));
   await app.register(lessonRoutes(deps));
+  await app.register(schoolRoutes(deps));
   return app;
 }

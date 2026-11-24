@@ -18,8 +18,13 @@ export async function requireUser(
   return who;
 }
 
-/** True when the user teaches in the school. */
-export async function teachesIn(database: Database, userId: string, schoolId: string) {
+/** True when the user holds the role in the school now. */
+async function holds(
+  database: Database,
+  userId: string,
+  schoolId: string,
+  role: 'teacher' | 'school_admin',
+) {
   const rows = await database.db
     .select({ id: schoolMemberships.id })
     .from(schoolMemberships)
@@ -27,13 +32,21 @@ export async function teachesIn(database: Database, userId: string, schoolId: st
       and(
         eq(schoolMemberships.userId, userId),
         eq(schoolMemberships.schoolId, schoolId),
-        eq(schoolMemberships.role, 'teacher'),
+        eq(schoolMemberships.role, role),
         isNull(schoolMemberships.endedAt),
       ),
     )
     .limit(1);
   return rows.length > 0;
 }
+
+/** True when the user teaches in the school. */
+export const teachesIn = (database: Database, userId: string, schoolId: string) =>
+  holds(database, userId, schoolId, 'teacher');
+
+/** True when the user runs the school's account in the lab. */
+export const adminOf = (database: Database, userId: string, schoolId: string) =>
+  holds(database, userId, schoolId, 'school_admin');
 
 /** A class the user teaches and has not archived, or null. */
 export async function ownClass(database: Database, userId: string, classId: string) {

@@ -43,6 +43,41 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
   await expect(page.getByTestId('assigned-lessons')).toContainText(/পুশ বোতাম|push button/i);
 });
 
+test('a school admin invites a teacher, who signs up with the code', async ({ page }) => {
+  const stamp = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  await page.goto('/account');
+  await page.getByTestId('teacher-switch').click();
+  await page.getByTestId('teacher-name').fill('প্রধান শিক্ষক');
+  await page.getByTestId('teacher-school').fill('আমন্ত্রণ বিদ্যালয়');
+  await page.getByTestId('teacher-email').fill(`admin-${stamp}@example.test`);
+  await page.getByTestId('teacher-password').fill('a long pass phrase');
+  await page.getByTestId('teacher-submit').click();
+
+  await expect(page.getByTestId('school-teacher')).toHaveCount(1);
+  await page.getByTestId('invite-teacher').click();
+  const code = (await page.getByTestId('invite-code-shown').textContent())!.trim();
+  expect(code).toMatch(/^\w{4}-\w{4}-\w{4}$/);
+  await expect(page.getByTestId('open-invite')).toHaveCount(1);
+
+  await page.getByTestId('sign-out').click();
+  await page.getByTestId('teacher-switch').click();
+  await page.getByTestId('teacher-name').fill('নতুন শিক্ষক');
+  await page.getByTestId('teacher-invited').click();
+  await page.getByTestId('teacher-invite').fill(code);
+  await page.getByTestId('teacher-email').fill(`invited-${stamp}@example.test`);
+  await page.getByTestId('teacher-password').fill('a long pass phrase');
+  await page.getByTestId('teacher-submit').click();
+  await expect(page.getByTestId('nav-account')).toContainText('নতুন শিক্ষক');
+  // A teacher here, not its admin: classes, but no invitations.
+  await expect(page.getByTestId('new-class')).toBeVisible();
+  await expect(page.getByTestId('school-teachers')).toHaveCount(0);
+
+  // The code is used up.
+  await page.getByTestId('join-school-code').fill(code);
+  await page.getByTestId('join-school-submit').click();
+  await expect(page.getByTestId('account-problem')).toBeVisible();
+});
+
 test('a wrong class code is explained', async ({ page }) => {
   await page.goto('/account');
   await page.getByTestId('join-code').fill('AAAA-AAAA');

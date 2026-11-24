@@ -5,6 +5,10 @@ import type { AppDependencies } from '../app';
 import { DUMMY_HASH, hashPassword, verifyPassword } from '../auth/password';
 import { audit, clearSessionCookie, endSession, signedIn, startSession } from '../auth/session';
 import { classEnrollments, classes, schoolMemberships, schools, users } from '../db/schema';
+import { acceptInvite } from './schools';
+
+/** Thrown inside the sign-up transaction to undo it when the invitation does not work. */
+class NoSuchInvite extends Error {}
 
 const Email = Type.String({
   minLength: 3,
@@ -17,7 +21,8 @@ const Name = Type.String({ minLength: 1, maxLength: 80 });
 
 /**
  * Accounts for adults (teachers). A teacher signs up with an email and a
- * password and names their school; learners never have an email and join
+ * password, and either names their school (becoming its admin) or gives the
+ * code a school's admin made for them. Learners never have an email and join
  * through a class instead.
  */
 export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
@@ -36,7 +41,9 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
               email: Email,
               password: Password,
               displayName: Name,
-              schoolName: Name,
+              schoolName: Type.Optional(Name),
+              /** Joins an existing school instead of naming a new one. */
+              inviteCode: Type.Optional(Type.String({ minLength: 4, maxLength: 40 })),
               district: Type.Optional(Type.String({ maxLength: 60 })),
             },
             { additionalProperties: false },
@@ -44,7 +51,10 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
         },
       },
       async (request, reply) => {
-        const { email, password, displayName, schoolName, district } = request.body;
+        const { email, password, displayName, schoolName, inviteCode, district } = request.body;
+        if ((schoolName === undefined) === (inviteCode === undefined)) {
+          return reply.code(400).send({ error: 'school-or-invite' });
+        }
         const taken = await database.db
           .select({ id: users.id })
           .from(users)
@@ -52,21 +62,32 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
           .limit(1);
         if (taken.length > 0) return reply.code(409).send({ error: 'email-taken' });
         const passwordHash = await hashPassword(password);
-        const userId = await database.db.transaction(async (tx) => {
-          const [user] = await tx
-            .insert(users)
-            .values({ kind: 'adult', email: email.toLowerCase(), passwordHash, displayName })
-            .returning({ id: users.id });
-          const [school] = await tx
-            .insert(schools)
-            .values({ name: schoolName, district: district || null })
-            .returning({ id: schools.id });
-          await tx.insert(schoolMemberships).values([
-            { schoolId: school!.id, userId: user!.id, role: 'school_admin' },
-            { schoolId: school!.id, userId: user!.id, role: 'teacher' },
-          ]);
-          return user!.id;
-        });
+        let userId: string;
+        try {
+          userId = await database.db.transaction(async (tx) => {
+            const [user] = await tx
+              .insert(users)
+              .values({ kind: 'adult', email: email.toLowerCase(), passwordHash, displayName })
+              .returning({ id: users.id });
+            if (inviteCode !== undefined) {
+              if (!(await acceptInvite(tx, inviteCode, user!.id))) throw new NoSuchInvite();
+              return user!.id;
+            }
+            const [school] = await tx
+              .insert(schools)
+              .values({ name: schoolName!, district: district || null })
+              .returning({ id: schools.id });
+            await tx.insert(schoolMemberships).values([
+              { schoolId: school!.id, userId: user!.id, role: 'school_admin' },
+              { schoolId: school!.id, userId: user!.id, role: 'teacher' },
+            ]);
+            return user!.id;
+          });
+        } catch (error) {
+          if (error instanceof NoSuchInvite)
+            return reply.code(404).send({ error: 'no-such-invite' });
+          throw error;
+        }
         await audit(database, { actorId: userId, action: 'auth.sign-up' });
         await startSession(database, reply, userId, secure);
         return reply.code(201).send({ ok: true });

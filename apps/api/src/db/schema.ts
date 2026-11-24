@@ -287,3 +287,27 @@ export const progressEvents = pgTable(
     check('progress_events_step_positive', sql`${t.step} >= 0`),
   ],
 );
+
+/**
+ * A school admin's invitation for another teacher to join the school. The code
+ * is shown to the admin once and kept only as a hash; it works once, for a week.
+ */
+export const teacherInvites = pgTable(
+  'teacher_invites',
+  {
+    id: id(),
+    schoolId: uuid('school_id')
+      .notNull()
+      .references(() => schools.id, { onDelete: 'restrict' }),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    codeHash: text('code_hash').notNull().unique(),
+    expiresAt: at('expires_at').notNull(),
+    acceptedBy: uuid('accepted_by').references(() => users.id, { onDelete: 'restrict' }),
+    acceptedAt: at('accepted_at'),
+    revokedAt: at('revoked_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('teacher_invites_school_idx').on(t.schoolId)],
+);

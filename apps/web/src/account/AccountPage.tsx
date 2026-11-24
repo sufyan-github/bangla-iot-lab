@@ -28,6 +28,7 @@ const KNOWN_ERRORS = [
   'offline',
   'bad-request',
   'already-set',
+  'no-such-invite',
 ];
 
 function Problem({ error }: { error: string | null }) {
@@ -44,7 +45,17 @@ function Problem({ error }: { error: string | null }) {
  * A secret shown once: a join code or a learner's key, written large in
  * chalk on a slate, so a teacher can copy it onto the classroom's board.
  */
-function ShownOnce({ label, value, testId }: { label: string; value: string; testId: string }) {
+function ShownOnce({
+  label,
+  value,
+  testId,
+  note,
+}: {
+  label: string;
+  value: string;
+  testId: string;
+  note?: string;
+}) {
   const { t } = useT();
   return (
     <div className="rounded-[var(--radius-card)] border-[6px] border-[#8a6a43] bg-[#23332d] p-4 text-paper shadow-[var(--shadow-raised)]">
@@ -55,7 +66,7 @@ function ShownOnce({ label, value, testId }: { label: string; value: string; tes
       >
         {value}
       </p>
-      <p className="text-sm text-paper/70">{t('account.shownOnce')}</p>
+      <p className="text-sm text-paper/70">{note ?? t('account.shownOnce')}</p>
     </div>
   );
 }
@@ -82,7 +93,10 @@ function TeacherSignIn() {
   const { t } = useT();
   const refresh = useAccount((s) => s.refresh);
   const [signUp, setSignUp] = useState(false);
+  // Signing up to join a school whose admin sent a code, rather than naming a new one.
+  const [invited, setInvited] = useState(false);
   const [form, setForm] = useState({
+    inviteCode: '',
     email: '',
     password: '',
     displayName: '',
@@ -94,11 +108,14 @@ function TeacherSignIn() {
     setForm({ ...form, [key]: event.target.value });
   const send = async (event: FormEvent) => {
     event.preventDefault();
+    const { email, password, displayName, inviteCode, schoolName, district } = form;
     const done = signUp
-      ? await submit('/v1/auth/sign-up', {
-          ...form,
-          ...(form.district ? {} : { district: undefined }),
-        })
+      ? await submit(
+          '/v1/auth/sign-up',
+          invited
+            ? { email, password, displayName, inviteCode }
+            : { email, password, displayName, schoolName, district: district || undefined },
+        )
       : await submit('/v1/auth/sign-in', { email: form.email, password: form.password });
     if (done) await refresh();
   };
@@ -119,24 +136,60 @@ function TeacherSignIn() {
               className={input}
             />
           </Field>
-          <Field label={t('account.schoolName')}>
-            <input
-              data-testid="teacher-school"
-              value={form.schoolName}
-              onChange={set('schoolName')}
-              required
-              maxLength={80}
-              className={input}
-            />
-          </Field>
-          <Field label={t('account.district')}>
-            <input
-              value={form.district}
-              onChange={set('district')}
-              maxLength={60}
-              className={input}
-            />
-          </Field>
+          <div className="flex flex-wrap gap-2" role="group">
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={!invited}
+              onClick={() => setInvited(false)}
+            >
+              {t('account.newSchool')}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              data-testid="teacher-invited"
+              aria-pressed={invited}
+              onClick={() => setInvited(true)}
+            >
+              {t('account.haveInvite')}
+            </button>
+          </div>
+          {invited ? (
+            <Field label={t('account.inviteCode')}>
+              <input
+                data-testid="teacher-invite"
+                value={form.inviteCode}
+                onChange={set('inviteCode')}
+                required
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={40}
+                className={`${input} font-mono uppercase tracking-widest`}
+              />
+            </Field>
+          ) : (
+            <>
+              <Field label={t('account.schoolName')}>
+                <input
+                  data-testid="teacher-school"
+                  value={form.schoolName}
+                  onChange={set('schoolName')}
+                  required
+                  maxLength={80}
+                  className={input}
+                />
+              </Field>
+              <Field label={t('account.district')}>
+                <input
+                  value={form.district}
+                  onChange={set('district')}
+                  maxLength={60}
+                  className={input}
+                />
+              </Field>
+            </>
+          )}
         </>
       )}
       <Field label={t('account.email')}>
@@ -466,10 +519,171 @@ function ClassLessons({ classId }: { classId: string }) {
   );
 }
 
+interface SchoolTeacher {
+  userId: string;
+  displayName: string;
+  admin: boolean;
+}
+interface OpenInvite {
+  id: string;
+  expiresAt: string;
+}
+
+/** For a school's admin: its teachers, and codes that invite more. */
+function SchoolTeachers({ schoolId, schoolName }: { schoolId: string; schoolName: string }) {
+  const { t } = useT();
+  const [list, setList] = useState<{ teachers: SchoolTeacher[]; invites: OpenInvite[] } | null>(
+    null,
+  );
+  const [shown, setShown] = useState<string | null>(null);
+  const { busy, error, submit } = useSubmit();
+  const load = async () => {
+    const answer = await call<{ teachers: SchoolTeacher[]; invites: OpenInvite[] }>(
+      `/v1/schools/${schoolId}/teachers`,
+    );
+    if (answer.ok) setList(answer.value);
+  };
+  // Loads again only when the school changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => void load(), [schoolId]);
+
+  return (
+    <section data-testid="school-teachers" className="space-y-3">
+      <div>
+        <h2 className="text-lg font-semibold">{t('account.teachers')}</h2>
+        <p className="text-sm text-ink-soft">{schoolName}</p>
+      </div>
+      {list && (
+        <ul className="divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface">
+          {list.teachers.map((teacher) => (
+            <li
+              key={teacher.userId}
+              data-testid="school-teacher"
+              className="flex items-center gap-2 px-4 py-2.5"
+            >
+              <span className="flex-1">{teacher.displayName}</span>
+              {teacher.admin && (
+                <span className="rounded-full bg-mat-soft px-2 py-0.5 text-xs font-medium text-mat-deep">
+                  {t('account.admin')}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {shown && (
+        <ShownOnce
+          label={t('account.inviteShown')}
+          value={shown}
+          testId="invite-code-shown"
+          note={t('account.inviteNote')}
+        />
+      )}
+      {list && list.invites.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-ink-soft">{t('account.openInvites')}</h3>
+          <ul className="mt-1 space-y-1">
+            {list.invites.map((invite) => (
+              <li
+                key={invite.id}
+                data-testid="open-invite"
+                className="flex items-center gap-2 text-sm"
+              >
+                <span className="flex-1">
+                  {t('account.inviteUntil', {
+                    date: new Date(invite.expiresAt).toLocaleDateString(),
+                  })}
+                </span>
+                <button
+                  type="button"
+                  data-testid="invite-withdraw"
+                  className="btn btn-quiet min-h-9 text-sm"
+                  onClick={async () => {
+                    await call(`/v1/schools/${schoolId}/invites/${invite.id}/withdraw`, {});
+                    setShown(null);
+                    await load();
+                  }}
+                >
+                  {t('account.withdraw')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <Problem error={error} />
+      <button
+        type="button"
+        data-testid="invite-teacher"
+        disabled={busy}
+        className={secondary}
+        onClick={async () => {
+          const made = await submit<{ code: string }>(`/v1/schools/${schoolId}/invites`, {});
+          if (made) {
+            setShown(made.code);
+            await load();
+          }
+        }}
+      >
+        {t('account.inviteTeacher')}
+      </button>
+    </section>
+  );
+}
+
+/** A teacher already signed in joins another school with its admin's code. */
+function JoinSchool() {
+  const { t } = useT();
+  const refresh = useAccount((s) => s.refresh);
+  const [code, setCode] = useState('');
+  const { busy, error, submit } = useSubmit();
+  return (
+    <form
+      data-testid="join-school"
+      className="space-y-2"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        if (await submit('/v1/invites/accept', { code })) {
+          setCode('');
+          await refresh();
+        }
+      }}
+    >
+      <h2 className="text-lg font-semibold">{t('account.joinSchool')}</h2>
+      <p className="text-sm text-ink-soft">{t('account.joinSchoolAbout')}</p>
+      <div className="flex flex-wrap gap-2">
+        <input
+          data-testid="join-school-code"
+          aria-label={t('account.inviteCode')}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          required
+          autoComplete="off"
+          spellCheck={false}
+          maxLength={40}
+          className={`${input} max-w-72 flex-1 font-mono uppercase tracking-widest`}
+        />
+        <button
+          type="submit"
+          data-testid="join-school-submit"
+          disabled={busy}
+          className={secondary}
+        >
+          {t('account.join')}
+        </button>
+      </div>
+      <Problem error={error} />
+    </form>
+  );
+}
+
 function TeacherDashboard() {
   const { t, number } = useT();
   const me = useAccount((s) => s.me)!;
-  const school = me.schools.find((s) => s.role === 'teacher');
+  const teaching = me.schools.filter((s) => s.role === 'teacher');
+  const running = me.schools.filter((s) => s.role === 'school_admin');
+  const [schoolChoice, setSchoolChoice] = useState<string | null>(null);
+  const school = teaching.find((s) => s.schoolId === schoolChoice) ?? teaching[0];
   const [classes, setClasses] = useState<ClassSummary[] | null>(null);
   const [form, setForm] = useState({ name: '', grade: 6, consent: false });
   const [shownCode, setShownCode] = useState<{ classId: string; code: string } | null>(null);
@@ -487,7 +701,7 @@ function TeacherDashboard() {
     <div className="space-y-6">
       <section>
         <h2 className="text-lg font-semibold">{t('account.yourClasses')}</h2>
-        {school && <p className="text-sm text-ink-soft">{school.schoolName}</p>}
+        {teaching.length === 1 && <p className="text-sm text-ink-soft">{school!.schoolName}</p>}
         {shownCode && (
           <div className="mt-3">
             <ShownOnce
@@ -512,6 +726,11 @@ function TeacherDashboard() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="flex-1 font-semibold">
                     {item.name} · {t('account.grade', { grade: number(item.grade) })}
+                    {teaching.length > 1 && (
+                      <span className="block text-sm font-normal text-ink-soft">
+                        {teaching.find((s) => s.schoolId === item.schoolId)?.schoolName}
+                      </span>
+                    )}
                   </span>
                   <span className="text-sm text-ink-soft">
                     {t('account.learnerCount', { count: number(item.learners) })}
@@ -615,6 +834,22 @@ function TeacherDashboard() {
           }}
         >
           <h2 className="text-lg font-semibold">{t('account.newClass')}</h2>
+          {teaching.length > 1 && (
+            <Field label={t('account.classSchool')}>
+              <select
+                data-testid="class-school"
+                value={school.schoolId}
+                onChange={(e) => setSchoolChoice(e.target.value)}
+                className={input}
+              >
+                {teaching.map((s) => (
+                  <option key={s.schoolId} value={s.schoolId}>
+                    {s.schoolName}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label={t('account.className')}>
             <input
               data-testid="class-name"
@@ -660,6 +895,11 @@ function TeacherDashboard() {
           </button>
         </form>
       )}
+
+      {running.map((s) => (
+        <SchoolTeachers key={s.schoolId} schoolId={s.schoolId} schoolName={s.schoolName} />
+      ))}
+      <JoinSchool />
     </div>
   );
 }
