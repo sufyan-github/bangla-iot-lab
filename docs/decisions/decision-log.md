@@ -2108,3 +2108,25 @@ Built on 24 November 2026, the third step of D-096.
   that fail now show why.
 - **Not done:** account closing by the user or a guardian, and the retention
   job; a check that a school is real (the owner decides, by any means).
+
+## D-100 — Closing accounts
+
+Built on 24 November 2026, chosen by the owner as the next step.
+
+- **One's own account.** Anyone signed in can close their account from My
+  account; a password, if the account has one, confirms it. Class learners,
+  who sign in with a key, can close theirs too.
+- **A learner's own account, by the guardian.** On the guardian page
+  (`/account/guardian`, linked from the first screen and from the approval
+  email), the guardian writes the learner's sign-in name and their own email.
+  If they match the approval on record, a one-time link (24 hours) goes to that
+  email; opening it closes the account. The answer is the same whatever is
+  found, so the page tells no one which names or emails exist.
+- **Nothing left without someone in charge.** A school's admin hands the role
+  on first, and an owner of the lab gives the role back on the server first. A
+  teacher's classes pass to their school's admin, and their learners stay.
+- **What closing does.** No way in remains (sign-in, key, reset links), every
+  session ends, school memberships end, and the consent on record is marked
+  withdrawn. The data stays until the retention job removes it; that job is
+  not built yet, and its periods wait for the lawyer.
+- Migration `0009` adds the `close-account` kind of email link.

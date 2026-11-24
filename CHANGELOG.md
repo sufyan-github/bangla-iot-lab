@@ -31,6 +31,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Closing accounts**: anyone can close their own account from My account; a
+  parent or guardian can close a learner's own account by a link sent to the
+  email that approved it.
 - **Schools that apply**: a new school waits for the lab owner's approval;
   teachers confirm their email; a school admin can give a teacher a reset link;
   everyone with a password can change it and sign out on every device. The

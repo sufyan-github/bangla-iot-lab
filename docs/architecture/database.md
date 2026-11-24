@@ -60,6 +60,11 @@ Enums: `account_kind`, `platform_role`, `school_role`, `consent_scope`, `consent
 | `schools.status`     | `pending`, `active` or `suspended`; closed uses `archived_at` | default `active`; only an active, open school's roles count and classes can be joined |
 | `users.suspended_at` | Stopped for now by an owner; can be restored                  | a suspended account cannot sign in, and its sessions stop working at once             |
 
+Migration `0009` (D-100) adds `close-account` to the kinds of email link: a
+guardian's one-time link to close a learner's own account. A closed account has
+`deactivated_at` set, its sign-in key removed, its school memberships ended and
+its consent records marked revoked.
+
 ## Designed, to be migrated with the feature that uses it
 
 Tables are added when their first consumer is built, so the schema never holds
