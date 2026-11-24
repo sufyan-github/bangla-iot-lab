@@ -31,6 +31,8 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The lab office in Kumo**: the owner's dashboard is rebuilt with Cloudflare's
+  Kumo components (tables, dialogs, badges, a copy box), loaded only for owners.
 - **Schools that apply**: a new school waits for the lab owner's approval;
   teachers confirm their email; a school admin can give a teacher a reset link;
   everyone with a password can change it and sign out on every device. The
