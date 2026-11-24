@@ -1,0 +1,57 @@
+/*
+ * The lab office's own styles: Cloudflare's Kumo components (D-099). This file
+ * is imported only by the office page, which loads on demand, so students never
+ * download it. It adds Kumo's theme and the utilities Kumo and the office use,
+ * and no page reset: the lab's own app.css still styles the page.
+ *
+ * Tailwind's defaults and Kumo's theme would change some page-wide settings
+ * (the typeface, text sizes, the root colour scheme); they are put back below,
+ * so a visit to the office changes nothing elsewhere in the lab.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import '@cloudflare/kumo/styles/tailwind';
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+
+@source '../../node_modules/@cloudflare/kumo/dist';
+@source './';
+
+/*
+ * The lab's own values for every page-wide setting that Tailwind's defaults or
+ * Kumo's theme would change: the Bangla typeface, the text sizes (Bangla needs
+ * the larger steps, nothing below 13 px) and the transition speed. They must
+ * match app.css; a browser test compares the two after the office has loaded.
+ */
+@theme {
+  --font-sans: 'Anek Bangla Variable', 'Noto Sans Bengali', system-ui, sans-serif;
+  --default-transition-duration: 150ms;
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.55;
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.1875rem;
+  --text-lg--line-height: 1.45;
+  --text-xl: 1.4375rem;
+  --text-xl--line-height: 1.35;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.3;
+  --text-3xl: 2.125rem;
+  --text-3xl--line-height: 1.25;
+}
+
+/* Kumo sets the root's colour scheme to light; the lab's own stays: normal, or dark. */
+@layer base {
+  :root {
+    color-scheme: normal;
+  }
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      color-scheme: dark;
+    }
+  }
+}

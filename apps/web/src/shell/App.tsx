@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router';
 import { AccountPage } from '../account/AccountPage';
 import { useAccount } from '../account/client';
@@ -10,7 +10,8 @@ import { LabPage } from '../lab/LabPage';
 import { LessonsPage } from '../lessons/LessonsPage';
 import { Esp32Page } from './Esp32Page';
 import { LicencesPage } from './LicencesPage';
-import { OwnerPage } from '../owner/OwnerPage';
+// The lab office and its component library load only when an owner opens it.
+const OwnerPage = lazy(() => import('../owner/OwnerPage'));
 import { useOnline } from './useOnline';
 
 /** Sun for light, moon for dark, and a half-filled circle for following the device. */
@@ -199,7 +200,14 @@ export function App() {
           <Route path="/licences" element={<LicencesPage />} />
           <Route path="/esp32" element={<Esp32Page />} />
           <Route path="/account" element={<AccountPage />} />
-          <Route path="/owner" element={<OwnerPage />} />
+          <Route
+            path="/owner"
+            element={
+              <Suspense fallback={null}>
+                <OwnerPage />
+              </Suspense>
+            }
+          />
           <Route path="/account/verify" element={<EmailLinkPage expected="verify-email" />} />
           <Route path="/account/approve" element={<EmailLinkPage expected="approve-learner" />} />
           <Route path="/account/reset" element={<EmailLinkPage expected="reset-password" />} />
