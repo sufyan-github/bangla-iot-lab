@@ -92,7 +92,7 @@ export const PartDefinitionSchema = Type.Object({
        * For a chip that sits across the centre gap: the row each leg must be in,
        * whichever hole was tapped. Such a part can only be slid along the gap.
        */
-      rows: Type.Optional(Type.Array(Type.Union([Type.Literal('e'), Type.Literal('f')]))),
+      rows: Type.Optional(Type.Array(Type.String({ pattern: '^[a-j]$' }))),
     }),
   ),
   /** Property values a newly placed part starts with. */

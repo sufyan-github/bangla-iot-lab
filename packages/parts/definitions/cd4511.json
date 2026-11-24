@@ -1,0 +1,121 @@
+{
+  "formatVersion": 1,
+  "id": "cd4511",
+  "simulates": "logic16",
+  "status": "simulated",
+  "family": "logic",
+  "tier": 2,
+  "name": {
+    "bn": "CD4511 (BCD থেকে ৭-সেগমেন্ট ডিকোডার)",
+    "en": "CD4511 BCD to seven-segment decoder"
+  },
+  "summary": {
+    "bn": "চার বিটের একটা সংখ্যা (০–৯) নিয়ে ৭-সেগমেন্ট ডিসপ্লের ঠিক সেগমেন্টগুলো জ্বালায়",
+    "en": "Takes a four-bit number (0 to 9) and lights the right segments of a seven-segment display"
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": [
+      "The chip answers at once: the time a real one takes is left out.",
+      "LT̅ LOW lights every segment; otherwise BL̅ LOW lights none. While LE is LOW the segments follow A to D; while LE is HIGH they keep the number held when it went HIGH. 10 to 15 light nothing. As in its datasheet, 6 is drawn without its top bar and 9 without its bottom bar.",
+      "It is a CMOS 4000-series chip and works from 3 to 18 V. Its outputs give current to a common-cathode display; each segment still needs its own resistor. An output is modelled as the supply or ground through about 50 Ω, like the 74HC chips; a real CD4511's HIGH is a little below its supply.",
+      "An input is HIGH above 70 % of the supply and LOW below 30 %; in between it keeps its last level. These are typical figures, not measured.",
+      "It is placed across the centre gap with pin 1 at the bottom left, and cannot be turned round."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "p1",
+      "label": "1",
+      "role": "input"
+    },
+    {
+      "id": "p2",
+      "label": "2",
+      "role": "input"
+    },
+    {
+      "id": "p3",
+      "label": "3",
+      "role": "input"
+    },
+    {
+      "id": "p4",
+      "label": "4",
+      "role": "input"
+    },
+    {
+      "id": "p5",
+      "label": "5",
+      "role": "input"
+    },
+    {
+      "id": "p6",
+      "label": "6",
+      "role": "input"
+    },
+    {
+      "id": "p7",
+      "label": "7",
+      "role": "input"
+    },
+    {
+      "id": "p8",
+      "label": "8",
+      "role": "ground"
+    },
+    {
+      "id": "p9",
+      "label": "9",
+      "role": "output"
+    },
+    {
+      "id": "p10",
+      "label": "10",
+      "role": "output"
+    },
+    {
+      "id": "p11",
+      "label": "11",
+      "role": "output"
+    },
+    {
+      "id": "p12",
+      "label": "12",
+      "role": "output"
+    },
+    {
+      "id": "p13",
+      "label": "13",
+      "role": "output"
+    },
+    {
+      "id": "p14",
+      "label": "14",
+      "role": "output"
+    },
+    {
+      "id": "p15",
+      "label": "15",
+      "role": "output"
+    },
+    {
+      "id": "p16",
+      "label": "16",
+      "role": "power"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["cd4511"]
+  },
+  "placement": {
+    "idPrefix": "U",
+    "offsets": [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0],
+    "rows": ["f", "f", "f", "f", "f", "f", "f", "f", "e", "e", "e", "e", "e", "e", "e", "e"]
+  }
+}

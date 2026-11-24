@@ -7,6 +7,7 @@ import {
   boardPinNumber,
   boardTerminals,
   isGateChip,
+  isLogicChipPart,
   isProgrammable,
   isHole,
   stripOf,
@@ -135,6 +136,8 @@ export const BOX_TYPES = new Set([
   'lora',
   'relaymodule',
   'logic',
+  'logic16',
+  'sevenseg',
   'relay',
   'servo',
   'ultrasonic',
@@ -144,7 +147,7 @@ export const BOX_TYPES = new Set([
   'l298n',
 ]);
 /** Boxes with so many legs that only the connected ones are drawn. */
-export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno', 'esp32', 'l298n', 'logic']);
+export const SPARSE_BOX_TYPES = new Set(['lcd', 'uno', 'esp32', 'l298n', 'logic', 'logic16']);
 
 export function pinNames(component: CircuitComponent): readonly string[] {
   if (component.type === 'breadboard') return [];
@@ -163,13 +166,13 @@ export function pinLabel(component: CircuitComponent, pin: string): string {
     return number >= 14 ? `A${number - 14}` : `D${number}`;
   }
   // A chip's pins are named as in its datasheet: 1A and 1B in, 1Y out, for its first gate.
-  if (component.type === 'logic') {
+  if (isLogicChipPart(component)) {
     const n = Number(pin.slice(1));
-    if (n === 7) return 'GND';
-    if (n === 14) return 'VCC';
     const chip = component.props.chip;
     // A chip that is not a row of gates has its pins named in its own model.
     if (!isGateChip(chip)) return CHIP_MODELS[chip].labels[n] ?? String(n);
+    if (n === 7) return 'GND';
+    if (n === 14) return 'VCC';
     const gates = LOGIC_CHIP_GATES[chip].gates;
     const index = gates.findIndex((gate) => gate.output === n || gate.inputs.includes(n));
     const gate = gates[index]!;
@@ -177,6 +180,9 @@ export function pinLabel(component: CircuitComponent, pin: string): string {
       gate.output === n ? 'Y' : gate.inputs.length === 1 ? 'A' : 'AB'[gate.inputs.indexOf(n)];
     return `${index + 1}${role}`;
   }
+  // A display's segments are named in small letters, as on its datasheet.
+  if (component.type === 'sevenseg')
+    return pin.startsWith('com') ? 'COM' : pin === 'dp' ? 'DP' : pin;
   // The ESP32's pins are named as printed on the board.
   if (component.type === 'esp32') return pin.startsWith('gnd') ? 'GND' : pin.toUpperCase();
   const short: Record<string, string> = {
@@ -212,7 +218,7 @@ export function gatesInUse(
   component: CircuitComponent,
   connected: (pin: string) => boolean,
 ): number[] {
-  if (component.type !== 'logic' || !isGateChip(component.props.chip)) return [];
+  if (!isLogicChipPart(component) || !isGateChip(component.props.chip)) return [];
   return LOGIC_CHIP_GATES[component.props.chip].gates.flatMap((gate, index) =>
     [...gate.inputs, gate.output].some((n) => connected(`p${n}`)) ? [index] : [],
   );

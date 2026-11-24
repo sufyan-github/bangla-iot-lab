@@ -1380,3 +1380,42 @@ HIGH and LOW times.
 Tests: the flip-flop divides a button's presses by two and stays cleared while
 CLR is LOW; the clock module ticks at 1 Hz and the flip-flop halves it. A
 browser test picks the chip and sets the clock's frequency.
+
+## D-075 — Counters, a seven-segment decoder and a display
+
+The second logic segment (L2), built on the chip model of D-074.
+
+**Chips.** The 74HC393 (two 4-bit counters that count on the clock's falling
+edge, with an active-HIGH reset) fits the 14-pin shape and joins that list. The
+74HC161 counter and the CD4511 decoder have 16 pins, so they are a part type of
+their own (`logic16`), placed across the gap the same way: pins 1 to 8 in row f,
+16 to 9 in row e. All three follow their datasheets' function tables:
+
+- **74HC161**: MR̅ LOW clears at once; on the clock's rising edge PE̅ LOW loads
+  D0 to D3, otherwise it counts when CEP and CET are both HIGH; TC is HIGH when
+  CET is HIGH and the count is 15.
+- **CD4511**: LT̅ LOW lights every segment, BL̅ LOW none; LE HIGH keeps the
+  number held when it went HIGH; 10 to 15 light nothing; 6 has no top bar and
+  9 no bottom bar, as its datasheet draws them.
+
+Each chip model now carries its supply range: 2 to 6 V for the 74HC family, 3
+to 18 V for the CD4511 (REPORTED, from the datasheets). A chip below its lowest
+is unpowered; above its highest the lab says it is being damaged. The message
+no longer assumes a 74HC chip.
+
+**Display.** A single-digit 0.56 inch display: eight red LEDs (the lab's red
+LED model) sharing one leg, common cathode or common anode as chosen in the
+inspector. Its rows of legs are 0.6 inch apart, so it stands across the gap in
+rows d and h, in the common 10-pin order (bottom e, d, COM, c, DP; top g, f,
+COM, a, b). The two COM legs are joined inside. Each segment is judged like an
+LED, so too much current shows as damage.
+
+**Not modelled.** The CD4511's real HIGH, which is a little below its supply
+(its outputs are modelled like the 74HC chips'), propagation delays, and
+multiplexed displays (several digits sharing segment lines).
+
+Tests: each counter counts on the right edge, wraps, resets and (for the
+74HC161) loads and carries; the decoder lights the datasheet's segments for
+every code and obeys LT̅ and BL̅; the display lights the segment fed, in either
+kind, and stays dark when wired for the other kind; both new parts land where
+they should. Two browser tests place them.
