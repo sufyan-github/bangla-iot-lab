@@ -10,6 +10,13 @@ export interface Me {
     locale: string;
     /** A learner who signed up on their own. */
     ownAccount?: boolean;
+    /**
+     * staff: an adult in a school; individual: an adult in no school, or a
+     * learner with their own account; class: a learner only through classes.
+     */
+    account: 'staff' | 'individual' | 'class';
+    /** A learner's own sign-in name, if they have one. */
+    username: string | null;
   };
   schools: { schoolId: string; schoolName: string; role: string }[];
   classes: { classId: string; className: string; grade: number; pseudonym: string }[];
@@ -59,14 +66,26 @@ export const useAccount = create<{
   me: undefined,
   async refresh() {
     const answer = await call<Me>('/v1/me');
+    // Only the API's own "signed out" signs the page out. Too many requests, or no
+    // connection, says nothing about the session: keep what was known.
+    if (!answer.ok && answer.error !== 'signed-out') {
+      set((state) => ({ me: state.me === undefined ? null : state.me }));
+      return;
+    }
     set({ me: answer.ok ? answer.value : null });
     // Progress made while offline goes now.
-    if (answer.ok && answer.value.user.kind === 'learner') {
+    if (answer.ok && answer.value.user.account !== 'staff') {
       const { flushProgress } = await import('./outbox');
       void flushProgress();
     }
   },
   async signOut() {
+    // This account's waiting progress leaves the device with it.
+    const me = useAccount.getState().me;
+    if (me) {
+      const { forgetProgress } = await import('./outbox');
+      await forgetProgress(me.user.id);
+    }
     await call('/v1/auth/sign-out', {});
     set({ me: null });
   },

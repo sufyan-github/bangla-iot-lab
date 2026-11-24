@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { makeClass, openTeacherSignUp, teacherWithClass } from './account-helpers';
 
 /** A teacher makes a class; a learner joins it with the code and a nickname. */
 
@@ -6,7 +7,7 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
   // Each run, and each browser, signs up afresh.
   const email = `teacher-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.test`;
   await page.goto('/account');
-  await page.getByTestId('teacher-switch').click();
+  await openTeacherSignUp(page);
   await page.getByTestId('teacher-name').fill('রিনা আপা');
   await page.getByTestId('teacher-school').fill('পরীক্ষা বিদ্যালয়');
   await page.getByTestId('teacher-email').fill(email);
@@ -33,6 +34,7 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
   ).toBeVisible();
 
   await page.getByTestId('sign-out').click();
+  await page.getByTestId('entry-class').click();
   await page.getByTestId('join-code').fill(code.toLowerCase());
   await page.getByTestId('join-pseudonym').fill('তারা');
   await page.getByTestId('join-submit').click();
@@ -46,7 +48,7 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
 test('a school admin invites a teacher, who signs up with the code', async ({ page }) => {
   const stamp = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   await page.goto('/account');
-  await page.getByTestId('teacher-switch').click();
+  await openTeacherSignUp(page);
   await page.getByTestId('teacher-name').fill('প্রধান শিক্ষক');
   await page.getByTestId('teacher-school').fill('আমন্ত্রণ বিদ্যালয়');
   await page.getByTestId('teacher-email').fill(`admin-${stamp}@example.test`);
@@ -60,7 +62,7 @@ test('a school admin invites a teacher, who signs up with the code', async ({ pa
   await expect(page.getByTestId('open-invite')).toHaveCount(1);
 
   await page.getByTestId('sign-out').click();
-  await page.getByTestId('teacher-switch').click();
+  await openTeacherSignUp(page);
   await page.getByTestId('teacher-name').fill('নতুন শিক্ষক');
   await page.getByTestId('teacher-invited').click();
   await page.getByTestId('teacher-invite').fill(code);
@@ -80,6 +82,7 @@ test('a school admin invites a teacher, who signs up with the code', async ({ pa
 
 test('a wrong class code is explained', async ({ page }) => {
   await page.goto('/account');
+  await page.getByTestId('entry-class').click();
   await page.getByTestId('join-code').fill('AAAA-AAAA');
   await page.getByTestId('join-pseudonym').fill('নদী');
   await page.getByTestId('join-submit').click();
@@ -91,7 +94,7 @@ test('a project saved to the cloud can be opened again on a device without it', 
 }) => {
   const email = `cloud-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.test`;
   await page.goto('/account');
-  await page.getByTestId('teacher-switch').click();
+  await openTeacherSignUp(page);
   await page.getByTestId('teacher-name').fill('শিক্ষক');
   await page.getByTestId('teacher-school').fill('বিদ্যালয়');
   await page.getByTestId('teacher-email').fill(email);
@@ -119,56 +122,7 @@ test('a project saved to the cloud can be opened again on a device without it', 
   await expect(page.locator('[data-part="LED1"]')).toBeVisible();
 });
 
-/** Signs a new teacher up on the page and makes a class; returns the class's join code. */
-async function teacherWithClass(page: Page, email: string, className: string) {
-  await page.goto('/account');
-  await page.getByTestId('teacher-switch').click();
-  await page.getByTestId('teacher-name').fill('শিক্ষক');
-  await page.getByTestId('teacher-school').fill('বিদ্যালয়');
-  await page.getByTestId('teacher-email').fill(email);
-  await page.getByTestId('teacher-password').fill('a long pass phrase');
-  await page.getByTestId('teacher-submit').click();
-  return makeClass(page, className);
-}
-async function makeClass(page: Page, className: string) {
-  await page.getByTestId('class-name').fill(className);
-  await page.getByTestId('class-consent').check();
-  await page.getByTestId('class-submit').click();
-  await expect(page.getByTestId('join-code-shown')).toBeVisible();
-  return (await page.getByTestId('join-code-shown').textContent())!.trim();
-}
 const stamp = () => `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-
-test('a learner signs up on their own, and later joins a class on the same account', async ({
-  page,
-  browser,
-}) => {
-  await page.goto('/account');
-  await page.getByTestId('learner-own').click();
-  await page.getByTestId('own-pseudonym').fill('আকাশ');
-  // Not without the guardian's permission.
-  await expect(page.getByTestId('own-submit')).toBeDisabled();
-  await page.getByTestId('own-consent').check();
-  await page.getByTestId('own-submit').click();
-  await expect(page.getByTestId('learner-key')).toHaveText(/^\w{4}-\w{4}-\w{4}$/);
-  await page.getByRole('button', { name: /চালিয়ে যাও|Continue/ }).click();
-  await expect(page.getByTestId('my-progress')).toBeVisible();
-  await expect(page.getByTestId('nav-account')).toContainText('আকাশ');
-
-  // A teacher, on another device, makes a class.
-  const elsewhere = await browser.newContext();
-  const teacher = await elsewhere.newPage();
-  const base = new URL(page.url()).origin;
-  await teacher.goto(`${base}/account`);
-  const code = await teacherWithClass(teacher, `t-${stamp()}@example.test`, 'অষ্টম ক');
-  await elsewhere.close();
-
-  await page.getByTestId('learner-class-code').fill(code);
-  await page.getByTestId('learner-class-submit').click();
-  await expect(page.getByTestId('learner-home')).toContainText('অষ্টম ক');
-  // The same account: no second key.
-  await expect(page.getByTestId('learner-key')).toHaveCount(0);
-});
 
 test('a teacher moves a learner between classes; an admin removes a teacher', async ({
   page,
@@ -180,6 +134,7 @@ test('a teacher moves a learner between classes; an admin removes a teacher', as
   const learnerContext = await browser.newContext();
   const learner = await learnerContext.newPage();
   await learner.goto(`${new URL(page.url()).origin}/account`);
+  await learner.getByTestId('entry-class').click();
   await learner.getByTestId('join-code').fill(first);
   await learner.getByTestId('join-pseudonym').fill('নদী');
   await learner.getByTestId('join-submit').click();
@@ -201,7 +156,7 @@ test('a teacher moves a learner between classes; an admin removes a teacher', as
   const otherContext = await browser.newContext();
   const other = await otherContext.newPage();
   await other.goto(`${new URL(page.url()).origin}/account`);
-  await other.getByTestId('teacher-switch').click();
+  await openTeacherSignUp(other);
   await other.getByTestId('teacher-name').fill('অতিথি');
   await other.getByTestId('teacher-invited').click();
   await other.getByTestId('teacher-invite').fill(invite);

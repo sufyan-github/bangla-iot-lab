@@ -1,413 +1,11 @@
-import type { MessageKey } from '@banglalab/i18n';
 import { LESSONS } from '@banglalab/lessons';
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { useT } from '../i18n';
 import { call, useAccount, type ClassSummary, type Learner } from './client';
-
-const input = 'field';
-const primary = 'btn btn-primary px-5';
-const secondary = 'btn btn-secondary';
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm text-ink-soft">{label}</span>
-      {children}
-    </label>
-  );
-}
-
-/** Errors the page explains; anything else is "something went wrong". */
-const KNOWN_ERRORS = [
-  'email-taken',
-  'wrong-email-or-password',
-  'pseudonym-taken',
-  'no-such-code',
-  'wrong-key',
-  'offline',
-  'bad-request',
-  'already-set',
-  'no-such-invite',
-  'already-in-class',
-];
-
-function Problem({ error }: { error: string | null }) {
-  const { t } = useT();
-  if (!error) return null;
-  return (
-    <p role="alert" data-testid="account-problem" className="text-sm font-medium text-danger">
-      {t(`account.error.${KNOWN_ERRORS.includes(error) ? error : 'other'}` as MessageKey)}
-    </p>
-  );
-}
-
-/**
- * A secret shown once: a join code or a learner's key, written large in
- * chalk on a slate, so a teacher can copy it onto the classroom's board.
- */
-function ShownOnce({
-  label,
-  value,
-  testId,
-  note,
-}: {
-  label: string;
-  value: string;
-  testId: string;
-  note?: string;
-}) {
-  const { t } = useT();
-  return (
-    <div className="rounded-[var(--radius-card)] border-[6px] border-[#8a6a43] bg-[#23332d] p-4 text-chalk shadow-[var(--shadow-raised)]">
-      <p className="text-sm text-chalk/75">{label}</p>
-      <p
-        data-testid={testId}
-        className="my-2 font-mono text-3xl font-bold tracking-[0.18em] text-[#f4f1e8] [text-shadow:0_0_1px_rgb(255_255_255/0.6)] sm:text-4xl"
-      >
-        {value}
-      </p>
-      <p className="text-sm text-chalk/70">{note ?? t('account.shownOnce')}</p>
-    </div>
-  );
-}
-
-/** A form that posts to the API and reports its error, if any. */
-function useSubmit() {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const submit = async <T,>(path: string, body: unknown): Promise<T | null> => {
-    setBusy(true);
-    setError(null);
-    const answer = await call<T>(path, body);
-    setBusy(false);
-    if (!answer.ok) {
-      setError(answer.error);
-      return null;
-    }
-    return answer.value;
-  };
-  return { busy, error, submit };
-}
-
-function TeacherSignIn() {
-  const { t } = useT();
-  const refresh = useAccount((s) => s.refresh);
-  const [signUp, setSignUp] = useState(false);
-  // Signing up to join a school whose admin sent a code, rather than naming a new one.
-  const [invited, setInvited] = useState(false);
-  const [form, setForm] = useState({
-    inviteCode: '',
-    email: '',
-    password: '',
-    displayName: '',
-    schoolName: '',
-    district: '',
-  });
-  const { busy, error, submit } = useSubmit();
-  const set = (key: keyof typeof form) => (event: { target: { value: string } }) =>
-    setForm({ ...form, [key]: event.target.value });
-  const send = async (event: FormEvent) => {
-    event.preventDefault();
-    const { email, password, displayName, inviteCode, schoolName, district } = form;
-    const done = signUp
-      ? await submit(
-          '/v1/auth/sign-up',
-          invited
-            ? { email, password, displayName, inviteCode }
-            : { email, password, displayName, schoolName, district: district || undefined },
-        )
-      : await submit('/v1/auth/sign-in', { email: form.email, password: form.password });
-    if (done) await refresh();
-  };
-  return (
-    <form onSubmit={send} className="space-y-3" data-testid="teacher-form">
-      <h2 className="text-lg font-semibold">
-        {t(signUp ? 'account.teacherSignUp' : 'account.teacherSignIn')}
-      </h2>
-      {signUp && (
-        <>
-          <Field label={t('account.displayName')}>
-            <input
-              data-testid="teacher-name"
-              value={form.displayName}
-              onChange={set('displayName')}
-              required
-              maxLength={80}
-              className={input}
-            />
-          </Field>
-          <div className="flex flex-wrap gap-2" role="group">
-            <button
-              type="button"
-              className="chip"
-              aria-pressed={!invited}
-              onClick={() => setInvited(false)}
-            >
-              {t('account.newSchool')}
-            </button>
-            <button
-              type="button"
-              className="chip"
-              data-testid="teacher-invited"
-              aria-pressed={invited}
-              onClick={() => setInvited(true)}
-            >
-              {t('account.haveInvite')}
-            </button>
-          </div>
-          {invited ? (
-            <Field label={t('account.inviteCode')}>
-              <input
-                data-testid="teacher-invite"
-                value={form.inviteCode}
-                onChange={set('inviteCode')}
-                required
-                autoComplete="off"
-                spellCheck={false}
-                maxLength={40}
-                className={`${input} font-mono uppercase tracking-widest`}
-              />
-            </Field>
-          ) : (
-            <>
-              <Field label={t('account.schoolName')}>
-                <input
-                  data-testid="teacher-school"
-                  value={form.schoolName}
-                  onChange={set('schoolName')}
-                  required
-                  maxLength={80}
-                  className={input}
-                />
-              </Field>
-              <Field label={t('account.district')}>
-                <input
-                  value={form.district}
-                  onChange={set('district')}
-                  maxLength={60}
-                  className={input}
-                />
-              </Field>
-            </>
-          )}
-        </>
-      )}
-      <Field label={t('account.email')}>
-        <input
-          data-testid="teacher-email"
-          type="email"
-          autoComplete="email"
-          value={form.email}
-          onChange={set('email')}
-          required
-          className={input}
-        />
-      </Field>
-      <Field label={t('account.password')}>
-        <input
-          data-testid="teacher-password"
-          type="password"
-          autoComplete={signUp ? 'new-password' : 'current-password'}
-          minLength={signUp ? 10 : undefined}
-          value={form.password}
-          onChange={set('password')}
-          required
-          className={input}
-        />
-      </Field>
-      {signUp && <p className="text-sm text-ink-soft">{t('account.passwordRule')}</p>}
-      <Problem error={error} />
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="submit"
-          data-testid="teacher-submit"
-          disabled={busy}
-          className="btn bg-mat px-5 text-chalk hover:bg-mat-deep"
-        >
-          {t(signUp ? 'account.signUp' : 'account.signIn')}
-        </button>
-        <button
-          type="button"
-          data-testid="teacher-switch"
-          onClick={() => setSignUp(!signUp)}
-          className="btn btn-quiet min-h-9 text-sm"
-        >
-          {t(signUp ? 'account.haveAccount' : 'account.newTeacher')}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function LearnerJoin() {
-  const { t } = useT();
-  const refresh = useAccount((s) => s.refresh);
-  const [code, setCode] = useState('');
-  const [pseudonym, setPseudonym] = useState('');
-  const [key, setKey] = useState('');
-  const [joined, setJoined] = useState<{ key: string; className?: string } | null>(null);
-  // With a class code from a teacher, or on their own with a guardian's permission.
-  const [mode, setMode] = useState<'code' | 'own'>('code');
-  const [consent, setConsent] = useState(false);
-  const join = useSubmit();
-  const own = useSubmit();
-  const signIn = useSubmit();
-  if (joined) {
-    return (
-      <div className="space-y-3" data-testid="joined">
-        <p className="font-semibold">
-          {joined.className
-            ? t('account.joined', { name: joined.className })
-            : t('account.welcome', { name: pseudonym })}
-        </p>
-        <ShownOnce
-          label={t('account.yourKey')}
-          value={joined.key}
-          testId="learner-key"
-          note={t('account.keepKey')}
-        />
-        <button type="button" onClick={() => void refresh()} className={primary}>
-          {t('account.continue')}
-        </button>
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-2" role="group">
-        <button
-          type="button"
-          className="chip"
-          aria-pressed={mode === 'code'}
-          onClick={() => setMode('code')}
-        >
-          {t('account.haveCode')}
-        </button>
-        <button
-          type="button"
-          className="chip"
-          data-testid="learner-own"
-          aria-pressed={mode === 'own'}
-          onClick={() => setMode('own')}
-        >
-          {t('account.onMyOwn')}
-        </button>
-      </div>
-      {mode === 'own' ? (
-        <form
-          className="space-y-3"
-          data-testid="own-form"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            const done = await own.submit<{ key: string }>('/v1/auth/learner-sign-up', {
-              pseudonym,
-              guardianConsent: consent,
-            });
-            if (done) setJoined(done);
-          }}
-        >
-          <h2 className="text-lg font-semibold">{t('account.ownTitle')}</h2>
-          <p className="text-sm text-ink-soft">{t('account.ownAbout')}</p>
-          <Field label={t('account.pseudonym')}>
-            <input
-              data-testid="own-pseudonym"
-              value={pseudonym}
-              onChange={(e) => setPseudonym(e.target.value)}
-              required
-              minLength={2}
-              maxLength={24}
-              className={input}
-            />
-          </Field>
-          <p className="text-sm text-ink-soft">{t('account.pseudonymRule')}</p>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              data-testid="own-consent"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-              className="mt-1 h-5 w-5 accent-amber"
-            />
-            {t('account.guardianConsent')}
-          </label>
-          <Problem error={own.error} />
-          <button
-            type="submit"
-            data-testid="own-submit"
-            disabled={own.busy || !consent}
-            className={primary}
-          >
-            {t('account.startLearning')}
-          </button>
-        </form>
-      ) : (
-        <form
-          className="space-y-3"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            const done = await join.submit<{ key: string; className: string }>('/v1/join', {
-              code,
-              pseudonym,
-            });
-            if (done) setJoined(done);
-          }}
-        >
-          <h2 className="text-lg font-semibold">{t('account.joinClass')}</h2>
-          <Field label={t('account.classCode')}>
-            <input
-              data-testid="join-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              required
-              autoCapitalize="characters"
-              className={`${input} font-mono tracking-widest`}
-            />
-          </Field>
-          <Field label={t('account.pseudonym')}>
-            <input
-              data-testid="join-pseudonym"
-              value={pseudonym}
-              onChange={(e) => setPseudonym(e.target.value)}
-              required
-              minLength={2}
-              maxLength={24}
-              className={input}
-            />
-          </Field>
-          <p className="text-sm text-ink-soft">{t('account.pseudonymRule')}</p>
-          <Problem error={join.error} />
-          <button type="submit" data-testid="join-submit" disabled={join.busy} className={primary}>
-            {t('account.join')}
-          </button>
-        </form>
-      )}
-      <form
-        className="space-y-3 border-t border-line pt-4"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          if (await signIn.submit('/v1/auth/key', { key })) await refresh();
-        }}
-      >
-        <h2 className="text-lg font-semibold">{t('account.keySignIn')}</h2>
-        <Field label={t('account.key')}>
-          <input
-            data-testid="key-input"
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            required
-            autoCapitalize="characters"
-            className={`${input} font-mono tracking-widest`}
-          />
-        </Field>
-        <Problem error={signIn.error} />
-        <button type="submit" data-testid="key-submit" disabled={signIn.busy} className={secondary}>
-          {t('account.signIn')}
-        </button>
-      </form>
-    </div>
-  );
-}
+import { LabPass } from './LabPass';
+import { SignedOut } from './SignedOut';
+import { Field, Problem, ShownOnce, input, primary, secondary, useSubmit } from './ui';
 
 function Roster({
   classId,
@@ -1215,105 +813,119 @@ function LearnerHome() {
         </section>
       )}
 
-      <form
-        data-testid="learner-join-class"
-        className="space-y-3 rounded-[var(--radius-card)] border border-line bg-paper p-4"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const done = await join.submit<{ className: string }>('/v1/join', {
-            code,
-            pseudonym: nickname,
-          });
-          if (done) {
-            setJoinedClass(done.className);
-            setCode('');
-            await refresh();
-          }
-        }}
-      >
-        <h2 className="text-lg font-semibold">{t('account.joinAClass')}</h2>
-        <p className="text-sm text-ink-soft">{t('account.joinAClassAbout')}</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label={t('account.classCode')}>
-            <input
-              data-testid="learner-class-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              required
-              autoCapitalize="characters"
-              className={`${input} font-mono tracking-widest`}
-            />
-          </Field>
-          <Field label={t('account.pseudonym')}>
-            <input
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              required
-              minLength={2}
-              maxLength={24}
-              className={input}
-            />
-          </Field>
-        </div>
-        <Problem error={join.error} />
-        {joinedClass && (
-          <p role="status" className="text-sm font-medium text-accent">
-            {t('account.joinedClass', { name: joinedClass })}
-          </p>
-        )}
-        <button
-          type="submit"
-          data-testid="learner-class-submit"
-          disabled={join.busy}
-          className={secondary}
-        >
-          {t('account.join')}
-        </button>
-      </form>
+      {me.user.username && (
+        <section className="space-y-1" data-testid="own-sign-in">
+          <p className="font-medium">{t('account.signInName', { name: me.user.username })}</p>
+          <p className="text-sm text-ink-soft">{t('account.ownForgot')}</p>
+        </section>
+      )}
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">{t('account.yourKeyTitle')}</h2>
-        <p className="text-sm text-ink-soft">{t('account.newOwnKeyAbout')}</p>
-        {newKey && (
-          <ShownOnce
-            label={t('account.yourKey')}
-            value={newKey}
-            testId="own-new-key"
-            note={t('account.keepKey')}
-          />
-        )}
-        {confirmKey ? (
+      {/* Adults on their own have no classes to join: classes are for learners. */}
+      {me.user.kind === 'learner' && (
+        <form
+          data-testid="learner-join-class"
+          className="space-y-3 rounded-[var(--radius-card)] border border-line bg-paper p-4"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const done = await join.submit<{ className: string }>('/v1/join', {
+              code,
+              pseudonym: nickname,
+            });
+            if (done) {
+              setJoinedClass(done.className);
+              setCode('');
+              await refresh();
+            }
+          }}
+        >
+          <h2 className="text-lg font-semibold">{t('account.joinAClass')}</h2>
+          <p className="text-sm text-ink-soft">{t('account.joinAClassAbout')}</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={t('account.classCode')}>
+              <input
+                data-testid="learner-class-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                required
+                autoCapitalize="characters"
+                className={`${input} font-mono tracking-widest`}
+              />
+            </Field>
+            <Field label={t('account.pseudonym')}>
+              <input
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                required
+                minLength={2}
+                maxLength={24}
+                className={input}
+              />
+            </Field>
+          </div>
+          <Problem error={join.error} />
+          {joinedClass && (
+            <p role="status" className="text-sm font-medium text-accent">
+              {t('account.joinedClass', { name: joinedClass })}
+            </p>
+          )}
           <button
-            type="button"
-            data-testid="confirm-new-key"
-            className="btn min-h-9 bg-danger px-3 text-sm text-paper"
-            onClick={async () => {
-              const answer = await call<{ key: string }>('/v1/me/key', {});
-              setConfirmKey(false);
-              if (answer.ok) setNewKey(answer.value.key);
-            }}
-          >
-            {t('account.confirmNewKey')}
-          </button>
-        ) : (
-          <button
-            type="button"
-            data-testid="new-own-key"
+            type="submit"
+            data-testid="learner-class-submit"
+            disabled={join.busy}
             className={secondary}
-            onClick={() => setConfirmKey(true)}
           >
-            {t('account.makeNewKey')}
+            {t('account.join')}
           </button>
-        )}
-      </section>
+        </form>
+      )}
+
+      {/* A key is how a class learner signs in; others have a password. */}
+      {me.user.account === 'class' && (
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold">{t('account.yourKeyTitle')}</h2>
+          <p className="text-sm text-ink-soft">{t('account.newOwnKeyAbout')}</p>
+          {newKey && (
+            <div data-testid="own-new-key">
+              <LabPass
+                nickname={me.user.displayName}
+                className={me.classes[0]?.className}
+                passKey={newKey}
+              />
+            </div>
+          )}
+          {confirmKey ? (
+            <button
+              type="button"
+              data-testid="confirm-new-key"
+              className="btn min-h-9 bg-danger px-3 text-sm text-paper"
+              onClick={async () => {
+                const answer = await call<{ key: string }>('/v1/me/key', {});
+                setConfirmKey(false);
+                if (answer.ok) setNewKey(answer.value.key);
+              }}
+            >
+              {t('account.confirmNewKey')}
+            </button>
+          ) : (
+            <button
+              type="button"
+              data-testid="new-own-key"
+              className={secondary}
+              onClick={() => setConfirmKey(true)}
+            >
+              {t('account.makeNewKey')}
+            </button>
+          )}
+        </section>
+      )}
     </div>
   );
 }
 
 /**
  * Accounts: a teacher signs in and manages classes; a learner joins a class
- * with its code and a nickname, or signs up to learn on their own. The lab
- * works without signing in.
+ * with its code and a nickname; anyone may open an account of their own
+ * (D-096). The lab works without signing in.
  */
 export function AccountPage() {
   const { t } = useT();
@@ -1342,18 +954,8 @@ export function AccountPage() {
       {me === undefined ? (
         <p className="text-ink-soft">{t('account.loading')}</p>
       ) : me === null ? (
-        <>
-          <p className="text-ink-soft">{t('account.about')}</p>
-          <div className="grid gap-6 md:grid-cols-2">
-            <section className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
-              <LearnerJoin />
-            </section>
-            <section className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
-              <TeacherSignIn />
-            </section>
-          </div>
-        </>
-      ) : me.user.kind === 'adult' ? (
+        <SignedOut />
+      ) : me.user.account === 'staff' ? (
         <TeacherDashboard />
       ) : (
         <LearnerHome />

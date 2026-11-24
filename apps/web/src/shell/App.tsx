@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router';
 import { AccountPage } from '../account/AccountPage';
 import { useAccount } from '../account/client';
+import { EmailLinkPage } from '../account/EmailLink';
 import { HomePage } from '../home/HomePage';
 import { useLocale, useT } from '../i18n';
 import { THEME_ORDER, useTheme, type ThemeChoice } from '../theme';
@@ -192,6 +193,9 @@ export function App() {
           <Route path="/licences" element={<LicencesPage />} />
           <Route path="/esp32" element={<Esp32Page />} />
           <Route path="/account" element={<AccountPage />} />
+          <Route path="/account/verify" element={<EmailLinkPage expected="verify-email" />} />
+          <Route path="/account/approve" element={<EmailLinkPage expected="approve-learner" />} />
+          <Route path="/account/reset" element={<EmailLinkPage expected="reset-password" />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </div>

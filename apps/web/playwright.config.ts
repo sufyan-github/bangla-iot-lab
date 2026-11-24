@@ -45,6 +45,10 @@ export default defineConfig({
         COMPILES_PER_MINUTE: '600',
         // Each test signs up afresh, on two screen sizes at once.
         SIGN_INS_PER_MINUTE: '200',
+        // Every browser of every test shares one address.
+        REQUESTS_PER_MINUTE: '5000',
+        // The local mailbox, readable by tests, so they can follow emailed links.
+        DEV_MAILBOX: '1',
       },
     },
   ],
