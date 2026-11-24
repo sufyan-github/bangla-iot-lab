@@ -456,7 +456,7 @@ describe('logic sheet, part 3: blocks that decode, count and store', () => {
     expect(word(state, 'REG1')).toBe(0);
     ({ sheet: s, state } = pulse(s, state, 'IN3'));
     expect(word(state, 'REG1')).toBe(5);
-    ({ sheet: s, state } = step(s, state, { IN1: false, IN2: false }));
+    ({ state } = step(s, state, { IN1: false, IN2: false }));
     expect(word(state, 'REG1')).toBe(5);
   });
 
@@ -482,7 +482,7 @@ describe('logic sheet, part 3: blocks that decode, count and store', () => {
     // Address 0 still holds 0; back at 1 the word is still there.
     ({ sheet: s, state } = step(s, state, { IN1: false, IN3: false }));
     expect(word(state, 'RAM1')).toBe(0);
-    ({ sheet: s, state } = step(s, state, { IN1: true }));
+    ({ state } = step(s, state, { IN1: true }));
     expect(word(state, 'RAM1')).toBe(2);
   });
 
@@ -491,7 +491,7 @@ describe('logic sheet, part 3: blocks that decode, count and store', () => {
     expect(sheet.elements[0]).toMatchObject({ id: 'RAM1', x: 0, y: 0 });
     // The RAM is 4 wide and 9 high: a gate at (2, 6) would sit on it, one at (4, 6) does not.
     expect(addSheetElement(sheet, 'AND', 2, 6)).toEqual({ ok: false, error: 'taken' });
-    sheet = ok(addSheetElement(sheet, 'AND', 4, 6));
+    expect(ok(addSheetElement(sheet, 'AND', 4, 6)).elements).toHaveLength(2);
     // Near the bottom edge it is moved up to fit.
     const low = ok(addSheetElement(emptySheet(), 'RAM', 10, 23));
     expect(low.elements[0]!.y).toBe(15);

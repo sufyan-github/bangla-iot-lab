@@ -1716,3 +1716,44 @@ owner's word.
   time. Headers are accepted but not used. The web panel lists each request
   a board's program made and its status. A new ready-made program,
   `webclient`, uses all of this.
+
+## D-088 — The logic sheet, part 3: names, several at once, larger blocks, K-maps, blocks of your own and buses
+
+Built on 24 November 2026 at the owner's request, in segments, each tested
+before the next.
+
+- **A fix first.** The sheet's wire format allowed only letters in a port's
+  name, so a wired hex digit (ports D0 to D3) made the whole sheet invalid:
+  saving was refused and the sheet came back empty on reopening. Port names
+  may now end in a number; a test keeps it so.
+- **Names.** A switch, lamp, clock or block can be named (up to 12
+  characters); the name is used on the sheet, in the truth table, its
+  expressions and the timing diagram.
+- **Several at once.** A box dragged over empty space chooses what it touches;
+  Shift or Ctrl adds or takes away. Chosen elements move, copy (with the wires
+  between them), paste (with new ids, a little further on) and are removed
+  together. Keys: Delete, Ctrl+C, Ctrl+V, Ctrl+A, Escape; Copy and Paste are
+  buttons too, for phones. What was copied can be pasted into another project.
+- **Larger blocks.** Elements may now be bigger than 3 × 3. New: a 2-to-4
+  **decoder**; a 4-bit **counter** (counts rising clock edges, CLR taken at the
+  edge, CO HIGH at 15); a 4-bit **register**; a **RAM** of 16 words of 4 bits
+  (reads at once, writes on a rising edge while WE is HIGH). A counter's and a
+  register's bits are lines on the timing diagram. Sheets with counters,
+  registers or RAM have no truth table.
+- **K-maps.** For two to four switches, each lamp's truth table is also shown
+  as a Karnaugh map in Gray-code order, each group of the simplest sum marked
+  by a coloured bar; choosing a group outlines its cells.
+- **Blocks of your own (sub-circuits).** Chosen elements can be made into a
+  block: its switches (top to bottom) are its inputs and its lamps its
+  outputs, by their names. The original circuit stays. Blocks are placed from
+  a "Your blocks" group, may be made with earlier blocks (a full adder from
+  two half adders, tested), are saved with the sheet, and travel with copies
+  into other projects. A sheet with blocks is worked out by taking them apart
+  (inside names "U1_G1"); a block's ports show the levels of what drives them.
+  A block can be forgotten when nothing uses it. **Not done:** opening a block
+  to change it (a new block is made instead).
+- **Buses.** Counters, registers, RAM, decoders and hex digits have a bar
+  beside each group of pins. Two matching bars are joined by a bus: one wire
+  per bit underneath, drawn as one thick line with its width and value. Only
+  groups of the same width, outputs to inputs. **Not done:** buses on blocks'
+  own pins, splitting a bus, and keeping bus labels clear of elements.

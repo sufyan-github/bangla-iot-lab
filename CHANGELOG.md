@@ -14,8 +14,17 @@ make no promise of compatibility, except that saved circuits are always migrated
   example pictures; lessons in tracks with progress; instruments with dark
   screens; a grouped logic-sheet toolbar; and the join code in chalk.
 
+### Fixed
+
+- A logic sheet with a wired hex digit can be saved and opened again (it was
+  refused, and came back empty).
+
 ### Added
 
+- **Logic sheet, part 3**: names for elements; choosing several with a box,
+  and copy, paste, move and remove together; a decoder, counter, register and
+  16 × 4 RAM; a Karnaugh map for each lamp; blocks of your own made from part
+  of a sheet (sub-circuits); and buses between groups of pins.
 - **HTTPClient for the ESP32**: `HTTPClient.h` in the board library and three
   made-up web services in the lab (`echo.lab`, `weather.lab`, `log.lab`); the
   web panel lists the requests a program made. Ready-made program `webclient`.
