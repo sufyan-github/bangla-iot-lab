@@ -283,5 +283,57 @@
     "bn": "তাপমাত্রা ৩৫ °C-র বেশি হলে LED নীল করো: গাছের জন্য খুব গরম।",
     "en": "Make the LED blue when the temperature is above 35 °C: too hot for the plant."
   },
-  "kind": "project"
+  "kind": "project",
+  "quiz": [
+    {
+      "question": {
+        "bn": "মাটি শুকনো হলে প্ল্যান্ট মনিটর কী দেখায়?",
+        "en": "When the soil is dry, what does the plant monitor show?"
+      },
+      "choices": [
+        {
+          "bn": "লাল আলো আর ডিসপ্লেতে WATER ME",
+          "en": "A red light and WATER ME on the display"
+        },
+        {
+          "bn": "সবুজ আলো",
+          "en": "A green light"
+        },
+        {
+          "bn": "শুধু তাপমাত্রা",
+          "en": "Only the temperature"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "শুকনো মাটিতে RGB LED লাল হয় আর ডিসপ্লে পানি দিতে বলে।",
+        "en": "With dry soil the RGB LED turns red and the display asks for water."
+      }
+    },
+    {
+      "question": {
+        "bn": "এই যন্ত্রে কোন সেন্সর তাপমাত্রা আর আর্দ্রতা মাপে?",
+        "en": "Which sensor in this device measures temperature and humidity?"
+      },
+      "choices": [
+        {
+          "bn": "মাটির সেন্সর",
+          "en": "The soil sensor"
+        },
+        {
+          "bn": "DHT11",
+          "en": "The DHT11"
+        },
+        {
+          "bn": "OLED",
+          "en": "The OLED"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "DHT11 বাতাসের তাপমাত্রা আর আর্দ্রতা দেয়; মাটির সেন্সর মাটির ভেজাভাব দেয়।",
+        "en": "The DHT11 gives the air’s temperature and humidity; the soil sensor gives the soil’s wetness."
+      }
+    }
+  ]
 }

@@ -202,5 +202,57 @@
   "tryNext": {
     "bn": "BLK আবার খুলে দাও। তারপর `tft.setRotation(1)` দিয়ে ছবিটা পাশ ফিরিয়ে দেখো।",
     "en": "Free BLK again. Then turn the picture on its side with `tft.setRotation(1)`."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "CS পিন LOW থাকলে কী বোঝায়?",
+        "en": "What does it mean while the CS pin is LOW?"
+      },
+      "choices": [
+        {
+          "bn": "ব্যাকলাইট বন্ধ",
+          "en": "The backlight is off"
+        },
+        {
+          "bn": "ডিসপ্লে শুনছে",
+          "en": "The display is listening"
+        },
+        {
+          "bn": "একটা কমান্ড আসছে",
+          "en": "A command is coming"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "CS LOW থাকলে ডিসপ্লে বাসের কথা শোনে; DC বলে কোনটা কমান্ড আর কোনটা ছবির বিন্দু।",
+        "en": "While CS is LOW the display listens to the bus; DC says which bytes are commands and which are dots."
+      }
+    },
+    {
+      "question": {
+        "bn": "BLK GND-এ জুড়ে দিলে কী হয়?",
+        "en": "What happens when BLK is joined to GND?"
+      },
+      "choices": [
+        {
+          "bn": "ছবি মুছে যায়",
+          "en": "The picture is erased"
+        },
+        {
+          "bn": "ডিসপ্লে আবার চালু হয়",
+          "en": "The display restarts"
+        },
+        {
+          "bn": "ব্যাকলাইট নেভে; ছবি চিপের মেমরিতে থাকে, শুধু দেখা যায় না",
+          "en": "The backlight goes out; the picture stays in the chip’s memory but cannot be seen"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "BLK শুধু পেছনের আলো চালায়; ছবিটা চিপের মেমরিতেই থাকে।",
+        "en": "BLK only drives the light behind the screen; the picture stays in the chip’s memory."
+      }
+    }
+  ]
 }

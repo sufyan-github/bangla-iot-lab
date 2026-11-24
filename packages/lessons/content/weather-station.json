@@ -196,5 +196,57 @@
   "tryNext": {
     "bn": "সেন্সরের ঠিকানা 0x77 করে বোর্ড আবার চালু করো: প্রোগ্রাম কী বলে দেখো। তারপর প্রোগ্রামে ঠিকানা বদলে দেখো।",
     "en": "Set the sensor's address to 0x77 and restart the board: see what the program says. Then change the address in the program."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "BME280 কী কী মাপে?",
+        "en": "What does the BME280 measure?"
+      },
+      "choices": [
+        {
+          "bn": "শুধু তাপমাত্রা",
+          "en": "Only temperature"
+        },
+        {
+          "bn": "ধুলো",
+          "en": "Dust"
+        },
+        {
+          "bn": "তাপমাত্রা, আর্দ্রতা আর বায়ুচাপ",
+          "en": "Temperature, humidity and air pressure"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "একটা ছোট চিপেই তিনটা মাপ: তাপমাত্রা, আর্দ্রতা আর বায়ুচাপ।",
+        "en": "One small chip gives all three: temperature, humidity and air pressure."
+      }
+    },
+    {
+      "question": {
+        "bn": "bme.begin(0x76)-এ 0x76 কী?",
+        "en": "In bme.begin(0x76), what is 0x76?"
+      },
+      "choices": [
+        {
+          "bn": "সেন্সরের I2C ঠিকানা",
+          "en": "The sensor’s I2C address"
+        },
+        {
+          "bn": "পিনের নম্বর",
+          "en": "A pin number"
+        },
+        {
+          "bn": "তাপমাত্রা",
+          "en": "A temperature"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "বোর্ড I2C বাসে যাকে চায়, তাকে তার ঠিকানা ধরে ডাকে; BME280-এর ঠিকানা 0x76।",
+        "en": "On the I2C bus the board calls the device it wants by its address; the BME280’s is 0x76."
+      }
+    }
+  ]
 }

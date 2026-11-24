@@ -232,5 +232,57 @@
     "bn": "`DIM` বদলে ১০ করো, আর দেখো রাতের কম আলো কতটা কমে।",
     "en": "Change `DIM` to 10 and see how much dimmer the night light gets."
   },
-  "kind": "project"
+  "kind": "project",
+  "quiz": [
+    {
+      "question": {
+        "bn": "রাতে কেউ না থাকলে বাতি কেমন জ্বলে?",
+        "en": "At night with nobody about, how does the lamp glow?"
+      },
+      "choices": [
+        {
+          "bn": "পুরো উজ্জ্বল",
+          "en": "At full brightness"
+        },
+        {
+          "bn": "একদম নেভা",
+          "en": "Not at all"
+        },
+        {
+          "bn": "হালকা",
+          "en": "Dimly"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "রাতে হালকা জ্বলে বিদ্যুৎ বাঁচায়; কেউ এলে পুরো উজ্জ্বল হয়।",
+        "en": "It glows dimly at night to save electricity, and goes bright when someone comes."
+      }
+    },
+    {
+      "question": {
+        "bn": "কে আসছে, সেটা বাতি জানে কোন সেন্সর দিয়ে?",
+        "en": "Which sensor tells the lamp that someone is coming?"
+      },
+      "choices": [
+        {
+          "bn": "PIR সেন্সর",
+          "en": "The PIR sensor"
+        },
+        {
+          "bn": "LDR মডিউল",
+          "en": "The LDR module"
+        },
+        {
+          "bn": "কোনোটাই না",
+          "en": "Neither"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "PIR নড়াচড়া টের পায়; LDR শুধু বলে দিন না রাত।",
+        "en": "The PIR notices movement; the LDR only tells day from night."
+      }
+    }
+  ]
 }

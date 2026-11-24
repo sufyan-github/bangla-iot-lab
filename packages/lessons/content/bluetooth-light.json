@@ -198,5 +198,57 @@
   "tryNext": {
     "bn": "প্রোগ্রামে একটা নতুন কমান্ড যোগ করো: \"?\" পাঠালে বোর্ড উত্তরে বলুক বাতি জ্বলছে না নিভে আছে।",
     "en": "Add a new command to the program: when \"?\" is sent, the board answers whether the light is on or off."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "বোর্ডের কাছে HC-05 আসলে কী?",
+        "en": "To the board, what is the HC-05?"
+      },
+      "choices": [
+        {
+          "bn": "একটা ওয়াই-ফাই নেটওয়ার্ক",
+          "en": "A Wi-Fi network"
+        },
+        {
+          "bn": "শুধু একটা সিরিয়াল পোর্ট",
+          "en": "Just a serial port"
+        },
+        {
+          "bn": "আরেকটা ESP32",
+          "en": "Another ESP32"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "ফোন যা লেখে তা bt.available()-এ আসে, আর bt.println() যা লেখে তা ফোনে যায়।",
+        "en": "What the phone writes arrives in bt.available(), and what bt.println() writes goes to the phone."
+      }
+    },
+    {
+      "question": {
+        "bn": "HC-05-এর VCC কেন 3V3-এ না দিয়ে VIN-এ?",
+        "en": "Why does the HC-05’s VCC go to VIN rather than 3V3?"
+      },
+      "choices": [
+        {
+          "bn": "VIN বেশি দ্রুত",
+          "en": "VIN is faster"
+        },
+        {
+          "bn": "3V3 শুধু সেন্সরের জন্য",
+          "en": "3V3 is only for sensors"
+        },
+        {
+          "bn": "মডিউলের 3.6 V-এর বেশি লাগে",
+          "en": "The module needs more than 3.6 V"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "HC-05-এর VCC-তে 3.6 V-এর বেশি লাগে, তাই VIN-এর 5 V।",
+        "en": "The HC-05’s VCC needs more than 3.6 V, so it takes VIN’s 5 V."
+      }
+    }
+  ]
 }

@@ -183,5 +183,57 @@
   "tryNext": {
     "bn": "একটা রেজিস্টর সরিয়ে বাতাস পুরো খারাপ করো আর দেখো ল্যাব কী সতর্কবার্তা দেয়। তারপর আবার লাগিয়ে দাও।",
     "en": "Take one resistor out, make the air as bad as it goes, and see what the lab warns about. Then put it back."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "দুটো সমান 10 kΩ রোধের ডিভাইডারে AO-র 4 V পিনে কত হয়?",
+        "en": "With a divider of two equal 10 kΩ resistors, what do AO’s 4 V become at the pin?"
+      },
+      "choices": [
+        {
+          "bn": "4 V",
+          "en": "4 V"
+        },
+        {
+          "bn": "1 V",
+          "en": "1 V"
+        },
+        {
+          "bn": "2 V",
+          "en": "2 V"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "সমান দুটো রোধ ভোল্টেজকে অর্ধেক করে: 4 V থেকে 2 V।",
+        "en": "Two equal resistors halve the voltage: 4 V becomes 2 V."
+      }
+    },
+    {
+      "question": {
+        "bn": "ESP32-এর পিন সবচেয়ে বেশি কত ভোল্ট সইতে পারে?",
+        "en": "What is the most an ESP32 pin can stand?"
+      },
+      "choices": [
+        {
+          "bn": "3.6 V",
+          "en": "3.6 V"
+        },
+        {
+          "bn": "5 V",
+          "en": "5 V"
+        },
+        {
+          "bn": "12 V",
+          "en": "12 V"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "3.6 V-এর বেশি পেলে পিন নষ্ট হতে পারে; তাই 5 V সেন্সরের জন্য ডিভাইডার লাগে।",
+        "en": "More than 3.6 V can damage a pin, so a 5 V sensor needs a divider."
+      }
+    }
+  ]
 }

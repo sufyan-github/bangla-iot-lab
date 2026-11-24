@@ -241,5 +241,57 @@
   "tryNext": {
     "bn": "সুইচ চালু অবস্থায় বোর্ড আবার চালু করো, আর দেখো কারেন্টের মাপ কেন ভুল আসে।",
     "en": "Restart the board with the switch on, and see why the current reading comes out wrong."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "ভোল্টেজ সেন্সর মাপা ভোল্টেজের পাঁচ ভাগের এক ভাগ দেয়। 7.2 V ব্যাটারি থেকে পিনে কত যায়?",
+        "en": "The voltage sensor gives a fifth of what it measures. From a 7.2 V battery, what reaches the pin?"
+      },
+      "choices": [
+        {
+          "bn": "প্রায় 3.6 V",
+          "en": "About 3.6 V"
+        },
+        {
+          "bn": "প্রায় 1.4 V",
+          "en": "About 1.4 V"
+        },
+        {
+          "bn": "7.2 V",
+          "en": "7.2 V"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "7.2 ÷ 5 = 1.44 V, যা পিনের জন্য নিরাপদ।",
+        "en": "7.2 ÷ 5 = 1.44 V, which is safe for a pin."
+      }
+    },
+    {
+      "question": {
+        "bn": "ভোল্টেজ 7 V আর কারেন্ট 0.3 A হলে শক্তি কত?",
+        "en": "With 7 V and 0.3 A, what is the power?"
+      },
+      "choices": [
+        {
+          "bn": "প্রায় 2.1 W",
+          "en": "About 2.1 W"
+        },
+        {
+          "bn": "প্রায় 23 W",
+          "en": "About 23 W"
+        },
+        {
+          "bn": "প্রায় 0.04 W",
+          "en": "About 0.04 W"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "শক্তি = ভোল্টেজ × কারেন্ট = 7 × 0.3 = 2.1 W।",
+        "en": "Power = voltage × current = 7 × 0.3 = 2.1 W."
+      }
+    }
+  ]
 }

@@ -244,5 +244,57 @@
     "bn": "পাম্প একবারে ১০ সেকেন্ডের বেশি চলবে না, এমন নিয়ম যোগ করো: মাটির সেন্সর নষ্ট হলেও পানি উপচে পড়বে না।",
     "en": "Add a rule that the pump never runs more than 10 seconds at a time, so a broken sensor cannot flood the plant."
   },
-  "kind": "project"
+  "kind": "project",
+  "quiz": [
+    {
+      "question": {
+        "bn": "পাম্প নিজের ব্যাটারিতে চলে; বোর্ড তাকে চালু করে কী দিয়ে?",
+        "en": "The pump runs on its own battery. What does the board switch it with?"
+      },
+      "choices": [
+        {
+          "bn": "সরাসরি একটা পিন দিয়ে",
+          "en": "Straight from a pin"
+        },
+        {
+          "bn": "একটা রিলে দিয়ে",
+          "en": "A relay"
+        },
+        {
+          "bn": "ডিসপ্লে দিয়ে",
+          "en": "The display"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "রিলের কন্ট্যাক্ট বোর্ড থেকে আলাদা, তাই সেটা অন্য ব্যাটারির পাম্প চালু-বন্ধ করতে পারে।",
+        "en": "The relay’s contact is separate from the board, so it can switch a pump on another battery."
+      }
+    },
+    {
+      "question": {
+        "bn": "মাটির আর্দ্রতা 60% হলে পাম্পের কী হয়?",
+        "en": "With the soil at 60% wet, what does the pump do?"
+      },
+      "choices": [
+        {
+          "bn": "চলতে থাকে",
+          "en": "Keeps running"
+        },
+        {
+          "bn": "আরও জোরে চলে",
+          "en": "Runs faster"
+        },
+        {
+          "bn": "থেমে যায়",
+          "en": "Stops"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "মাটি যথেষ্ট ভেজা, তাই প্রোগ্রাম রিলে বন্ধ করে পাম্প থামায়।",
+        "en": "The soil is wet enough, so the program switches the relay off and the pump stops."
+      }
+    }
+  ]
 }

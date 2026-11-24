@@ -229,5 +229,57 @@
     "bn": "ঢাকনা বন্ধ হওয়ার পর প্রতি ১০ সেকেন্ডে একবার ছোট বিপ দাও, যতক্ষণ বৃষ্টি চলে।",
     "en": "Once the cover is closed, give a short beep every 10 seconds for as long as it rains."
   },
-  "kind": "project"
+  "kind": "project",
+  "quiz": [
+    {
+      "question": {
+        "bn": "বৃষ্টি এলে সার্ভো কোন কোণে যায়?",
+        "en": "When rain comes, which angle does the servo go to?"
+      },
+      "choices": [
+        {
+          "bn": "0°, ঢাকনা খোলা",
+          "en": "0°, the cover open"
+        },
+        {
+          "bn": "180°",
+          "en": "180°"
+        },
+        {
+          "bn": "90°, ঢাকনা বন্ধ",
+          "en": "90°, the cover closed"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "এই প্রকল্পে 0° মানে খোলা আর 90° মানে বন্ধ।",
+        "en": "In this project 0° is open and 90° is closed."
+      }
+    },
+    {
+      "question": {
+        "bn": "বৃষ্টি থেমে গেলে (ভেজাভাব 0%) কী হয়?",
+        "en": "When the rain stops (0% wet), what happens?"
+      },
+      "choices": [
+        {
+          "bn": "ঢাকনা আবার খোলে",
+          "en": "The cover opens again"
+        },
+        {
+          "bn": "ঢাকনা বন্ধই থাকে",
+          "en": "The cover stays closed"
+        },
+        {
+          "bn": "বাজার বাজতেই থাকে",
+          "en": "The buzzer keeps sounding"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "প্রোগ্রাম সেন্সর পড়তে থাকে; শুকনো হলে সার্ভো আবার 0°-তে ফেরে।",
+        "en": "The program keeps reading the sensor; when it is dry the servo returns to 0°."
+      }
+    }
+  ]
 }

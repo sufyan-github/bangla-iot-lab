@@ -175,5 +175,53 @@
   "tryNext": {
     "bn": "ব্যাটারির ভোল্টেজ বদলাও (ব্যাটারিতে ট্যাপ করো): আউটপুট ৫ V-ই থাকে কি না দেখো।",
     "en": "Change the battery's voltage (tap the battery): see whether the output stays at 5 V."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "রেগুলেটর মোটরকে 0.2 A দেয়, কিন্তু ব্যাটারি থেকে নেয় মাত্র 0.14 A। কীভাবে?",
+        "en": "The regulator gives the motor 0.2 A but takes only 0.14 A from the battery. How?"
+      },
+      "choices": [
+        {
+          "bn": "ব্যাটারি দুর্বল",
+          "en": "The battery is weak"
+        },
+        {
+          "bn": "বাড়তি ভোল্টেজ তাপে না পুড়িয়ে কারেন্টে বদলে দেয়",
+          "en": "It turns the extra voltage into current instead of burning it off as heat"
+        },
+        {
+          "bn": "মোটর ধীরে চলে",
+          "en": "The motor runs slower"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "ঢোকে 9 V × 0.14 A ≈ 1.3 W, বেরোয় 5 V × 0.2 A = 1 W: শক্তি প্রায় একই থাকে।",
+        "en": "In goes 9 V × 0.14 A ≈ 1.3 W, out comes 5 V × 0.2 A = 1 W: the power stays nearly the same."
+      }
+    },
+    {
+      "question": {
+        "bn": "9 V থেকে কি এটা 8 V বানাতে পারে?",
+        "en": "Can it make 8 V from 9 V?"
+      },
+      "choices": [
+        {
+          "bn": "হ্যাঁ, ট্রিমার ঘোরালেই",
+          "en": "Yes, just turn the trimmer"
+        },
+        {
+          "bn": "না: তার নিজের সুইচে প্রায় 1.2 V লাগে",
+          "en": "No: its own switch needs about 1.2 V"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "ইনপুট থেকে আউটপুট অন্তত প্রায় 1.2 V কম হবেই; 9 V থেকে প্রায় 7.8 V পর্যন্ত।",
+        "en": "The output is always at least about 1.2 V below the input: up to about 7.8 V from 9 V."
+      }
+    }
+  ]
 }

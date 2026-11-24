@@ -308,5 +308,57 @@
     "bn": "বাতাস খারাপ হলে বাজার একটানা না বাজিয়ে প্রতি সেকেন্ডে একবার বিপ দাও।",
     "en": "When the air is bad, beep once a second instead of sounding all the time."
   },
-  "kind": "project"
+  "kind": "project",
+  "quiz": [
+    {
+      "question": {
+        "bn": "বাতাস মাঝারি খারাপ হলে RGB LED হলুদ হয়। কোন দুটো রঙ জ্বলে?",
+        "en": "When the air is fair, the RGB LED shows yellow. Which two colours are lit?"
+      },
+      "choices": [
+        {
+          "bn": "লাল আর নীল",
+          "en": "Red and blue"
+        },
+        {
+          "bn": "লাল আর সবুজ",
+          "en": "Red and green"
+        },
+        {
+          "bn": "সবুজ আর নীল",
+          "en": "Green and blue"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "লাল আর সবুজ আলো মিলে হলুদ দেখায়।",
+        "en": "Red and green light together look yellow."
+      }
+    },
+    {
+      "question": {
+        "bn": "MQ-135-এর AO পিনে যাওয়ার আগে দুটো 10 kΩ রোধ কেন?",
+        "en": "Why do two 10 kΩ resistors sit between the MQ-135’s AO and the pin?"
+      },
+      "choices": [
+        {
+          "bn": "খারাপ বাতাসে AO প্রায় 4 V পর্যন্ত ওঠে; ডিভাইডার তা অর্ধেক করে",
+          "en": "In bad air AO rises to about 4 V; the divider halves it"
+        },
+        {
+          "bn": "বাজার জোরে বাজাতে",
+          "en": "To make the buzzer louder"
+        },
+        {
+          "bn": "ডিসপ্লে চালাতে",
+          "en": "To power the display"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "ESP32-এর পিন 3.6 V-এর বেশি সইতে পারে না; দুটো সমান রোধ ভোল্টেজ অর্ধেক করে।",
+        "en": "An ESP32 pin cannot stand more than 3.6 V; two equal resistors halve the voltage."
+      }
+    }
+  ]
 }

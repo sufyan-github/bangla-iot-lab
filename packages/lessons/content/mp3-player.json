@@ -186,5 +186,57 @@
   "tryNext": {
     "bn": "দ্বিতীয় একটা বোতাম যোগ করো যেটা চাপলে আওয়াজ কমে (`player.volumeDown()`)।",
     "en": "Add a second button that turns the volume down (`player.volumeDown()`)."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "বোর্ড প্লেয়ারকে ১ নম্বর ট্র্যাক বাজাতে বলে কীভাবে?",
+        "en": "How does the board tell the player to play track 1?"
+      },
+      "choices": [
+        {
+          "bn": "গানটা নিজেই পাঠায়",
+          "en": "It sends the music itself"
+        },
+        {
+          "bn": "প্লেয়ারের বোতাম চাপে",
+          "en": "It presses the player’s button"
+        },
+        {
+          "bn": "সিরিয়ালে একটা বার্তা পাঠায়: কমান্ড, ট্র্যাক নম্বর আর চেকসাম",
+          "en": "It sends a serial message: the command, the track number and a checksum"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "player.play(1) দশ বাইটের একটা বার্তা পাঠায়; গান প্লেয়ারের নিজের কার্ডে থাকে।",
+        "en": "player.play(1) sends a ten-byte message; the music is on the player’s own card."
+      }
+    },
+    {
+      "question": {
+        "bn": "বার্তার চেকসাম কী কাজে লাগে?",
+        "en": "What is the message’s checksum for?"
+      },
+      "choices": [
+        {
+          "bn": "বার্তাটা পুরোপুরি ঠিকঠাক এল কি না দেখতে",
+          "en": "To check that the message arrived whole"
+        },
+        {
+          "bn": "আওয়াজ ঠিক করতে",
+          "en": "To set the volume"
+        },
+        {
+          "bn": "কার্ড বাছতে",
+          "en": "To choose the card"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "পাঠানো বাইটগুলোর যোগফল মিলিয়ে দেখা হয়; না মিললে বার্তায় গোলমাল হয়েছে।",
+        "en": "The bytes are added up and compared; if they do not match, the message was garbled."
+      }
+    }
+  ]
 }

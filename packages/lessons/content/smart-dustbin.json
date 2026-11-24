@@ -233,5 +233,57 @@
     "bn": "ঢাকনা খোলা থাকার সময় তিন সেকেন্ড থেকে পাঁচ সেকেন্ড করো।",
     "en": "Keep the lid open for five seconds instead of three."
   },
-  "kind": "project"
+  "kind": "project",
+  "quiz": [
+    {
+      "question": {
+        "bn": "ডাস্টবিন হাত টের পায় কী দিয়ে?",
+        "en": "What does the dustbin sense a hand with?"
+      },
+      "choices": [
+        {
+          "bn": "PIR সেন্সর",
+          "en": "A PIR sensor"
+        },
+        {
+          "bn": "আল্ট্রাসনিক সেন্সর",
+          "en": "An ultrasonic sensor"
+        },
+        {
+          "bn": "বোতাম",
+          "en": "A button"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "আল্ট্রাসনিক সেন্সর দূরত্ব মাপে; হাত কাছে এলে দূরত্ব কমে যায়।",
+        "en": "The ultrasonic sensor measures distance; a hand coming close makes it small."
+      }
+    },
+    {
+      "question": {
+        "bn": "ঢাকনা খোলার পর কী হয়?",
+        "en": "What happens after the lid opens?"
+      },
+      "choices": [
+        {
+          "bn": "তিন সেকেন্ড পর নিজেই বন্ধ হয়",
+          "en": "It closes by itself three seconds later"
+        },
+        {
+          "bn": "কেউ বন্ধ না করা পর্যন্ত খোলা থাকে",
+          "en": "It stays open until someone closes it"
+        },
+        {
+          "bn": "বাজার একটানা বাজে",
+          "en": "The buzzer sounds without stopping"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "প্রোগ্রাম তিন সেকেন্ড অপেক্ষা করে সার্ভোকে আবার 0°-তে, মানে বন্ধ অবস্থায় আনে।",
+        "en": "The program waits three seconds, then turns the servo back to 0°, closed."
+      }
+    }
+  ]
 }

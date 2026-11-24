@@ -194,5 +194,57 @@
   "tryNext": {
     "bn": "নব ঘোরালে সব LED একই রঙে জ্বলুক, আর রংটা বদলাক (`ring.ColorHSV(hue)`-এ hue বদলাও)।",
     "en": "Make the knob light every LED in one colour that changes as it turns (vary hue in `ring.ColorHSV(hue)`)."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "ring.show() কী করে?",
+        "en": "What does ring.show() do?"
+      },
+      "choices": [
+        {
+          "bn": "একটা LED-এর রঙ ঠিক করে",
+          "en": "Sets one LED’s colour"
+        },
+        {
+          "bn": "সব LED-এর রঙ একসঙ্গে তার দিয়ে পাঠায়",
+          "en": "Sends every LED’s colour down the wire at once"
+        },
+        {
+          "bn": "রিং বন্ধ করে",
+          "en": "Turns the ring off"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "setPixelColor শুধু বোর্ডের মেমরিতে লেখে; show() দিলে তবে রঙগুলো রিংয়ে যায়।",
+        "en": "setPixelColor only writes to the board’s memory; the colours reach the ring when show() is called."
+      }
+    },
+    {
+      "question": {
+        "bn": "প্রতিটা LED-এর জন্য কয়টা বাইট যায়?",
+        "en": "How many bytes go for each LED?"
+      },
+      "choices": [
+        {
+          "bn": "একটা",
+          "en": "One"
+        },
+        {
+          "bn": "বারোটা",
+          "en": "Twelve"
+        },
+        {
+          "bn": "তিনটা: সবুজ, লাল, নীল",
+          "en": "Three: green, red, blue"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "WS2812B প্রতিটা LED-এর জন্য তিনটা বাইট নেয়, এই ক্রমে: সবুজ, লাল, নীল।",
+        "en": "A WS2812B takes three bytes for each LED, in this order: green, red, blue."
+      }
+    }
+  ]
 }

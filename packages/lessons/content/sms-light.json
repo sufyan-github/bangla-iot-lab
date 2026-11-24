@@ -210,5 +210,57 @@
   "tryNext": {
     "bn": "মডিউলে ট্যাপ করে সংকেত ০ করো, তারপর সার্কিট আবার চালু করো: প্রোগ্রাম কী বলে? তারপর একটা গ্যাস সেন্সর যোগ করে গ্যাস পেলে SMS পাঠাও।",
     "en": "Tap the module, set the signal to 0, and run the circuit again: what does the program say? Then add a gas sensor and send an SMS when it finds gas."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "SIM800L-এর VCC-তে 3.4 থেকে 4.4 V লাগে। কোনটা মানায়?",
+        "en": "The SIM800L’s VCC needs 3.4 V to 4.4 V. Which source fits?"
+      },
+      "choices": [
+        {
+          "bn": "ESP32-এর 3.3 V",
+          "en": "The ESP32’s 3.3 V"
+        },
+        {
+          "bn": "USB-র 5 V",
+          "en": "USB’s 5 V"
+        },
+        {
+          "bn": "একটা 18650 সেল",
+          "en": "An 18650 cell"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "3.3 V খুব কম আর 5 V খুব বেশি; 18650 সেলের ভোল্টেজ ঠিক সেই সীমার মধ্যে।",
+        "en": "3.3 V is too little and 5 V too much; an 18650 cell’s voltage sits in that range."
+      }
+    },
+    {
+      "question": {
+        "bn": "একটা AT কমান্ড কাজ করলে মডিউল কী লিখে উত্তর দেয়?",
+        "en": "When an AT command works, what does the module write back?"
+      },
+      "choices": [
+        {
+          "bn": "OK",
+          "en": "OK"
+        },
+        {
+          "bn": "ERROR",
+          "en": "ERROR"
+        },
+        {
+          "bn": "কিছুই না",
+          "en": "Nothing"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "মডিউল লেখায় উত্তর দেয়: কাজ হলে OK, না হলে ERROR।",
+        "en": "The module answers in text: OK when it worked, ERROR when not."
+      }
+    }
+  ]
 }

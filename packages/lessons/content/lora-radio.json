@@ -317,5 +317,53 @@
   "tryNext": {
     "bn": "রেডিও ৪ কিমি দূরে সরাও: বার্তা আসা বন্ধ হয়। এবার দুই প্রোগ্রামেই `LoRa.setSpreadingFactor(12);` যোগ করো: বার্তা ধীরে যায়, কিন্তু আরও দূরে পৌঁছায়।",
     "en": "Move the radio 4 km away: messages stop. Now add `LoRa.setSpreadingFactor(12);` to both programs: messages go slower, but reach further."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "কোন সিগন্যাল বেশি শক্তিশালী: RSSI −40 না −100?",
+        "en": "Which signal is stronger: RSSI −40 or −100?"
+      },
+      "choices": [
+        {
+          "bn": "−100",
+          "en": "−100"
+        },
+        {
+          "bn": "−40",
+          "en": "−40"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "RSSI শূন্যের যত কাছে, সিগন্যাল তত শক্তিশালী।",
+        "en": "The closer RSSI is to zero, the stronger the signal."
+      }
+    },
+    {
+      "question": {
+        "bn": "রেডিওর 3.3V কেন 5 V-এ দেওয়া যাবে না?",
+        "en": "Why must the radio’s 3.3V not go to 5 V?"
+      },
+      "choices": [
+        {
+          "bn": "5 V-এ রেডিও নষ্ট হয়",
+          "en": "5 V damages the radio"
+        },
+        {
+          "bn": "5 V-এ বার্তা ধীরে যায়",
+          "en": "Messages go slower on 5 V"
+        },
+        {
+          "bn": "5 V-এ বেশি দূরে যায়, সেটা নিষেধ",
+          "en": "It reaches too far on 5 V"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "Ra-02 শুধু 3.3 V-এর জন্য; 5 V দিলে নষ্ট হতে পারে।",
+        "en": "The Ra-02 is made for 3.3 V only; 5 V can damage it."
+      }
+    }
+  ]
 }

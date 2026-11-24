@@ -192,5 +192,57 @@
   "tryNext": {
     "bn": "আগের GPS পাঠের সাথে মিলিয়ে ভাবো: দুটো সিরিয়াল যন্ত্র একসাথে লাগাতে চাইলে কোন পিন ব্যবহার করবে?",
     "en": "Think back to the GPS lesson: to use two serial modules at once, which pins would you use?"
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "সেন্সরের TX বোর্ডের কোন পিনে যায়?",
+        "en": "Which board pin does the sensor’s TX go to?"
+      },
+      "choices": [
+        {
+          "bn": "TX2",
+          "en": "TX2"
+        },
+        {
+          "bn": "GND",
+          "en": "GND"
+        },
+        {
+          "bn": "RX2",
+          "en": "RX2"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "সিরিয়ালের তার আড়াআড়ি: একজনের TX (বলে) অন্যজনের RX-এ (শোনে)।",
+        "en": "Serial wires cross: one side’s TX (speaks) goes to the other’s RX (listens)."
+      }
+    },
+    {
+      "question": {
+        "bn": "µg/m³ মানে কী?",
+        "en": "What does µg/m³ mean?"
+      },
+      "choices": [
+        {
+          "bn": "প্রতি ঘনমিটার বাতাসে কত মাইক্রোগ্রাম কণা",
+          "en": "Micrograms of particles in each cubic metre of air"
+        },
+        {
+          "bn": "প্রতি সেকেন্ডে কত মিটার",
+          "en": "Metres per second"
+        },
+        {
+          "bn": "প্রতি মিনিটে কতগুলো কণা",
+          "en": "Particles per minute"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "PM2.5 মানে খুব ছোট কণা; তাদের ভর প্রতি ঘনমিটার বাতাসে মাপা হয়।",
+        "en": "PM2.5 means very small particles; their mass is measured in each cubic metre of air."
+      }
+    }
+  ]
 }

@@ -211,5 +211,57 @@
   "tryNext": {
     "bn": "একই SCL আর SDA তারে একটা BME280-ও লাগাও, আর দুটো সেন্সর একসাথে পড়ার প্রোগ্রাম লেখো।",
     "en": "Add a BME280 on the same SCL and SDA wires, and write a program that reads both sensors."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "অনেকগুলো I2C যন্ত্র একই SCL আর SDA ভাগ করে কীভাবে?",
+        "en": "How can many I2C devices share the same SCL and SDA?"
+      },
+      "choices": [
+        {
+          "bn": "প্রত্যেকের নিজের ঠিকানা আছে",
+          "en": "Each has its own address"
+        },
+        {
+          "bn": "পালা করে, ঘণ্টায় ঘণ্টায়",
+          "en": "They take turns, hour by hour"
+        },
+        {
+          "bn": "পারে না, প্রত্যেকের আলাদা তার লাগে",
+          "en": "They cannot; each needs its own wires"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "বোর্ড যাকে চায়, তার ঠিকানা ধরে ডাকে; বাকিরা চুপ থাকে।",
+        "en": "The board calls the one it wants by its address; the others stay quiet."
+      }
+    },
+    {
+      "question": {
+        "bn": "ব্যাটারি 8.8 V থেকে 6 V করলে মোটরের কারেন্টের কী হয়?",
+        "en": "The battery goes from 8.8 V to 6 V. What happens to the motor’s current?"
+      },
+      "choices": [
+        {
+          "bn": "বাড়ে",
+          "en": "It rises"
+        },
+        {
+          "bn": "কমে, প্রায় 350 থেকে 230 mA",
+          "en": "It falls, from about 350 to 230 mA"
+        },
+        {
+          "bn": "একই থাকে",
+          "en": "It stays the same"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "মোটর এখানে রোধের মতো আচরণ করে: ভোল্টেজ কম হলে কারেন্টও কম।",
+        "en": "The motor acts like a resistor here: less voltage means less current."
+      }
+    }
+  ]
 }

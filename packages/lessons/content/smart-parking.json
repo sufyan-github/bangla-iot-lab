@@ -282,5 +282,53 @@
     "bn": "জায়গা ভরা থাকলে একটা লাল LED জ্বালাও, খালি থাকলে সবুজ।",
     "en": "Light a red LED when the space is full and a green one when it is free."
   },
-  "kind": "project"
+  "kind": "project",
+  "quiz": [
+    {
+      "question": {
+        "bn": "জায়গায় গাড়ি থাকলে (FULL) নতুন গাড়ি এলে গেটের কী হয়?",
+        "en": "With the space taken (FULL), what does the gate do for a new car?"
+      },
+      "choices": [
+        {
+          "bn": "খোলে",
+          "en": "It opens"
+        },
+        {
+          "bn": "বন্ধই থাকে",
+          "en": "It stays shut"
+        },
+        {
+          "bn": "অর্ধেক খোলে",
+          "en": "It half opens"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "জায়গা খালি না থাকলে গেট খোলার মানে নেই, তাই প্রোগ্রাম গেট বন্ধ রাখে।",
+        "en": "There is no point opening with no free space, so the program keeps the gate shut."
+      }
+    },
+    {
+      "question": {
+        "bn": "জায়গায় গাড়ি আছে কি না, কোন সেন্সর মাপে?",
+        "en": "Which sensor tells whether a car is in the space?"
+      },
+      "choices": [
+        {
+          "bn": "IR সেন্সর",
+          "en": "The IR sensor"
+        },
+        {
+          "bn": "আল্ট্রাসনিক সেন্সর",
+          "en": "The ultrasonic sensor"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "গেটে গাড়ি এল কি না বলে IR সেন্সর; জায়গায় দূরত্ব মেপে গাড়ি আছে কি না বলে আল্ট্রাসনিক।",
+        "en": "The IR sensor notices a car at the gate; the ultrasonic one measures whether the space is taken."
+      }
+    }
+  ]
 }

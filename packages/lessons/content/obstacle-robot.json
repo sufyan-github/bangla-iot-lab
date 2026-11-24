@@ -311,5 +311,57 @@
     "bn": "ENA আর ENB-র জাম্পার খুলে PWM দাও, আর বাধার কাছে এলে রোবটের গতি কমাও।",
     "en": "Take off the ENA and ENB jumpers, add PWM, and slow the robot down as it nears an obstacle."
   },
-  "kind": "project"
+  "kind": "project",
+  "quiz": [
+    {
+      "question": {
+        "bn": "বাধা 10 সেমিতে এলে রোবট কী করে?",
+        "en": "When the obstacle comes to 10 cm, what does the robot do?"
+      },
+      "choices": [
+        {
+          "bn": "পেছনে যায়, তারপর ঘোরে",
+          "en": "It backs up, then turns"
+        },
+        {
+          "bn": "জোরে সামনে যায়",
+          "en": "It speeds forwards"
+        },
+        {
+          "bn": "থেমে বসে থাকে",
+          "en": "It stops and waits"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "দুটো চাকা উল্টো ঘুরে পেছায়, তারপর এক চাকা সামনে আর অন্যটা পেছনে ঘুরে দিক বদলায়।",
+        "en": "Both wheels reverse to back up, then one turns forwards and the other back to turn."
+      }
+    },
+    {
+      "question": {
+        "bn": "রোবট ঘোরে কীভাবে?",
+        "en": "How does the robot turn?"
+      },
+      "choices": [
+        {
+          "bn": "একটা স্টিয়ারিং মোটর দিয়ে",
+          "en": "With a steering motor"
+        },
+        {
+          "bn": "দুই চাকা একই দিকে ঘুরিয়ে",
+          "en": "By turning both wheels the same way"
+        },
+        {
+          "bn": "এক চাকা সামনে, অন্যটা পেছনে ঘুরিয়ে",
+          "en": "By turning one wheel forwards and the other back"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "দুই চাকা উল্টো দিকে ঘুরলে রোবট জায়গায় দাঁড়িয়ে ঘোরে।",
+        "en": "With the wheels turning opposite ways, the robot spins on the spot."
+      }
+    }
+  ]
 }

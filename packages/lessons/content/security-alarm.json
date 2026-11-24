@@ -291,5 +291,57 @@
     "bn": "পাহারা চালু হওয়ার পর ১০ সেকেন্ড সময় দাও, যাতে ঘর থেকে বেরোনো যায়।",
     "en": "Give 10 seconds after arming before the guard starts, so there is time to leave the room."
   },
-  "kind": "project"
+  "kind": "project",
+  "quiz": [
+    {
+      "question": {
+        "bn": "পাহারা বন্ধ থাকলে PIR কাউকে দেখলে কী হয়?",
+        "en": "With the guard off, what happens when the PIR notices someone?"
+      },
+      "choices": [
+        {
+          "bn": "অ্যালার্ম বাজে",
+          "en": "The alarm sounds"
+        },
+        {
+          "bn": "কিছুই না",
+          "en": "Nothing"
+        },
+        {
+          "bn": "ডিসপ্লে বন্ধ হয়",
+          "en": "The display goes off"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "বোতাম চেপে পাহারা চালু (ARMED) থাকলে তবেই অ্যালার্ম বাজে।",
+        "en": "The alarm only sounds while the guard is on (ARMED), set with the button."
+      }
+    },
+    {
+      "question": {
+        "bn": "অ্যালার্ম থামাতে কী করতে হয়?",
+        "en": "How is the alarm stopped?"
+      },
+      "choices": [
+        {
+          "bn": "বোতাম আবার চাপো, পাহারা বন্ধ হবে",
+          "en": "Press the button again to switch the guard off"
+        },
+        {
+          "bn": "PIR ঢেকে দাও",
+          "en": "Cover the PIR"
+        },
+        {
+          "bn": "বোর্ড খুলে ফেলো",
+          "en": "Unplug the board"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "বোতাম পাহারা চালু-বন্ধ করে; বন্ধ করলে অ্যালার্ম থামে।",
+        "en": "The button switches the guard on and off; switching it off stops the alarm."
+      }
+    }
+  ]
 }

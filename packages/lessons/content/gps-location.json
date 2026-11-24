@@ -148,5 +148,53 @@
   "tryNext": {
     "bn": "TX আর RX উল্টে লাগিয়ে দেখো প্রোগ্রাম কী বলে। তারপর অক্ষাংশ-দ্রাঘিমাংশ বদলে তোমার স্কুলের অবস্থান দাও।",
     "en": "Swap TX and RX and see what the program says. Then change the latitude and longitude to your school's."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "GPS-এর TX বোর্ডের কোথায় যায়?",
+        "en": "Where does the GPS’s TX go on the board?"
+      },
+      "choices": [
+        {
+          "bn": "RX2-এ (GPIO16)",
+          "en": "To RX2 (GPIO16)"
+        },
+        {
+          "bn": "TX2-এ (GPIO17)",
+          "en": "To TX2 (GPIO17)"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "এক পাশের মুখ (TX) অন্য পাশের কানে (RX): তাই তার আড়াআড়ি।",
+        "en": "One side’s mouth (TX) goes to the other’s ear (RX), so the wires cross."
+      }
+    },
+    {
+      "question": {
+        "bn": "ঘরের ভেতরে, আকাশ দেখতে না পেলে GPS কী করে?",
+        "en": "Indoors, unable to see the sky, what does the GPS do?"
+      },
+      "choices": [
+        {
+          "bn": "পাঠানো থামিয়ে দেয়",
+          "en": "It stops sending"
+        },
+        {
+          "bn": "একটা ভুল অবস্থান পাঠায়",
+          "en": "It sends a wrong position"
+        },
+        {
+          "bn": "বাক্য পাঠাতে থাকে, কিন্তু অবস্থান ছাড়া",
+          "en": "It keeps sending sentences, but without a position"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "মডিউল চলতেই থাকে; উপগ্রহ না পেলে বাক্যে অবস্থানের ঘর খালি থাকে, প্রোগ্রাম অপেক্ষা করে।",
+        "en": "The module keeps going; without satellites the position fields are empty and the program waits."
+      }
+    }
+  ]
 }

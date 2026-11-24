@@ -198,5 +198,57 @@
   "tryNext": {
     "bn": "একই তিনটে তারে আরেকটা প্রোব লাগাও: প্রোগ্রাম দুটোই খুঁজে পায় কি না দেখো। তারপর পুল-আপ সরিয়ে দেখো কী হয়।",
     "en": "Add a second probe on the same three wires: see whether the program finds both. Then take the pull-up away and see what happens."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "4.7 kΩ পুল-আপ কেন লাগে?",
+        "en": "Why does it need a 4.7 kΩ pull-up?"
+      },
+      "choices": [
+        {
+          "bn": "LED-এর কারেন্ট কমাতে",
+          "en": "To limit the LED’s current"
+        },
+        {
+          "bn": "প্রোব জলরোধী করতে",
+          "en": "To make the probe waterproof"
+        },
+        {
+          "bn": "প্রোব আর বোর্ড তারকে শুধু নিচে টানতে পারে; পুল-আপ তাকে HIGH করে",
+          "en": "The probe and board can only pull the wire down; the pull-up brings it HIGH"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "পুল-আপ না থাকলে লাইন কখনো HIGH হয় না, তাই কথাই হয় না।",
+        "en": "Without the pull-up the line never goes HIGH, so no talk can happen."
+      }
+    },
+    {
+      "question": {
+        "bn": "এক তারে কয়েকটা প্রোব থাকলে বোর্ড তাদের আলাদা চেনে কীভাবে?",
+        "en": "With several probes on one wire, how does the board tell them apart?"
+      },
+      "choices": [
+        {
+          "bn": "প্রত্যেকের নিজের 64-বিট নম্বরে",
+          "en": "By each one’s own 64-bit number"
+        },
+        {
+          "bn": "রঙ দেখে",
+          "en": "By their colour"
+        },
+        {
+          "bn": "তার কতটা লম্বা, তা দেখে",
+          "en": "By how long the wire is"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "প্রতিটা DS18B20-এর কারখানায় দেওয়া একটা আলাদা 64-বিট নম্বর থাকে।",
+        "en": "Every DS18B20 has its own 64-bit number, set at the factory."
+      }
+    }
+  ]
 }

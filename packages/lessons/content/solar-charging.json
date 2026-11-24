@@ -235,5 +235,57 @@
   "tryNext": {
     "bn": "সেলটা চার্জার ছাড়া সরাসরি প্যানেলে লাগিয়ে দেখো ল্যাব কী সতর্ক করে। তারপর আবার চার্জার দিয়ে লাগাও।",
     "en": "Connect the cell straight to the panel, without the charger, and see what the lab warns about. Then put the charger back."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "লিথিয়াম সেল সরাসরি প্যানেলে লাগানো যায় না কেন?",
+        "en": "Why must a lithium cell never go straight on the panel?"
+      },
+      "choices": [
+        {
+          "bn": "চার্জারই সেলকে 4.2 V-এ থামায়; তা ছাড়া বেশি চার্জ হতে পারে",
+          "en": "The charger is what stops it at 4.2 V; without it the cell can be overcharged"
+        },
+        {
+          "bn": "প্যানেল AC দেয়",
+          "en": "The panel gives AC"
+        },
+        {
+          "bn": "সেল খুব ধীরে চার্জ হবে",
+          "en": "The cell would charge too slowly"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "TP4056 কারেন্ট সামলায় আর 4.2 V-এ চার্জ থামায়; বেশি চার্জ লিথিয়াম সেলের জন্য বিপজ্জনক।",
+        "en": "The TP4056 controls the current and stops at 4.2 V; overcharging a lithium cell is dangerous."
+      }
+    },
+    {
+      "question": {
+        "bn": "রাতে (রোদ 0) LED-এর আলো কোথা থেকে আসে?",
+        "en": "At night (sun at 0), where does the LED’s light come from?"
+      },
+      "choices": [
+        {
+          "bn": "প্যানেল থেকে",
+          "en": "From the panel"
+        },
+        {
+          "bn": "সেল থেকে",
+          "en": "From the cell"
+        },
+        {
+          "bn": "চার্জারের লাল বাতি থেকে",
+          "en": "From the charger’s red light"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "দিনে সেলে যা জমেছে, রাতে সেটাই LED জ্বালায়।",
+        "en": "What the cell stored by day lights the LED at night."
+      }
+    }
+  ]
 }

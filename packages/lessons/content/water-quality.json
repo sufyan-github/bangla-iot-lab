@@ -245,5 +245,57 @@
   "tryNext": {
     "bn": "দুটো ১০ kΩ রেজিস্টর সরিয়ে A সোজা D34-এ দাও, আর দেখো ল্যাব কী সতর্কবার্তা দেয়। তারপর আবার লাগিয়ে দাও।",
     "en": "Take the two 10 kΩ resistors out, put A straight on D34, and see what the lab warns about. Then put them back."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "TDS কী মাপে?",
+        "en": "What does TDS measure?"
+      },
+      "choices": [
+        {
+          "bn": "পানি কতটা ঘোলা",
+          "en": "How cloudy the water is"
+        },
+        {
+          "bn": "পানিতে কতটা লবণ আর খনিজ মিশে আছে, ppm-এ",
+          "en": "How much salt and mineral is dissolved, in ppm"
+        },
+        {
+          "bn": "পানির তাপমাত্রা",
+          "en": "The water’s temperature"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "TDS মানে দ্রবীভূত মোট কঠিন পদার্থ; ঘোলাভাব মাপে টার্বিডিটি সেন্সর।",
+        "en": "TDS means total dissolved solids; cloudiness is the turbidity sensor’s job."
+      }
+    },
+    {
+      "question": {
+        "bn": "টার্বিডিটি সেন্সরে ডিভাইডার লাগে, TDS মিটারে লাগে না। কেন?",
+        "en": "The turbidity sensor needs a divider but the TDS meter does not. Why?"
+      },
+      "choices": [
+        {
+          "bn": "টার্বিডিটির আউটপুট প্রায় 4 V পর্যন্ত যায়; TDS কখনো 2.3 V-এর বেশি নয়",
+          "en": "Turbidity’s output reaches about 4 V; TDS never goes above 2.3 V"
+        },
+        {
+          "bn": "TDS মিটার ডিজিটাল",
+          "en": "The TDS meter is digital"
+        },
+        {
+          "bn": "দুটোতেই লাগে",
+          "en": "Both need one"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "পিন 3.6 V-এর বেশি সইতে পারে না; শুধু বেশি ভোল্টেজের আউটপুটে ডিভাইডার লাগে।",
+        "en": "A pin cannot stand more than 3.6 V; only the higher output needs a divider."
+      }
+    }
+  ]
 }

@@ -161,5 +161,57 @@
   "tryNext": {
     "bn": "প্রোগ্রাম বদলে দূরত্ব থেকে ট্যাংক কতটা ভরা (%) দেখাও: ধরো ট্যাংক ২০০ সেমি গভীর, আর সেন্সর পানির সর্বোচ্চ মাত্রার ২৫ সেমি ওপরে।",
     "en": "Change the program to show how full the tank is (%) from the distance: say the tank is 200 cm deep, and the sensor is 25 cm above the highest water level."
-  }
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "পানি 15 সেমি দূরে। সেন্সর কত দেখায়?",
+        "en": "The water is 15 cm away. What does the sensor show?"
+      },
+      "choices": [
+        {
+          "bn": "15",
+          "en": "15"
+        },
+        {
+          "bn": "0",
+          "en": "0"
+        },
+        {
+          "bn": "25",
+          "en": "25"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "এর অন্ধ এলাকা 25 সেমি: নিজের শব্দ শেষ হওয়ার আগে ফেরা প্রতিধ্বনি ধরতে পারে না।",
+        "en": "Its blind zone is 25 cm: it cannot catch an echo that returns before its own sound has finished."
+      }
+    },
+    {
+      "question": {
+        "bn": "তাই ট্যাংকে সেন্সর পানির সর্বোচ্চ উচ্চতা থেকে কত উপরে বসাতে হবে?",
+        "en": "So how far above the highest water level must it sit in a tank?"
+      },
+      "choices": [
+        {
+          "bn": "অন্তত 25 সেমি",
+          "en": "At least 25 cm"
+        },
+        {
+          "bn": "5 সেমি",
+          "en": "5 cm"
+        },
+        {
+          "bn": "যেকোনো জায়গায়",
+          "en": "Anywhere"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "পানি কখনো অন্ধ এলাকার ভেতরে এলে মাপ ভুল হবে।",
+        "en": "If the water ever comes into the blind zone, the reading is wrong."
+      }
+    }
+  ]
 }
