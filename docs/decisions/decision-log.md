@@ -2242,3 +2242,28 @@ was approved the same day.
 - **Stages to come,** one pull request each: home, lessons and glossary; the
   lab; accounts, teachers' and guardians' pages. The owner's office keeps
   Kumo and takes the new colours through its settings.
+
+## D-104 — The redesign, stage 2: home, lessons and glossary
+
+Built on 25 November 2026, the second stage of the redesign (D-103), from
+the design page the owner approved.
+
+- **Lessons as a numbered path.** Each lesson is a stop on a wire: its number
+  (a tick once it is done), the lab's own drawing of its part, what it needs
+  and how far the student has got. The wire turns green behind a finished
+  lesson. Only the lesson last worked on stands out, in amber; the rest stay
+  quiet. All the tracks stay on one page, as before, so a link to a lesson
+  still finds it.
+- **Progress as LEDs.** One LED for every lesson, in the title band and
+  beside each track, lit when the lesson is done and ringed when it is in
+  hand; the steps of the lesson in hand are drawn the same way. The row is one
+  picture to a screen reader, with the count in words as its name.
+- **Home.** The title is the lab's promise, beside the lab's own drawing of a
+  circuit, in place of "My circuits"; the lesson in hand is offered first,
+  then the examples, then the student's circuits. The note that everything is
+  kept on the device moved under the circuits it is about.
+- **Glossary.** Entries read as a dictionary: the two names on the left, the
+  meaning, other names, lessons and related terms on the right, in one list
+  with hairlines in place of a card for each.
+- The drawings come from the lab's parts drawer (`PartIcon`), so a part looks
+  the same on the path as in the lab, and no new pictures are shipped.

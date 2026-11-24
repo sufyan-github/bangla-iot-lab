@@ -8,6 +8,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Changed
 
+- **Home, lessons and glossary rebuilt** (the redesign's second stage): the
+  lessons are a numbered path with each part's drawing, progress is a row of
+  LEDs, the home page offers the lesson you left off, and the glossary reads
+  as dictionary entries.
 - **New colours and typefaces** (the first stage of a redesign): the pages
   are a white breadboard in light and a green blackboard in dark, with a
   breadboard's red and blue rails under each title; text is set in Noto Sans
