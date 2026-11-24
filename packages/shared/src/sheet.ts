@@ -789,3 +789,70 @@ export function connectBus(sheet: LogicSheet, a: string, b: string): SheetEdit {
   });
   return { ok: true, id: `K${k}`, sheet: { ...sheet, wires: [...sheet.wires, ...wires] } };
 }
+
+/**
+ * A block's inside as a sheet of its own, to look at or change, with the blocks
+ * it may use (those made before it). Null when there is no such block.
+ */
+export function blockAsSheet(sheet: LogicSheet, blockId: string): LogicSheet | null {
+  const blocks = sheet.blocks ?? [];
+  const index = blocks.findIndex((b) => b.id === blockId);
+  if (index < 0) return null;
+  const block = blocks[index]!;
+  const earlier = blocks.slice(0, index);
+  return {
+    version: 1,
+    elements: block.elements,
+    wires: block.wires,
+    ...(earlier.length > 0 ? { blocks: earlier } : {}),
+  };
+}
+
+/**
+ * Puts a changed inside back into a block. Its switches and lamps (top to
+ * bottom) are its pins again; every copy of the block, on the sheet and inside
+ * later blocks, takes the new number of pins, and wires to pins that are gone go.
+ */
+export function updateBlock(
+  sheet: LogicSheet,
+  blockId: string,
+  inner: Pick<LogicSheet, 'elements' | 'wires'>,
+): SheetEdit {
+  const blocks = sheet.blocks ?? [];
+  const index = blocks.findIndex((b) => b.id === blockId);
+  if (index < 0) return { ok: false, error: 'missing' };
+  const order = (a: SheetElement, b: SheetElement) => a.y - b.y || a.x - b.x;
+  const inputs = inner.elements.filter((e) => e.kind === 'input').sort(order);
+  const outputs = inner.elements.filter((e) => e.kind === 'output').sort(order);
+  if (inputs.length === 0 || outputs.length === 0) return { ok: false, error: 'no-pins' };
+  if (inputs.length > MAX_PINS || outputs.length > MAX_PINS) return { ok: false, error: 'full' };
+  const pins: [number, number] = [inputs.length, outputs.length];
+  // Every copy takes the new pins; wires to pins it no longer has go.
+  const refit = (part: Pick<LogicSheet, 'elements' | 'wires'>) => {
+    const copies = new Set(
+      part.elements.filter((e) => e.kind === 'SUB' && e.block === blockId).map((e) => e.id),
+    );
+    if (copies.size === 0) return part;
+    const kept = (port: string) => {
+      const [id, name] = port.split('.');
+      if (!copies.has(id!)) return true;
+      const n = Number(name!.slice(1));
+      return name!.startsWith('i') ? n <= pins[0] : n <= pins[1];
+    };
+    return {
+      elements: part.elements.map((e) => (copies.has(e.id) ? { ...e, pins } : e)),
+      wires: part.wires.filter((w) => kept(w.from) && kept(w.to)),
+    };
+  };
+  const block: SheetBlock = {
+    ...blocks[index]!,
+    elements: inner.elements,
+    wires: inner.wires,
+    inputs: inputs.map((e) => e.id),
+    outputs: outputs.map((e) => e.id),
+  };
+  const nextBlocks = blocks.map((b, i) =>
+    i === index ? block : i > index ? { ...b, ...refit(b) } : b,
+  );
+  return { ok: true, id: blockId, sheet: { ...sheet, ...refit(sheet), blocks: nextBlocks } };
+}

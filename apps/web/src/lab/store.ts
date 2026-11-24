@@ -8,8 +8,10 @@ import {
   addWire,
   attachError,
   emptyCircuit,
+  blockAsSheet,
   emptySheet,
   isLogicSheet,
+  updateBlock,
   flipPart,
   isHole,
   placePart,
@@ -130,8 +132,14 @@ interface LabState {
   open(project: ProjectContent & { id: string }): void;
   close(): void;
   setName(name: string): void;
-  /** Applies an edit to the logic sheet; returns it, so a refusal can be shown. */
+  /**
+   * Applies an edit to the logic sheet; returns it, so a refusal can be shown.
+   * While a block is open, the edit is to the block's inside.
+   */
   editSheet(edit: (sheet: LogicSheet) => SheetEdit): SheetEdit;
+  /** The block whose inside is being changed, or null for the sheet itself. */
+  openBlockId: string | null;
+  openBlock(id: string | null): void;
   /** Earlier and undone states of the logic sheet, for undo and redo. */
   sheetPast: LogicSheet[];
   sheetFuture: LogicSheet[];
@@ -291,6 +299,7 @@ export const useLab = create<LabState>((set, get) => {
         programs: project.programs,
         settings: project.settings ?? {},
         sheet: isLogicSheet(project.sheet) ? project.sheet : emptySheet(),
+        openBlockId: null,
         sheetPast: [],
         sheetFuture: [],
         selectedId: null,
@@ -305,9 +314,20 @@ export const useLab = create<LabState>((set, get) => {
       set({ projectId: null, selectedId: null, wireStart: null, past: [], future: [], ...STOPPED });
     },
     setName: (name) => set({ name }),
+    openBlockId: null,
+    openBlock: (id) => set({ openBlockId: id }),
     editSheet(edit) {
       const before = get().sheet;
-      const result = edit(before);
+      const open = get().openBlockId;
+      const inside = open ? blockAsSheet(before, open) : null;
+      let result = edit(inside ?? before);
+      // An edit inside a block goes back into the block, and from there to every copy.
+      if (inside && result.ok && result.sheet !== inside) {
+        const id = result.id;
+        const ids = result.ids;
+        result = updateBlock(before, open!, result.sheet);
+        if (result.ok) result = { ...result, id, ids };
+      }
       if (result.ok && result.sheet !== before) {
         set({
           sheet: result.sheet,

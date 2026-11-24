@@ -246,6 +246,22 @@ test('a half adder made into a block, placed and wired, adds; it is kept with th
   // 1 + 1: the sum is 0 again, as the XOR inside gives.
   await page.locator('[data-element="IN2"] rect').first().click();
   await expect(sum).toHaveAttribute('data-high', 'false');
+  await page.locator('[data-element="IN2"] rect').first().click();
+  await expect(sum).toHaveAttribute('data-high', 'true');
+
+  // Opened, the block's inside is on the sheet; a change there reaches the copy.
+  await page.locator('[data-element="U1"] rect').first().click();
+  await page.getByTestId('sheet-open-block').click();
+  await expect(page.getByTestId('sheet-block-open')).toContainText('Half add');
+  await expect(page.locator('[data-element="U1"]')).toHaveCount(0);
+  await page.locator('[data-element="G1"] rect').first().click();
+  await page.getByTestId('sheet-delete').click();
+  await page.getByTestId('sheet-block-done').click();
+  await expect(page.getByTestId('sheet-block-open')).toHaveCount(0);
+  // Without its XOR, the block gives no sum.
+  await expect(sum).toHaveAttribute('data-high', 'false');
+  await page.getByTestId('sheet-undo').click();
+  await expect(sum).toHaveAttribute('data-high', 'true');
 
   // Saved with the project, block and all.
   await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');

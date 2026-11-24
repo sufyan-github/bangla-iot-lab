@@ -252,6 +252,10 @@ export const bn = {
   'sheet.hint.bus': 'এবার আরেকটা ব্লকের মিলিয়ে নেওয়া পিনের দণ্ডে ট্যাপ করো: বাস একবারে সব পিন জোড়ে।',
   'sheet.error.not-bus':
     'বাস জোড়ে একই মাপের দুটো পিনের দল: একটা আউটপুটের, একটা ইনপুটের। দলের পাশের দণ্ডে ট্যাপ করো।',
+  'sheet.openBlock': 'ব্লক খোলো',
+  'sheet.insideBlock':
+    '“{name}” ব্লকের ভেতরে: যা বদলাবে, তা এর প্রতিটা কপিতে যাবে। সুইচ আর বাতিগুলোই এর পিন।',
+  'sheet.blockDone': 'হয়ে গেছে',
   'sheet.label': 'নাম',
   'sheet.timing': 'টাইমিং ডায়াগ্রাম',
   'sheet.timingHold': 'থামিয়ে দেখো',
@@ -1322,6 +1326,10 @@ export const en: Record<MessageKey, string> = {
     'Now tap the matching bar of pins on another block: a bus joins every pin at once.',
   'sheet.error.not-bus':
     'A bus joins two groups of pins of the same size, one of outputs and one of inputs. Tap the bars beside the groups.',
+  'sheet.openBlock': 'Open block',
+  'sheet.insideBlock':
+    'Inside the block “{name}”: what you change reaches every copy of it. Its switches and lamps are its pins.',
+  'sheet.blockDone': 'Done',
   'sheet.label': 'Name',
   'sheet.timing': 'Timing diagram',
   'sheet.timingHold': 'Hold still',

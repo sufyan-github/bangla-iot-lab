@@ -5,6 +5,7 @@ import {
   copyFromSheet,
   emptySheet,
   isLogicSheet,
+  blockAsSheet,
   makeBlock,
   moveSheetElement,
   moveSheetElements,
@@ -14,6 +15,7 @@ import {
   removeManyFromSheet,
   setSheetElement,
   sheetName,
+  updateBlock,
   type LogicSheet,
   type SheetEdit,
   type SheetKind,
@@ -756,6 +758,57 @@ describe('logic sheet, part 4: buses on blocks', () => {
     ).toEqual({
       ok: false,
       error: 'not-bus',
+    });
+  });
+});
+
+describe('logic sheet, part 4: changing a block', () => {
+  it('a change inside a block reaches every copy, and its pins follow its switches and lamps', () => {
+    // A block that is just a NOT gate: one switch in, one lamp out.
+    let sheet = build(
+      ['input', 'NOT', 'output'],
+      [
+        ['IN1.q', 'G1.a'],
+        ['G1.y', 'OUT1.a'],
+      ],
+    );
+    sheet = ok(
+      makeBlock(
+        sheet,
+        sheet.elements.map((e) => e.id),
+        'Invert',
+      ),
+    );
+    sheet = { ...sheet, elements: [], wires: [] };
+    sheet = ok(addSheetElement(sheet, 'input', 0, 0));
+    sheet = ok(addSheetElement(sheet, 'SUB', 6, 0, 'B1'));
+    sheet = ok(addSheetElement(sheet, 'output', 12, 0));
+    sheet = ok(connectSheet(sheet, 'IN1.q', 'U1.i1'));
+    sheet = ok(connectSheet(sheet, 'U1.o1', 'OUT1.a'));
+    expect(evaluateSheet(sheet, 0).levels['OUT1.a']).toBe(true);
+
+    // Opened, the NOT becomes a buffer: the copy follows at once.
+    const inside = blockAsSheet(sheet, 'B1')!;
+    let changed = ok(removeFromSheet(inside, 'G1'));
+    changed = ok(connectSheet(changed, 'IN1.q', 'OUT1.a'));
+    sheet = ok(updateBlock(sheet, 'B1', changed));
+    expect(evaluateSheet(sheet, 0).levels['OUT1.a']).toBe(false);
+
+    // A second lamp inside gives the block a second output; taking the first
+    // switch's lamp away again keeps the wires to pins that are still there.
+    changed = ok(addSheetElement(changed, 'output', 6, 6));
+    sheet = ok(updateBlock(sheet, 'B1', changed));
+    expect(sheet.elements.find((e) => e.id === 'U1')!.pins).toEqual([1, 2]);
+    changed = ok(removeFromSheet(changed, 'OUT2'));
+    sheet = ok(updateBlock(sheet, 'B1', changed));
+    expect(sheet.elements.find((e) => e.id === 'U1')!.pins).toEqual([1, 1]);
+    expect(sheet.wires).toHaveLength(2);
+    expect(isLogicSheet(sheet)).toBe(true);
+
+    // A block must keep a switch and a lamp.
+    expect(updateBlock(sheet, 'B1', ok(removeFromSheet(changed, 'IN1')))).toEqual({
+      ok: false,
+      error: 'no-pins',
     });
   });
 });

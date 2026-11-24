@@ -5,6 +5,7 @@ import {
   SHEET_HEIGHT,
   SHEET_WIDTH,
   addSheetElement,
+  blockAsSheet,
   blockPinNames,
   connectBus,
   connectSheet,
@@ -37,7 +38,7 @@ import {
   type SheetState,
   type SheetTruthTable,
 } from '@banglalab/simulation';
-import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { useT } from '../i18n';
 import { useLab } from './store';
 import { KMap } from './KMap';
@@ -612,7 +613,20 @@ function ElementBody({
  * symbols and joined port to port. It works out as pure logic while it is open.
  */
 export function SheetView() {
-  const sheet = useLab((s) => s.sheet);
+  const main = useLab((s) => s.sheet);
+  const openBlockId = useLab((s) => s.openBlockId);
+  // While a block is open, its inside is what is shown, worked out and changed.
+  const inside = useMemo(
+    () => (openBlockId ? blockAsSheet(main, openBlockId) : null),
+    [main, openBlockId],
+  );
+  const sheet = inside ?? main;
+  const openBlock = useLab((s) => s.openBlock);
+  // A block that is no longer there (an undo took it away) closes.
+  useEffect(() => {
+    if (openBlockId && !inside) openBlock(null);
+  }, [openBlockId, inside, openBlock]);
+  const openName = openBlockId ? main.blocks?.find((b) => b.id === openBlockId)?.name : null;
   const { editSheet, undoSheet, redoSheet } = useLab.getState();
   const canUndo = useLab((s) => s.sheetPast.length > 0);
   const canRedo = useLab((s) => s.sheetFuture.length > 0);
@@ -868,6 +882,27 @@ export function SheetView() {
               ? t('sheet.hint.select')
               : t('sheet.hint.place')}
       </p>
+      {openBlockId && (
+        <div
+          data-testid="sheet-block-open"
+          className="flex flex-wrap items-center gap-2 border-b border-line bg-mat-soft px-4 py-2 text-sm"
+        >
+          <span className="flex-1 text-mat-deep">
+            {t('sheet.insideBlock', { name: openName ?? '' })}
+          </span>
+          <button
+            type="button"
+            data-testid="sheet-block-done"
+            onClick={() => {
+              openBlock(null);
+              setSelection([]);
+            }}
+            className="btn btn-primary min-h-9"
+          >
+            {t('sheet.blockDone')}
+          </button>
+        </div>
+      )}
       <div className="min-h-0 flex-1 overflow-auto bg-paper p-3">
         <svg
           ref={svg}
@@ -1216,7 +1251,21 @@ export function SheetView() {
                 {t('sheet.paste', { count: clip.elements.length })}
               </button>
             )}
-            {chosen.length > 1 && blockName === null && (
+            {selectedElement?.kind === 'SUB' && selectedElement.block && (
+              <button
+                type="button"
+                data-testid="sheet-open-block"
+                onClick={() => {
+                  openBlock(selectedElement.block!);
+                  setSelection([]);
+                  setTool('select');
+                }}
+                className="min-h-11 rounded-lg border-2 border-line px-3 font-medium hover:border-ink-soft"
+              >
+                {t('sheet.openBlock')}
+              </button>
+            )}
+            {chosen.length > 1 && blockName === null && !openBlockId && (
               <button
                 type="button"
                 data-testid="sheet-make-block"
