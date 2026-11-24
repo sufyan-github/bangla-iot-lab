@@ -34,6 +34,7 @@ const KNOWN_ERRORS = [
   'username-taken',
   'too-many-tries',
   'link-not-working',
+  'account-suspended',
 ];
 
 export function Problem({ error }: { error: string | null }) {

@@ -17,6 +17,8 @@ export interface Me {
     account: 'staff' | 'individual' | 'class';
     /** A learner's own sign-in name, if they have one. */
     username: string | null;
+    /** "platform_admin" for the lab's owners. */
+    platformRole: string | null;
   };
   schools: { schoolId: string; schoolName: string; role: string }[];
   classes: { classId: string; className: string; grade: number; pseudonym: string }[];

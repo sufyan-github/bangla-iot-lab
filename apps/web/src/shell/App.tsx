@@ -10,6 +10,7 @@ import { LabPage } from '../lab/LabPage';
 import { LessonsPage } from '../lessons/LessonsPage';
 import { Esp32Page } from './Esp32Page';
 import { LicencesPage } from './LicencesPage';
+import { OwnerPage } from '../owner/OwnerPage';
 import { useOnline } from './useOnline';
 
 /** Sun for light, moon for dark, and a half-filled circle for following the device. */
@@ -72,6 +73,11 @@ function Header() {
       <NavLink to="/licences" className={link} data-testid="nav-licences">
         {t('nav.licences')}
       </NavLink>
+      {me?.user.platformRole === 'platform_admin' && (
+        <NavLink to="/owner" className={link} data-testid="nav-owner">
+          {t('nav.owner')}
+        </NavLink>
+      )}
     </>
   );
 
@@ -193,6 +199,7 @@ export function App() {
           <Route path="/licences" element={<LicencesPage />} />
           <Route path="/esp32" element={<Esp32Page />} />
           <Route path="/account" element={<AccountPage />} />
+          <Route path="/owner" element={<OwnerPage />} />
           <Route path="/account/verify" element={<EmailLinkPage expected="verify-email" />} />
           <Route path="/account/approve" element={<EmailLinkPage expected="approve-learner" />} />
           <Route path="/account/reset" element={<EmailLinkPage expected="reset-password" />} />

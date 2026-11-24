@@ -9,11 +9,16 @@ export async function openTeacherSignUp(page: Page) {
 }
 
 /** Signs a new teacher up on the page and makes a class; returns the class's join code. */
-export async function teacherWithClass(page: Page, email: string, className: string) {
+export async function teacherWithClass(
+  page: Page,
+  email: string,
+  className: string,
+  schoolName = 'বিদ্যালয়',
+) {
   await page.goto('/account');
   await openTeacherSignUp(page);
   await page.getByTestId('teacher-name').fill('শিক্ষক');
-  await page.getByTestId('teacher-school').fill('বিদ্যালয়');
+  await page.getByTestId('teacher-school').fill(schoolName);
   await page.getByTestId('teacher-email').fill(email);
   await page.getByTestId('teacher-password').fill('a long pass phrase');
   await page.getByTestId('teacher-submit').click();
