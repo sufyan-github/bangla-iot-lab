@@ -454,6 +454,28 @@ export function LabPage() {
           </button>
         </div>
 
+        {/* On a phone: the tools, the parts and the view in a slim row, so nothing covers the board. */}
+        {!wide && (
+          <div className="flex h-[3.25rem] shrink-0 items-center gap-2 border-b border-line bg-surface px-2">
+            {view === 'board' && (
+              <>
+                <ToolPicker compact />
+                <button
+                  type="button"
+                  data-testid="parts-open"
+                  onClick={() => setPartsOpen(true)}
+                  className="btn min-h-10 bg-mat px-3 text-sm text-paper"
+                >
+                  <span aria-hidden className="text-base leading-none">
+                    ＋
+                  </span>
+                  {t('drawer.title')}
+                </button>
+              </>
+            )}
+            <div className="ml-auto">{viewSwitch}</div>
+          </div>
+        )}
         <div className="flex min-h-0 flex-1">
           {/* The parts drawer, beside the board on a wide screen. */}
           {wide && view === 'board' && (
@@ -469,14 +491,11 @@ export function LabPage() {
           )}
           <div
             className={`relative flex min-w-0 flex-1 flex-col ${
-              wide ? 'min-h-0' : 'h-[calc(100dvh-3.5rem-3.25rem)] min-h-[22rem]'
+              wide ? 'min-h-0' : 'h-[calc(100dvh-3.5rem-6.5rem)] min-h-[20rem]'
             }`}
           >
             {view === 'sheet' ? (
               <>
-                {!wide && (
-                  <div className="border-b border-line bg-surface px-2 py-1.5">{viewSwitch}</div>
-                )}
                 <SheetView />
               </>
             ) : (
@@ -485,10 +504,7 @@ export function LabPage() {
                 {view === 'board' ? <Canvas /> : <Diagram />}
               </>
             )}
-            {/* Over the board: the view switch on a phone, at the top (above the sheet's own toolbar). */}
-            {!wide && view !== 'sheet' && (
-              <div className="absolute top-2 left-2 z-10">{viewSwitch}</div>
-            )}
+
             {/* What to do next: low on the board, clear of the breadboard's top rows. */}
             {wide && (
               <div className="pointer-events-none absolute bottom-3 left-3 z-10 max-w-[calc(100%-12rem)]">
@@ -501,26 +517,8 @@ export function LabPage() {
               </div>
             )}
             {!wide && view === 'board' && (
-              <div className="absolute right-2 bottom-3 left-2 z-10 flex flex-col items-start gap-2">
-                <div className="pointer-events-none max-w-[calc(100%-9.5rem)]">
-                  <CanvasHint />
-                </div>
-                <div className="flex items-end gap-2">
-                  <div className="rounded-xl bg-surface shadow-[var(--shadow-raised)]">
-                    <ToolPicker compact />
-                  </div>
-                  <button
-                    type="button"
-                    data-testid="parts-open"
-                    onClick={() => setPartsOpen(true)}
-                    className="btn bg-mat px-4 text-paper shadow-[var(--shadow-raised)]"
-                  >
-                    <span aria-hidden className="text-lg leading-none">
-                      ＋
-                    </span>
-                    {t('drawer.title')}
-                  </button>
-                </div>
+              <div className="pointer-events-none absolute bottom-3 left-2 z-10 max-w-[calc(100%-9.5rem)]">
+                <CanvasHint />
               </div>
             )}
           </div>

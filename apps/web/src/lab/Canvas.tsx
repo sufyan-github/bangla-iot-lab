@@ -1031,7 +1031,7 @@ export function Canvas() {
         </HistoryButton>
       </div>
 
-      <div className="absolute right-3 bottom-3 flex max-lg:bottom-[4.25rem] overflow-hidden rounded-xl border border-line bg-surface shadow-md">
+      <div className="absolute right-3 bottom-3 flex overflow-hidden rounded-xl border border-line bg-surface shadow-md">
         <ZoomButton
           label={t('lab.zoomOut')}
           onClick={() => setChosenZoom(Math.max(ZOOM_MIN, zoom - 0.15))}

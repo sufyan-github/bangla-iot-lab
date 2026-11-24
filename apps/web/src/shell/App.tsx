@@ -48,7 +48,7 @@ function Header() {
           <img src="/favicon.svg" alt="" width={26} height={26} />
           <span className="text-lg max-[420px]:sr-only">{t('app.name')}</span>
         </NavLink>
-        <nav className="hidden gap-0.5 md:flex">{links}</nav>
+        {!menu && <nav className="hidden gap-0.5 md:flex">{links}</nav>}
         <div className="ml-auto flex items-center gap-2">
           <NavLink
             to="/account"

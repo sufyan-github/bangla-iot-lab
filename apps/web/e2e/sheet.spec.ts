@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** Taps the sheet at a grid step (the sheet is 40 × 24 steps). */
 async function tapSheet(page: Page, gx: number, gy: number) {
-  const svg = page.getByTestId('sheet').locator('svg');
+  const svg = page.getByTestId('sheet-canvas');
   const box = (await svg.boundingBox())!;
   await svg.click({ position: { x: (gx / 40) * box.width, y: (gy / 24) * box.height } });
 }

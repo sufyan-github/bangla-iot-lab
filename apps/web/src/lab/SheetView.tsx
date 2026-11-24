@@ -545,6 +545,7 @@ export function SheetView() {
       <div className="min-h-0 flex-1 overflow-auto bg-paper p-3">
         <svg
           ref={svg}
+          data-testid="sheet-canvas"
           viewBox={`0 0 ${SHEET_WIDTH * CELL} ${SHEET_HEIGHT * CELL}`}
           className="block w-full max-w-[60rem] touch-none rounded-xl bg-surface text-ink"
           onPointerDown={(event) => event.target === event.currentTarget && onBackground(event)}
