@@ -22,6 +22,7 @@ import {
 import type {
   BoardStatus,
   HttpResponse,
+  MqttMessage,
   Probe,
   SimulationFrame,
   SimulationResult,
@@ -45,6 +46,14 @@ export type SaveState = 'saved' | 'saving' | 'error';
 
 /** Serial text is kept to this many characters per board. */
 const SERIAL_LIMIT = 8_000;
+/** How many recent numbers each MQTT topic keeps for its little chart. */
+const TOPIC_HISTORY = 60;
+
+export interface MqttTopic extends MqttMessage {
+  /** Its recent numeric payloads, oldest first. */
+  history: number[];
+  count: number;
+}
 /** How many steps back the student can undo. */
 const HISTORY_LIMIT = 100;
 /** Changes to one setting this close together, as from a slider, undo as one step. */
@@ -77,6 +86,8 @@ interface LabState {
   boards: Record<string, BoardStatus>;
   /** The latest answer each board's web server gave, by board id. */
   pages: Record<string, HttpResponse>;
+  /** Each MQTT topic seen while running: its latest message and its recent numbers. */
+  topics: Record<string, MqttTopic>;
   /** How fast the simulation is running against real time; 1 when it keeps up. */
   speed: number;
   /** Counts uploads per board, so a running circuit knows when to restart a program. */
@@ -146,6 +157,7 @@ const STOPPED = {
   result: null,
   boards: {},
   pages: {} as Record<string, HttpResponse>,
+  topics: {} as Record<string, MqttTopic>,
   serial: {},
   pressed: [] as string[],
   speed: 1,
@@ -435,11 +447,25 @@ export const useLab = create<LabState>((set, get) => {
         const last = board.http?.at(-1);
         if (last) pages = { ...pages, [boardId]: last };
       }
+      let topics = get().topics;
+      for (const message of frame.mqtt ?? []) {
+        const before = topics[message.topic];
+        const number = Number(message.payload);
+        const history =
+          Number.isFinite(number) && message.payload.trim() !== ''
+            ? [...(before?.history ?? []), number].slice(-TOPIC_HISTORY)
+            : (before?.history ?? []);
+        topics = {
+          ...topics,
+          [message.topic]: { ...message, history, count: (before?.count ?? 0) + 1 },
+        };
+      }
       signals.append(frame.trace, frame.timeMs);
       set({
         result: frame.result,
         boards: frame.boards,
         pages,
+        topics,
         serial,
         settings,
         speed: frame.speed ?? 1,

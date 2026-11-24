@@ -64,3 +64,13 @@ class WiFiClass {
 };
 
 extern WiFiClass WiFi;
+
+/**
+ * A network connection, as libraries such as PubSubClient take one. The lab
+ * has no real sockets: the libraries it offers talk to the lab's own services
+ * instead, so this only stands in for the object a program makes.
+ */
+class WiFiClient {
+ public:
+  bool connected() { return WiFi.isConnected(); }
+};

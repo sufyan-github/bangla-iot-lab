@@ -12,6 +12,7 @@ import { CodePanel } from './CodePanel';
 import { Palette } from './Palette';
 import { Inspector, Messages, Meter, TruthTablePanel } from './panels';
 import { SignalsPanel } from './SignalsPanel';
+import { IotPanel } from './IotPanel';
 import { WebPanel } from './WebPanel';
 import { checkStep } from '@banglalab/lessons';
 import { LessonPanel } from '../lessons/LessonPanel';
@@ -252,6 +253,7 @@ const TAB_LABELS = {
   code: 'code.tabCode',
   signals: 'code.tabSignals',
   web: 'web.tab',
+  iot: 'iot.tab',
 } as const;
 
 export function LabPage() {
@@ -310,7 +312,9 @@ export function LabPage() {
       // Private mode: the choice lasts for this visit.
     }
   };
-  const [tab, setTab] = useState<'lesson' | 'circuit' | 'code' | 'signals' | 'web'>('circuit');
+  const [tab, setTab] = useState<'lesson' | 'circuit' | 'code' | 'signals' | 'web' | 'iot'>(
+    'circuit',
+  );
   // A project made from a lesson opens at its lesson.
   useEffect(() => setTab(hasLesson ? 'lesson' : 'circuit'), [hasLesson]);
   /** The breadboard is where the circuit is built; the diagram is the same circuit as a schematic. */
@@ -429,9 +433,9 @@ export function LabPage() {
         className={`w-full shrink-0 overflow-y-auto border-line bg-surface lg:border-l ${showCode ? 'lg:w-[34rem]' : 'lg:w-[21rem]'}`}
       >
         <div role="tablist" className="flex border-b border-line">
-          {(['lesson', 'circuit', 'code', 'signals', 'web'] as const)
+          {(['lesson', 'circuit', 'code', 'signals', 'web', 'iot'] as const)
             .filter((id) => id !== 'code' || boardId !== undefined)
-            .filter((id) => id !== 'web' || esp32Id !== undefined)
+            .filter((id) => (id !== 'web' && id !== 'iot') || esp32Id !== undefined)
             .filter((id) => id !== 'lesson' || hasLesson)
             .map((id) => (
               <button
@@ -486,6 +490,8 @@ export function LabPage() {
           <SignalsPanel />
         ) : tab === 'web' && esp32Id !== undefined ? (
           <WebPanel boardId={esp32Id} />
+        ) : tab === 'iot' ? (
+          <IotPanel />
         ) : (
           <>
             <Messages />

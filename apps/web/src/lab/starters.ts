@@ -58,6 +58,7 @@ import esp32LoraSendSource from '@banglalab/board-emulators/fixtures/esp32-start
 import esp32LoraReceiveSource from '@banglalab/board-emulators/fixtures/esp32-starters/lora-receive.ino?raw';
 import esp32DeepsleepSource from '@banglalab/board-emulators/fixtures/esp32-starters/deepsleep.ino?raw';
 import esp32WebserverSource from '@banglalab/board-emulators/fixtures/esp32-starters/webserver.ino?raw';
+import esp32MqttSource from '@banglalab/board-emulators/fixtures/esp32-starters/mqtt.ino?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
 import type { BoardProgram } from '../storage/projects';
@@ -129,6 +130,7 @@ export const ESP32_STARTERS = {
   'lora-receive': { source: esp32LoraReceiveSource },
   deepsleep: { source: esp32DeepsleepSource },
   webserver: { source: esp32WebserverSource },
+  mqtt: { source: esp32MqttSource },
 } as const;
 
 export type StarterId = keyof typeof STARTERS;

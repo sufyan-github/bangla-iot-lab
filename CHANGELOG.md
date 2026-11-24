@@ -8,6 +8,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **MQTT and an IoT dashboard**: a made-up MQTT broker in the lab shared by the
+  boards, `PubSubClient.h` in the ESP32 library, and an IoT panel that shows
+  each topic's latest value with a small chart and sends messages. Ready-made
+  program `mqtt`.
 - **Wi-Fi and the board's own web page**: `WiFi.h` and `WebServer.h` in the
   ESP32 board library, on a made-up network with no real internet, and a
   "Web page" panel that asks the board for its pages and shows them safely

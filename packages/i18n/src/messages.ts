@@ -321,6 +321,7 @@ export const bn = {
   'code.starter.esp32.lora-receive': 'LoRa: বার্তা শোনা (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.deepsleep': 'ডিপ স্লিপ: ঘুমিয়ে আবার জাগা (LED: D2)',
   'code.starter.esp32.webserver': 'ওয়েব পেজ: ব্রাউজার থেকে LED (LED: D2)',
+  'code.starter.esp32.mqtt': 'MQTT: নবের মান পাঠাও, বার্তায় LED (নব: D34, LED: D2)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -626,6 +627,20 @@ export const bn = {
 
   'code.tabCircuit': 'সার্কিট',
   'code.tabCode': 'কোড',
+  'iot.tab': 'IoT',
+  'iot.idle':
+    'সার্কিট চালু করো, আর বোর্ডে এমন প্রোগ্রাম তোলো যা MQTT ব্রোকারে যুক্ত হয় (যেমন তৈরি প্রোগ্রাম "MQTT")।',
+  'iot.about':
+    'ল্যাবের নিজের MQTT ব্রোকার: বোর্ডগুলো আর এই ড্যাশবোর্ড এখানে বার্তা পাঠায় আর পায়। আসল ইন্টারনেট নেই।',
+  'iot.none': 'এখনো কোনো বার্তা আসেনি।',
+  'iot.from': 'শেষ পাঠিয়েছে {from} · মোট {count}টা',
+  'iot.dashboard': 'ড্যাশবোর্ড',
+  'iot.send': 'বার্তা পাঠাও',
+  'iot.topic': 'টপিক',
+  'iot.message': 'বার্তা',
+  'iot.retained': 'ব্রোকারে রেখে দাও (retained): পরে যে যুক্ত হবে সেও পাবে',
+  'iot.publish': 'পাঠাও',
+  'iot.badTopic': 'এই টপিকে পাঠানো যায় না: + বা # ছাড়া একটা টপিক লেখো।',
   'web.tab': 'ওয়েব পেজ',
   'web.about':
     'বোর্ডের নিজের ওয়েব সার্ভার থেকে পেজ চাও। আসল ইন্টারনেট নেই: অনুরোধ যায় বোর্ডের প্রোগ্রামের কাছে, আর পেজের কোনো স্ক্রিপ্ট চলে না।',
@@ -1086,6 +1101,7 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.lora-receive': 'LoRa: listening (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.deepsleep': 'Deep sleep: sleeping and waking again (LED: D2)',
   'code.starter.esp32.webserver': 'Web page: an LED from the browser (LED: D2)',
+  'code.starter.esp32.mqtt': 'MQTT: send the knob, an LED by message (knob: D34, LED: D2)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -1391,6 +1407,20 @@ export const en: Record<MessageKey, string> = {
 
   'code.tabCircuit': 'Circuit',
   'code.tabCode': 'Code',
+  'iot.tab': 'IoT',
+  'iot.idle':
+    'Run the circuit, with a program on the board that connects to an MQTT broker (such as the ready-made “MQTT”).',
+  'iot.about':
+    'The lab’s own MQTT broker: the boards and this dashboard send and receive messages here. There is no real internet.',
+  'iot.none': 'No messages yet.',
+  'iot.from': 'Last from {from} · {count} in all',
+  'iot.dashboard': 'the dashboard',
+  'iot.send': 'Send a message',
+  'iot.topic': 'Topic',
+  'iot.message': 'Message',
+  'iot.retained': 'Keep it at the broker (retained): anyone who connects later gets it too',
+  'iot.publish': 'Send',
+  'iot.badTopic': 'You cannot send to this topic: write one without + or #.',
   'web.tab': 'Web page',
   'web.about':
     'Ask the board’s own web server for a page. There is no real internet: the request goes to the board’s program, and no script on the page runs.',

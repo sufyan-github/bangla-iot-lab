@@ -1414,3 +1414,26 @@ and offered as buttons beneath it.
 internet, POST bodies, and the time a request takes on air.
 
 Ready-made program `webserver`: an LED switched from the board's page.
+
+## D-083 — MQTT and an IoT dashboard
+
+The second IoT segment, on the Wi-Fi of D-080. The lab has one made-up MQTT
+broker per circuit, shared by every board and a new **IoT** dashboard panel;
+there is still no real internet, and any server name reaches it. The lab's
+ESP32 library gains `PubSubClient.h`, written for the lab from the documented
+API of Nick O'Leary's PubSubClient (MIT): the real library needs a TCP socket,
+which the lab does not model. `setServer`, `setCallback`, `connect`,
+`connected`, `state`, `publish` (with retain), `subscribe`, `unsubscribe` and
+`loop` are there, and a `WiFiClient` to hand it.
+
+The broker matches `+` and `#` as MQTT does, keeps the last retained message on
+each topic (an empty one clears it), refuses wildcards in a published topic,
+and keeps topics to 256 characters and payloads to 4 KB. Messages arrive at
+once and in order; up to 64 may wait for a board's `loop()`. QoS, persistent
+sessions, last will and authentication are not modelled. Leaving Wi-Fi ends a
+board's connection.
+
+The dashboard lists every topic with its latest value, who sent it, and a small
+chart of its recent numbers, and sends messages (optionally retained) with
+quick "on" and "off" buttons. Ready-made program `mqtt`: the knob's reading to
+`lab/knob` every two seconds, and the LED from `lab/led`.

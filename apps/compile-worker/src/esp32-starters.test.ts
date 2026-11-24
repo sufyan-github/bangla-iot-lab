@@ -33,6 +33,7 @@ describe('shipped ESP32 starter programs', () => {
       'motion.ino',
       'motor.ino',
       'mp3.ino',
+      'mqtt.ino',
       'obstacle.ino',
       'oled.ino',
       'parking.ino',

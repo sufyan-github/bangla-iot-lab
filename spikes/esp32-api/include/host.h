@@ -136,6 +136,22 @@ size_t host_http_next(char* buffer, size_t capacity);
 void host_http_respond(int status, const char* type, size_t type_length, const char* body,
                        size_t body_length);
 
+/**
+ * MQTT, as the lab models it: one made-up broker in the lab, shared by every
+ * board and the dashboard panel, whatever server name the program gives.
+ * `host_mqtt_connect` returns 0 when connected, or a PubSubClient state code.
+ * `host_mqtt_next` copies the oldest message waiting for this board as
+ * "topic", a zero byte, then the payload, takes it off the queue when it fits,
+ * and returns its whole length (0 when none is waiting).
+ */
+int host_mqtt_connect(const char* client_id, size_t client_id_length);
+void host_mqtt_disconnect(void);
+int host_mqtt_connected(void);
+int host_mqtt_publish(const char* topic, size_t topic_length, const uint8_t* payload,
+                      size_t payload_length, int retained);
+int host_mqtt_subscribe(const char* filter, size_t filter_length, int subscribe);
+size_t host_mqtt_next(char* buffer, size_t capacity);
+
 uint64_t host_micros(void);
 /** Lets time pass. This is where the world moves on and scripted inputs arrive. */
 void host_delay_micros(uint64_t microseconds);

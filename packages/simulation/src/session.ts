@@ -16,6 +16,7 @@ import { BOARD_MODELS, type BoardModel } from './boards';
 import { Esp32SimBoard, esp32Emulator, parseEsp32Firmware } from './esp32-sim-board';
 import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
+import { MqttBroker, type MqttMessage } from './mqtt';
 import {
   buildNetlist,
   type ChargerState,
@@ -94,6 +95,8 @@ export interface SimulationFrame {
   speed?: number;
   result: SimulationResult;
   boards: Record<string, BoardStatus>;
+  /** MQTT messages sent since the last frame, by the boards or the dashboard. */
+  mqtt?: MqttMessage[];
   /** Present only while probes are set. */
   trace?: SignalTrace;
 }
@@ -376,6 +379,19 @@ export class SimulationSession {
     });
     emulator.onSerial((text) => (board.serial += text));
     emulator.onHttpResponse?.((response) => board.http.push(response));
+    emulator.onMqtt?.({
+      connect: (_clientId, deliver) => {
+        this.broker.connect(boardId, (message) => deliver(message.topic, message.payload));
+        return true;
+      },
+      disconnect: () => this.broker.disconnect(boardId),
+      publish: (topic, payload, retained) =>
+        this.broker.publish({ topic, payload, from: boardId, timeMs: this.clock }, retained),
+      subscribe: (filter, subscribe) =>
+        subscribe
+          ? this.broker.subscribe(boardId, filter)
+          : this.broker.unsubscribe(boardId, filter),
+    });
     emulator.onSettingsSaved?.((settings) => {
       this.settings.set(boardId, settings);
       this.settingsChanged.add(boardId);
@@ -819,6 +835,14 @@ export class SimulationSession {
     this.time = end;
   }
 
+  /** The lab's MQTT broker, shared by the boards and the dashboard panel. */
+  private readonly broker = new MqttBroker();
+
+  /** A message from the dashboard panel. False when the topic is not one a client may publish to. */
+  publishMqtt(topic: string, payload: string, retained = false): boolean {
+    return this.broker.publish({ topic, payload, from: 'dashboard', timeMs: this.time }, retained);
+  }
+
   /**
    * A request from the lab's browser panel to a board's web server. Returns its
    * number, to find the answer by in a later frame, or why it was not sent.
@@ -876,6 +900,8 @@ export class SimulationSession {
       this.settingsChanged.delete(id);
     }
     const frame: SimulationFrame = { timeMs: this.time, result, boards };
+    const messages = this.broker.takeLog();
+    if (messages.length > 0) frame.mqtt = messages;
     if (this.probes.length > 0) {
       frame.trace = this.trace;
       this.trace = { probes: this.probes, times: [], values: this.probes.map(() => []) };
