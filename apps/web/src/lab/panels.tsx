@@ -586,7 +586,14 @@ function PartSettings({ part }: { part: CircuitComponent }) {
         >
           {LOGIC16_CHIPS.map((chip) => (
             <option key={chip} value={chip}>
-              {chip} · {t(chip === 'CD4511' ? 'chip.decoder' : 'chip.counter')}
+              {chip} ·{' '}
+              {t(
+                chip === 'CD4511'
+                  ? 'chip.decoder'
+                  : chip === '74HC595'
+                    ? 'chip.shift'
+                    : 'chip.counter',
+              )}
             </option>
           ))}
         </select>

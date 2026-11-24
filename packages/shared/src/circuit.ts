@@ -31,12 +31,13 @@ import { holeExists, holeName, isHole, parseHole, type BreadboardSize } from './
  * 23 — adds the 74HC74 flip-flop chip and the clock module.
  * 24 — adds the 74HC393 counter, the 16-pin chips (74HC161 counter and CD4511
  *     decoder) and the seven-segment display.
+ * 25 — adds the 74HC595 shift register.
  * Up to version 20 each version only adds part types or optional fields, so an
  * older document is valid in a newer version apart from the number. Version
  * 21 renames every hole: `migrateCircuit` puts the one fixed breadboard of an
  * older circuit in as BB1, where it was, and names its holes after it.
  */
-export const CIRCUIT_SCHEMA_VERSION = 24;
+export const CIRCUIT_SCHEMA_VERSION = 25;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 /** A breadboard hole: the breadboard's id, a dot and the hole, as "BB1.a12". */
@@ -662,8 +663,8 @@ export type GateChip = (typeof GATE_CHIPS)[number];
 /** The logic chips with fourteen pins the lab has: the gate chips, a flip-flop and a counter. */
 export const LOGIC_CHIPS = [...GATE_CHIPS, '74HC74', '74HC393'] as const;
 export type LogicChip = (typeof LOGIC_CHIPS)[number];
-/** The logic chips with sixteen pins: a counter and a seven-segment decoder. */
-export const LOGIC16_CHIPS = ['74HC161', 'CD4511'] as const;
+/** The logic chips with sixteen pins: a counter, a shift register and a seven-segment decoder. */
+export const LOGIC16_CHIPS = ['74HC161', '74HC595', 'CD4511'] as const;
 export type Logic16Chip = (typeof LOGIC16_CHIPS)[number];
 export type AnyLogicChip = LogicChip | Logic16Chip;
 
@@ -775,7 +776,7 @@ export const Logic16Schema = Type.Object({
     Object.fromEntries(DIP16_PINS.map((pin) => [pin, Hole])) as Record<string, typeof Hole>,
   ),
   props: Type.Object({
-    chip: Type.Union([Type.Literal('74HC161'), Type.Literal('CD4511')]),
+    chip: Type.Union([Type.Literal('74HC161'), Type.Literal('74HC595'), Type.Literal('CD4511')]),
   }),
 });
 

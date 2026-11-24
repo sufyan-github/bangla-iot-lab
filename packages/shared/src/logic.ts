@@ -265,6 +265,71 @@ const HC161: ChipModel = {
 };
 
 /**
+ * 74HC595: an 8-bit shift register with a storage register. On SHCP's rising
+ * edge every bit moves up one place and DS comes in at Q0; MR̅ LOW clears the
+ * shift register at once. On STCP's rising edge the storage register takes the
+ * shift register, and Q0 to Q7 show the storage register while OE̅ is LOW (and
+ * are let go while it is HIGH). Q7S gives the shift register's last bit, to
+ * feed a second chip's DS. With both clocks joined, the storage register gets
+ * the bits from before the shift, as the datasheet says.
+ */
+const P595 = {
+  data: 14,
+  shiftClock: 11,
+  storeClock: 12,
+  reset: 10,
+  enable: 13,
+  q: [15, 1, 2, 3, 4, 5, 6, 7],
+  serialOut: 9,
+} as const;
+
+const HC595: ChipModel = {
+  pins: 16,
+  supply: 16,
+  ground: 8,
+  supplyRange: HC_SUPPLY,
+  units: [
+    {
+      inputs: [P595.data, P595.shiftClock, P595.storeClock, P595.reset, P595.enable],
+      outputs: [...P595.q, P595.serialOut],
+    },
+  ],
+  labels: {
+    1: 'Q1',
+    2: 'Q2',
+    3: 'Q3',
+    4: 'Q4',
+    5: 'Q5',
+    6: 'Q6',
+    7: 'Q7',
+    8: 'GND',
+    9: 'Q7S',
+    10: 'MR̅',
+    11: 'SHCP',
+    12: 'STCP',
+    13: 'OE̅',
+    14: 'DS',
+    15: 'Q0',
+    16: 'VCC',
+  },
+  remembers: true,
+  step(now, before, memory) {
+    let shift = memory[0] ?? 0;
+    let stored = memory[1] ?? 0;
+    if (rose(P595.storeClock, now, before)) stored = shift;
+    if (now[P595.reset] === false) shift = 0;
+    else if (rose(P595.shiftClock, now, before)) {
+      shift = ((shift << 1) | (now[P595.data] === true ? 1 : 0)) & 0xff;
+    }
+    const outputs: Record<number, boolean | null> = {};
+    const enabled = now[P595.enable] === false;
+    P595.q.forEach((pin, bit) => (outputs[pin] = enabled ? ((stored >> bit) & 1) === 1 : null));
+    outputs[P595.serialOut] = ((shift >> 7) & 1) === 1;
+    return { outputs, memory: [shift, stored] };
+  },
+};
+
+/**
  * The segments the CD4511 lights for each digit, a to g. As its datasheet
  * draws them, 6 has no top bar (a) and 9 no bottom bar (d). Codes 10 to 15
  * light nothing.
@@ -351,6 +416,7 @@ export const CHIP_MODELS: Readonly<Record<AnyLogicChip, ChipModel>> = {
   '74HC74': HC74,
   '74HC393': HC393,
   '74HC161': HC161,
+  '74HC595': HC595,
   CD4511,
 };
 

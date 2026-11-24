@@ -320,6 +320,7 @@ export const bn = {
   'code.starter.esp32.lora-send': 'LoRa: বার্তা পাঠানো (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.lora-receive': 'LoRa: বার্তা শোনা (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.deepsleep': 'ডিপ স্লিপ: ঘুমিয়ে আবার জাগা (LED: D2)',
+  'code.starter.esp32.shift': 'চলন্ত আলো: 74HC595 দিয়ে আটটা LED (D23, D18, D5)',
   'code.starter.esp32.watering': 'নিজে নিজে পানি দেওয়া (D34, D26)',
   'tool.voltagesensor': 'ভোল্টেজ সেন্সর',
   'part.voltagesensor': '০–২৫ V ভোল্টেজ সেন্সর',
@@ -503,10 +504,11 @@ export const bn = {
   'chip.flipflop': 'D ফ্লিপ-ফ্লপ',
   'chip.counter': 'কাউন্টার',
   'chip.decoder': '৭-সেগমেন্ট ডিকোডার',
+  'chip.shift': 'শিফট রেজিস্টার',
   'tool.logic16': '১৬ পায়ের চিপ',
   'part.logic16': '১৬ পায়ের চিপ (কাউন্টার, ডিকোডার)',
   'part.logic16.about':
-    '১৬ পায়ের চিপও বোর্ডের মাঝের খাঁজের ওপর বসে: খাঁজের নিচে ১ থেকে ৮ নম্বর পা, ওপরে ১৬ থেকে ৯। ১৬ নম্বর পা সাপ্লাই, ৮ নম্বর GND। 74HC161 একটা ৪-বিট কাউন্টার: ঘড়ির (CP) পা LOW থেকে HIGH হলে এক করে বাড়ে, যদি CEP আর CET দুটোই HIGH থাকে; PE̅ LOW থাকলে বাড়ার বদলে D0–D3-এর সংখ্যাটা বসায়; MR̅ LOW করলে সঙ্গে সঙ্গে ০। ১৫-র পর আবার ০, আর ১৫-তে TC HIGH হয়। এর ২ থেকে ৬ V লাগে। CD4511 চার বিটের একটা সংখ্যা (A সবচেয়ে ছোট বিট, তারপর B, C, D) নিয়ে ৭-সেগমেন্ট ডিসপ্লের ঠিক সেগমেন্টগুলো জ্বালায়; ১০ থেকে ১৫ হলে কিছুই না। LT̅ আর BL̅ HIGH-এ লাগাও (LOW করলে সব জ্বলে বা সব নেভে), আর LE LOW-তে (HIGH করলে শেষ সংখ্যাটা ধরে রাখে)। এটা ৩ থেকে ১৮ V-এ চলে, আর কমন-ক্যাথোড ডিসপ্লেতে কারেন্ট দেয়; প্রতিটা সেগমেন্টে আলাদা রেজিস্টর লাগবে।',
+    '১৬ পায়ের চিপও বোর্ডের মাঝের খাঁজের ওপর বসে: খাঁজের নিচে ১ থেকে ৮ নম্বর পা, ওপরে ১৬ থেকে ৯। ১৬ নম্বর পা সাপ্লাই, ৮ নম্বর GND। 74HC161 একটা ৪-বিট কাউন্টার: ঘড়ির (CP) পা LOW থেকে HIGH হলে এক করে বাড়ে, যদি CEP আর CET দুটোই HIGH থাকে; PE̅ LOW থাকলে বাড়ার বদলে D0–D3-এর সংখ্যাটা বসায়; MR̅ LOW করলে সঙ্গে সঙ্গে ০। ১৫-র পর আবার ০, আর ১৫-তে TC HIGH হয়। এর ২ থেকে ৬ V লাগে। CD4511 চার বিটের একটা সংখ্যা (A সবচেয়ে ছোট বিট, তারপর B, C, D) নিয়ে ৭-সেগমেন্ট ডিসপ্লের ঠিক সেগমেন্টগুলো জ্বালায়; ১০ থেকে ১৫ হলে কিছুই না। LT̅ আর BL̅ HIGH-এ লাগাও (LOW করলে সব জ্বলে বা সব নেভে), আর LE LOW-তে (HIGH করলে শেষ সংখ্যাটা ধরে রাখে)। এটা ৩ থেকে ১৮ V-এ চলে, আর কমন-ক্যাথোড ডিসপ্লেতে কারেন্ট দেয়; প্রতিটা সেগমেন্টে আলাদা রেজিস্টর লাগবে। 74HC595 একটা শিফট রেজিস্টার: মাত্র তিনটা পিন দিয়ে আটটা আউটপুট চালানো যায়। SHCP LOW থেকে HIGH হলে DS-এর বিট ঢোকে আর বাকিরা এক ঘর সরে; STCP LOW থেকে HIGH হলে জমানো আটটা বিট Q0–Q7-এ বেরোয়। OE̅ LOW আর MR̅ HIGH-এ লাগাও। বোর্ডে shiftOut() এই কাজটাই করে। Q7S পরের 74HC595-এর DS-এ লাগালে ষোলোটা আউটপুট হয়।',
   'tool.sevenseg': '৭-সেগমেন্ট ডিসপ্লে',
   'part.sevenseg': '৭-সেগমেন্ট ডিসপ্লে',
   'part.sevenseg.about':
@@ -1077,6 +1079,7 @@ export const en: Record<MessageKey, string> = {
   'code.starter.esp32.lora-send': 'LoRa: sending (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.lora-receive': 'LoRa: listening (Ra-02: NSS D5, RST D14, DIO0 D2)',
   'code.starter.esp32.deepsleep': 'Deep sleep: sleeping and waking again (LED: D2)',
+  'code.starter.esp32.shift': 'Running light: eight LEDs through a 74HC595 (D23, D18, D5)',
   'code.starter.esp32.watering': 'Automatic watering (D34, D26)',
   'tool.voltagesensor': 'Voltage sensor',
   'part.voltagesensor': '0–25 V voltage sensor',
@@ -1260,10 +1263,11 @@ export const en: Record<MessageKey, string> = {
   'chip.flipflop': 'D flip-flop',
   'chip.counter': 'counter',
   'chip.decoder': 'seven-segment decoder',
+  'chip.shift': 'shift register',
   'tool.logic16': '16-pin chip',
   'part.logic16': '16-pin chip (counter, decoder)',
   'part.logic16.about':
-    'A 16-pin chip sits across the centre gap too: pins 1 to 8 below the gap, 16 to 9 above it. Pin 16 is the supply, pin 8 GND. The 74HC161 is a 4-bit counter: when its clock (CP) goes from LOW to HIGH it counts up by one, provided CEP and CET are both HIGH; while PE̅ is LOW it loads the number on D0 to D3 instead; MR̅ LOW clears it to 0 at once. After 15 it goes back to 0, and at 15 TC is HIGH. It needs 2 to 6 V. The CD4511 takes a four-bit number (A the smallest bit, then B, C, D) and lights the right segments of a seven-segment display; for 10 to 15 it lights none. Tie LT̅ and BL̅ HIGH (LOW lights every segment or none) and LE LOW (HIGH keeps the last number). It works from 3 to 18 V and gives current to a common-cathode display; each segment needs its own resistor.',
+    'A 16-pin chip sits across the centre gap too: pins 1 to 8 below the gap, 16 to 9 above it. Pin 16 is the supply, pin 8 GND. The 74HC161 is a 4-bit counter: when its clock (CP) goes from LOW to HIGH it counts up by one, provided CEP and CET are both HIGH; while PE̅ is LOW it loads the number on D0 to D3 instead; MR̅ LOW clears it to 0 at once. After 15 it goes back to 0, and at 15 TC is HIGH. It needs 2 to 6 V. The CD4511 takes a four-bit number (A the smallest bit, then B, C, D) and lights the right segments of a seven-segment display; for 10 to 15 it lights none. Tie LT̅ and BL̅ HIGH (LOW lights every segment or none) and LE LOW (HIGH keeps the last number). It works from 3 to 18 V and gives current to a common-cathode display; each segment needs its own resistor. The 74HC595 is a shift register: three pins drive eight outputs. When SHCP goes from LOW to HIGH the bit on DS comes in and the others move up one place; when STCP goes from LOW to HIGH the eight bits held appear on Q0 to Q7. Tie OE̅ LOW and MR̅ HIGH. On a board, shiftOut() does exactly this. Q7S to the DS of a second 74HC595 gives sixteen outputs.',
   'tool.sevenseg': '7-segment display',
   'part.sevenseg': 'Seven-segment display',
   'part.sevenseg.about':

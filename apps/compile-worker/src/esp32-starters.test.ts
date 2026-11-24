@@ -48,6 +48,7 @@ describe('shipped ESP32 starter programs', () => {
       'security.ino',
       'sender.ino',
       'servo.ino',
+      'shift.ino',
       'sms.ino',
       'soil.ino',
       'streetlight.ino',

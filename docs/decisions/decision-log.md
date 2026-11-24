@@ -1419,3 +1419,27 @@ Tests: each counter counts on the right edge, wraps, resets and (for the
 every code and obeys LT̅ and BL̅; the display lights the segment fed, in either
 kind, and stays dark when wired for the other kind; both new parts land where
 they should. Two browser tests place them.
+
+## D-076 — The 74HC595 shift register, and shiftOut() on the ESP32
+
+The third logic segment (L3). The 74HC595 joins the 16-pin chips (circuit
+format version 25), following its datasheet's function table: on SHCP's rising
+edge the bits move up and DS comes in at Q0; MR̅ LOW clears the shift register
+at once; on STCP's rising edge the storage register takes the shift register;
+OE̅ HIGH lets Q0 to Q7 go; Q7S gives bit 7 to feed a second chip. With both
+clocks joined, the storage register gets the bits from before the shift.
+
+**shiftOut() and shiftIn() on the ESP32.** The lab's own board library gains
+both, written from the Arduino reference's description (each bit on the data
+pin, then a clock pulse; MSBFIRST starts with bit 7). The ESP32 core's own
+version is LGPL and is not used. On the UNO the Arduino core's real
+`shiftOut()` already runs. Each library call costs 2 µs of simulated time, so
+every clock edge reaches the circuit as its own moment and none is lost.
+
+**Power-on.** A chip that powers up with its clock already HIGH sees no rising
+edge until the clock has gone LOW and HIGH again, as on a real chip.
+
+Ready-made program `shift` (a running light on eight LEDs, from three pins).
+Tests: by hand, three SHCP pulses with DS HIGH show nothing until STCP, then
+0b111, and a LOW shifts in at Q0; on the ESP32 the program lights Q0 to Q7 in
+turn, 300 ms each, and starts again.
