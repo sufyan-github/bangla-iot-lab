@@ -7,6 +7,7 @@ import type { Database } from './db/client';
 import { authRoutes } from './routes/auth';
 import { classRoutes } from './routes/classes';
 import { learnerRoutes } from './routes/learners';
+import { projectRoutes } from './routes/projects';
 import { compileRoutes } from './routes/compile';
 import { registerHealthRoutes } from './routes/health';
 
@@ -55,5 +56,6 @@ export async function buildApp(deps: AppDependencies) {
   await app.register(authRoutes(deps));
   await app.register(classRoutes(deps));
   await app.register(learnerRoutes(deps));
+  await app.register(projectRoutes(deps));
   return app;
 }
