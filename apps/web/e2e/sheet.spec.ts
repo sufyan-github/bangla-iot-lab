@@ -71,6 +71,17 @@ test('two switches, an AND gate and a lamp: the lamp lights only with both on', 
   await page.getByTestId('sheet-label').press('Enter');
   await page.getByTestId('sheet-table').click();
   await expect(page.getByTestId('sheet-expression')).toHaveText('Both = A·B');
+
+  // Its K-map: four cells, one of them 1 (A and B both HIGH), in the one group A·B.
+  const cells = page.getByTestId('kmap-cell');
+  await expect(cells).toHaveCount(4);
+  await expect(page.locator('[data-testid="kmap-cell"][data-value="1"]')).toHaveCount(1);
+  await expect(page.locator('[data-testid="kmap-cell"][data-row="3"]')).toHaveAttribute(
+    'data-groups',
+    '1',
+  );
+  await page.getByTestId('kmap-term').click();
+  await expect(page.getByTestId('kmap-term')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('a clock and a D flip-flop with Q̅ to D: the flip-flop turns over by itself', async ({

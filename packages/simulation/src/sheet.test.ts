@@ -16,7 +16,13 @@ import {
   type SheetKind,
 } from '@banglalab/shared';
 import { describe, expect, it } from 'vitest';
-import { evaluateSheet, sheetTruthTable, simplestSum, type SheetState } from './sheet';
+import {
+  evaluateSheet,
+  sheetTruthTable,
+  simplestSum,
+  simplestTerms,
+  type SheetState,
+} from './sheet';
 
 /** Applies edits that must succeed. */
 const ok = (edit: SheetEdit): LogicSheet => {
@@ -486,5 +492,24 @@ describe('logic sheet, part 3: blocks that decode, count and store', () => {
     // Near the bottom edge it is moved up to fit.
     const low = ok(addSheetElement(emptySheet(), 'RAM', 10, 23));
     expect(low.elements[0]!.y).toBe(15);
+  });
+});
+
+describe('the groups behind the simplest sum', () => {
+  it('gives each term with the inputs it fixes, as a K-map groups them', () => {
+    // Majority of three: HIGH when at least two of A, B, C are.
+    const majority = [0, 0, 0, 1, 0, 1, 1, 1].map(Boolean);
+    const terms = simplestTerms(3, majority);
+    expect(terms.map((t) => t.text).sort()).toEqual(['A·B', 'A·C', 'B·C']);
+    // A·B fixes A (bit 2) and B (bit 1), both HIGH, and covers rows 6 and 7.
+    const ab = terms.find((t) => t.text === 'A·B')!;
+    expect(ab).toMatchObject({ mask: 0b110, value: 0b110 });
+    expect([0, 1, 2, 3, 4, 5, 6, 7].filter((row) => (row & ab.mask) === ab.value)).toEqual([6, 7]);
+    expect(simplestSum(3, majority)).toBe(terms.map((t) => t.text).join(' + '));
+  });
+
+  it('has no terms when the output is never HIGH, and one that fixes nothing when always', () => {
+    expect(simplestTerms(2, [false, false, false, false])).toEqual([]);
+    expect(simplestTerms(2, [true, true, true, true])).toEqual([{ mask: 0, value: 0, text: '1' }]);
   });
 });

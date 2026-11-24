@@ -216,10 +216,33 @@ export function sheetTruthTable(sheet: LogicSheet): SheetTruthTable | null {
  * output never or always is.
  */
 export function simplestSum(inputs: number, outputs: readonly boolean[]): string {
+  const terms = simplestTerms(inputs, outputs);
+  if (terms.length === 0) return '0';
+  if (terms.length === 1 && terms[0]!.mask === 0) return '1';
+  return terms.map((term) => term.text).join(' + ');
+}
+
+/**
+ * One term of a sum of products: the inputs it fixes (`mask`, A the highest
+ * bit) and their values. It covers the truth-table rows where
+ * `(row & mask) === value`: on a K-map, one group.
+ */
+export interface SumTerm {
+  mask: number;
+  value: number;
+  /** As written, "A·B̄". */
+  text: string;
+}
+
+/**
+ * The terms of the simplest sum of products (see simplestSum): none when the
+ * output is never HIGH, one that fixes nothing when it always is.
+ */
+export function simplestTerms(inputs: number, outputs: readonly boolean[]): SumTerm[] {
   const names = ['A', 'B', 'C', 'D'].slice(0, inputs);
   const ones = outputs.flatMap((high, row) => (high ? [row] : []));
-  if (ones.length === 0) return '0';
-  if (ones.length === outputs.length) return '1';
+  if (ones.length === 0) return [];
+  if (ones.length === outputs.length) return [{ mask: 0, value: 0, text: '1' }];
   // An implicant: the bits it fixes (mask) and their values.
   type Term = { mask: number; value: number };
   const full = (1 << inputs) - 1;
@@ -257,16 +280,15 @@ export function simplestSum(inputs: number, outputs: readonly boolean[]): string
       list.length * 100 + list.reduce((sum, t) => sum + literals(t), 0);
     if (!best || cost(chosen) < cost(best)) best = chosen;
   }
-  return best!
-    .map((term) =>
-      names
-        .map((name, i) => {
-          const bit = 1 << (inputs - 1 - i);
-          if (!(term.mask & bit)) return '';
-          return term.value & bit ? name : `${name}\u0305`;
-        })
-        .filter(Boolean)
-        .join('·'),
-    )
-    .join(' + ');
+  return best!.map((term) => ({
+    ...term,
+    text: names
+      .map((name, i) => {
+        const bit = 1 << (inputs - 1 - i);
+        if (!(term.mask & bit)) return '';
+        return term.value & bit ? name : `${name}\u0305`;
+      })
+      .filter(Boolean)
+      .join('·'),
+  }));
 }

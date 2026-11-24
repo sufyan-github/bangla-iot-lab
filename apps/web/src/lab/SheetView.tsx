@@ -26,12 +26,14 @@ import {
   nextSheetClockChange,
   sheetTruthTable,
   simplestSum,
+  simplestTerms,
   type SheetState,
   type SheetTruthTable,
 } from '@banglalab/simulation';
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react';
 import { useT } from '../i18n';
 import { useLab } from './store';
+import { KMap } from './KMap';
 import { TimingDiagram } from './TimingDiagram';
 import { TimingTrace, timingSignals } from './timing';
 
@@ -1134,15 +1136,21 @@ export function SheetView() {
                   list: table.inputs.map((id, i) => `${'ABCD'[i]} = ${nameOf(id)}`).join(', '),
                 })}
               </p>
-              {table.outputs.map((id, o) => (
-                <p key={id} className="font-mono text-lg" data-testid="sheet-expression">
-                  {nameOf(id)} ={' '}
-                  {simplestSum(
-                    table.inputs.length,
-                    table.rows.map((row) => row.outputs[o]!),
-                  )}
-                </p>
-              ))}
+              {table.outputs.map((id, o) => {
+                const column = table.rows.map((row) => row.outputs[o]!);
+                return (
+                  <div key={id} className="space-y-2 pt-2">
+                    <p className="font-mono text-lg" data-testid="sheet-expression">
+                      {nameOf(id)} = {simplestSum(table.inputs.length, column)}
+                    </p>
+                    <KMap
+                      inputs={table.inputs.length}
+                      outputs={column}
+                      terms={simplestTerms(table.inputs.length, column)}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
           {table === 'none' && (
