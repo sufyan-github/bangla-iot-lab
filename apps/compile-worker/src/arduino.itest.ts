@@ -202,6 +202,67 @@ void report(Level value) { Serial.println(value == HIGH_LEVEL ? "page ok" : "bad
     expect(unknown.diagnostics[0].message).toContain('NoSuchLibrary.h');
   });
 
+  it('drives an SSD1306 OLED over I2C with Wire and Adafruit_SSD1306', async () => {
+    const result = await compile(`#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
+void setup() {
+  Serial.begin(9600);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { Serial.println("no display"); return; }
+  display.clearDisplay();
+  display.fillRect(0, 0, 10, 10, SSD1306_WHITE);
+  display.display();
+  Serial.println("drawn");
+}
+void loop() {}
+`);
+    expect(result.ok).toBe(true);
+    const board = new UnoBoard(result.hex);
+    const sent: { address: number; bytes: number }[] = [];
+    board.onI2c((transfer) => {
+      if (transfer.address !== 0x3c) return { status: 2 };
+      sent.push({ address: transfer.address, bytes: transfer.write.length });
+      return { status: 0, read: new Uint8Array(transfer.readLength) };
+    });
+    let serial = '';
+    board.onSerial((text) => (serial += text));
+    board.runFor(1500);
+    expect(serial).toContain('drawn');
+    // Commands, then the whole picture: 128 × 64 dots are 1024 bytes, sent in pieces.
+    const total = sent.reduce((sum, s) => sum + s.bytes, 0);
+    expect(total).toBeGreaterThan(1024);
+    // Without a device answering, begin() still works (the display is write-only),
+    // but nothing is sent anywhere.
+  }, 120_000);
+
+  it('talks SPI: each byte out on MOSI comes back from the device on MISO', async () => {
+    const result = await compile(`#include <SPI.h>
+void setup() {
+  Serial.begin(9600);
+  pinMode(10, OUTPUT);
+  SPI.begin();
+  digitalWrite(10, LOW);
+  byte back = SPI.transfer(0xA5);
+  digitalWrite(10, HIGH);
+  Serial.println(back, HEX);
+}
+void loop() {}
+`);
+    expect(result.ok).toBe(true);
+    const board = new UnoBoard(result.hex);
+    const out: number[] = [];
+    board.onSpi((transfer) => {
+      out.push(...transfer.bytes);
+      return Uint8Array.of(0x3c);
+    });
+    let serial = '';
+    board.onSerial((text) => (serial += text));
+    board.runFor(500);
+    expect(out).toEqual([0xa5]);
+    expect(serial.trim()).toBe('3C');
+  }, 120_000);
+
   it('cannot read host files from a sketch', async () => {
     const result = await compile('#include "/etc/passwd"\nvoid setup() {}\nvoid loop() {}\n');
     expect(result.ok).toBe(false);

@@ -7,6 +7,7 @@ import {
   ARDUINO_CORE_VERSION,
   ARDUINO_FLAGS,
   ARDUINO_LIBRARIES,
+  AVR_EXTRA_LIBRARIES,
   CXX_FLAGS,
   ensureArduinoCore,
   type ArduinoCore,
@@ -181,7 +182,7 @@ export class Compiler {
           ? ['esp32-firmware', this.firmwareKey ?? 'unbuilt']
           : ['esp32-library', this.esp32Key ?? 'unbuilt']
         : request.language === 'arduino'
-          ? [ARDUINO_CORE_VERSION, ARDUINO_LIBRARIES, ARDUINO_FLAGS, CXX_FLAGS]
+          ? [ARDUINO_CORE_VERSION, ARDUINO_LIBRARIES, AVR_EXTRA_LIBRARIES, ARDUINO_FLAGS, CXX_FLAGS]
           : GCC_FLAGS;
     const parts = [RECIPE_VERSION, this.toolchain, recipe, request.board, request.language];
     const hash = createHash('sha256')

@@ -24,6 +24,46 @@ export const ARDUINO_LIBRARIES = [
     include: 'LiquidCrystal/src',
     sources: ['LiquidCrystal/src/LiquidCrystal.cpp'],
   },
+  // Wire (I2C) and SPI come with the core itself, in the same pinned release.
+  {
+    name: 'Wire',
+    version: '1.8.8',
+    include: 'ArduinoCore-avr/libraries/Wire/src',
+    sources: [
+      'ArduinoCore-avr/libraries/Wire/src/Wire.cpp',
+      'ArduinoCore-avr/libraries/Wire/src/utility/twi.c',
+    ],
+  },
+  {
+    name: 'SPI',
+    version: '1.8.8',
+    include: 'ArduinoCore-avr/libraries/SPI/src',
+    sources: ['ArduinoCore-avr/libraries/SPI/src/SPI.cpp'],
+  },
+] as const;
+
+/**
+ * Libraries by other people, under permissive licences, kept unmodified in
+ * third_party with their licence texts (the same copies the ESP32 builds use):
+ * the kit's displays and I2C sensors, now that the UNO has I2C and SPI.
+ */
+const THIRD_PARTY = path.resolve(import.meta.dirname, '../../../third_party');
+export const AVR_EXTRA_LIBRARIES = [
+  // Adafruit GFX 1.13.0 (BSD), with SPITFT for colour displays; not its extra fonts.
+  { dir: 'adafruit-gfx', sources: ['Adafruit_GFX.cpp', 'Adafruit_SPITFT.cpp'] },
+  // Adafruit SSD1306 2.5.17 (BSD): the OLED display.
+  { dir: 'adafruit-ssd1306', sources: ['Adafruit_SSD1306.cpp'] },
+  // Adafruit BusIO 1.17.4 (MIT): the I2C and SPI device classes the libraries share.
+  {
+    dir: 'adafruit-busio',
+    sources: ['Adafruit_I2CDevice.cpp', 'Adafruit_SPIDevice.cpp', 'Adafruit_BusIO_Register.cpp'],
+  },
+  // Adafruit ST7735 and ST7789 1.12.0 (MIT): the colour display.
+  { dir: 'adafruit-st7735', sources: ['Adafruit_ST77xx.cpp', 'Adafruit_ST7789.cpp'] },
+  // Adafruit unified sensor 1.1.15 (Apache-2.0), BME280 2.3.0 (BSD) and INA219 1.2.3 (BSD).
+  { dir: 'adafruit-sensor', sources: ['Adafruit_Sensor.cpp'] },
+  { dir: 'adafruit-bme280', sources: ['Adafruit_BME280.cpp'] },
+  { dir: 'adafruit-ina219', sources: ['Adafruit_INA219.cpp'] },
 ] as const;
 
 /** Flags shared by the core and by sketches, for an UNO (ATmega328P at 16 MHz). */
@@ -41,6 +81,7 @@ export const ARDUINO_FLAGS = [
   `-I${CORE_SOURCE_DIR}`,
   `-I${VARIANT_DIR}`,
   ...ARDUINO_LIBRARIES.map((library) => `-I${path.join(VENDOR_DIR, library.include)}`),
+  ...AVR_EXTRA_LIBRARIES.map((library) => `-I${path.join(THIRD_PARTY, library.dir)}`),
 ];
 export const CXX_FLAGS = [
   '-std=gnu++11',
@@ -72,6 +113,7 @@ export async function ensureArduinoCore(cacheDir: string, toolchain: string): Pr
       JSON.stringify([
         ARDUINO_CORE_VERSION,
         ARDUINO_LIBRARIES,
+        AVR_EXTRA_LIBRARIES,
         toolchain,
         ARDUINO_FLAGS,
         CXX_FLAGS,
@@ -81,7 +123,14 @@ export async function ensureArduinoCore(cacheDir: string, toolchain: string): Pr
     .slice(0, 16);
   const dir = path.join(cacheDir, 'arduino-core', key);
   const archive = path.join(dir, 'core.a');
-  const core = { archive, readOnlyPaths: [VENDOR_DIR, dir] };
+  const core = {
+    archive,
+    readOnlyPaths: [
+      VENDOR_DIR,
+      dir,
+      ...AVR_EXTRA_LIBRARIES.map((library) => path.join(THIRD_PARTY, library.dir)),
+    ],
+  };
   if (
     await access(archive).then(
       () => true,
@@ -105,6 +154,9 @@ export async function ensureArduinoCore(cacheDir: string, toolchain: string): Pr
       .filter((f) => /\.(c|cpp|S)$/.test(f))
       .map((f) => path.join(CORE_SOURCE_DIR, f)),
     ...ARDUINO_LIBRARIES.flatMap((library) => library.sources.map((f) => path.join(VENDOR_DIR, f))),
+    ...AVR_EXTRA_LIBRARIES.flatMap((library) =>
+      library.sources.map((f) => path.join(THIRD_PARTY, library.dir, f)),
+    ),
   ];
   const compileOne = async (file: string) => {
     const flags = file.endsWith('.cpp')

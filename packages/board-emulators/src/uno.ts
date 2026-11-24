@@ -1,6 +1,8 @@
 import {
   AVRADC,
   AVRIOPort,
+  AVRSPI,
+  AVRTWI,
   AVRTimer,
   AVRUSART,
   CPU,
@@ -10,16 +12,26 @@ import {
   portBConfig,
   portCConfig,
   portDConfig,
+  spiConfig,
   timer0Config,
+  twiConfig,
   timer1Config,
   timer2Config,
   usart0Config,
 } from 'avr8js';
 import { parseIntelHex } from './intel-hex';
-import type { PinDrive, PinListener, ProgrammableBoard } from './board';
+import type { I2cHandler, PinDrive, PinListener, ProgrammableBoard, SpiHandler } from './board';
 
 const FLASH_SIZE = 0x8000; // ATmega328P: 32 KiB
 const CLOCK_HZ = 16_000_000;
+/** The UNO's I2C pins (A4, A5) and SPI pins (D13 clock, D11 out, D12 in), in Arduino numbering. */
+const SDA = 18;
+const SCL = 19;
+const SCK = 13;
+const MOSI = 11;
+const MISO = 12;
+/** The most bytes a device is asked for at once; the program takes what it needs. */
+const I2C_READ_AHEAD = 32;
 
 export const UNO_PIN_COUNT = 20;
 /** Supply voltage of the board's logic, volts. */
@@ -37,8 +49,9 @@ const DRIVE: Record<PinState, PinDrive> = {
  * GPIO ports, timers (so `delay`, `millis` and PWM work), ADC and serial port.
  *
  * Pins use Arduino numbering: 0-13 are the digital pins (port D then port B)
- * and 14-19 are A0-A5 (port C). Not emulated: SPI, I²C, EEPROM, external
- * interrupts driven from the circuit.
+ * and 14-19 are A0-A5 (port C). Its I²C (TWI) and SPI hardware reach the
+ * circuit's devices through the same handlers as the ESP32's. Not emulated:
+ * EEPROM, external interrupts driven from the circuit.
  */
 export class UnoBoard implements ProgrammableBoard {
   private readonly cpu: CPU;
@@ -47,6 +60,8 @@ export class UnoBoard implements ProgrammableBoard {
   private readonly pinListeners = new Set<PinListener>();
   private readonly serialListeners = new Set<(text: string) => void>();
   private readonly decoder = new TextDecoder();
+  private i2c: I2cHandler | null = null;
+  private spi: SpiHandler | null = null;
 
   constructor(hex: string) {
     const flash = parseIntelHex(hex, FLASH_SIZE);
@@ -76,11 +91,87 @@ export class UnoBoard implements ProgrammableBoard {
       });
     }
 
+    this.attachTwi(new AVRTWI(this.cpu, twiConfig, CLOCK_HZ));
+    const spi = new AVRSPI(this.cpu, spiConfig, CLOCK_HZ);
+    spi.onByte = (value) => {
+      const reply = this.spi?.({
+        sck: SCK,
+        mosi: MOSI,
+        miso: MISO,
+        bytes: Uint8Array.of(value),
+        timeMs: this.timeMs,
+      });
+      // The byte comes back after the time it takes to clock it out.
+      this.cpu.addClockEvent(() => spi.completeTransfer(reply?.[0] ?? 0xff), spi.transferCycles);
+    };
+
     const usart = new AVRUSART(this.cpu, usart0Config, CLOCK_HZ);
     usart.onByteTransmit = (byte) => {
       const text = this.decoder.decode(Uint8Array.of(byte), { stream: true });
       if (text) for (const listener of this.serialListeners) listener(text);
     };
+  }
+
+  /**
+   * The TWI hardware tells of each step (start, address, byte, stop); the
+   * circuit's devices answer whole exchanges. Bytes written are gathered until
+   * the stop, or until a repeated start turns to reading, when they go with the
+   * read as one exchange, as a register read does.
+   */
+  private attachTwi(twi: AVRTWI): void {
+    let address = 0;
+    let writing = false;
+    let written: number[] = [];
+    let reading: number[] = [];
+    const exchange = (write: number[], readLength: number) =>
+      this.i2c?.({ sda: SDA, scl: SCL, address, write: Uint8Array.from(write), readLength }) ?? {
+        status: 2 as const,
+      };
+    const flush = () => {
+      if (writing && written.length > 0) exchange(written, 0);
+      written = [];
+      writing = false;
+    };
+    twi.eventHandler = {
+      start: () => twi.completeStart(),
+      stop: () => {
+        flush();
+        twi.completeStop();
+      },
+      connectToSlave: (addr, write) => {
+        if (write) {
+          flush();
+          address = addr;
+          writing = true;
+          // Whether a device answers its address.
+          twi.completeConnect(exchange([], 0).status === 0);
+          return;
+        }
+        // A read: any bytes just written to the same device go with it.
+        const before = writing && addr === address ? written : [];
+        written = [];
+        writing = false;
+        address = addr;
+        const result = exchange(before, I2C_READ_AHEAD);
+        reading = result.status === 0 ? [...(result.read ?? [])] : [];
+        twi.completeConnect(result.status === 0);
+      },
+      writeByte: (value) => {
+        written.push(value);
+        twi.completeWrite(true);
+      },
+      readByte: () => twi.completeRead(reading.shift() ?? 0xff),
+    };
+  }
+
+  /** Gives the board the circuit's I²C devices, on A4 (SDA) and A5 (SCL). */
+  onI2c(handler: I2cHandler): void {
+    this.i2c = handler;
+  }
+
+  /** Gives the board the circuit's SPI devices, on D13 (SCK), D11 (MOSI) and D12 (MISO). */
+  onSpi(handler: SpiHandler): void {
+    this.spi = handler;
   }
 
   private portDrives(port: AVRIOPort, pinCount: number): PinDrive[] {
