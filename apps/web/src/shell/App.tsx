@@ -42,82 +42,85 @@ function Header() {
   );
 
   return (
-    <header className={`bg-mat-deep text-paper ${inLab ? 'max-lg:hidden' : ''}`}>
-      <div className="flex h-12 items-center gap-1 px-3">
-        <NavLink to="/" className="mr-3 flex shrink-0 items-center gap-2 font-semibold">
-          <img src="/favicon.svg" alt="" width={26} height={26} />
-          <span className="text-lg max-[420px]:sr-only">{t('app.name')}</span>
-        </NavLink>
-        {!menu && <nav className="hidden gap-0.5 md:flex">{links}</nav>}
-        <div className="ml-auto flex items-center gap-2">
-          <NavLink
-            to="/account"
-            data-testid="nav-account"
-            className={({ isActive }) =>
-              `flex min-h-9 max-w-32 items-center gap-2 truncate rounded-full sm:max-w-40 border px-3 text-sm font-medium ${
-                isActive
-                  ? 'border-paper bg-paper text-mat-deep'
-                  : 'border-paper/35 hover:bg-paper/10'
-              }`
-            }
-          >
-            {me && (
-              <span
-                aria-hidden
-                className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-amber text-xs font-bold text-ink"
-              >
-                {[...me.user.displayName][0]}
-              </span>
-            )}
-            <span className="truncate">{me ? me.user.displayName : t('nav.account')}</span>
+    <>
+      <header className={`bg-mat-deep text-paper ${inLab ? 'max-lg:hidden' : ''}`}>
+        <div className="flex h-12 items-center gap-1 px-3">
+          <NavLink to="/" className="mr-3 flex shrink-0 items-center gap-2 font-semibold">
+            <img src="/favicon.svg" alt="" width={26} height={26} />
+            <span className="text-lg max-[420px]:sr-only">{t('app.name')}</span>
           </NavLink>
-          <button
-            type="button"
-            data-testid="language"
-            lang={locale === 'bn' ? 'en' : 'bn'}
-            aria-label={t('nav.language')}
-            onClick={() => setLocale(locale === 'bn' ? 'en' : 'bn')}
-            className="flex min-h-9 overflow-hidden rounded-full border border-paper/35 text-xs font-semibold"
-          >
-            <span
-              className={`grid place-items-center px-2.5 ${locale === 'bn' ? 'bg-paper text-mat-deep' : ''}`}
+          {!menu && <nav className="hidden gap-0.5 md:flex">{links}</nav>}
+          <div className="ml-auto flex items-center gap-2">
+            <NavLink
+              to="/account"
+              data-testid="nav-account"
+              className={({ isActive }) =>
+                `flex min-h-9 max-w-32 items-center gap-2 truncate rounded-full sm:max-w-40 border px-3 text-sm font-medium ${
+                  isActive
+                    ? 'border-paper bg-paper text-mat-deep'
+                    : 'border-paper/35 hover:bg-paper/10'
+                }`
+              }
             >
-              বাং
-            </span>
-            <span
-              className={`grid place-items-center px-2.5 ${locale === 'en' ? 'bg-paper text-mat-deep' : ''}`}
+              {me && (
+                <span
+                  aria-hidden
+                  className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-amber text-xs font-bold text-ink"
+                >
+                  {[...me.user.displayName][0]}
+                </span>
+              )}
+              <span className="truncate">{me ? me.user.displayName : t('nav.account')}</span>
+            </NavLink>
+            <button
+              type="button"
+              data-testid="language"
+              lang={locale === 'bn' ? 'en' : 'bn'}
+              aria-label={t('nav.language')}
+              onClick={() => setLocale(locale === 'bn' ? 'en' : 'bn')}
+              className="flex min-h-9 overflow-hidden rounded-full border border-paper/35 text-xs font-semibold"
             >
-              EN
-            </span>
-          </button>
-          <button
-            type="button"
-            data-testid="menu"
-            aria-expanded={menu}
-            aria-label={t('nav.menu')}
-            onClick={() => setMenu(!menu)}
-            className="grid h-11 w-11 place-items-center rounded-lg hover:bg-paper/10 md:hidden"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="22"
-              height="22"
-              aria-hidden
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
+              <span
+                className={`grid place-items-center px-2.5 ${locale === 'bn' ? 'bg-paper text-mat-deep' : ''}`}
+              >
+                বাং
+              </span>
+              <span
+                className={`grid place-items-center px-2.5 ${locale === 'en' ? 'bg-paper text-mat-deep' : ''}`}
+              >
+                EN
+              </span>
+            </button>
+            <button
+              type="button"
+              data-testid="menu"
+              aria-expanded={menu}
+              aria-label={t('nav.menu')}
+              onClick={() => setMenu(!menu)}
+              className="grid h-11 w-11 place-items-center rounded-lg hover:bg-paper/10 md:hidden"
             >
-              {menu ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-            </svg>
-          </button>
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                aria-hidden
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                {menu ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
-      {menu && (
-        <nav className="flex flex-col gap-0.5 border-t border-paper/15 px-3 py-2 md:hidden">
-          {links}
-        </nav>
-      )}
+        {menu && (
+          <nav className="flex flex-col gap-0.5 border-t border-paper/15 px-3 py-2 md:hidden">
+            {links}
+          </nav>
+        )}
+      </header>
+      {/* Outside the header, so it shows in the lab on a phone too, where the header steps aside. */}
       {!online && (
         <p
           role="status"
@@ -127,7 +130,7 @@ function Header() {
           {t('status.offline')}
         </p>
       )}
-    </header>
+    </>
   );
 }
 
