@@ -1990,3 +1990,58 @@ Built on 24 November 2026.
   ink.
 - **Not done:** a separate dark design for the mat and the parts; contrast not
   measured on a real phone screen outdoors.
+
+## D-096 — Accounts of one's own, with proper sign-in
+
+Decided by the owner on 24 November 2026; first part built the same day.
+
+**The decision.** The lab serves two kinds of use, both with proper sign-in, and
+the owner controls both: schools with labs (admins, teachers, class learners),
+and people on their own, with no school. The owner's choices:
+
+- People on their own sign in with an email and a password, the email
+  confirmed by a link, and reset a forgotten password by email.
+- Under 18: the learner never gives an email or phone number. They choose a
+  sign-in name, a nickname and a password, and name a parent's or guardian's
+  email. The guardian approves the account from a link (that approval is the
+  consent, recorded with policy `individual-learner-2026-11`) and receives
+  its password resets.
+- Sessions end when the browser closes unless "keep me signed in on this
+  device" (30 days) is ticked, for shared school computers and family phones.
+- Later steps: an owner's control panel (approve, suspend, reset, close); new
+  schools apply and work once the owner approves; teachers reset by email or
+  with a code from their school's admin; class learners keep a key, shown as
+  a lab pass card that can be saved, with no QR code.
+
+**Built now (part 1, individuals).**
+
+- API: `register`, `register-learner`, `email-link`, `verify-email`,
+  `approve-learner`, `resend`, `forgot-password`, `reset-password`; sign-in by
+  email or sign-in name with a "keep" choice; `/v1/me` says whether an account
+  is a school's staff, an individual or a class learner. Answers never tell a
+  stranger whether an email has an account; the owner of the address is told
+  by email instead. Links carry their token after `#`, so it never reaches a
+  server log, and the page removes it from the address bar at once.
+- Email: no provider is chosen, so messages go to a local mailbox (kept in
+  memory, logged by recipient and subject, readable by tests). The API refuses
+  to start in production until a provider is configured.
+- Web: the account page first asks how you will come in (an account, a new
+  account, a class code or lab pass), then shows one form at a time; pages for
+  the three kinds of link; the lab pass card for class learners; adults on
+  their own get the learner's home, with progress recorded.
+- **Fixed along the way:** waiting progress was kept on the device without
+  saying whose, so on a shared device it could be sent as the next learner's;
+  it is now tagged with its account, and signing out sends it or removes it.
+  A refused request (too many in a minute) now says so, instead of "something
+  is not filled in right", and no longer makes the page look signed out. The
+  limit on all requests from one address is now a setting.
+- **Replaced:** the nickname-only sign-up with a guardian's tick (D-087). Its
+  accounts keep working by key; no new ones are made.
+- **Corrected:** the review before this work said some account fields had no
+  accessible name. They do (each is inside its label); the tool used to read
+  the page did not show it.
+- **Not done yet:** teachers' emails are not confirmed (their sign-up is
+  unchanged until the school step); an email provider; the owner's panel; the
+  classroom limit on joining (ten a minute from one address); a lawyer's word
+  on the guardian approval under the Personal Data Protection Act 2026
+  (REPORTED to have replaced the 2025 Ordinance; not read by us).

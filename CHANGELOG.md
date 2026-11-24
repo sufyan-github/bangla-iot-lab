@@ -16,6 +16,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Fixed
 
+- On a shared device, progress waiting to upload can no longer be sent as the
+  next learner's.
+- Too many requests in a minute is now explained, and no longer looks like
+  being signed out.
 - A clock inside a block on the logic sheet now ticks.
 - Browser tests no longer fail when a busy computer slows the simulation: they
   wait in the lab's own time.
@@ -24,6 +28,11 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Accounts of your own**: anyone can open an account with a confirmed email
+  and a password, and reset it by email. Learners under 18 give no email of
+  their own: a parent or guardian approves the account from an email. Sign-in
+  lasts until the browser closes unless you choose to stay signed in. Class
+  learners get their key on a lab pass card they can save.
 - **Dark mode**: the lab follows the device's light or dark setting, or the
   student's own choice from a button in the header. The bench and the parts
   keep their real colours.

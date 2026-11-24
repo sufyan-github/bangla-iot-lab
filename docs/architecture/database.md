@@ -43,6 +43,16 @@ Enums: `account_kind`, `platform_role`, `school_role`, `consent_scope`, `consent
 | `progress_events`        | A learner's finished step or lesson     | unique `client_event_id` (offline resends kept once); `step >= 0`    |
 | `teacher_invites`        | A one-use code to join a school (0004)  | unique `code_hash`; works once, for 7 days; index `school_id`        |
 
+## Added with individual accounts (migration `0006`, D-096)
+
+| Table / column            | Purpose                                                   | Keys and constraints                                                                     |
+| ------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `users.username`          | A learner's own sign-in name (not contact information)    | unique `lower(username)`; only learners have one                                         |
+| `users.email_verified_at` | When an adult opened the link sent to their email         | an adult on their own cannot sign in until it is set                                     |
+| `guardian_links`          | The guardian's email for a learner's own account          | index `learner_id`; `approved_at` set by the guardian's link; revocable                  |
+| `email_tokens`            | One-time links: verify an email, approve a learner, reset | unique `token_hash` (SHA-256); works once, until `expires_at`; a newer one cancels older |
+| `sessions.persistent`     | "Keep me signed in on this device"                        | without it the cookie ends with the browser and the server gives up after 12 hours       |
+
 ## Designed, to be migrated with the feature that uses it
 
 Tables are added when their first consumer is built, so the schema never holds
@@ -67,6 +77,8 @@ untested guesses.
 | Projects and versions          | Life of the account; soft-deleted projects purged after 30 days; keep the newest 20 versions |
 | Progress events                | Current academic year plus one, then only aggregates                                         |
 | Consent records                | Life of the account plus 3 years (evidence of consent)                                       |
+| Guardian's email               | Life of the learner's account; then deleted with it                                          |
+| Email links (`email_tokens`)   | 30 days after they are used or run out                                                       |
 | Audit logs                     | 24 months                                                                                    |
 | AI usage records               | 24 months (billing)                                                                          |
 | Payments                       | As tax law requires                                                                          |
