@@ -7,6 +7,7 @@ import { useT } from '../i18n';
 import { useOnline } from '../shell/useOnline';
 import { matchingStarter, starterIds, starterLabel, starterProgram } from './starters';
 import { programText, type SketchTab } from '../storage/projects';
+import { SerialPlot } from './SerialPlot';
 import { useLab } from './store';
 
 /** The main file's name, as the Arduino IDE shows a sketch's first tab. */
@@ -96,6 +97,8 @@ export function CodePanel({ boardId }: { boardId: string }) {
     program.hexSource === programText({ source, files }) &&
     (engine === undefined || builtFor === engine);
 
+  /** The serial monitor as text, or its numbers drawn as lines. */
+  const [serialMode, setSerialMode] = useState<'text' | 'plot'>('text');
   const serialBox = useRef<HTMLPreElement>(null);
   useEffect(() => {
     serialBox.current?.scrollTo({ top: serialBox.current.scrollHeight });
@@ -302,8 +305,26 @@ export function CodePanel({ boardId }: { boardId: string }) {
       </div>
 
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <h2 className="text-base font-semibold">{t('code.serial')}</h2>
+        <div className="mb-1.5 flex items-center gap-2">
+          <h2 className="mr-auto text-base font-semibold">{t('code.serial')}</h2>
+          <div
+            role="group"
+            aria-label={t('code.serialView')}
+            className="flex gap-0.5 rounded-lg bg-paper p-0.5"
+          >
+            {(['text', 'plot'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                data-testid={`serial-${mode}`}
+                aria-pressed={serialMode === mode}
+                onClick={() => setSerialMode(mode)}
+                className={`min-h-9 rounded-md px-2.5 text-sm font-medium ${serialMode === mode ? 'bg-surface text-ink shadow-sm' : 'text-ink-soft'}`}
+              >
+                {t(mode === 'text' ? 'code.serialText' : 'code.plot')}
+              </button>
+            ))}
+          </div>
           {serial && (
             <button
               type="button"
@@ -314,7 +335,9 @@ export function CodePanel({ boardId }: { boardId: string }) {
             </button>
           )}
         </div>
+        {serialMode === 'plot' && <SerialPlot text={serial} />}
         <pre
+          hidden={serialMode === 'plot'}
           ref={serialBox}
           data-testid="serial"
           className="h-36 overflow-auto rounded-xl bg-ink p-3 font-mono text-sm whitespace-pre-wrap text-paper"

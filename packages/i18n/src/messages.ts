@@ -940,6 +940,12 @@ export const bn = {
   'code.boards': 'কোন বোর্ডের প্রোগ্রাম',
   'code.serial': 'সিরিয়াল মনিটর',
   'code.serialEmpty': 'প্রোগ্রাম Serial.print() দিয়ে যা পাঠাবে, চালু অবস্থায় এখানে দেখাবে।',
+  'code.plot': 'গ্রাফ',
+  'code.serialText': 'লেখা',
+  'code.serialView': 'সিরিয়াল কীভাবে দেখাবে',
+  'code.plotEmpty':
+    'প্রোগ্রাম সংখ্যা ছাপলে এখানে রেখা হয়ে দেখা যাবে। এক লাইনে কয়েকটা সংখ্যা দিলে কয়েকটা রেখা হয়; নাম দিতে চাইলে "temp:24.5" লেখো।',
+  'code.plotPoints': 'শেষ {count}টা লাইন',
   'code.clear': 'মুছে ফেলো',
 } as const;
 
@@ -1903,5 +1909,11 @@ export const en: Record<MessageKey, string> = {
   'code.boards': 'Which board’s program',
   'code.serial': 'Serial monitor',
   'code.serialEmpty': 'Whatever the program sends with Serial.print() appears here while it runs.',
+  'code.plot': 'Graph',
+  'code.serialText': 'Text',
+  'code.serialView': 'How the serial monitor shows',
+  'code.plotEmpty':
+    'When the program prints numbers, they show here as lines. Several numbers on one line make several lines; to name one, print "temp:24.5".',
+  'code.plotPoints': 'last {count} lines',
   'code.clear': 'Clear',
 };
