@@ -1855,3 +1855,29 @@ remaining work.
   lesson can be finished, as for every other lesson.
 - **Corrected:** the relay module already had a lesson; the "Not done" note in
   D-056 is out of date on that point.
+
+## D-091 — Thirty reference circuits, and tests that wait in lab time
+
+Built on 24 November 2026 as the "simulator accuracy" segment.
+
+- **Reference circuits.** The DC solver is checked against ngspice 45.2 on 30
+  circuits, up from 15, plus the 3 over time: an R-2R ladder DAC, a current
+  divider, batteries in parallel, a cell being charged, a T attenuator, a
+  balanced bridge, a ten-resistor chain, a two-source mesh, a bridge
+  rectifier, diode OR and AND gates, an LED on a current source, a solar cell
+  on a load, a transistor LED driver from a 3.3 V pin, and a Darlington pair.
+  The answers come from ngspice in WebAssembly (`eecircuit-engine`, MIT),
+  which the project already used; nothing new was installed. Four answers were
+  also checked by hand (the ladder gives 5 × 11/16 = 3.4375 V; the bridge's
+  midpoints are both 4 V; the divider and the mesh match their formulas). The
+  existing 15 answer files came out unchanged. Every node in the new circuits
+  has a real current path, so no answer rests on leakage, where simulators
+  rightly differ. The regeneration script now reads ngspice's result names in
+  either case.
+- **Tests in lab time.** The lab shows its simulated time to tests in a hidden
+  element; a helper retries an assertion until it passes or the lab has run a
+  given time, with three minutes of real time as a hard limit. Nine tests that
+  waited on the wall clock for the simulation now use it. Compile waits keep
+  wall-clock limits.
+- **Not done:** measuring the editor with 200 parts and the lab on a low-end
+  Android phone; that needs the phone.

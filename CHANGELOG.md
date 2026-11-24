@@ -16,11 +16,15 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Fixed
 
+- Browser tests no longer fail when a busy computer slows the simulation: they
+  wait in the lab's own time.
 - A logic sheet with a wired hex digit can be saved and opened again (it was
   refused, and came back empty).
 
 ### Added
 
+- **Thirty reference circuits**: the solver is checked against ngspice on 30
+  steady-state circuits and 3 over time, up from 18.
 - **A quiz for every lesson**: all 50 lessons end with questions, marked at
   once with the reason.
 - **Lessons on the logic sheet**: the half adder, a binary counter on a hex
