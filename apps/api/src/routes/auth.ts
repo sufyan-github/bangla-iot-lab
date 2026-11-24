@@ -29,7 +29,9 @@ const Name = Type.String({ minLength: 1, maxLength: 80 });
 export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
   const { database, config } = deps;
   const secure = config.webOrigin.startsWith('https:');
-  const strict = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } };
+  const strict = {
+    config: { rateLimit: { max: deps.config.signInsPerMinute, timeWindow: '1 minute' } },
+  };
 
   return async (app) => {
     app.post(

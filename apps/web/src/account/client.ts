@@ -3,7 +3,14 @@ import { API_URL } from '../api';
 
 /** Who is signed in, as the API describes them. */
 export interface Me {
-  user: { id: string; kind: 'adult' | 'learner'; displayName: string; locale: string };
+  user: {
+    id: string;
+    kind: 'adult' | 'learner';
+    displayName: string;
+    locale: string;
+    /** A learner who signed up on their own. */
+    ownAccount?: boolean;
+  };
   schools: { schoolId: string; schoolName: string; role: string }[];
   classes: { classId: string; className: string; grade: number; pseudonym: string }[];
 }

@@ -49,7 +49,9 @@ const School = Type.Object({ id: Type.String({ format: 'uuid' }) });
  */
 export function schoolRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
   const { database } = deps;
-  const strict = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } };
+  const strict = {
+    config: { rateLimit: { max: deps.config.signInsPerMinute, timeWindow: '1 minute' } },
+  };
 
   return async (app) => {
     /** The school's teachers and its open invitations. Admins only. */

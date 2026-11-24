@@ -29,6 +29,7 @@ const KNOWN_ERRORS = [
   'bad-request',
   'already-set',
   'no-such-invite',
+  'already-in-class',
 ];
 
 function Problem({ error }: { error: string | null }) {
@@ -245,14 +246,27 @@ function LearnerJoin() {
   const [code, setCode] = useState('');
   const [pseudonym, setPseudonym] = useState('');
   const [key, setKey] = useState('');
-  const [joined, setJoined] = useState<{ key: string; className: string } | null>(null);
+  const [joined, setJoined] = useState<{ key: string; className?: string } | null>(null);
+  // With a class code from a teacher, or on their own with a guardian's permission.
+  const [mode, setMode] = useState<'code' | 'own'>('code');
+  const [consent, setConsent] = useState(false);
   const join = useSubmit();
+  const own = useSubmit();
   const signIn = useSubmit();
   if (joined) {
     return (
       <div className="space-y-3" data-testid="joined">
-        <p className="font-semibold">{t('account.joined', { name: joined.className })}</p>
-        <ShownOnce label={t('account.yourKey')} value={joined.key} testId="learner-key" />
+        <p className="font-semibold">
+          {joined.className
+            ? t('account.joined', { name: joined.className })
+            : t('account.welcome', { name: pseudonym })}
+        </p>
+        <ShownOnce
+          label={t('account.yourKey')}
+          value={joined.key}
+          testId="learner-key"
+          note={t('account.keepKey')}
+        />
         <button type="button" onClick={() => void refresh()} className={primary}>
           {t('account.continue')}
         </button>
@@ -261,45 +275,113 @@ function LearnerJoin() {
   }
   return (
     <div className="space-y-6">
-      <form
-        className="space-y-3"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const done = await join.submit<{ key: string; className: string }>('/v1/join', {
-            code,
-            pseudonym,
-          });
-          if (done) setJoined(done);
-        }}
-      >
-        <h2 className="text-lg font-semibold">{t('account.joinClass')}</h2>
-        <Field label={t('account.classCode')}>
-          <input
-            data-testid="join-code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-            autoCapitalize="characters"
-            className={`${input} font-mono tracking-widest`}
-          />
-        </Field>
-        <Field label={t('account.pseudonym')}>
-          <input
-            data-testid="join-pseudonym"
-            value={pseudonym}
-            onChange={(e) => setPseudonym(e.target.value)}
-            required
-            minLength={2}
-            maxLength={24}
-            className={input}
-          />
-        </Field>
-        <p className="text-sm text-ink-soft">{t('account.pseudonymRule')}</p>
-        <Problem error={join.error} />
-        <button type="submit" data-testid="join-submit" disabled={join.busy} className={primary}>
-          {t('account.join')}
+      <div className="flex flex-wrap gap-2" role="group">
+        <button
+          type="button"
+          className="chip"
+          aria-pressed={mode === 'code'}
+          onClick={() => setMode('code')}
+        >
+          {t('account.haveCode')}
         </button>
-      </form>
+        <button
+          type="button"
+          className="chip"
+          data-testid="learner-own"
+          aria-pressed={mode === 'own'}
+          onClick={() => setMode('own')}
+        >
+          {t('account.onMyOwn')}
+        </button>
+      </div>
+      {mode === 'own' ? (
+        <form
+          className="space-y-3"
+          data-testid="own-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const done = await own.submit<{ key: string }>('/v1/auth/learner-sign-up', {
+              pseudonym,
+              guardianConsent: consent,
+            });
+            if (done) setJoined(done);
+          }}
+        >
+          <h2 className="text-lg font-semibold">{t('account.ownTitle')}</h2>
+          <p className="text-sm text-ink-soft">{t('account.ownAbout')}</p>
+          <Field label={t('account.pseudonym')}>
+            <input
+              data-testid="own-pseudonym"
+              value={pseudonym}
+              onChange={(e) => setPseudonym(e.target.value)}
+              required
+              minLength={2}
+              maxLength={24}
+              className={input}
+            />
+          </Field>
+          <p className="text-sm text-ink-soft">{t('account.pseudonymRule')}</p>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              data-testid="own-consent"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-1 h-5 w-5 accent-amber"
+            />
+            {t('account.guardianConsent')}
+          </label>
+          <Problem error={own.error} />
+          <button
+            type="submit"
+            data-testid="own-submit"
+            disabled={own.busy || !consent}
+            className={primary}
+          >
+            {t('account.startLearning')}
+          </button>
+        </form>
+      ) : (
+        <form
+          className="space-y-3"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const done = await join.submit<{ key: string; className: string }>('/v1/join', {
+              code,
+              pseudonym,
+            });
+            if (done) setJoined(done);
+          }}
+        >
+          <h2 className="text-lg font-semibold">{t('account.joinClass')}</h2>
+          <Field label={t('account.classCode')}>
+            <input
+              data-testid="join-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              autoCapitalize="characters"
+              className={`${input} font-mono tracking-widest`}
+            />
+          </Field>
+          <Field label={t('account.pseudonym')}>
+            <input
+              data-testid="join-pseudonym"
+              value={pseudonym}
+              onChange={(e) => setPseudonym(e.target.value)}
+              required
+              minLength={2}
+              maxLength={24}
+              className={input}
+            />
+          </Field>
+          <p className="text-sm text-ink-soft">{t('account.pseudonymRule')}</p>
+          <Problem error={join.error} />
+          <button type="submit" data-testid="join-submit" disabled={join.busy} className={primary}>
+            {t('account.join')}
+          </button>
+        </form>
+      )}
       <form
         className="space-y-3 border-t border-line pt-4"
         onSubmit={async (event) => {
@@ -327,7 +409,16 @@ function LearnerJoin() {
   );
 }
 
-function Roster({ classId }: { classId: string }) {
+function Roster({
+  classId,
+  others,
+  onChanged,
+}: {
+  classId: string;
+  /** The teacher's other classes in the same school, where a learner may be moved. */
+  others: { id: string; name: string }[];
+  onChanged: () => void;
+}) {
   const { t, number } = useT();
   const [learners, setLearners] = useState<Learner[] | null>(null);
   const [newKey, setNewKey] = useState<{ pseudonym: string; key: string } | null>(null);
@@ -361,6 +452,28 @@ function Roster({ classId }: { classId: string }) {
               data-testid="roster-learner"
             >
               <span className="flex-1 font-medium">{learner.pseudonym}</span>
+              {others.length > 0 && (
+                <select
+                  data-testid="move-to"
+                  aria-label={t('account.moveTo')}
+                  value=""
+                  className="field min-h-9 w-auto py-1 text-sm"
+                  onChange={async (event) => {
+                    const to = event.target.value;
+                    if (!to) return;
+                    await call(`/v1/classes/${classId}/learners/${learner.enrolment}/move`, { to });
+                    await load();
+                    onChanged();
+                  }}
+                >
+                  <option value="">{t('account.moveTo')}</option>
+                  {others.map((other) => (
+                    <option key={other.id} value={other.id}>
+                      {other.name}
+                    </option>
+                  ))}
+                </select>
+              )}
               <button
                 type="button"
                 className="btn btn-quiet min-h-9 text-sm"
@@ -532,6 +645,11 @@ interface OpenInvite {
 /** For a school's admin: its teachers, and codes that invite more. */
 function SchoolTeachers({ schoolId, schoolName }: { schoolId: string; schoolName: string }) {
   const { t } = useT();
+  const refresh = useAccount((s) => s.refresh);
+  // Which teacher's action is waiting for a second press, and which action.
+  const [confirming, setConfirming] = useState<{ id: string; what: 'remove' | 'admin' } | null>(
+    null,
+  );
   const [list, setList] = useState<{ teachers: SchoolTeacher[]; invites: OpenInvite[] } | null>(
     null,
   );
@@ -562,10 +680,52 @@ function SchoolTeachers({ schoolId, schoolName }: { schoolId: string; schoolName
               className="flex items-center gap-2 px-4 py-2.5"
             >
               <span className="flex-1">{teacher.displayName}</span>
-              {teacher.admin && (
+              {teacher.admin ? (
                 <span className="rounded-full bg-mat-soft px-2 py-0.5 text-xs font-medium text-mat-deep">
                   {t('account.admin')}
                 </span>
+              ) : confirming?.id === teacher.userId ? (
+                <button
+                  type="button"
+                  data-testid={`confirm-${confirming.what === 'admin' ? 'make-admin' : 'remove-teacher'}`}
+                  className={`btn min-h-9 px-3 text-sm text-paper ${
+                    confirming.what === 'admin' ? 'bg-mat' : 'bg-danger'
+                  }`}
+                  onClick={async () => {
+                    const action = confirming.what === 'admin' ? 'make-admin' : 'remove';
+                    await call(`/v1/schools/${schoolId}/teachers/${teacher.userId}/${action}`, {});
+                    setConfirming(null);
+                    // Handing on the role ends this page's admin view.
+                    if (action === 'make-admin') await refresh();
+                    else await load();
+                  }}
+                >
+                  {t(
+                    confirming.what === 'admin'
+                      ? 'account.confirmMakeAdmin'
+                      : 'account.confirmRemoveTeacher',
+                    { name: teacher.displayName },
+                  )}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    data-testid="make-admin"
+                    className="btn btn-quiet min-h-9 text-sm"
+                    onClick={() => setConfirming({ id: teacher.userId, what: 'admin' })}
+                  >
+                    {t('account.makeAdmin')}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="remove-teacher"
+                    className="btn btn-danger min-h-9 text-sm"
+                    onClick={() => setConfirming({ id: teacher.userId, what: 'remove' })}
+                  >
+                    {t('account.remove')}
+                  </button>
+                </>
               )}
             </li>
           ))}
@@ -805,7 +965,13 @@ function TeacherDashboard() {
                 )}
                 {open === item.id && (
                   <div className="mt-3">
-                    <Roster classId={item.id} />
+                    <Roster
+                      classId={item.id}
+                      others={(classes ?? []).filter(
+                        (other) => other.id !== item.id && other.schoolId === item.schoolId,
+                      )}
+                      onChanged={() => void load()}
+                    />
                   </div>
                 )}
               </li>
@@ -904,67 +1070,246 @@ function TeacherDashboard() {
   );
 }
 
+interface LessonProgressRow {
+  lessonId: string;
+  steps: number;
+  done: boolean;
+}
+
+/** A learner's own page: their progress, their classes and what is set there, and their key. */
 function LearnerHome() {
   const { t, number, locale } = useT();
   const me = useAccount((s) => s.me)!;
+  const refresh = useAccount((s) => s.refresh);
   const [assigned, setAssigned] = useState<
     { id: string; lessonId: string; dueAt: string | null; className: string }[]
   >([]);
+  const [progress, setProgress] = useState<LessonProgressRow[] | null>(null);
+  const [code, setCode] = useState('');
+  const [nickname, setNickname] = useState(me.user.displayName);
+  const [joinedClass, setJoinedClass] = useState<string | null>(null);
+  const [confirmKey, setConfirmKey] = useState(false);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const join = useSubmit();
   useEffect(() => {
     void call<{ assignments: typeof assigned }>('/v1/assignments').then((answer) => {
       if (answer.ok) setAssigned(answer.value.assignments);
     });
-  }, []);
+    void call<{ lessons: LessonProgressRow[] }>('/v1/me/progress').then((answer) => {
+      setProgress(answer.ok ? answer.value.lessons : []);
+    });
+  }, [me.classes.length]);
+  const title = (lessonId: string) =>
+    LESSONS.find((l) => l.id === lessonId)?.title[locale] ?? lessonId;
+
   return (
-    <section className="space-y-2" data-testid="learner-home">
-      <h2 className="text-lg font-semibold">{t('account.yourClasses')}</h2>
-      <ul className="space-y-2">
-        {me.classes.map((item) => (
-          <li
-            key={item.classId}
-            className="rounded-[var(--radius-card)] border border-line bg-surface p-4"
-          >
-            <span className="font-semibold">{item.className}</span> ·{' '}
-            {t('account.grade', { grade: number(item.grade) })}
-            <p className="text-sm text-ink-soft">{t('account.youAre', { name: item.pseudonym })}</p>
-          </li>
-        ))}
-      </ul>
-      <h2 className="pt-4 text-lg font-semibold">{t('account.setForYou')}</h2>
-      {assigned.length === 0 ? (
-        <p className="text-sm text-ink-soft">{t('account.noLessons')}</p>
-      ) : (
-        <ul className="space-y-2" data-testid="assigned-lessons">
-          {assigned.map((item) => {
-            const lesson = LESSONS.find((l) => l.id === item.lessonId);
-            return (
+    <div className="space-y-8" data-testid="learner-home">
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">
+          {t('account.welcome', { name: me.user.displayName })}
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/lessons" className={primary}>
+            {t('account.goLessons')}
+          </Link>
+          <Link to="/" className={secondary}>
+            {t('account.goProjects')}
+          </Link>
+        </div>
+      </section>
+
+      <section className="space-y-2" data-testid="my-progress">
+        <h2 className="text-lg font-semibold">{t('account.myProgress')}</h2>
+        {progress === null ? (
+          <p className="text-sm text-ink-soft">{t('account.loading')}</p>
+        ) : progress.length === 0 ? (
+          <p className="text-sm text-ink-soft">{t('account.noProgress')}</p>
+        ) : (
+          <ul className="space-y-2">
+            {progress.map((row) => {
+              const total = LESSONS.find((l) => l.id === row.lessonId)?.steps.length ?? 0;
+              const shown = row.done ? total : Math.min(row.steps, total);
+              return (
+                <li
+                  key={row.lessonId}
+                  data-testid="progress-lesson"
+                  data-lesson={row.lessonId}
+                  data-done={row.done}
+                  className="rounded-[var(--radius-card)] border border-line bg-surface p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="flex-1 font-semibold">{title(row.lessonId)}</span>
+                    {row.done ? (
+                      <span className="rounded-full bg-mat-soft px-2 py-0.5 text-xs font-medium text-mat-deep">
+                        {t('account.lessonDone')}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-ink-soft">
+                        {t('account.stepsDone', { done: number(shown), total: number(total) })}
+                      </span>
+                    )}
+                    <Link
+                      to={`/lessons#${row.lessonId}`}
+                      className="font-medium text-mat underline"
+                    >
+                      {t('account.openLesson')}
+                    </Link>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line" aria-hidden>
+                    <div
+                      className="h-full rounded-full bg-mat"
+                      style={{ width: `${total ? (shown / total) * 100 : 0}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      {me.classes.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold">{t('account.yourClasses')}</h2>
+          <ul className="space-y-2">
+            {me.classes.map((item) => (
               <li
-                key={item.id}
-                className="flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-line bg-surface p-4"
+                key={item.classId}
+                className="rounded-[var(--radius-card)] border border-line bg-surface p-4"
               >
-                <span className="flex-1 font-semibold">
-                  {lesson?.title[locale] ?? item.lessonId}
-                </span>
-                {item.dueAt && (
-                  <span className="text-sm text-ink-soft">
-                    {t('account.dueBy', { date: new Date(item.dueAt).toLocaleDateString() })}
-                  </span>
-                )}
-                <Link to={`/lessons#${item.lessonId}`} className="font-medium text-mat underline">
-                  {t('account.openLesson')}
-                </Link>
+                <span className="font-semibold">{item.className}</span> ·{' '}
+                {t('account.grade', { grade: number(item.grade) })}
+                <p className="text-sm text-ink-soft">
+                  {t('account.youAre', { name: item.pseudonym })}
+                </p>
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ul>
+          <h2 className="pt-4 text-lg font-semibold">{t('account.setForYou')}</h2>
+          {assigned.length === 0 ? (
+            <p className="text-sm text-ink-soft">{t('account.noLessons')}</p>
+          ) : (
+            <ul className="space-y-2" data-testid="assigned-lessons">
+              {assigned.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-line bg-surface p-4"
+                >
+                  <span className="flex-1 font-semibold">{title(item.lessonId)}</span>
+                  {item.dueAt && (
+                    <span className="text-sm text-ink-soft">
+                      {t('account.dueBy', { date: new Date(item.dueAt).toLocaleDateString() })}
+                    </span>
+                  )}
+                  <Link to={`/lessons#${item.lessonId}`} className="font-medium text-mat underline">
+                    {t('account.openLesson')}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       )}
-    </section>
+
+      <form
+        data-testid="learner-join-class"
+        className="space-y-3 rounded-[var(--radius-card)] border border-line bg-paper p-4"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          const done = await join.submit<{ className: string }>('/v1/join', {
+            code,
+            pseudonym: nickname,
+          });
+          if (done) {
+            setJoinedClass(done.className);
+            setCode('');
+            await refresh();
+          }
+        }}
+      >
+        <h2 className="text-lg font-semibold">{t('account.joinAClass')}</h2>
+        <p className="text-sm text-ink-soft">{t('account.joinAClassAbout')}</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label={t('account.classCode')}>
+            <input
+              data-testid="learner-class-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              autoCapitalize="characters"
+              className={`${input} font-mono tracking-widest`}
+            />
+          </Field>
+          <Field label={t('account.pseudonym')}>
+            <input
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              required
+              minLength={2}
+              maxLength={24}
+              className={input}
+            />
+          </Field>
+        </div>
+        <Problem error={join.error} />
+        {joinedClass && (
+          <p role="status" className="text-sm font-medium text-mat-deep">
+            {t('account.joinedClass', { name: joinedClass })}
+          </p>
+        )}
+        <button
+          type="submit"
+          data-testid="learner-class-submit"
+          disabled={join.busy}
+          className={secondary}
+        >
+          {t('account.join')}
+        </button>
+      </form>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold">{t('account.yourKeyTitle')}</h2>
+        <p className="text-sm text-ink-soft">{t('account.newOwnKeyAbout')}</p>
+        {newKey && (
+          <ShownOnce
+            label={t('account.yourKey')}
+            value={newKey}
+            testId="own-new-key"
+            note={t('account.keepKey')}
+          />
+        )}
+        {confirmKey ? (
+          <button
+            type="button"
+            data-testid="confirm-new-key"
+            className="btn min-h-9 bg-danger px-3 text-sm text-paper"
+            onClick={async () => {
+              const answer = await call<{ key: string }>('/v1/me/key', {});
+              setConfirmKey(false);
+              if (answer.ok) setNewKey(answer.value.key);
+            }}
+          >
+            {t('account.confirmNewKey')}
+          </button>
+        ) : (
+          <button
+            type="button"
+            data-testid="new-own-key"
+            className={secondary}
+            onClick={() => setConfirmKey(true)}
+          >
+            {t('account.makeNewKey')}
+          </button>
+        )}
+      </section>
+    </div>
   );
 }
 
 /**
  * Accounts: a teacher signs in and manages classes; a learner joins a class
- * with its code and a nickname. The lab works without signing in.
+ * with its code and a nickname, or signs up to learn on their own. The lab
+ * works without signing in.
  */
 export function AccountPage() {
   const { t } = useT();
