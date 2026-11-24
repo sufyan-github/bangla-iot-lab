@@ -288,3 +288,41 @@ describe('74HC74 D flip-flop', () => {
     expect(q).toEqual([false, true, true, false, false, true, true, false]);
   });
 });
+
+describe('the logic analyser on a chip', () => {
+  it('records a chip leg from ground: the clock and the flip-flop’s Q, half as fast', () => {
+    const document = circuit(
+      [
+        battery(5),
+        chip('74HC74'),
+        {
+          id: 'CLK1',
+          type: 'clock',
+          pins: { vcc: 'BB1.g24', out: 'BB1.g25', gnd: 'BB1.g26' },
+          props: { hz: 2 },
+        },
+      ],
+      [
+        ...power,
+        ['BAT1.pos', 'BB1.j24'],
+        ['BAT1.neg', 'BB1.j26'],
+        ['BB1.j25', beside(3)],
+        [beside(6), beside(2)],
+        tie(1, true),
+        tie(4, true),
+      ],
+    );
+    const session = new SimulationSession(document);
+    session.setProbes(['pin:U1.p3', 'pin:U1.p5']);
+    session.advance(2000);
+    const { trace } = session.frame();
+    /** The times at which a recorded signal goes HIGH. */
+    const rises = (values: number[]) =>
+      values.flatMap((volts, i) =>
+        volts > 2.5 && (i === 0 || values[i - 1]! <= 2.5) ? [Math.round(trace!.times[i]!)] : [],
+      );
+    // 2 Hz: the clock rises at 250, 750, 1250 and 1750 ms; Q on every other rise.
+    expect(rises(trace!.values[0]!)).toEqual([250, 750, 1250, 1750]);
+    expect(rises(trace!.values[1]!)).toEqual([250, 1250]);
+  });
+});

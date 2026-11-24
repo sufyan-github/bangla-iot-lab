@@ -1,7 +1,16 @@
-import { boardPinNumber, isProgrammable, parseTerminal } from '@banglalab/shared';
+import {
+  CHIP_MODELS,
+  boardPinNumber,
+  isHole,
+  isLogicChipPart,
+  isProgrammable,
+  parseTerminal,
+  stripOf,
+} from '@banglalab/shared';
 import type { Probe } from '@banglalab/simulation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useT } from '../i18n';
+import { pinLabel } from './diagram/nets';
 import { signalStats, signals, type SignalStats } from './signals';
 import { useLab } from './store';
 
@@ -10,6 +19,8 @@ const CHANNEL_COLORS = ['#e8a21a', '#4fb3ff'];
 const PLOT_HEIGHT = 190;
 const ROW_HEIGHT = 26;
 const LABEL_WIDTH = 46;
+/** At most this many chip legs get a row of their own. */
+const MAX_CHIP_ROWS = 16;
 
 /** Rounds a voltage range up to a tidy full-scale value. */
 function fullScale(volts: number): number {
@@ -56,6 +67,52 @@ export function SignalsPanel() {
       .map((socket): Probe => `socket:${socket}`);
   }, [circuit.wires, pinOf]);
 
+  /**
+   * The legs of logic chips and clock modules that are joined to something (by
+   * a wire or another part's leg in the same strip), apart from supply and ground.
+   */
+  const chipProbes = useMemo(() => {
+    const used = new Map<string, number>();
+    const note = (end: string) => {
+      if (!isHole(end)) return;
+      const strip = stripOf(end);
+      used.set(strip, (used.get(strip) ?? 0) + 1);
+    };
+    for (const wire of circuit.wires) [wire.from, wire.to].forEach(note);
+    for (const component of circuit.components) {
+      if ('pins' in component)
+        Object.values(component.pins as Record<string, string>).forEach(note);
+    }
+    const probes: Probe[] = [];
+    for (const component of circuit.components) {
+      let legs: string[] = [];
+      if (isLogicChipPart(component)) {
+        const model = CHIP_MODELS[component.props.chip];
+        legs = Array.from({ length: model.pins }, (_, i) => i + 1)
+          .filter((n) => n !== model.supply && n !== model.ground)
+          .map((n) => `p${n}`);
+      } else if (component.type === 'clock') legs = ['out'];
+      const pins = 'pins' in component ? (component.pins as Record<string, string>) : {};
+      for (const leg of legs) {
+        const hole = pins[leg];
+        // Joined to something besides the leg itself.
+        if (hole && (used.get(stripOf(hole)) ?? 0) > 1) probes.push(`pin:${component.id}.${leg}`);
+      }
+    }
+    return probes.slice(0, MAX_CHIP_ROWS);
+  }, [circuit]);
+  /** Every row of the logic analyser: the wired board pins, then the chip legs. */
+  const rows = useMemo(() => [...pinProbes, ...chipProbes], [pinProbes, chipProbes]);
+  /** A chip leg's name, as its datasheet gives it: "U1 1Q". */
+  const legName = useCallback(
+    (probe: Probe) => {
+      const [id, leg] = probe.slice('pin:'.length).split('.');
+      const component = circuit.components.find((c) => c.id === id);
+      return component ? `${id} ${pinLabel(component, leg!)}` : probe;
+    },
+    [circuit.components],
+  );
+
   const firstChoice =
     parts.find((c) => c.type === 'led') ?? parts.find((c) => c.type === 'capacitor') ?? parts[0];
   const [channels, setChannels] = useState<(Probe | null)[]>([
@@ -65,11 +122,11 @@ export function SignalsPanel() {
   const [spanMs, setSpanMs] = useState<number>(1000);
   const [stats, setStats] = useState<(SignalStats | null)[]>([null, null]);
 
-  // Record the chosen channels plus every wired pin while this panel is open.
-  const probeKey = [...channels, ...pinProbes].join();
+  // Record the chosen channels plus every analyser row while this panel is open.
+  const probeKey = [...channels, ...rows].join();
   useEffect(() => {
     const chosen = channels.filter((probe): probe is Probe => probe !== null);
-    setProbes([...new Set([...chosen, ...pinProbes])]);
+    setProbes([...new Set([...chosen, ...rows])]);
     // `probeKey` stands for the contents of both lists.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [probeKey]);
@@ -89,7 +146,7 @@ export function SignalsPanel() {
       drawn = signals.version;
 
       const width = canvas.clientWidth;
-      const height = PLOT_HEIGHT + pinProbes.length * ROW_HEIGHT;
+      const height = PLOT_HEIGHT + rows.length * ROW_HEIGHT;
       const ratio = window.devicePixelRatio || 1;
       if (canvas.width !== width * ratio || canvas.height !== height * ratio) {
         canvas.width = width * ratio;
@@ -161,12 +218,16 @@ export function SignalsPanel() {
       views.forEach((view, channel) => view && trace(view, y, CHANNEL_COLORS[channel]!));
 
       // Logic analyser rows: above 2.5 V counts as HIGH.
-      pinProbes.forEach((probe, row) => {
+      rows.forEach((probe, row) => {
         const rowTop = PLOT_HEIGHT + row * ROW_HEIGHT;
         context.fillStyle = row % 2 === 0 ? '#1a302b' : '#13231f';
         context.fillRect(0, rowTop, width, ROW_HEIGHT);
         context.fillStyle = '#b9c9c4';
-        context.fillText(socketName(probe), 6, rowTop + 17);
+        context.fillText(
+          probe.startsWith('pin:') ? legName(probe) : socketName(probe),
+          6,
+          rowTop + 17,
+        );
         const view = signals.window(probe, spanMs);
         if (view) trace(view, (volts) => rowTop + (volts > 2.5 ? 6 : ROW_HEIGHT - 6), '#7dff9b');
       });
@@ -179,11 +240,15 @@ export function SignalsPanel() {
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [channels, pinProbes, spanMs]);
+  }, [channels, rows, spanMs, legName]);
 
   const probeLabel = (probe: Probe) =>
-    probe.startsWith('part:') ? probe.slice(5) : t('scope.socket', { pin: socketName(probe) });
-  const options: Probe[] = [...parts.map((c): Probe => `part:${c.id}`), ...pinProbes];
+    probe.startsWith('part:')
+      ? probe.slice(5)
+      : probe.startsWith('pin:')
+        ? legName(probe)
+        : t('scope.socket', { pin: socketName(probe) });
+  const options: Probe[] = [...parts.map((c): Probe => `part:${c.id}`), ...rows];
 
   return (
     <div className="space-y-4 px-4 py-4" data-testid="signals-panel">
@@ -251,7 +316,8 @@ export function SignalsPanel() {
           role="img"
           aria-label={t('scope.title')}
           className="block w-full rounded-xl"
-          style={{ height: PLOT_HEIGHT + pinProbes.length * ROW_HEIGHT }}
+          style={{ height: PLOT_HEIGHT + rows.length * ROW_HEIGHT }}
+          data-rows={rows.length}
         />
         {!running && signals.times.length === 0 && (
           <p className="mt-2 text-sm text-ink-soft">{t('scope.idle')}</p>
@@ -293,8 +359,17 @@ export function SignalsPanel() {
       <section>
         <h2 className="text-base font-semibold">{t('scope.logic')}</h2>
         <p className="text-sm text-ink-soft">
-          {t(pinProbes.length > 0 ? 'scope.logicAbout' : 'scope.logicEmpty')}
+          {t(rows.length > 0 ? 'scope.logicAbout' : 'scope.logicEmpty')}
         </p>
+        {chipProbes.length > 0 && (
+          <ul className="mt-1 flex flex-wrap gap-1.5 text-sm" data-testid="analyser-legs">
+            {chipProbes.map((probe) => (
+              <li key={probe} className="rounded-md border border-line px-2 py-0.5">
+                {legName(probe)}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

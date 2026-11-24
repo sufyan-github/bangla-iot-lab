@@ -13,6 +13,7 @@ import { Esp32SketchBoard } from './esp32-sketch-board';
 import { MIN_SUPPLY, MODULE_MIN_SUPPLY } from './library';
 import {
   buildNetlist,
+  netName,
   type ChargerState,
   type ChipState,
   type RegulatorState,
@@ -64,9 +65,10 @@ export interface BoardStatus {
 
 /**
  * A signal to record over time, as an instrument probe would: the voltage
- * across a part ("part:LED1") or on a board socket ("socket:UNO1.d9").
+ * across a part ("part:LED1"), on a board socket ("socket:UNO1.d9"), or on a
+ * leg of a part on the breadboard ("pin:U1.p5"), measured from ground.
  */
-export type Probe = `part:${string}` | `socket:${string}`;
+export type Probe = `part:${string}` | `socket:${string}` | `pin:${string}`;
 
 /** What the probes saw since the previous frame. Each value holds until the next time. */
 export interface SignalTrace {
@@ -192,6 +194,7 @@ export class SimulationSession {
 
   private probes: Probe[] = [];
   private trace: SignalTrace = { probes: [], times: [], values: [] };
+  private probeNets: (string | null)[] = [];
   /** Time reached by the recording, which runs ahead of `time` inside a slice. */
   private clock = 0;
 
@@ -244,6 +247,7 @@ export class SimulationSession {
     // Breadboards play no part in the electricity: the strips follow from the hole names.
     const document = withoutBreadboards(circuit);
     this.document = document;
+    this.probeNets = this.netsOfProbes();
     this.pressed = pressed;
     this.solutions = new Map();
     this.stepping = null;
@@ -281,13 +285,30 @@ export class SimulationSession {
   setProbes(probes: readonly Probe[]): void {
     this.probes = [...probes];
     this.trace = { probes: this.probes, times: [], values: this.probes.map(() => []) };
+    this.probeNets = this.netsOfProbes();
+  }
+
+  /** For each probe on a leg, the net its hole is in; null for the other probes. */
+  private netsOfProbes(): (string | null)[] {
+    return this.probes.map((probe) => {
+      if (!probe.startsWith('pin:')) return null;
+      const [id, pin] = probe.slice('pin:'.length).split('.');
+      const component = this.document.components.find((c) => c.id === id);
+      const hole =
+        component && 'pins' in component
+          ? (component.pins as Record<string, string | undefined>)[pin ?? '']
+          : undefined;
+      return hole ? netName(hole) : null;
+    });
   }
 
   /** Adds a sample to the trace, unless nothing changed since the last one. */
   private record(solution: StateSolution | null): void {
     if (this.probes.length === 0) return;
     const { times, values } = this.trace;
-    const sample = this.probes.map((probe) => {
+    const sample = this.probes.map((probe, p) => {
+      const net = this.probeNets[p];
+      if (net) return solution?.nodes[net] ?? 0;
       const id = probe.slice(probe.indexOf(':') + 1);
       const source = probe.startsWith('part:') ? solution?.parts[id] : solution?.sockets[id];
       return source?.voltage ?? 0;

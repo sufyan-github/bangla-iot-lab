@@ -8,6 +8,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The logic analyser reads chip legs**: every joined leg of a logic chip or
+  clock module gets a row, named as in its datasheet, so a circuit of chips
+  with no board can be watched too. Any of them can be an oscilloscope channel.
 - **Four logic lessons**, each checked step by step by the lab: AND and OR
   gates, the flip-flop, counting by itself with a seven-segment display, and
   the shift register.

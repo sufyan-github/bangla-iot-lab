@@ -1466,3 +1466,20 @@ to change: a lesson still starts with the ESP32 board, which is the supply.
 
 **Not checked.** That the lessons read well to students; that is for the team's
 classroom trials, like the other lessons.
+
+## D-078 — The logic analyser reads chip legs
+
+The fifth logic segment (L5). The logic analyser showed only the board's wired
+pins, so a circuit of chips with no board, such as a counter driven by a clock
+module, showed nothing. A probe can now be on any leg of a part on the
+breadboard (`pin:U1.p5`): the session records the voltage of the net that leg
+is in, measured from ground, at every change, like the other probes.
+
+The panel gives a row to every leg of a logic chip or clock module that is
+joined to something (a wire or another part's leg in its strip), apart from
+supply and ground, up to 16 rows, named as in the datasheet ("U1 1CLK"). Above
+2.5 V counts as HIGH, as for the board pins. Any of these legs can also be one
+of the oscilloscope's two channels.
+
+**Not done.** A threshold that follows each chip's own supply (a chip on 3.3 V
+is read against 2.5 V too), and triggering.

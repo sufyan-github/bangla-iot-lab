@@ -124,3 +124,36 @@ test('a 16-pin chip can be swapped between the counter and the decoder', async (
   await page.getByTestId('logic-chip').selectOption('CD4511');
   await expect(chip).toContainText('CD4511');
 });
+
+test('the logic analyser has a row for a chip leg joined to a clock module', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await page.getByTestId('tool-battery').click();
+  // A 74HC74 at e10 (pin 3, 1CLK, in column 12 below the gap) and a clock module at c20.
+  await place(page, 'logic', 'BB1.e10');
+  await page.locator('[data-hit="U1"]').click();
+  await page.getByTestId('logic-chip').selectOption('74HC74');
+  await place(page, 'clock', 'BB1.c20');
+  await page.getByTestId('tool-wire').click();
+  for (const [from, to] of [
+    ['BAT1.pos', 'BB1.a20'],
+    ['BAT1.neg', 'BB1.a22'],
+    ['BB1.a21', 'BB1.j12'],
+  ]) {
+    await tap(page, from!);
+    await tap(page, to!);
+  }
+  await page.getByTestId('tool-select').click();
+  await page.getByTestId('tab-signals').click();
+  const legs = page.getByTestId('analyser-legs');
+  await expect(legs).toContainText('U1 1CLK');
+  await expect(legs).toContainText('CLK1 OUT');
+  // Its probe can be chosen for the oscilloscope too.
+  await page.getByTestId('channel-2').selectOption('pin:U1.p3');
+  await page.getByTestId('run').click();
+  await expect
+    .poll(async () => Number(await page.getByTestId('stats-2').getAttribute('data-max')), {
+      timeout: 6000,
+    })
+    .toBeGreaterThan(4);
+});
