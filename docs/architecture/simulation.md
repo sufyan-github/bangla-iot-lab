@@ -165,7 +165,27 @@ measures the echo to within 1 cm or 1 %.
 ## UNO emulation
 
 `packages/board-emulators` wraps avr8js: an ATmega328P at 16 MHz with ports B, C
-and D, timers 0–2, the ADC and USART0. Verified by test with real compiled
-sketches: `delay` timing, `INPUT_PULLUP` and `digitalRead`, `analogWrite` duty
-on all three timers, `analogRead` with `Serial.println`. Not emulated: SPI, I²C,
-EEPROM, and interrupts triggered by the circuit.
+and D, timers 0–2, the ADC, USART0, and the TWI (I²C) and SPI hardware. Verified
+by test with real compiled sketches: `delay` timing, `INPUT_PULLUP` and
+`digitalRead`, `analogWrite` duty on all three timers, `analogRead` with
+`Serial.println`, the OLED on A4/A5 and the ST7789 colour display on D13/D11
+through Wire, SPI and Adafruit's libraries, and the WS2812B ring on any pin.
+Not emulated: EEPROM, and interrupts triggered by the circuit.
+
+**I²C and SPI.** The TWI hardware reports each step (start, address, byte,
+stop); the board gathers the bytes written until the stop, or until a repeated
+start turns to reading, and hands the whole exchange to the same device models
+the ESP32 uses. An SPI byte goes to the devices as it is clocked out, and the
+reply comes back after the time the transfer takes.
+
+**WS2812 LEDs.** The board has no LED hardware: the lab's own NeoPixel library
+(`apps/compile-worker/avr-lib`) switches the pin itself, with bit times counted
+in clock cycles in a few lines of assembly (800 kHz: 6 cycles HIGH for a 0, 13
+for a 1). The board times every HIGH pulse from the chip's clock: shorter than
+10 cycles is a 0, up to 32 cycles (2 µs) a 1, and a line resting LOW for 50 µs
+ends the frame, which goes to the ring like the ESP32's. These short pulses are
+not passed on as pin changes; a longer HIGH is passed on with the time it began,
+so the circuit hears of it at most 2 µs late. A pulse made by `digitalWrite`
+lasts about 3 µs and is an ordinary change (tested with `shiftOut`). A sketch
+writing to the port registers directly could make pulses short enough to be
+taken for LED data.

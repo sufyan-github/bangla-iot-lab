@@ -1907,3 +1907,32 @@ Built on 24 November 2026, closing the gaps D-088 left.
   goes on.
 - **Not modelled:** different delays for different gates, and set-up and hold
   times for flip-flops.
+
+## D-093 — The UNO catches up: I²C, SPI, the displays and the LED ring
+
+Built on 24 November 2026. Until now the kit's OLED, the colour display and the
+LED ring worked only on the ESP32.
+
+- **I²C and SPI on the UNO.** avr8js's TWI and SPI hardware are joined to the
+  same device handlers as the ESP32's, on A4/A5 and D13/D11/D12. Wire and SPI
+  come from the pinned ArduinoCore-avr 1.8.8; Adafruit's GFX, SSD1306, ST7735/
+  ST7789, BusIO, unified sensor, BME280 and INA219 (all BSD, MIT or Apache-2.0)
+  from the copies already in `third_party`. Tested end to end: a compiled sketch
+  lights the OLED part and draws on the colour display through the circuit.
+- **LED ring.** Adafruit's NeoPixel library is LGPL, so the UNO gets the lab's
+  own (Apache-2.0), with the same interface as the lab's ESP32 version. It sends
+  the bits from counted-cycle assembly, with interrupts off, as a real board
+  must; the times were measured in the emulator (0.38 and 0.81 µs HIGH at
+  800 kHz, 0.5 and 1.19 µs at 400 kHz). The board reads the colours back from
+  each pulse's length (see the architecture note). **Chosen over** a host call
+  like the ESP32's: the UNO has no host, and a sketch built here should run the
+  same on a real board. **Fixed along the way:** a first version in plain C let
+  the compiler put its tests inside the HIGH time, making a 0 about 0.75 µs,
+  which a real ring would read as a 1.
+- **Licences.** Wire and SPI are part of the core release already used; their
+  source is now copied into `third_party/arduino-avr` beside the core's and
+  checked against the pinned fetch, and the licences page says that programs
+  built for the UNO include them. The compile worker's container now copies
+  every third-party library, not only the DHT library.
+- **Not checked:** whether a display or ring module takes the UNO's 5 V
+  signals, and any of it on a real board.

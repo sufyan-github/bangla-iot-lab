@@ -14,9 +14,9 @@ const NOTICES = [
   },
   {
     id: 'firmware',
-    name: 'Starter firmware for the UNO-compatible board',
+    name: 'Firmware for the UNO-compatible board',
     licence: 'LGPL-2.1-or-later',
-    text: 'The ready-made programs are compiled from sketches written for this project together with ArduinoCore-avr 1.8.8, and the Servo 1.3.0 and LiquidCrystal 1.0.7 libraries, Copyright Arduino LLC and contributors. Their complete source, and how to rebuild or relink the firmware, is in the repository.',
+    text: 'The ready-made programs, and the programs the lab builds from your own sketches for this board, are compiled together with ArduinoCore-avr 1.8.8 (with its Wire and SPI libraries), and the Servo 1.3.0 and LiquidCrystal 1.0.7 libraries, Copyright Arduino LLC and contributors. Their complete source, and how to rebuild or relink the firmware, is in the repository.',
     file: 'LGPL-2.1.txt',
     source: `${REPOSITORY}/tree/main/third_party/arduino-avr`,
   },

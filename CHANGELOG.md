@@ -24,6 +24,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The UNO catches up**: the OLED, the ST7789 colour display (with I²C and SPI,
+  through Wire, SPI and Adafruit's libraries) and the WS2812B LED ring (through
+  the lab's own NeoPixel library) now work on the UNO-compatible board.
 - **Logic finishing touches**: open a block to change it (every copy follows);
   buses on a block's pins; a gate delay that shows glitches on the timing
   diagram; and a trigger that holds the logic analyser on an edge.
