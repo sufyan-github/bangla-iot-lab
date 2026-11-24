@@ -271,6 +271,8 @@ describe('74HC74 D flip-flop', () => {
       ],
     );
     const session = new SimulationSession(document);
+    // With no board, the clock alone makes the circuit change by itself.
+    expect(session.isTimeDependent).toBe(true);
     const clock: boolean[] = [];
     const q: boolean[] = [];
     // At 1 Hz OUT is LOW for the first half of each second and HIGH for the second.
