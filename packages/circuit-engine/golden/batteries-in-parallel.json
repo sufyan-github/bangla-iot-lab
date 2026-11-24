@@ -1,0 +1,12 @@
+{
+  "name": "batteries-in-parallel",
+  "engine": "ngspice-45.2",
+  "deck": "* batteries-in-parallel\nVBA xBA 0 DC 9\nRBA 1 xBA 0.5\nVBB xBB 0 DC 7.2\nRBB 1 xBB 0.3\nRRL 1 0 100\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 7.860262008733625
+  },
+  "sourceCurrents": {
+    "BA": -2.27947598253275,
+    "BB": 2.2008733624454138
+  }
+}

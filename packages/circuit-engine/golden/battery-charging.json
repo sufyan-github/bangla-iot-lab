@@ -1,0 +1,13 @@
+{
+  "name": "battery-charging",
+  "engine": "ngspice-45.2",
+  "deck": "* battery-charging\nVV1 1 0 DC 9\nRR1 1 2 10\nVCELL xCELL 0 DC 3.7\nRCELL 2 xCELL 0.1\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 9,
+    "2": 3.7524752475247527
+  },
+  "sourceCurrents": {
+    "CELL": 0.5247524752475243,
+    "V1": -0.5247524752475248
+  }
+}

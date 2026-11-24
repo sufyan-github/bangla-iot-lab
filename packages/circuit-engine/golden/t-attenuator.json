@@ -1,0 +1,13 @@
+{
+  "name": "t-attenuator",
+  "engine": "ngspice-45.2",
+  "deck": "* t-attenuator\nVVS xVS 0 DC 2\nRVS 1 xVS 50\nRRa 1 2 50\nRRshunt 2 0 100\nRRb 2 3 50\nRRL 3 0 50\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 1.3333333333333335,
+    "2": 0.6666666666666667,
+    "3": 0.33333333333333337
+  },
+  "sourceCurrents": {
+    "VS": -0.013333333333333329
+  }
+}

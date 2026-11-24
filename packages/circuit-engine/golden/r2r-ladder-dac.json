@@ -1,0 +1,21 @@
+{
+  "name": "r2r-ladder-dac",
+  "engine": "ngspice-45.2",
+  "deck": "* r2r-ladder-dac\nVB3 1 0 DC 5\nVB2 2 0 DC 0\nVB1 3 0 DC 5\nVB0 4 0 DC 5\nRRt 5 0 2000\nRR0 4 5 2000\nRL1 5 6 1000\nRR1 3 6 2000\nRL2 6 7 1000\nRR2 2 7 2000\nRL3 7 8 1000\nRR3 1 8 2000\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 5,
+    "2": 0,
+    "3": 5,
+    "4": 5,
+    "5": 2.8515625,
+    "6": 3.203125,
+    "7": 2.65625,
+    "8": 3.4375
+  },
+  "sourceCurrents": {
+    "B0": -0.00107421875,
+    "B1": -0.0008984374999999999,
+    "B2": 0.001328125,
+    "B3": -0.00078125
+  }
+}

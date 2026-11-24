@@ -1,0 +1,16 @@
+{
+  "name": "transistor-led-driver",
+  "engine": "ngspice-45.2",
+  "deck": "* transistor-led-driver\nVV5 1 0 DC 5\nRR1 1 2 220\nDD1 2 3 MD1\nVPIN xPIN 0 DC 3.3\nRPIN 4 xPIN 25\nRRB 4 5 1000\nQQ1 3 5 0 MQ1\n.model MD1 D(IS=1.557e-17 N=2)\n.model MQ1 NPN(IS=1e-14 BF=200 BR=2)\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 5,
+    "2": 1.821807118382369,
+    "3": 0.038996797202919826,
+    "4": 3.2374299777152253,
+    "5": 0.7346290863242326
+  },
+  "sourceCurrents": {
+    "PIN": -0.0025028008913909883,
+    "V5": -0.014446331280080143
+  }
+}

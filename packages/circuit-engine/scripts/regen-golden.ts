@@ -25,14 +25,16 @@ for (const goldenCase of GOLDEN_CASES) {
   const sourceCurrents: Record<string, number> = {};
   for (const series of result.data) {
     const value = series.values[0];
-    const match = /^(v|i)\((.+)\)$/.exec(series.name);
+    // ngspice writes "v(1)", or "V(1)" in a circuit with no voltage source: read either.
+    const match = /^(v|i)\((.+)\)$/i.exec(series.name);
     if (!match || typeof value !== 'number') throw new Error(`Unexpected series ${series.name}`);
-    if (match[1] === 'v') {
+    const [kind, name] = [match[1]!.toLowerCase(), match[2]!.toLowerCase()];
+    if (kind === 'v') {
       // Named nodes are internal to a source model; only numbered nodes are compared.
-      if (/^\d+$/.test(match[2])) voltages[match[2]] = value;
+      if (/^\d+$/.test(name)) voltages[name] = value;
     }
-    // ngspice names the source "v<id>" in lower case; strip the leading v.
-    else sourceCurrents[match[2].slice(1).toUpperCase()] = value;
+    // Branch currents of voltage sources, named "v<id>": strip the leading v.
+    else if (name.startsWith('v')) sourceCurrents[name.slice(1).toUpperCase()] = value;
   }
   const engine = /Command: (ngspice-[\d.]+)/.exec(result.header)?.[1] ?? 'ngspice';
   const golden = { name: goldenCase.name, engine, deck, voltages, sourceCurrents };

@@ -1,0 +1,9 @@
+{
+  "name": "solar-cell-load",
+  "engine": "ngspice-45.2",
+  "deck": "* solar-cell-load\nIIL 0 1 DC 0.04\nDDJ 1 0 MDJ\nRRL 1 0 50\n.model MDJ D(IS=1e-14 N=1)\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 0.7386084963908232
+  },
+  "sourceCurrents": {}
+}

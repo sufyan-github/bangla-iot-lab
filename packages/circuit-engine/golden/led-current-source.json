@@ -1,0 +1,9 @@
+{
+  "name": "led-current-source",
+  "engine": "ngspice-45.2",
+  "deck": "* led-current-source\nII1 0 1 DC 0.015\nDD1 1 0 MD1\n.model MD1 D(IS=1.557e-17 N=2)\n.options gmin=1e-12 reltol=1e-7 abstol=1e-14 vntol=1e-9\n.op\n.end\n",
+  "voltages": {
+    "1": 1.7847558652058915
+  },
+  "sourceCurrents": {}
+}
