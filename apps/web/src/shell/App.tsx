@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { NavLink, Route, Routes } from 'react-router';
+import { useEffect, useState } from 'react';
+import { NavLink, Route, Routes, useLocation } from 'react-router';
 import { AccountPage } from '../account/AccountPage';
 import { useAccount } from '../account/client';
 import { HomePage } from '../home/HomePage';
@@ -17,40 +17,107 @@ function Header() {
   const me = useAccount((s) => s.me);
   const refresh = useAccount((s) => s.refresh);
   useEffect(() => void refresh(), [refresh]);
+  const { pathname } = useLocation();
+  const [menu, setMenu] = useState(false);
+  // The menu closes when a page is chosen.
+  useEffect(() => setMenu(false), [pathname]);
+  // In the lab on a phone, the lab's own bar (with its way back) takes this one's place.
+  const inLab = pathname.startsWith('/lab/');
   const link = ({ isActive }: { isActive: boolean }) =>
-    `rounded-lg px-3 py-2 font-medium ${isActive ? 'bg-paper/15 text-paper' : 'text-paper/80 hover:text-paper'}`;
+    `flex min-h-11 items-center rounded-lg px-3 text-sm font-medium ${
+      isActive ? 'bg-paper/15 text-paper' : 'text-paper/75 hover:bg-paper/10 hover:text-paper'
+    }`;
+  const links = (
+    <>
+      <NavLink to="/" end className={link}>
+        {t('nav.projects')}
+      </NavLink>
+      <NavLink to="/lessons" className={link} data-testid="nav-lessons">
+        {t('nav.lessons')}
+      </NavLink>
+      <NavLink to="/licences" className={link} data-testid="nav-licences">
+        {t('nav.licences')}
+      </NavLink>
+    </>
+  );
 
   return (
-    <header className="bg-mat-deep text-paper">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2">
-        <NavLink to="/" className="mr-2 flex items-center gap-2 py-1 text-xl font-semibold">
-          <img src="/favicon.svg" alt="" width={32} height={32} />
-          {t('app.name')}
+    <header className={`bg-mat-deep text-paper ${inLab ? 'max-lg:hidden' : ''}`}>
+      <div className="flex h-12 items-center gap-1 px-3">
+        <NavLink to="/" className="mr-3 flex shrink-0 items-center gap-2 font-semibold">
+          <img src="/favicon.svg" alt="" width={26} height={26} />
+          <span className="text-lg">{t('app.name')}</span>
         </NavLink>
-        <nav className="flex gap-1">
-          <NavLink to="/" end className={link}>
-            {t('nav.projects')}
+        <nav className="hidden gap-0.5 md:flex">{links}</nav>
+        <div className="ml-auto flex items-center gap-2">
+          <NavLink
+            to="/account"
+            data-testid="nav-account"
+            className={({ isActive }) =>
+              `flex min-h-9 max-w-40 items-center gap-2 truncate rounded-full border px-3 text-sm font-medium ${
+                isActive
+                  ? 'border-paper bg-paper text-mat-deep'
+                  : 'border-paper/35 hover:bg-paper/10'
+              }`
+            }
+          >
+            {me && (
+              <span
+                aria-hidden
+                className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-amber text-xs font-bold text-ink"
+              >
+                {[...me.user.displayName][0]}
+              </span>
+            )}
+            <span className="truncate">{me ? me.user.displayName : t('nav.account')}</span>
           </NavLink>
-          <NavLink to="/lessons" className={link} data-testid="nav-lessons">
-            {t('nav.lessons')}
-          </NavLink>
-          <NavLink to="/licences" className={link} data-testid="nav-licences">
-            {t('nav.licences')}
-          </NavLink>
-          <NavLink to="/account" className={link} data-testid="nav-account">
-            {me ? me.user.displayName : t('nav.account')}
-          </NavLink>
-        </nav>
-        <button
-          type="button"
-          data-testid="language"
-          lang={locale === 'bn' ? 'en' : 'bn'}
-          onClick={() => setLocale(locale === 'bn' ? 'en' : 'bn')}
-          className="ml-auto min-h-11 rounded-lg border border-paper/40 px-3 font-medium hover:bg-paper/10"
-        >
-          {t('nav.language')}
-        </button>
+          <button
+            type="button"
+            data-testid="language"
+            lang={locale === 'bn' ? 'en' : 'bn'}
+            aria-label={t('nav.language')}
+            onClick={() => setLocale(locale === 'bn' ? 'en' : 'bn')}
+            className="flex min-h-9 overflow-hidden rounded-full border border-paper/35 text-xs font-semibold"
+          >
+            <span
+              className={`grid place-items-center px-2.5 ${locale === 'bn' ? 'bg-paper text-mat-deep' : ''}`}
+            >
+              বাং
+            </span>
+            <span
+              className={`grid place-items-center px-2.5 ${locale === 'en' ? 'bg-paper text-mat-deep' : ''}`}
+            >
+              EN
+            </span>
+          </button>
+          <button
+            type="button"
+            data-testid="menu"
+            aria-expanded={menu}
+            aria-label={t('nav.menu')}
+            onClick={() => setMenu(!menu)}
+            className="grid h-11 w-11 place-items-center rounded-lg hover:bg-paper/10 md:hidden"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              aria-hidden
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              {menu ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+            </svg>
+          </button>
+        </div>
       </div>
+      {menu && (
+        <nav className="flex flex-col gap-0.5 border-t border-paper/15 px-3 py-2 md:hidden">
+          {links}
+        </nav>
+      )}
       {!online && (
         <p
           role="status"

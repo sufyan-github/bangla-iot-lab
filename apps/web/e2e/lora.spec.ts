@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /**
  * Stage 7: two ESP32 boards, each with a Ra-02 LoRa radio on its SPI bus,
@@ -7,12 +8,12 @@ import { expect, test, type Page } from '@playwright/test';
 
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 async function program(page: Page, board: string, starter: string) {
   await page.getByTestId('tab-code').click();
@@ -28,11 +29,11 @@ test('two boards talk over LoRa, and the signal weakens with distance', async ({
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await expect(page).toHaveURL(/\/lab\//);
-  await page.getByTestId('tool-esp32').click();
-  await page.getByTestId('tool-esp32').click();
-  await page.getByTestId('tool-lora').click();
+  await pick(page, 'esp32');
+  await pick(page, 'esp32');
+  await pick(page, 'lora');
   await tap(page, 'BB1.c1');
-  await page.getByTestId('tool-lora').click();
+  await pick(page, 'lora');
   await tap(page, 'BB1.c11');
   await expect(page.locator('[data-part="LORA2"]')).toBeVisible();
   await wire(page, [

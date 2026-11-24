@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /** The wider parts library: placing, operating and reading the parts added in Phase 1. */
 
@@ -11,21 +12,21 @@ async function newCircuit(page: Page) {
   await expect(page).toHaveURL(/\/lab\//);
 }
 async function place(page: Page, tool: string, hole: string) {
-  await page.getByTestId(`tool-${tool}`).click();
+  await pick(page, tool);
   await tap(page, hole);
 }
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 
 test('every part in the palette can be placed, and the circuit still solves', async ({ page }) => {
   await newCircuit(page);
-  await page.getByTestId('tool-battery').click();
+  await pick(page, 'battery');
   const tools = [
     ['resistor', 'BB1.a1'],
     ['led', 'BB1.a7'],
@@ -63,7 +64,7 @@ test('every part in the palette can be placed, and the circuit still solves', as
 
 test('a switch turns the LED on and off while the circuit runs', async ({ page }) => {
   await newCircuit(page);
-  await page.getByTestId('tool-battery').click();
+  await pick(page, 'battery');
   await place(page, 'switch', 'BB1.a1'); // a1 – a3
   await place(page, 'resistor', 'BB1.b3'); // b3 – b7
   await place(page, 'led', 'BB1.c7'); // c7 – c8
@@ -84,7 +85,7 @@ test('a switch turns the LED on and off while the circuit runs', async ({ page }
 
 test('a temperature sensor on the board follows its slider', async ({ page }) => {
   await newCircuit(page);
-  await page.getByTestId('tool-uno').click();
+  await pick(page, 'uno');
   await place(page, 'temperature', 'BB1.c10'); // legs: c10 supply, c11 output, c12 ground
   await wire(page, [
     ['UNO1.5v', 'BB1.a10'],
@@ -102,7 +103,7 @@ test('a temperature sensor on the board follows its slider', async ({ page }) =>
 
 test('a buzzer sounds when powered and can be muted', async ({ page }) => {
   await newCircuit(page);
-  await page.getByTestId('tool-battery').click();
+  await pick(page, 'battery');
   await place(page, 'buzzer', 'BB1.a1');
   await expect(page.getByTestId('mute')).toBeVisible();
   await wire(page, [
@@ -129,7 +130,7 @@ test('a servo follows the angle its program sets', async ({ page }) => {
   // the servo goes, not how fast: so it waits generously.
   test.setTimeout(90_000);
   await newCircuit(page);
-  await page.getByTestId('tool-uno').click();
+  await pick(page, 'uno');
   await place(page, 'servo', 'BB1.c10'); // legs: c10 ground, c11 supply, c12 signal
   await wire(page, [
     ['UNO1.gnd', 'BB1.a10'],
@@ -147,7 +148,7 @@ test('a servo follows the angle its program sets', async ({ page }) => {
 
 test('an ultrasonic sensor reports the distance set on its slider', async ({ page }) => {
   await newCircuit(page);
-  await page.getByTestId('tool-uno').click();
+  await pick(page, 'uno');
   await place(page, 'ultrasonic', 'BB1.c10'); // legs: c10 supply, c11 trig, c12 echo, c13 ground
   await wire(page, [
     ['UNO1.5v', 'BB1.a10'],
@@ -169,7 +170,7 @@ test('an ultrasonic sensor reports the distance set on its slider', async ({ pag
 
 test('an LCD shows the text its program prints', async ({ page }) => {
   await newCircuit(page);
-  await page.getByTestId('tool-uno').click();
+  await pick(page, 'uno');
   await place(page, 'lcd', 'BB1.h5'); // sixteen legs along row h, columns 5 to 20
   await wire(page, [
     ['UNO1.gnd', 'BB1.j5'], // VSS

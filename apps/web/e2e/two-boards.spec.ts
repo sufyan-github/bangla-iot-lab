@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /**
  * Two boards in one circuit: each has its own program, chosen in its own tab
@@ -8,12 +9,12 @@ import { expect, test, type Page } from '@playwright/test';
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 
 /** Puts a ready-made program on one board, chosen by its tab in the code view. */
@@ -29,11 +30,11 @@ test('two ESP32 boards, each with its own program, talk over a serial wire', asy
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await expect(page).toHaveURL(/\/lab\//);
-  await page.getByTestId('tool-esp32').click();
-  await page.getByTestId('tool-esp32').click();
+  await pick(page, 'esp32');
+  await pick(page, 'esp32');
   await expect(page.locator('[data-part="ESP2"]')).toBeVisible();
   // A third board is refused.
-  await page.getByTestId('tool-uno').click();
+  await pick(page, 'uno');
   await expect(page.locator('[data-part="UNO1"]')).toHaveCount(0);
 
   await wire(page, [

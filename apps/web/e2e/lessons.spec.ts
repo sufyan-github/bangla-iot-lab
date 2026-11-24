@@ -1,19 +1,20 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /** The kit lessons: the list, a lesson's steps checked by the lab, and progress kept on the device. */
 
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 async function place(page: Page, tool: string, hole: string) {
-  await page.getByTestId(`tool-${tool}`).click();
+  await pick(page, tool);
   await tap(page, hole);
 }
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 const checks = (page: Page) => page.getByTestId('lesson-check');
 async function expectStepDone(page: Page) {
@@ -24,6 +25,8 @@ async function expectStepDone(page: Page) {
 
 test('the lessons page lists the kit lessons, then the projects, in order', async ({ page }) => {
   await page.goto('/');
+  // On a phone the page links are behind the menu.
+  if (await page.getByTestId('menu').isVisible()) await page.getByTestId('menu').click();
   await page.getByTestId('nav-lessons').click();
   await expect(page).toHaveURL(/\/lessons$/);
   const parts = page.getByTestId('lesson-list').getByTestId('lesson-card');

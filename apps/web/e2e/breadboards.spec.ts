@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /**
  * Breadboards are parts: a circuit starts with one, more can be added in three
@@ -23,19 +24,19 @@ test('a new circuit has one breadboard; another is added, sized, used, moved and
   await newCircuit(page);
   await expect(boards(page)).toHaveCount(1);
 
-  await page.getByTestId('tool-breadboard').click();
+  await pick(page, 'breadboard');
   await expect(boards(page)).toHaveCount(2);
   // The new one is selected, and its inspector offers the three sizes.
   await expect(page.getByTestId('breadboard-half')).toHaveAttribute('aria-pressed', 'true');
   await page.getByTestId('breadboard-full').click();
   await expect(page.getByTestId('breadboard-full')).toHaveAttribute('aria-pressed', 'true');
 
-  await page.getByTestId('tool-led').click();
+  await pick(page, 'led');
   await tap(page, 'BB2.c60');
   await expect(page.locator('[data-part="LED1"]')).toBeVisible();
 
   // Moved by its tab, the board takes the LED with it.
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   const before = await cornerOf(page, 'BB2');
   const tabHit = page.locator('[data-hit="BB2"]');
   await tabHit.scrollIntoViewIfNeeded();
@@ -61,9 +62,9 @@ test('a new circuit has one breadboard; another is added, sized, used, moved and
 
 test('a smaller size is not offered while a part sits beyond it', async ({ page }) => {
   await newCircuit(page);
-  await page.getByTestId('tool-led').click();
+  await pick(page, 'led');
   await tap(page, 'BB1.c25');
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   await page.locator('[data-hit="BB1"]').click();
   await expect(page.getByTestId('breadboard-mini')).toBeDisabled();
   await expect(page.getByTestId('breadboard-full')).toBeEnabled();

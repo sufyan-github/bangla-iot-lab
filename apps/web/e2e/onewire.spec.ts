@@ -1,25 +1,26 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /** Stage 4: the DS18B20 over 1-Wire, the waterproof ultrasonic sensor, the line sensor, the siren. */
 
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 async function place(page: Page, tool: string, hole: string) {
-  await page.getByTestId(`tool-${tool}`).click();
+  await pick(page, tool);
   await tap(page, hole);
 }
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 async function newEsp32Circuit(page: Page) {
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await expect(page).toHaveURL(/\/lab\//);
-  await page.getByTestId('tool-esp32').click();
+  await pick(page, 'esp32');
   await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
 }
 
@@ -61,7 +62,7 @@ test('the waterproof sensor, line sensor and siren can be placed and are kept', 
   await place(page, 'jsnsr04t', 'BB1.a1');
   await place(page, 'linesensor', 'BB1.a7');
   await place(page, 'siren', 'BB1.a17');
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   await expect(page.locator('[data-part]')).toHaveCount(4);
   await page.locator('[data-hit="LINE1"]').click();
   // Channel 3 starts on the line; put channel 4 on it too.

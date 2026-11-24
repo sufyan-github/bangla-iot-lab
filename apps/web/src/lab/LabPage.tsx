@@ -1,7 +1,7 @@
 import type { MessageKey } from '@banglalab/i18n';
 import { isProgrammable } from '@banglalab/shared';
 import { proxy } from 'comlink';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useT } from '../i18n';
 import { simulation } from '../sim/client';
@@ -9,7 +9,7 @@ import { projectStore } from '../storage/projects';
 import { Canvas } from './Canvas';
 import { Diagram } from './diagram/Diagram';
 import { CodePanel } from './CodePanel';
-import { Palette } from './Palette';
+import { CanvasHint, PartsDrawer, ToolPicker } from './Palette';
 import { SheetView } from './SheetView';
 import { Inspector, Messages, Meter, TruthTablePanel } from './panels';
 import { SignalsPanel } from './SignalsPanel';
@@ -250,13 +250,25 @@ function Notice() {
   );
 }
 
+/** True on a wide screen (the lab's laptop layout), false on a phone or small tablet. */
+function useWide(): boolean {
+  const query = '(min-width: 1024px)';
+  const [wide, setWide] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const changed = () => setWide(media.matches);
+    media.addEventListener('change', changed);
+    return () => media.removeEventListener('change', changed);
+  }, []);
+  return wide;
+}
+
 const TAB_LABELS = {
   lesson: 'lesson.tab',
   circuit: 'code.tabCircuit',
   code: 'code.tabCode',
   signals: 'code.tabSignals',
-  web: 'web.tab',
-  iot: 'iot.tab',
+  network: 'network.tab',
 } as const;
 
 export function LabPage() {
@@ -315,9 +327,11 @@ export function LabPage() {
       // Private mode: the choice lasts for this visit.
     }
   };
-  const [tab, setTab] = useState<'lesson' | 'circuit' | 'code' | 'signals' | 'web' | 'iot'>(
-    'circuit',
-  );
+  const [tab, setTab] = useState<'lesson' | 'circuit' | 'code' | 'signals' | 'network'>('circuit');
+  const [networkView, setNetworkView] = useState<'web' | 'iot'>('web');
+  const [partsOpen, setPartsOpen] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const wide = useWide();
   // A project made from a lesson opens at its lesson.
   useEffect(() => setTab(hasLesson ? 'lesson' : 'circuit'), [hasLesson]);
   /** The breadboard is where the circuit is built; the diagram is the same circuit as a schematic. */
@@ -340,16 +354,59 @@ export function LabPage() {
   }
 
   const saveText = { saved: 'lab.saved', saving: 'lab.saving', error: 'lab.saveError' } as const;
+  const tabs = (['lesson', 'circuit', 'code', 'signals', 'network'] as const)
+    .filter((id) => id !== 'code' || boardId !== undefined)
+    .filter((id) => id !== 'network' || esp32Id !== undefined)
+    .filter((id) => id !== 'lesson' || hasLesson);
+  const chooseTab = (id: (typeof tabs)[number]) => {
+    setTab(id);
+    // On a phone the panel is below the board: bring it into view.
+    if (!wide)
+      requestAnimationFrame(() => panelRef.current?.scrollIntoView({ behavior: 'smooth' }));
+  };
+  const viewSwitch = (
+    <div
+      role="group"
+      aria-label={t('lab.viewLabel')}
+      className="flex shrink-0 gap-0.5 rounded-xl bg-paper p-1 shadow-[var(--shadow-raised)] lg:shadow-none"
+    >
+      {(['board', 'diagram', 'sheet'] as const).map((id) => (
+        <button
+          key={id}
+          type="button"
+          data-testid={`view-${id}`}
+          aria-pressed={view === id}
+          onClick={() => setView(id)}
+          className={`min-h-9 rounded-lg px-3 text-sm font-semibold ${
+            view === id ? 'bg-surface text-ink shadow-sm' : 'text-ink-soft hover:text-ink'
+          }`}
+        >
+          {t(
+            id === 'board'
+              ? 'lab.viewBoard'
+              : id === 'diagram'
+                ? 'lab.viewDiagram'
+                : 'lab.viewSheet',
+          )}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
-      <div className="flex min-h-[70dvh] min-w-0 flex-1 flex-col lg:min-h-0">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2">
+      <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
+        {/* One bar: the way back, the name, the view (on a wide screen), the save state and Run. */}
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 lg:gap-3 lg:px-3">
           <Link
             to="/"
-            className="rounded-lg px-2 py-2 text-sm font-medium text-ink-soft hover:bg-paper hover:text-ink"
+            aria-label={t('lab.back')}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-ink-soft hover:bg-paper hover:text-ink lg:w-auto lg:px-2"
           >
-            ‹ {t('lab.back')}
+            <span aria-hidden className="text-xl leading-none lg:hidden">
+              ‹
+            </span>
+            <span className="hidden text-sm font-medium lg:inline">‹ {t('lab.back')}</span>
           </Link>
           <input
             aria-label={t('lab.nameLabel')}
@@ -357,55 +414,32 @@ export function LabPage() {
             value={name}
             maxLength={80}
             onChange={(event) => setName(event.target.value)}
-            className="order-last min-h-11 min-w-0 basis-full rounded-lg border-2 border-line bg-transparent px-2 text-lg font-semibold sm:order-none sm:flex-1 sm:basis-0 sm:border-transparent sm:hover:border-line sm:focus:border-line"
+            className="min-h-11 min-w-0 flex-1 truncate rounded-lg border-2 border-transparent bg-transparent px-2 text-base font-semibold hover:border-line focus:border-line lg:text-lg"
           />
-          <div
-            role="group"
-            aria-label={t('lab.viewLabel')}
-            className="flex shrink-0 overflow-hidden rounded-xl border-2 border-line"
-          >
-            {(['board', 'diagram', 'sheet'] as const).map((id) => (
-              <button
-                key={id}
-                type="button"
-                data-testid={`view-${id}`}
-                aria-pressed={view === id}
-                onClick={() => setView(id)}
-                className={`min-h-11 px-3.5 text-sm font-semibold ${
-                  view === id
-                    ? 'bg-amber-soft text-ink'
-                    : 'text-ink-soft hover:bg-paper hover:text-ink'
-                }`}
-              >
-                {t(
-                  id === 'board'
-                    ? 'lab.viewBoard'
-                    : id === 'diagram'
-                      ? 'lab.viewDiagram'
-                      : 'lab.viewSheet',
-                )}
-              </button>
-            ))}
-          </div>
+          {wide && viewSwitch}
           <span
             data-testid="save-state"
             data-state={saveState}
-            className={`ml-auto text-sm sm:ml-0 ${saveState === 'error' ? 'font-semibold text-danger' : 'text-ink-soft'}`}
+            title={t(saveText[saveState])}
+            className={`flex shrink-0 items-center gap-1.5 text-sm ${saveState === 'error' ? 'font-semibold text-danger' : 'text-ink-faint'}`}
           >
-            {t(saveText[saveState])}
+            <span
+              aria-hidden
+              className={`h-2 w-2 rounded-full ${saveState === 'error' ? 'bg-danger' : saveState === 'saving' ? 'bg-amber' : 'bg-ok'}`}
+            />
+            <span className="max-sm:sr-only">{t(saveText[saveState])}</span>
           </span>
           {hasBuzzer && (
             <button
               type="button"
               data-testid="mute"
               aria-pressed={!muted}
+              aria-label={t('lab.sound')}
               onClick={toggleMute}
-              className="min-h-11 rounded-lg border-2 border-line px-3 text-sm font-medium hover:border-ink-soft"
+              className="btn btn-secondary shrink-0 px-3"
             >
-              <span aria-hidden className="mr-1.5">
-                {muted ? '🔇' : '🔊'}
-              </span>
-              {t('lab.sound')}
+              <span aria-hidden>{muted ? '🔇' : '🔊'}</span>
+              <span className="max-md:sr-only">{t('lab.sound')}</span>
             </button>
           )}
           <button
@@ -413,108 +447,204 @@ export function LabPage() {
             data-testid="run"
             aria-pressed={running}
             onClick={() => setRunning(!running)}
-            className={`min-h-12 min-w-36 rounded-xl px-5 text-lg font-semibold ${
-              running
-                ? 'border-2 border-ink bg-surface text-ink hover:bg-paper'
-                : 'bg-amber text-ink shadow-sm hover:brightness-105'
-            }`}
+            className={`btn shrink-0 px-4 text-base lg:min-w-32 ${running ? 'btn-secondary border-ink' : 'btn-primary'}`}
           >
-            <span aria-hidden className="mr-2">
-              {running ? '■' : '▶'}
-            </span>
+            <span aria-hidden>{running ? '■' : '▶'}</span>
             {t(running ? 'lab.stop' : 'lab.run')}
           </button>
         </div>
-        {view === 'sheet' ? (
-          <SheetView />
-        ) : (
-          <>
-            {view === 'board' ? (
-              <Palette />
+
+        <div className="flex min-h-0 flex-1">
+          {/* The parts drawer, beside the board on a wide screen. */}
+          {wide && view === 'board' && (
+            <aside
+              className="flex w-64 shrink-0 flex-col border-r border-line bg-surface"
+              aria-label={t('drawer.title')}
+            >
+              <div className="px-3 pt-3">
+                <ToolPicker />
+              </div>
+              <PartsDrawer />
+            </aside>
+          )}
+          <div
+            className={`relative flex min-w-0 flex-1 flex-col ${
+              wide ? 'min-h-0' : 'h-[calc(100dvh-3.5rem-3.25rem)] min-h-[22rem]'
+            }`}
+          >
+            {view === 'sheet' ? (
+              <SheetView />
             ) : (
-              <p className="border-b border-line bg-paper px-4 py-1.5 text-sm text-ink-soft">
-                {t('diagram.hint')}
-              </p>
+              <>
+                <Notice />
+                {view === 'board' ? <Canvas /> : <Diagram />}
+              </>
             )}
-            <div className="relative flex min-h-0 flex-1 flex-col">
-              <Notice />
-              {view === 'board' ? <Canvas /> : <Diagram />}
-            </div>
-          </>
-        )}
+            {/* Over the board: the view switch on a phone, at the top. */}
+            {!wide && <div className="absolute top-2 left-2 z-10">{viewSwitch}</div>}
+            {/* What to do next: low on the board, clear of the breadboard's top rows. */}
+            {wide && (
+              <div className="pointer-events-none absolute bottom-3 left-3 z-10 max-w-[calc(100%-12rem)]">
+                {view === 'board' && <CanvasHint />}
+                {view === 'diagram' && (
+                  <p className="rounded-[var(--radius-control)] bg-surface/95 px-3 py-1.5 text-sm text-ink-soft shadow-[var(--shadow-raised)]">
+                    {t('diagram.hint')}
+                  </p>
+                )}
+              </div>
+            )}
+            {!wide && view === 'board' && (
+              <div className="absolute right-2 bottom-3 left-2 z-10 flex flex-col items-start gap-2">
+                <div className="pointer-events-none max-w-[calc(100%-9.5rem)]">
+                  <CanvasHint />
+                </div>
+                <div className="flex items-end gap-2">
+                  <div className="rounded-xl bg-surface shadow-[var(--shadow-raised)]">
+                    <ToolPicker compact />
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="parts-open"
+                    onClick={() => setPartsOpen(true)}
+                    className="btn bg-mat px-4 text-paper shadow-[var(--shadow-raised)]"
+                  >
+                    <span aria-hidden className="text-lg leading-none">
+                      ＋
+                    </span>
+                    {t('drawer.title')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <aside
-        className={`w-full shrink-0 overflow-y-auto border-line bg-surface lg:border-l ${showCode ? 'lg:w-[34rem]' : 'lg:w-[21rem]'}`}
-      >
-        <div role="tablist" className="flex border-b border-line">
-          {(['lesson', 'circuit', 'code', 'signals', 'web', 'iot'] as const)
-            .filter((id) => id !== 'code' || boardId !== undefined)
-            .filter((id) => (id !== 'web' && id !== 'iot') || esp32Id !== undefined)
-            .filter((id) => id !== 'lesson' || hasLesson)
-            .map((id) => (
+      {/* On a phone the parts come up in a sheet over the board, and go once one is picked. */}
+      {!wide && partsOpen && (
+        <div
+          className="fixed inset-0 z-40 flex flex-col justify-end"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('drawer.title')}
+        >
+          <button
+            type="button"
+            aria-label={t('drawer.close')}
+            className="absolute inset-0 bg-ink/40"
+            onClick={() => setPartsOpen(false)}
+          />
+          <div className="relative flex max-h-[78dvh] flex-col rounded-t-[var(--radius-sheet)] bg-surface shadow-[var(--shadow-raised)]">
+            <div className="flex items-center justify-between px-4 pt-3">
+              <span
+                aria-hidden
+                className="absolute top-1.5 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-line-strong"
+              />
+              <h2 className="text-lg font-semibold">{t('drawer.title')}</h2>
               <button
-                key={id}
                 type="button"
-                role="tab"
-                data-testid={`tab-${id}`}
-                aria-selected={tab === id}
-                onClick={() => setTab(id)}
-                className={`min-h-12 flex-1 border-b-4 text-base font-semibold ${
-                  tab === id
-                    ? 'border-amber text-ink'
-                    : 'border-transparent text-ink-soft hover:text-ink'
-                }`}
+                data-testid="parts-close"
+                onClick={() => setPartsOpen(false)}
+                className="btn btn-quiet"
               >
-                {t(TAB_LABELS[id])}
+                {t('drawer.close')}
               </button>
-            ))}
+            </div>
+            <PartsDrawer onChosen={() => setPartsOpen(false)} />
+          </div>
         </div>
-        {tab === 'lesson' && hasLesson ? (
-          <LessonPanel />
-        ) : showCode ? (
-          <>
-            {boardIds.length > 1 && (
+      )}
+
+      <aside
+        ref={panelRef}
+        className={`flex w-full shrink-0 flex-col border-line bg-surface lg:min-h-0 lg:border-l ${showCode ? 'lg:w-[34rem]' : 'lg:w-[22rem]'}`}
+      >
+        <div
+          role="tablist"
+          className="flex shrink-0 gap-0.5 border-b border-line bg-surface px-1.5 pt-1.5"
+        >
+          {tabs.map((id) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              data-testid={`tab-${id}`}
+              aria-selected={tab === id}
+              onClick={() => chooseTab(id)}
+              className={`min-h-11 flex-1 rounded-t-lg border-b-[3px] px-1 text-sm font-semibold ${
+                tab === id
+                  ? 'border-mat text-ink'
+                  : 'border-transparent text-ink-soft hover:bg-paper hover:text-ink'
+              }`}
+            >
+              {t(TAB_LABELS[id])}
+            </button>
+          ))}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {tab === 'lesson' && hasLesson ? (
+            <LessonPanel />
+          ) : showCode ? (
+            <>
+              {boardIds.length > 1 && (
+                <div
+                  role="tablist"
+                  aria-label={t('code.boards')}
+                  className="flex gap-1.5 border-b border-line px-4 pt-3 pb-2"
+                >
+                  {boardIds.map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      data-testid={`code-board-${id}`}
+                      aria-selected={id === boardId}
+                      aria-pressed={id === boardId}
+                      onClick={() => setChosenBoard(id)}
+                      className="chip px-4 font-semibold"
+                    >
+                      {id}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <CodePanel key={boardId} boardId={boardId!} />
+            </>
+          ) : tab === 'signals' ? (
+            <SignalsPanel />
+          ) : tab === 'network' && esp32Id !== undefined ? (
+            <>
               <div
                 role="tablist"
-                aria-label={t('code.boards')}
+                aria-label={t('network.label')}
                 className="flex gap-1.5 border-b border-line px-4 pt-3 pb-2"
               >
-                {boardIds.map((id) => (
+                {(['web', 'iot'] as const).map((id) => (
                   <button
                     key={id}
                     type="button"
                     role="tab"
-                    data-testid={`code-board-${id}`}
-                    aria-selected={id === boardId}
-                    onClick={() => setChosenBoard(id)}
-                    className={`min-h-11 rounded-lg border-2 px-4 text-sm font-semibold ${
-                      id === boardId
-                        ? 'border-amber bg-amber-soft text-ink'
-                        : 'border-line text-ink-soft hover:border-ink-soft'
-                    }`}
+                    data-testid={`tab-${id}`}
+                    aria-selected={networkView === id}
+                    aria-pressed={networkView === id}
+                    onClick={() => setNetworkView(id)}
+                    className="chip px-4 font-semibold"
                   >
-                    {id}
+                    {t(id === 'web' ? 'web.tab' : 'iot.tab')}
                   </button>
                 ))}
               </div>
-            )}
-            <CodePanel key={boardId} boardId={boardId!} />
-          </>
-        ) : tab === 'signals' ? (
-          <SignalsPanel />
-        ) : tab === 'web' && esp32Id !== undefined ? (
-          <WebPanel boardId={esp32Id} />
-        ) : tab === 'iot' ? (
-          <IotPanel />
-        ) : (
-          <>
-            <Messages />
-            <Meter />
-            <Inspector />
-            <TruthTablePanel />
-          </>
-        )}
+              {networkView === 'web' ? <WebPanel boardId={esp32Id} /> : <IotPanel />}
+            </>
+          ) : (
+            <>
+              <Messages />
+              <Meter />
+              <Inspector />
+              <TruthTablePanel />
+            </>
+          )}
+        </div>
       </aside>
     </main>
   );

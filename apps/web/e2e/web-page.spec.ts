@@ -11,6 +11,7 @@ test('the web page program joins Wi-Fi and its page switches the LED', async ({ 
   await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
   await page.getByTestId('run').click();
 
+  await page.getByTestId('tab-network').click();
   await page.getByTestId('tab-web').click();
   const shown = page.getByTestId('web-page');
   // The board takes a moment to join the network; until then the panel says so.
@@ -40,6 +41,7 @@ test('the browser panel says why a board without Wi-Fi cannot be reached', async
   await page.goto('/');
   await page.getByTestId('open-example-esp32').click();
   await page.getByTestId('run').click();
+  await page.getByTestId('tab-network').click();
   await page.getByTestId('tab-web').click();
   await page.getByTestId('web-go').click();
   await expect(page.getByTestId('web-problem')).toBeVisible();
@@ -54,6 +56,7 @@ test('the MQTT program shows the knob on the IoT dashboard, and "on" lights the 
   await page.getByTestId('starter').selectOption('mqtt');
   await expect(page.getByTestId('upload-status').locator('[data-uploaded]')).toBeVisible();
   await page.getByTestId('run').click();
+  await page.getByTestId('tab-network').click();
   await page.getByTestId('tab-iot').click();
   const knob = page.locator('[data-testid="iot-topic"][data-topic="lab/knob"]');
   await expect(knob).toBeVisible({ timeout: 15_000 });

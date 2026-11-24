@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /**
  * Stage 5: the ESP32's second serial port, with the NEO-6M GPS, the PMS5003
@@ -8,22 +9,22 @@ import { expect, test, type Page } from '@playwright/test';
 
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 async function place(page: Page, tool: string, hole: string) {
-  await page.getByTestId(`tool-${tool}`).click();
+  await pick(page, tool);
   await tap(page, hole);
 }
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 async function newEsp32Circuit(page: Page) {
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await expect(page).toHaveURL(/\/lab\//);
-  await page.getByTestId('tool-esp32').click();
+  await pick(page, 'esp32');
   await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
 }
 

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 import { writeProgram } from './editor';
 
 /**
@@ -145,12 +146,12 @@ test('the knob program prints what the board reads from the potentiometer', asyn
 test('an ESP32 board can be added to an empty circuit and removed again', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('new-project').click();
-  await page.getByTestId('tool-esp32').click();
+  await pick(page, 'esp32');
   await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
   // Two boards at most, of either kind: a UNO-compatible board joins it, a third does not.
-  await page.getByTestId('tool-uno').click();
+  await pick(page, 'uno');
   await expect(page.locator('[data-part="UNO1"]')).toBeVisible();
-  await page.getByTestId('tool-esp32').click();
+  await pick(page, 'esp32');
   await expect(page.locator('[data-part="ESP2"]')).toHaveCount(0);
   await page.getByTestId('undo').click();
   await expect(page.locator('[data-part="UNO1"]')).toHaveCount(0);
@@ -303,22 +304,22 @@ test('going back to the lab’s own model runs the ready-made program again, off
 
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 async function place(page: Page, tool: string, hole: string) {
-  await page.getByTestId(`tool-${tool}`).click();
+  await pick(page, tool);
   await tap(page, hole);
 }
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 async function newEsp32Circuit(page: Page) {
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await expect(page).toHaveURL(/\/lab\//);
-  await page.getByTestId('tool-esp32').click();
+  await pick(page, 'esp32');
   await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
 }
 
@@ -533,10 +534,10 @@ test('an OLED display with SCL and SDA swapped shows nothing', async ({ page }) 
 test('the motor program runs a motor both ways through the L298N driver', async ({ page }) => {
   test.setTimeout(90_000);
   await newEsp32Circuit(page);
-  await page.getByTestId('tool-battery').click();
+  await pick(page, 'battery');
   // The kit's pack of six AA cells.
   await page.getByRole('button', { name: /7[.,]2|৭[.,]২/ }).click();
-  await page.getByTestId('tool-l298n').click();
+  await pick(page, 'l298n');
   await expect(page.locator('[data-part="DRV1"]')).toBeVisible();
   // Speed comes from the program, so the ENA jumper is taken off.
   await page.getByTestId('jumper-enaJumper').getByRole('button').nth(1).click();

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 import { writeProgram } from './editor';
 
 /**
@@ -34,12 +35,12 @@ test('build a board circuit by tapping; the program blinks the LED, also offline
   await page.goto('/');
   await page.getByTestId('new-project').click();
 
-  await page.getByTestId('tool-uno').click();
-  await page.getByTestId('tool-resistor').click();
+  await pick(page, 'uno');
+  await pick(page, 'resistor');
   await tap(page, 'BB1.c5');
-  await page.getByTestId('tool-led').click();
+  await pick(page, 'led');
   await tap(page, 'BB1.d9');
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of [
     ['UNO1.d13', 'BB1.a5'],
     ['BB1.a10', 'UNO1.gnd'],
@@ -189,12 +190,12 @@ test('the oscilloscope and logic analyser show the blinking pin', async ({ page 
 test('a capacitor charges over time on the oscilloscope', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('new-project').click();
-  await page.getByTestId('tool-battery').click();
-  await page.getByTestId('tool-resistor').click();
+  await pick(page, 'battery');
+  await pick(page, 'resistor');
   await tap(page, 'BB1.a5');
-  await page.getByTestId('tool-capacitor').click();
+  await pick(page, 'capacitor');
   await tap(page, 'BB1.b9');
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of [
     ['BAT1.pos', 'BB1.c5'],
     ['BB1.c11', 'BAT1.neg'],

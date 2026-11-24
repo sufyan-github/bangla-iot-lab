@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /**
  * Phase 0 acceptance: "A student can create a basic LED circuit, run it,
@@ -50,12 +51,12 @@ test('build an LED circuit, run it, save it and reopen it offline', async ({ pag
   await expect(page).toHaveURL(/\/lab\//);
 
   // --- build: battery, resistor, LED and four wires, placed by tapping ---
-  await page.getByTestId('tool-battery').click();
-  await page.getByTestId('tool-resistor').click();
+  await pick(page, 'battery');
+  await pick(page, 'resistor');
   await tap(page, 'BB1.c5');
-  await page.getByTestId('tool-led').click();
+  await pick(page, 'led');
   await tap(page, 'BB1.d9');
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of [
     ['BAT1.pos', 'BB1.tp1'],
     ['BAT1.neg', 'BB1.tn1'],
@@ -134,7 +135,7 @@ test('explains common mistakes and keeps working after each fix', async ({ page 
   await expect(page.locator('[data-diag^="open-circuit"]')).toBeVisible();
 
   // A refused edit is explained and changes nothing.
-  await page.getByTestId('tool-led').click();
+  await pick(page, 'led');
   await tap(page, 'BB1.c5');
   await expect(page.getByTestId('notice')).toBeVisible();
   await expect(page.locator('[data-part]')).toHaveCount(3);
@@ -181,6 +182,8 @@ test('the application carries its licence notices and the firmware source offer'
   request,
 }) => {
   await page.goto('/');
+  // On a phone the page links are behind the menu.
+  if (await page.getByTestId('menu').isVisible()) await page.getByTestId('menu').click();
   await page.getByTestId('nav-licences').click();
   const notices = page.getByTestId('licences');
   await expect(notices.locator('[data-notice="app"]')).toContainText('Apache-2.0');

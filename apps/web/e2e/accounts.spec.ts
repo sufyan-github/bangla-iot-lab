@@ -12,7 +12,7 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
   await page.getByTestId('teacher-email').fill(email);
   await page.getByTestId('teacher-password').fill('a long pass phrase');
   await page.getByTestId('teacher-submit').click();
-  await expect(page.getByTestId('nav-account')).toHaveText('রিনা আপা');
+  await expect(page.getByTestId('nav-account')).toContainText('রিনা আপা');
 
   // The class can be made only once the school's permission is confirmed.
   await page.getByTestId('class-name').fill('সপ্তম ক');
@@ -39,7 +39,7 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
   await expect(page.getByTestId('learner-key')).toHaveText(/^\w{4}-\w{4}-\w{4}$/);
   await page.getByRole('button', { name: /চালিয়ে যাও|Continue/ }).click();
   await expect(page.getByTestId('learner-home')).toContainText('সপ্তম ক');
-  await expect(page.getByTestId('nav-account')).toHaveText('তারা');
+  await expect(page.getByTestId('nav-account')).toContainText('তারা');
   await expect(page.getByTestId('assigned-lessons')).toContainText(/পুশ বোতাম|push button/i);
 });
 

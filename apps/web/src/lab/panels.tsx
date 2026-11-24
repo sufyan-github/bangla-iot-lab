@@ -64,11 +64,7 @@ function Choice(props: {
       title={props.label}
       disabled={props.disabled}
       onClick={props.onClick}
-      className={`min-h-11 min-w-11 rounded-lg border-2 px-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 ${
-        props.selected
-          ? 'border-amber bg-amber-soft'
-          : 'border-line bg-surface hover:border-ink-soft'
-      }`}
+      className="chip"
     >
       {props.children}
     </button>

@@ -1,5 +1,5 @@
 import type { MessageKey } from '@banglalab/i18n';
-import { Fragment, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { useLab, type Tool } from './store';
 
@@ -466,18 +466,59 @@ const ICONS: Record<PaletteItem, ReactNode> = {
 };
 
 /** Tools in the order they are shown; each inner list is one group. */
-const GROUPS: PaletteItem[][] = [
-  ['select', 'wire', 'probe'],
-  ['breadboard', 'battery', 'supply', 'generator', 'uno', 'esp32'],
-  ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
-  ['buzzer', 'motor', 'l298n', 'relay', 'relaymodule', 'servo', 'rgbled', 'lcd', 'oled'],
-  ['logic', 'logic16', 'clock', 'sevenseg'],
-  ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
-  ['voltagesensor', 'acs712', 'mq7', 'ph', 'tds', 'turbidity'],
-  ['cell', 'tp4056', 'lm2596', 'solar'],
-  ['bme280', 'ina219', 'ds18b20', 'jsnsr04t', 'linesensor', 'siren'],
-  ['gps', 'pms5003', 'bluetooth', 'mp3', 'gsm'],
-  ['ledring', 'tft', 'lora'],
+/** The drawing tools, always at hand. */
+export const TOOLS = ['select', 'wire', 'probe'] as const;
+
+/**
+ * The parts, in compartments as a parts organiser box keeps them. Each part is
+ * in one compartment; the order within one is roughly how often it is used.
+ */
+const BINS: { id: string; items: PaletteItem[] }[] = [
+  { id: 'boards', items: ['breadboard', 'esp32', 'uno'] },
+  {
+    id: 'basic',
+    items: [
+      'resistor',
+      'led',
+      'button',
+      'switch',
+      'potentiometer',
+      'capacitor',
+      'diode',
+      'transistor',
+    ],
+  },
+  {
+    id: 'outputs',
+    items: ['buzzer', 'siren', 'rgbled', 'motor', 'servo', 'l298n', 'relay', 'relaymodule', 'mp3'],
+  },
+  { id: 'displays', items: ['lcd', 'oled', 'tft', 'ledring', 'sevenseg'] },
+  {
+    id: 'sensors',
+    items: [
+      'ldr',
+      'ldrmodule',
+      'temperature',
+      'dht11',
+      'ds18b20',
+      'bme280',
+      'soil',
+      'rain',
+      'pir',
+      'ir',
+      'ultrasonic',
+      'jsnsr04t',
+      'linesensor',
+      'mq135',
+      'mq7',
+      'pms5003',
+      'gps',
+    ],
+  },
+  { id: 'measure', items: ['voltagesensor', 'acs712', 'ina219', 'ph', 'tds', 'turbidity'] },
+  { id: 'logic', items: ['logic', 'logic16', 'clock'] },
+  { id: 'power', items: ['battery', 'supply', 'generator', 'cell', 'tp4056', 'lm2596', 'solar'] },
+  { id: 'radio', items: ['bluetooth', 'gsm', 'lora'] },
 ];
 
 /** Parts with their own placement hint; the rest share a general one. */
@@ -492,25 +533,11 @@ const HINTS: Partial<Record<Tool, MessageKey>> = {
   capacitor: 'hint.capacitor',
 };
 
-/** Tool and part picker. One tap picks a tool; the hint says what to do next. */
-export function Palette() {
-  const tool = useLab((s) => s.tool);
-  const wireStart = useLab((s) => s.wireStart);
-  const running = useLab((s) => s.running);
-  const wireSelected = useLab((s) => s.circuit.wires.some((wire) => wire.id === s.selectedId));
+/** What a tap on a palette item does: add a part beside the board, or pick a tool. */
+function useChoose() {
   const { setTool, addBreadboard, addBattery, addUno, addEsp32, addMotorDriver } =
     useLab.getState();
-  const { t } = useT();
-
-  const hint: MessageKey =
-    tool === 'wire' && wireStart
-      ? 'hint.wire.end'
-      : tool === 'select' && wireSelected
-        ? 'hint.wireSelected'
-        : tool === 'select' && running
-          ? 'hint.running'
-          : (HINTS[tool] ?? 'hint.place');
-  const choose = (item: PaletteItem) =>
+  return (item: PaletteItem) =>
     item === 'breadboard'
       ? addBreadboard()
       : item === 'battery'
@@ -524,46 +551,152 @@ export function Palette() {
               : item === 'l298n'
                 ? addMotorDriver()
                 : setTool(item);
+}
+
+const Icon = ({ item, size = 24 }: { item: PaletteItem; size?: number }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+    {ICONS[item]}
+  </svg>
+);
+
+/** Select, wire and probe: the three ways of working on the board. */
+export function ToolPicker({ compact = false }: { compact?: boolean }) {
+  const tool = useLab((s) => s.tool);
+  const choose = useChoose();
+  const { t } = useT();
+  return (
+    <div
+      role="toolbar"
+      aria-label={t('tool.select')}
+      className="flex gap-1 rounded-xl bg-paper p-1"
+    >
+      {TOOLS.map((item) => (
+        <button
+          key={item}
+          type="button"
+          data-testid={`tool-${item}`}
+          aria-pressed={tool === item}
+          onClick={() => choose(item)}
+          className={`flex flex-1 items-center justify-center rounded-lg px-1.5 font-medium ${
+            compact ? 'min-h-11 min-w-11' : 'min-h-12 flex-col gap-0.5 text-xs'
+          } ${tool === item ? 'bg-surface text-ink shadow-sm' : 'text-ink-soft hover:text-ink'}`}
+        >
+          <Icon item={item} size={20} />
+          {!compact && t(`tool.${item}`)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The parts drawer: a search box and the parts in labelled compartments. A tap
+ * picks a part to place (or adds a board or source beside the breadboard).
+ */
+export function PartsDrawer({ onChosen }: { onChosen?: () => void }) {
+  const tool = useLab((s) => s.tool);
+  const choose = useChoose();
+  const { t } = useT();
+  const [query, setQuery] = useState('');
+  const wanted = query.trim().toLowerCase();
+  const matches = (item: PaletteItem) =>
+    !wanted || item.includes(wanted) || t(`tool.${item}`).toLowerCase().includes(wanted);
+  const bins = BINS.map((bin) => ({ ...bin, items: bin.items.filter(matches) })).filter(
+    (bin) => bin.items.length > 0,
+  );
 
   return (
-    <div className="border-b border-line bg-surface">
-      <div
-        className="flex items-stretch gap-1 overflow-x-auto px-3 py-2"
-        role="toolbar"
-        aria-label={t('tool.select')}
-      >
-        {GROUPS.map((group, index) => (
-          <Fragment key={group[0]}>
-            {index > 0 && <span className="mx-1 w-px shrink-0 self-stretch bg-line" aria-hidden />}
-            {group.map((item) => (
-              <button
-                key={item}
-                type="button"
-                data-testid={`tool-${item}`}
-                aria-pressed={tool === item}
-                onClick={() => choose(item)}
-                className={`flex min-h-14 min-w-[4.25rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-1.5 text-sm font-medium whitespace-nowrap transition active:scale-95 ${
-                  tool === item
-                    ? 'border-amber bg-amber-soft text-ink'
-                    : 'border-transparent text-ink-soft hover:bg-paper hover:text-ink'
-                }`}
-              >
-                <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden>
-                  {ICONS[item]}
-                </svg>
-                {t(`tool.${item}`)}
-              </button>
-            ))}
-          </Fragment>
+    <div className="flex min-h-0 flex-1 flex-col" data-testid="parts-drawer">
+      <div className="px-3 pt-3 pb-2">
+        <label className="relative block">
+          <span className="sr-only">{t('drawer.search')}</span>
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-faint"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="11" cy="11" r="6.5" />
+            <path d="M16 16l4 4" strokeLinecap="round" />
+          </svg>
+          <input
+            type="search"
+            data-testid="parts-search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('drawer.search')}
+            className="field pl-9 text-sm"
+          />
+        </label>
+      </div>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-4">
+        {bins.length === 0 && <p className="px-1 text-sm text-ink-soft">{t('drawer.none')}</p>}
+        {bins.map((bin) => (
+          <section
+            key={bin.id}
+            aria-label={t(`drawer.bin.${bin.id}` as MessageKey)}
+            className="rounded-[var(--radius-card)] bg-mat-soft p-1.5 pt-0"
+          >
+            {/* The compartment's label, like a strip of tape on the box. */}
+            <h3 className="px-1.5 pt-1.5 pb-1 text-xs font-bold text-mat">
+              {t(`drawer.bin.${bin.id}` as MessageKey)}
+            </h3>
+            <div className="grid grid-cols-3 gap-1">
+              {bin.items.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  data-testid={`tool-${item}`}
+                  aria-pressed={tool === item}
+                  title={t(`tool.${item}`)}
+                  onClick={() => {
+                    choose(item);
+                    onChosen?.();
+                  }}
+                  className={`flex min-h-[4.25rem] flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] px-1 text-center text-xs leading-tight font-medium transition active:scale-95 ${
+                    tool === item
+                      ? 'bg-amber-soft text-ink ring-2 ring-amber'
+                      : 'bg-surface text-ink-soft shadow-[0_1px_0_rgb(0_0_0/0.06)] hover:text-ink'
+                  }`}
+                >
+                  <Icon item={item} />
+                  <span className="line-clamp-2 [overflow-wrap:anywhere]">{t(`tool.${item}`)}</span>
+                </button>
+              ))}
+            </div>
+          </section>
         ))}
       </div>
-      {/* Two lines of room on narrow screens, so the board does not jump when the hint changes. */}
-      <p
-        className="min-h-[3.55rem] border-t border-line bg-paper px-4 py-1.5 text-sm text-ink-soft sm:min-h-0"
-        aria-live="polite"
-      >
-        {t(hint)}
-      </p>
     </div>
+  );
+}
+
+/** What to do next with the tool in hand: a small note on the board, read out when it changes. */
+export function CanvasHint() {
+  const tool = useLab((s) => s.tool);
+  const wireStart = useLab((s) => s.wireStart);
+  const running = useLab((s) => s.running);
+  const wireSelected = useLab((s) => s.circuit.wires.some((wire) => wire.id === s.selectedId));
+  const { t } = useT();
+  const hint: MessageKey =
+    tool === 'wire' && wireStart
+      ? 'hint.wire.end'
+      : tool === 'select' && wireSelected
+        ? 'hint.wireSelected'
+        : tool === 'select' && running
+          ? 'hint.running'
+          : (HINTS[tool] ?? 'hint.place');
+  return (
+    <p
+      aria-live="polite"
+      data-testid="canvas-hint"
+      className="pointer-events-none max-w-md rounded-[var(--radius-control)] bg-surface/95 px-3 py-1.5 text-sm text-ink-soft shadow-[var(--shadow-raised)]"
+    >
+      {t(hint)}
+    </p>
   );
 }

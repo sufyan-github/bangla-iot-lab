@@ -1,19 +1,20 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /** Stage 1's analog sensor modules: voltage, current, CO, pH, TDS and turbidity. */
 
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 async function place(page: Page, tool: string, hole: string) {
-  await page.getByTestId(`tool-${tool}`).click();
+  await pick(page, tool);
   await tap(page, hole);
 }
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 const partAttribute = (page: Page, id: string, name: string) =>
   page.locator(`[data-part="${id}"]`).getAttribute(name);
@@ -22,7 +23,7 @@ async function newEsp32Circuit(page: Page) {
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await expect(page).toHaveURL(/\/lab\//);
-  await page.getByTestId('tool-esp32').click();
+  await pick(page, 'esp32');
   await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
 }
 
@@ -37,7 +38,7 @@ test('the six sensors can be placed, set and are kept', async ({ page }) => {
     ['turbidity', 'BB1.a27', 'TU1'],
   ] as const;
   for (const [tool, hole] of tools) await place(page, tool, hole);
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   await expect(page.locator('[data-part]')).toHaveCount(tools.length + 1);
   for (const [, , id] of tools) await expect(page.locator(`[data-part="${id}"]`)).toBeVisible();
 
@@ -64,7 +65,7 @@ test('the six sensors can be placed, set and are kept', async ({ page }) => {
 test('the voltage sensor gives a fifth of the battery it measures', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('new-project').click();
-  await page.getByTestId('tool-battery').click();
+  await pick(page, 'battery');
   await place(page, 'voltagesensor', 'BB1.c10'); // c10 VCC, c11 GND, c12 S
   await wire(page, [
     ['BAT1.pos', 'BB1.a10'],

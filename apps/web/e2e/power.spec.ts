@@ -1,19 +1,20 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /** Stage 2's power parts: the 18650 cell, the TP4056 charger, the LM2596 and the solar panel. */
 
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 async function place(page: Page, tool: string, hole: string) {
-  await page.getByTestId(`tool-${tool}`).click();
+  await pick(page, tool);
   await tap(page, hole);
 }
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 const partAttribute = (page: Page, id: string, name: string) =>
   page.locator(`[data-part="${id}"]`).getAttribute(name);
@@ -33,7 +34,7 @@ test('the four power parts can be placed, set and are kept', async ({ page }) =>
     ['lm2596', 'BB1.c22', 'REG1'],
   ] as const;
   for (const [tool, hole] of tools) await place(page, tool, hole);
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   await expect(page.locator('[data-part]')).toHaveCount(tools.length);
 
   await page.locator('[data-hit="CELL1"]').click();

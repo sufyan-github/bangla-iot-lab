@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /**
  * Working on the canvas by hand: pointing at holes, pulling wires out of them,
@@ -15,7 +16,7 @@ interface Spot {
  * shows its targets. They stay true however the page is scrolled or laid out.
  */
 async function places(page: Page, endpoints: string[]): Promise<Record<string, Spot>> {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   const found: Record<string, Spot> = {};
   for (const endpoint of endpoints) {
     const target = page.locator(`[data-endpoint="${endpoint}"]`);
@@ -24,7 +25,7 @@ async function places(page: Page, endpoints: string[]): Promise<Record<string, S
       y: Number(await target.getAttribute('cy')),
     };
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   return found;
 }
 
@@ -103,7 +104,7 @@ test('a wire can be dragged from one hole to another', async ({ page }) => {
   await expect(wires(page)).toHaveCount(4);
 
   // With the wire tool: press on one hole, let go on another.
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   const [from, to] = await onScreen(page, [at['BB1.h12']!, at['BB1.h20']!]);
   await page.mouse.move(from!.x, from!.y);
   await page.mouse.down();
@@ -115,7 +116,7 @@ test('a wire can be dragged from one hole to another', async ({ page }) => {
   await expect(page.getByTestId('wire-preview')).toHaveCount(0);
 
   // With the select tool: dragging away from a free hole pulls a wire out of it.
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   await drag(page, at['BB1.f14']!, at['BB1.f22']!);
   await expect(wires(page)).toHaveCount(6);
   await expect(page.getByTestId('tool-select')).toHaveAttribute('aria-pressed', 'true');
@@ -144,7 +145,7 @@ test('a wire picked up by its end moves to another hole', async ({ page }) => {
 
 test('a part tool shows where the part will go before it is placed', async ({ page }) => {
   await openExample(page, 'open-example');
-  await page.getByTestId('tool-resistor').click();
+  await pick(page, 'resistor');
   const free = page.locator('[data-endpoint="BB1.h15"]');
   await free.hover();
   await expect(page.getByTestId('ghost')).toHaveAttribute('data-ghost', 'resistor');
@@ -180,18 +181,18 @@ test('the battery and the board can be moved, and their wires follow', async ({ 
   await openExample(page, 'open-example-uno');
   const socket = page.locator('[data-endpoint="UNO1.d13"]');
   const before = await placeOf(page, 'UNO1');
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   const socketBefore = Number(await socket.getAttribute('cx'));
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 
   // Drag the board by its body, down and to the left.
   await dragPart(page, 'UNO1', { x: 0.5, y: 0.6 }, { x: -70, y: 40 });
   const after = await placeOf(page, 'UNO1');
   expect(after.x).toBeLessThan(before.x - 40);
   expect(after.y).toBeGreaterThan(before.y + 20);
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   expect(Number(await socket.getAttribute('cx')) - socketBefore).toBeCloseTo(after.x - before.x, 0);
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   await expect(wires(page)).toHaveCount(9);
 
   // It cannot be dropped on the breadboard: it stops at the edge instead.
@@ -208,7 +209,7 @@ test('the battery and the board can be moved, and their wires follow', async ({ 
   await page.getByTestId('run').click();
 
   // A battery moves the same way, and the position is saved with the circuit.
-  await page.getByTestId('tool-battery').click();
+  await pick(page, 'battery');
   const batteryBefore = await placeOf(page, 'BAT1');
   await dragPart(page, 'BAT1', { x: 0.3, y: 0.5 }, { x: 8, y: 110 });
   const batteryAfter = await placeOf(page, 'BAT1');
@@ -256,7 +257,7 @@ test('undo and redo step through edits, drags and removals', async ({ page }) =>
   await expect(parts).toHaveCount(5);
 
   // Place a part, then take it back.
-  await page.getByTestId('tool-resistor').click();
+  await pick(page, 'resistor');
   await page.locator('[data-endpoint="BB1.h15"]').click();
   await expect(parts).toHaveCount(6);
   await undo.click();
@@ -352,7 +353,7 @@ test('a wire can be bent around parts and straightened again', async ({ page }) 
 test('the multimeter probes read the voltage between two points', async ({ page }) => {
   await openExample(page, 'open-example');
   const reading = page.getByTestId('probe-reading');
-  await page.getByTestId('tool-probe').click();
+  await pick(page, 'probe');
 
   // Red probe on the battery's +: nothing to read until the circuit is switched on.
   await page.locator('[data-endpoint="BAT1.pos"]').click();
@@ -378,7 +379,7 @@ test('the multimeter probes read the voltage between two points', async ({ page 
   await expect(reading).toHaveAttribute('data-state', 'open');
 
   // The probes stay while other tools are used, until they are taken off.
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   await expect(page.getByTestId('probe-black')).toBeVisible();
   await page.getByTestId('probe-clear').click();
   await expect(page.getByTestId('probe-meter')).toHaveCount(0);

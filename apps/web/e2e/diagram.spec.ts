@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { pick } from './pick';
 
 /** The diagram view: the breadboard circuit drawn as a schematic, kept in step with it. */
 
@@ -27,7 +28,7 @@ test('the diagram shows the breadboard circuit as a schematic', async ({ page })
   await expect(page.getByTestId('meter-current')).toContainText('mA');
   await page.getByTestId('view-board').click();
   await expect(page.getByTestId('canvas-frame')).toBeVisible();
-  await page.getByTestId('tool-button').click();
+  await pick(page, 'button');
   await page.locator('[data-endpoint="BB1.h20"]').click();
   await page.getByTestId('view-diagram').click();
   await expect(symbols).toHaveCount(4);

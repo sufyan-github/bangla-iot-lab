@@ -1,25 +1,26 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pick } from './pick';
 
 /** Stage 3's I2C sensors: the BME280 and the INA219, read by their real libraries on the ESP32. */
 
 const tap = (page: Page, endpoint: string) => page.locator(`[data-endpoint="${endpoint}"]`).click();
 async function place(page: Page, tool: string, hole: string) {
-  await page.getByTestId(`tool-${tool}`).click();
+  await pick(page, tool);
   await tap(page, hole);
 }
 async function wire(page: Page, pairs: [string, string][]) {
-  await page.getByTestId('tool-wire').click();
+  await pick(page, 'wire');
   for (const [from, to] of pairs) {
     await tap(page, from);
     await tap(page, to);
   }
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
 }
 async function newEsp32Circuit(page: Page) {
   await page.goto('/');
   await page.getByTestId('new-project').click();
   await expect(page).toHaveURL(/\/lab\//);
-  await page.getByTestId('tool-esp32').click();
+  await pick(page, 'esp32');
   await expect(page.locator('[data-part="ESP1"]')).toBeVisible();
 }
 async function chooseStarter(page: Page, starter: string) {
@@ -55,7 +56,7 @@ test('the INA219 can be placed and kept, and its pins are named in the diagram',
 }) => {
   await newEsp32Circuit(page);
   await place(page, 'ina219', 'BB1.c10');
-  await page.getByTestId('tool-select').click();
+  await pick(page, 'select');
   await expect(page.locator('[data-part="INA1"]')).toBeVisible();
   await wire(page, [['ESP1.d22', 'BB1.a12']]);
   await page.getByTestId('view-diagram').click();
