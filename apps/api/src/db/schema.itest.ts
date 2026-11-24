@@ -48,7 +48,7 @@ describe('initial schema on PostgreSQL 18', () => {
     const { rows } = await database.pool.query(
       "select count(*)::int as n from information_schema.tables where table_schema = 'public'",
     );
-    expect(rows[0].n).toBe(12);
+    expect(rows[0].n).toBe(13);
   });
 
   it('stores a school, a teacher, a class and a pseudonymous learner', async () => {
