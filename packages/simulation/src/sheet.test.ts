@@ -487,7 +487,7 @@ describe('logic sheet, part 3: blocks that decode, count and store', () => {
   });
 
   it('blocks take more room than gates, and nothing may sit on them', () => {
-    let sheet = ok(addSheetElement(emptySheet(), 'RAM', 0, 0));
+    const sheet = ok(addSheetElement(emptySheet(), 'RAM', 0, 0));
     expect(sheet.elements[0]).toMatchObject({ id: 'RAM1', x: 0, y: 0 });
     // The RAM is 4 wide and 9 high: a gate at (2, 6) would sit on it, one at (4, 6) does not.
     expect(addSheetElement(sheet, 'AND', 2, 6)).toEqual({ ok: false, error: 'taken' });
