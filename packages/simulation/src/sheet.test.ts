@@ -258,6 +258,13 @@ describe('logic sheet, part 2', () => {
     expect(tick()).toBe(false);
   });
 
+  it('a sheet whose hex digit is wired can be kept and opened again', () => {
+    // Its ports are d0 to d3: a port name may end in a number.
+    const sheet = build(['input', 'HEX'], [['IN1.q', 'HEX1.d0']]);
+    expect(isLogicSheet(sheet)).toBe(true);
+    expect(isLogicSheet(JSON.parse(JSON.stringify(sheet)))).toBe(true);
+  });
+
   it('finds the simplest sum of products', () => {
     const table = (f: (a: boolean, b: boolean, c: boolean) => boolean) =>
       Array.from({ length: 8 }, (_, row) => f((row & 4) > 0, (row & 2) > 0, (row & 1) > 0));

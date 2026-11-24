@@ -75,7 +75,8 @@ export const SHEET_WIDTH = 40;
 export const SHEET_HEIGHT = 24;
 
 const SheetId = Type.String({ pattern: '^[A-Z]+[0-9]{1,3}$' });
-const Port = Type.String({ pattern: '^[A-Z]+[0-9]{1,3}\\.[a-z]+$' });
+/** A port, "G1.y"; a port's name may end in a number, as a hex digit's "d0" does. */
+const Port = Type.String({ pattern: '^[A-Z]+[0-9]{1,3}\\.[a-z][a-z0-9]*$' });
 
 export const SheetElementSchema = Type.Object({
   id: SheetId,
