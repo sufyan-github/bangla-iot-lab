@@ -24,6 +24,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Dark mode**: the lab follows the device's light or dark setting, or the
+  student's own choice from a button in the header. The bench and the parts
+  keep their real colours.
 - **The catalogue linked to the parts master**: each product is suggested for
   a lab part by its name, a person confirms or changes it on a private
   catalogue desk that runs on their own computer, and a report shows each part's

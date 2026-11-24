@@ -1964,3 +1964,29 @@ Built on 24 November 2026.
 - **Not done:** decisions themselves (the owner's call, product by product), and
   showing catalogue prices to students, which needs the store's written
   permission first.
+
+## D-095 — Dark mode
+
+Built on 24 November 2026.
+
+- **Follows the device, or the student's choice.** By default the lab uses the
+  phone's or computer's light or dark setting. A button in the header steps
+  through "as on this device", dark and light; a choice is remembered on that
+  device only (local storage), so no account data is involved.
+- **The bench keeps its daylight colours.** The page, panels, text and lines
+  go dark; the green mat, the breadboard and the parts on it, the meter's LCD
+  and the instruments' screens look as they do in light mode, since they are
+  things on the bench, and their colours carry meaning (wire colours, LED
+  colours, resistor bands).
+- **Colours by role.** Some colours served two roles, so they were split, with
+  the light-mode values unchanged (light mode looks exactly as before):
+  `chalk` (light text on the dark green mat, header and screens), `graphite`
+  (dark text on amber), and `accent` (the mat's green as text, lines and focus
+  on the page, which brightens in dark mode while the mat stays dark). Text on
+  the ink-coloured strips (a toast, a button) inverts with the theme; the
+  serial monitor stays a dark terminal in both.
+- **Also themed:** the code editor, with its own highlighting colours (CodeMirror's
+  defaults are made for white), the K-map group colours, and the schematic's
+  ink.
+- **Not done:** a separate dark design for the mat and the parts; contrast not
+  measured on a real phone screen outdoors.
