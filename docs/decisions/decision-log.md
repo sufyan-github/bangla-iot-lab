@@ -2045,3 +2045,32 @@ and people on their own, with no school. The owner's choices:
   classroom limit on joining (ten a minute from one address); a lawyer's word
   on the guardian approval under the Personal Data Protection Act 2026
   (REPORTED to have replaced the 2025 Ordinance; not read by us).
+
+## D-097 — The lab office: the owner's panel
+
+Built on 24 November 2026, the second step of D-096.
+
+- **Who.** An owner is a platform admin (`users.platform_role`, unused until
+  now). The role is given only on the server, with `owner:grant <email>`, to an
+  open adult account; never from the web. Both granting and taking back are
+  audited.
+- **What.** A page at `/owner`, linked in the header for owners only: counts
+  of schools and people; schools (suspend, start, close, reopen); people
+  (suspend, restore, close; a one-time reset link for 24 hours to hand on when
+  email does not arrive); the latest 100 audit entries. Every change asks
+  first and is audited with the owner as actor.
+- **Effects.** A suspended account cannot sign in by any means and its sessions
+  stop at once. A suspended or closed school gives its staff no powers and its
+  classes cannot be joined; its teachers can still sign in. A school gains a
+  status (`pending`, `active`, `suspended`), with `pending` ready for schools
+  that apply (the next step).
+- **Guards.** The owner's own account and other owners' cannot be suspended or
+  closed from the panel. Class learners get no reset link (their teacher gives
+  a key).
+- **What the owner sees.** What running the lab needs, no more: adults' names
+  and emails; learners' nicknames, own sign-in names, class counts and whether
+  a guardian approved, the guardian's email only in part. No learner progress
+  or projects. **Chosen over** showing guardians' emails in full: the owner
+  can still send a reset link to hand on without seeing it.
+- **Not done:** schools applying for approval (next step); reopening a closed
+  account (by design, closing is final); a fuller audit search.

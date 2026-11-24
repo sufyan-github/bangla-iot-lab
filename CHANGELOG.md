@@ -28,6 +28,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The lab office**: the owner's page for every school and every person:
+  suspend, restart and close schools and accounts, make a one-time reset link
+  to hand on, and read the latest activity. Owners are made only on the server.
 - **Accounts of your own**: anyone can open an account with a confirmed email
   and a password, and reset it by email. Learners under 18 give no email of
   their own: a parent or guardian approves the account from an email. Sign-in

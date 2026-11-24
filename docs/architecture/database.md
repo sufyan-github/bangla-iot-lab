@@ -53,6 +53,13 @@ Enums: `account_kind`, `platform_role`, `school_role`, `consent_scope`, `consent
 | `email_tokens`            | One-time links: verify an email, approve a learner, reset | unique `token_hash` (SHA-256); works once, until `expires_at`; a newer one cancels older |
 | `sessions.persistent`     | "Keep me signed in on this device"                        | without it the cookie ends with the browser and the server gives up after 12 hours       |
 
+## Added with the lab office (migration `0007`, D-097)
+
+| Table / column       | Purpose                                                       | Keys and constraints                                                                  |
+| -------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `schools.status`     | `pending`, `active` or `suspended`; closed uses `archived_at` | default `active`; only an active, open school's roles count and classes can be joined |
+| `users.suspended_at` | Stopped for now by an owner; can be restored                  | a suspended account cannot sign in, and its sessions stop working at once             |
+
 ## Designed, to be migrated with the feature that uses it
 
 Tables are added when their first consumer is built, so the schema never holds
