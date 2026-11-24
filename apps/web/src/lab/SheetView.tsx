@@ -2,7 +2,6 @@ import type { MessageKey } from '@banglalab/i18n';
 import {
   SHEET_GATES,
   SHEET_HEIGHT,
-  SHEET_KINDS,
   SHEET_WIDTH,
   addSheetElement,
   connectSheet,
@@ -79,6 +78,70 @@ function useSheetState(sheet: LogicSheet): SheetState {
     return () => cancelAnimationFrame(frame);
   }, [sheet]);
   return state;
+}
+
+/** The toolbar's groups: what is placed on the sheet, by what it does. */
+const TOOL_GROUPS: { id: string; items: SheetTool[] }[] = [
+  { id: 'select', items: ['select'] },
+  { id: 'io', items: ['input', 'output', 'clock'] },
+  { id: 'gates', items: ['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'] },
+  { id: 'blocks', items: ['MUX', 'FA', 'HEX'] },
+  { id: 'memory', items: ['DFF', 'JKFF', 'TFF'] },
+];
+
+/** A small drawing of each tool, a gate's symbol as a textbook draws it. */
+function ToolGlyph({ id }: { id: SheetTool }) {
+  const common = {
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.6,
+    strokeLinejoin: 'round' as const,
+  };
+  const bubble = id === 'NAND' || id === 'NOR' || id === 'NOT';
+  const body =
+    id === 'select' ? (
+      <path d="M7 4l10 7-5 1.5L10 18z" {...common} />
+    ) : id === 'input' ? (
+      <>
+        <rect x="4" y="8" width="16" height="8" rx="4" {...common} />
+        <circle cx="16" cy="12" r="2.5" fill="currentColor" />
+      </>
+    ) : id === 'output' ? (
+      <>
+        <circle cx="12" cy="12" r="6" {...common} />
+        <path d="M8 8l8 8M16 8l-8 8" {...common} strokeWidth={1.2} />
+      </>
+    ) : id === 'clock' ? (
+      <path d="M3 16h4V8h5v8h5V8h4" {...common} />
+    ) : id === 'AND' || id === 'NAND' ? (
+      <path d="M5 6h6a6 6 0 0 1 0 12H5z" {...common} />
+    ) : id === 'OR' || id === 'NOR' || id === 'XOR' ? (
+      <>
+        <path d="M5 6q9 0 12 6q-3 6-12 6q3-6 0-12z" {...common} />
+        {id === 'XOR' && <path d="M3 6q3 6 0 12" {...common} />}
+      </>
+    ) : id === 'NOT' ? (
+      <path d="M5 6l10 6-10 6z" {...common} />
+    ) : id === 'MUX' ? (
+      <path d="M7 4l10 4v8l-10 4z" {...common} />
+    ) : id === 'HEX' ? (
+      <>
+        <rect x="6" y="3" width="12" height="18" rx="2" {...common} />
+        <path d="M9 7h6M9 12h6M9 17h6M9 7v10M15 7v10" {...common} strokeWidth={1.2} />
+      </>
+    ) : (
+      <>
+        <rect x="5" y="4" width="14" height="16" rx="1.5" {...common} />
+        {id !== 'FA' && <path d="M5 13l3 2-3 2" {...common} strokeWidth={1.2} />}
+        {id === 'FA' && <path d="M9 9h6l-4 3 4 3H9" {...common} strokeWidth={1.2} />}
+      </>
+    );
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+      {body}
+      {bubble && <circle cx={id === 'NOT' ? 17.5 : 19.5} cy="12" r="2" {...common} />}
+    </svg>
+  );
 }
 
 /** A gate's textbook symbol in its 3 × 3 block. */
@@ -413,7 +476,6 @@ export function SheetView() {
 
   const selectedElement = sheet.elements.find((e) => e.id === selected);
   const floating = state.floating.filter((port) => !port.startsWith('OUT'));
-  const tools: SheetTool[] = ['select', ...SHEET_KINDS];
   const kindName = (kind: SheetKind) =>
     (SHEET_GATES as readonly string[]).includes(kind)
       ? kind
@@ -424,26 +486,53 @@ export function SheetView() {
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="sheet">
       <div
-        className="flex flex-wrap gap-1.5 border-b border-line bg-surface px-3 py-2"
+        className="flex flex-wrap items-end gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2"
         role="toolbar"
         aria-label={t('lab.viewSheet')}
       >
-        {tools.map((id) => (
-          <button
-            key={id}
-            type="button"
-            data-testid={`sheet-tool-${id}`}
-            aria-pressed={tool === id}
-            onClick={() => {
-              setTool(id);
-              setPending(null);
-            }}
-            className={`min-h-11 rounded-lg border-2 px-3 text-sm font-medium ${
-              tool === id ? 'border-amber bg-amber-soft' : 'border-line hover:border-ink-soft'
-            }`}
+        {TOOL_GROUPS.map((group) => (
+          <div
+            key={group.id}
+            role="group"
+            aria-label={
+              group.id === 'select' ? undefined : t(`sheet.group.${group.id}` as MessageKey)
+            }
           >
-            {id === 'select' ? t('sheet.tool.select') : kindName(id)}
-          </button>
+            {group.id !== 'select' && (
+              <span className="mb-0.5 block px-1 text-xs font-semibold text-ink-faint">
+                {t(`sheet.group.${group.id}` as MessageKey)}
+              </span>
+            )}
+            <div className="flex gap-0.5 rounded-xl bg-paper p-1">
+              {group.items.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  data-testid={`sheet-tool-${id}`}
+                  aria-pressed={tool === id}
+                  title={id === 'select' ? t('sheet.tool.select') : kindName(id)}
+                  onClick={() => {
+                    setTool(id);
+                    setPending(null);
+                  }}
+                  className={`flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-medium ${
+                    tool === id
+                      ? 'bg-surface text-ink shadow-sm ring-2 ring-amber'
+                      : 'text-ink-soft hover:bg-surface/60 hover:text-ink'
+                  }`}
+                >
+                  <ToolGlyph id={id} />
+                  <span
+                    className={
+                      (SHEET_GATES as readonly string[]).includes(id) ? 'font-mono text-xs' : ''
+                    }
+                  >
+                    {id === 'select' ? t('sheet.tool.select') : kindName(id)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
       <p className="border-b border-line bg-paper px-4 py-1.5 text-sm text-ink-soft">

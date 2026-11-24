@@ -473,15 +473,22 @@ export function LabPage() {
             }`}
           >
             {view === 'sheet' ? (
-              <SheetView />
+              <>
+                {!wide && (
+                  <div className="border-b border-line bg-surface px-2 py-1.5">{viewSwitch}</div>
+                )}
+                <SheetView />
+              </>
             ) : (
               <>
                 <Notice />
                 {view === 'board' ? <Canvas /> : <Diagram />}
               </>
             )}
-            {/* Over the board: the view switch on a phone, at the top. */}
-            {!wide && <div className="absolute top-2 left-2 z-10">{viewSwitch}</div>}
+            {/* Over the board: the view switch on a phone, at the top (above the sheet's own toolbar). */}
+            {!wide && view !== 'sheet' && (
+              <div className="absolute top-2 left-2 z-10">{viewSwitch}</div>
+            )}
             {/* What to do next: low on the board, clear of the breadboard's top rows. */}
             {wide && (
               <div className="pointer-events-none absolute bottom-3 left-3 z-10 max-w-[calc(100%-12rem)]">
