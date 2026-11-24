@@ -144,10 +144,10 @@ int twice(int n) { return n * 2; }
 
   it('says so when a sketch uses something the board library does not have yet', async () => {
     const missingHeader = (
-      await compile('#include <WiFi.h>\nvoid setup() {}\nvoid loop() {}\n')
+      await compile('#include <HTTPClient.h>\nvoid setup() {}\nvoid loop() {}\n')
     ).json();
     expect(missingHeader.ok).toBe(false);
-    expect(missingHeader.diagnostics[0].message).toMatch(/WiFi\.h/);
+    expect(missingHeader.diagnostics[0].message).toMatch(/HTTPClient\.h/);
     const missingFunction = (
       await compile('void setup() { esp_sleep_enable_ext1_wakeup(1, 0); }\nvoid loop() {}\n')
     ).json();
