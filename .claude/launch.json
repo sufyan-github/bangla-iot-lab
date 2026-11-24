@@ -4,30 +4,8 @@
     {
       "name": "web-preview",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "--filter",
-        "@banglalab/web",
-        "preview"
-      ],
+      "runtimeArgs": ["--filter", "@banglalab/web", "preview"],
       "port": 4173
-    },
-    {
-      "name": "web-dev",
-      "runtimeExecutable": "sh",
-      "runtimeArgs": [
-        "-c",
-        "VITE_API_URL=http://localhost:4010 pnpm --filter @banglalab/web dev --force"
-      ],
-      "port": 5173
-    },
-    {
-      "name": "api-dev",
-      "runtimeExecutable": "sh",
-      "runtimeArgs": [
-        "-c",
-        "API_PORT=4010 WEB_ORIGIN=http://localhost:5173 LOG_LEVEL=warn pnpm --filter @banglalab/api start"
-      ],
-      "port": 4010
     }
   ]
 }
