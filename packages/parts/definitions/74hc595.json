@@ -1,0 +1,121 @@
+{
+  "formatVersion": 1,
+  "id": "74hc595",
+  "simulates": "logic16",
+  "status": "simulated",
+  "family": "logic",
+  "tier": 2,
+  "name": {
+    "bn": "74HC595 (শিফট রেজিস্টার)",
+    "en": "74HC595 shift register"
+  },
+  "summary": {
+    "bn": "তিনটা পিন দিয়ে আটটা আউটপুট: বিট একটা একটা করে ঢুকিয়ে একসঙ্গে বের করে",
+    "en": "Eight outputs from three pins: bits go in one at a time and come out together"
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": [
+      "The chip answers at once: the few nanoseconds a real one takes, and its set-up and hold times, are left out.",
+      "On SHCP's rising edge the bits move up one place and DS comes in at Q0; MR̅ LOW clears the shift register at once. On STCP's rising edge Q0 to Q7 take the shift register's bits. OE̅ HIGH lets Q0 to Q7 go. With both clocks joined, the outputs are one bit behind, as the datasheet says.",
+      "Without power it forgets what it held and starts with every bit LOW. A real chip starts with any bits until it is cleared and stored.",
+      "An input is HIGH above 70 % of the supply and LOW below 30 %; in between it keeps its last level. An output is the supply or ground through about 50 Ω. These are typical datasheet figures, not measured. A real chip should not give more than 70 mA through its supply legs in all, so eight LEDs need resistors of 330 Ω or more.",
+      "It is placed across the centre gap with pin 1 at the bottom left, and cannot be turned round."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "p1",
+      "label": "1",
+      "role": "output"
+    },
+    {
+      "id": "p2",
+      "label": "2",
+      "role": "output"
+    },
+    {
+      "id": "p3",
+      "label": "3",
+      "role": "output"
+    },
+    {
+      "id": "p4",
+      "label": "4",
+      "role": "output"
+    },
+    {
+      "id": "p5",
+      "label": "5",
+      "role": "output"
+    },
+    {
+      "id": "p6",
+      "label": "6",
+      "role": "output"
+    },
+    {
+      "id": "p7",
+      "label": "7",
+      "role": "output"
+    },
+    {
+      "id": "p8",
+      "label": "8",
+      "role": "ground"
+    },
+    {
+      "id": "p9",
+      "label": "9",
+      "role": "output"
+    },
+    {
+      "id": "p10",
+      "label": "10",
+      "role": "input"
+    },
+    {
+      "id": "p11",
+      "label": "11",
+      "role": "input"
+    },
+    {
+      "id": "p12",
+      "label": "12",
+      "role": "input"
+    },
+    {
+      "id": "p13",
+      "label": "13",
+      "role": "input"
+    },
+    {
+      "id": "p14",
+      "label": "14",
+      "role": "input"
+    },
+    {
+      "id": "p15",
+      "label": "15",
+      "role": "output"
+    },
+    {
+      "id": "p16",
+      "label": "16",
+      "role": "power"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["74hc595"]
+  },
+  "placement": {
+    "idPrefix": "U",
+    "offsets": [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0],
+    "rows": ["f", "f", "f", "f", "f", "f", "f", "f", "e", "e", "e", "e", "e", "e", "e", "e"]
+  }
+}

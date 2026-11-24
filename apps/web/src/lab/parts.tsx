@@ -1,4 +1,4 @@
-import type { LedColor } from '@banglalab/shared';
+import { SEVEN_SEGMENTS, type LedColor, type SevenSegment } from '@banglalab/shared';
 import type { LedState } from '@banglalab/simulation';
 import { PITCH, UNO_BOX, UNO_SOCKETS, type Box, type Point } from './geometry';
 import { resistorBands } from './resistor-bands';
@@ -923,19 +923,28 @@ export function MotorView(props: { a: Point; b: Point; speed: number; selected: 
  * the notch at pin 1's end, the chip's name, and its fourteen legs.
  */
 export function ChipView(props: {
-  /** Pin 1 (row f, left), pin 7 (row f, right) and pin 14 (row e, left). */
+  /**
+   * Pin 1 (row f, left), the last pin of that row (row f, right: pin 7 of a
+   * 14-pin chip, pin 8 of a 16-pin one) and the highest pin (row e, left).
+   */
   p1: Point;
   p7: Point;
   p14: Point;
+  /** Pins along each side: 7 or 8. */
+  perSide?: number;
   name: string;
   selected: boolean;
 }) {
   const { p1, p7, p14 } = props;
+  const perSide = props.perSide ?? 7;
   const left = p1.x - 9;
   const width = p7.x - p1.x + 18;
   const top = p14.y + 5;
   const height = p1.y - p14.y - 10;
-  const legs = [0, 1, 2, 3, 4, 5, 6].map((i) => p1.x + ((p7.x - p1.x) * i) / 6);
+  const legs = Array.from(
+    { length: perSide },
+    (_, i) => p1.x + ((p7.x - p1.x) * i) / (perSide - 1),
+  );
   return (
     <g>
       {props.selected && (
@@ -988,6 +997,101 @@ export function ChipView(props: {
       >
         {props.name}
       </text>
+    </g>
+  );
+}
+
+/** Where each segment of a digit is drawn, in a 40 × 70 cell: a line from one point to another. */
+const SEGMENT_LINES: Record<SevenSegment, [number, number, number, number]> = {
+  a: [7, 2, 33, 2],
+  b: [37, 6, 36, 31],
+  c: [36, 39, 35, 64],
+  d: [31, 68, 5, 68],
+  e: [3, 64, 4, 39],
+  f: [4, 31, 5, 6],
+  g: [9, 35, 31, 35],
+  dp: [44, 68, 44, 68],
+};
+
+/**
+ * A 0.56 inch seven-segment display standing across the gap: a grey face with
+ * the digit's eight segments, each lit as brightly as its LED.
+ */
+export function SevenSegmentView(props: {
+  /** Leg e (bottom row, left), leg DP (bottom row, right) and leg g (top row, left). */
+  e: Point;
+  dp: Point;
+  g: Point;
+  /** How bright each segment is, 0 to 1. */
+  segments: Partial<Record<SevenSegment, number>> | undefined;
+  state: LedState | undefined;
+  selected: boolean;
+}) {
+  const { e, dp, g } = props;
+  const left = e.x - 10;
+  const width = dp.x - e.x + 20;
+  const top = g.y - 8;
+  const height = e.y - g.y + 16;
+  // The digit fills most of the face, leaning a little as real ones do.
+  const scale = (height * 0.72) / 70;
+  const originX = left + width / 2 - 22 * scale;
+  const originY = top + height / 2 - 35 * scale;
+  const burned = props.state === 'burned';
+  return (
+    <g>
+      {props.selected && (
+        <rect
+          x={left - 8}
+          y={top - 8}
+          width={width + 16}
+          height={height + 16}
+          rx={10}
+          fill={SELECTION}
+          opacity={0.4}
+        />
+      )}
+      <rect
+        x={left + 2}
+        y={top + 4}
+        width={width}
+        height={height}
+        rx={3}
+        fill="#000"
+        opacity={0.3}
+      />
+      <rect x={left} y={top} width={width} height={height} rx={3} fill="#2c2e30" />
+      <rect x={left + 4} y={top + 4} width={width - 8} height={height - 8} rx={2} fill="#151617" />
+      <g transform={`translate(${originX} ${originY}) scale(${scale}) skewX(-8)`}>
+        {SEVEN_SEGMENTS.map((segment) => {
+          const [x1, y1, x2, y2] = SEGMENT_LINES[segment];
+          const brightness = burned ? 0 : (props.segments?.[segment] ?? 0);
+          return (
+            <g key={segment} data-segment={segment} data-lit={brightness > 0 ? 'true' : 'false'}>
+              <line
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke="#3b1714"
+                strokeWidth={segment === 'dp' ? 7 : 6}
+                strokeLinecap="round"
+              />
+              {brightness > 0 && (
+                <line
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke="#ff4433"
+                  strokeWidth={segment === 'dp' ? 7 : 6}
+                  strokeLinecap="round"
+                  opacity={0.35 + 0.65 * brightness}
+                />
+              )}
+            </g>
+          );
+        })}
+      </g>
     </g>
   );
 }

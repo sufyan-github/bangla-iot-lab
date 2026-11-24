@@ -57,6 +57,7 @@ import esp32ReceiverSource from '@banglalab/board-emulators/fixtures/esp32-start
 import esp32LoraSendSource from '@banglalab/board-emulators/fixtures/esp32-starters/lora-send.ino?raw';
 import esp32LoraReceiveSource from '@banglalab/board-emulators/fixtures/esp32-starters/lora-receive.ino?raw';
 import esp32DeepsleepSource from '@banglalab/board-emulators/fixtures/esp32-starters/deepsleep.ino?raw';
+import esp32ShiftSource from '@banglalab/board-emulators/fixtures/esp32-starters/shift.ino?raw';
 import esp32WebserverSource from '@banglalab/board-emulators/fixtures/esp32-starters/webserver.ino?raw';
 import type { MessageKey } from '@banglalab/i18n';
 import type { ProgrammableType } from '@banglalab/shared';
@@ -128,6 +129,7 @@ export const ESP32_STARTERS = {
   'lora-send': { source: esp32LoraSendSource },
   'lora-receive': { source: esp32LoraReceiveSource },
   deepsleep: { source: esp32DeepsleepSource },
+  shift: { source: esp32ShiftSource },
   webserver: { source: esp32WebserverSource },
 } as const;
 

@@ -215,8 +215,17 @@ export class SimulationSession {
   }
 
   /** True when the circuit changes by itself as time passes: a program is running or a capacitor is present. */
+  /**
+   * True when the circuit changes as time passes, even with nothing touched: a
+   * program runs, a capacitor charges, a clock module ticks or a motion
+   * sensor's output times out.
+   */
   get isTimeDependent(): boolean {
-    return this.boards.size > 0 || this.hasCapacitors;
+    return (
+      this.boards.size > 0 ||
+      this.hasCapacitors ||
+      this.document.components.some((c) => c.type === 'clock' || c.type === 'pir')
+    );
   }
 
   /** Clock modules whose output is HIGH now. */

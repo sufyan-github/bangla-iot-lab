@@ -7,6 +7,9 @@ import {
   chipOutputs,
   boardPinNumber,
   boardTerminals,
+  isLogicChipPart,
+  SEVEN_SEGMENTS,
+  type SevenSegment,
   isProgrammable,
   terminalsOf,
   withoutBreadboards,
@@ -23,7 +26,6 @@ import {
   LOGIC_HIGH_FRACTION,
   LOGIC_LOW_FRACTION,
   LOGIC_MAX_OUTPUT_CURRENT,
-  LOGIC_MAX_SUPPLY,
   L298N_INPUT_HIGH,
   L298N_INPUT_LOW,
   L298N_LOGIC_MIN,
@@ -90,6 +92,13 @@ import {
 
 export type LedState = 'off' | 'on' | 'overcurrent' | 'burned' | 'reversed';
 
+/** Of several LEDs in one case, the state to report: the worst any of them is in. */
+function worstLed(each: readonly { state: LedState }[]): LedState {
+  return (['burned', 'overcurrent', 'reversed', 'on', 'off'] as const).find((state) =>
+    each.some((led) => led.state === state),
+  )!;
+}
+
 export interface Reading {
   /**
    * Volts across the part, averaged over the observed time. LED: anode minus
@@ -104,6 +113,8 @@ export interface Reading {
   led?: { state: LedState; brightness: number };
   /** Only for an RGB LED: how bright each of its three LEDs is, 0 to 1. */
   rgb?: Record<RgbChannel, number>;
+  /** How bright each segment of a seven-segment display is, 0 to 1. */
+  segments?: Record<SevenSegment, number>;
   /**
    * For parts that do something you can see or hear: 1 while a buzzer sounds, a
    * relay's contact is closed, a sensor module's indicator is lit or a motion
@@ -350,13 +361,13 @@ export function chipStates(
 ): Record<string, ChipState> {
   const next: Record<string, ChipState> = {};
   for (const component of document.components) {
-    if (component.type !== 'logic') continue;
+    if (!isLogicChipPart(component)) continue;
     const before = current[component.id] ?? CHIP_IDLE;
     const model = CHIP_MODELS[component.props.chip];
     const at = (n: number) => solution.nodes[netName(component.pins[`p${n}`]!)] ?? 0;
     const ground = at(model.ground);
     const supply = at(model.supply) - ground;
-    const powered = supply >= MIN_SUPPLY.logic!;
+    const powered = supply >= model.supplyRange[0];
     const inputs: Record<number, boolean> = {};
     for (const input of chipInputs(model)) {
       const volts = at(input) - ground;
@@ -612,7 +623,7 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
   const hasRegulator = document.components.some((c) => c.type === 'lm2596');
   const hasSensor = document.components.some((c) => c.type === 'acs712' || c.type === 'tds');
   const hasDriver = document.components.some((c) => c.type === 'l298n');
-  const hasChip = document.components.some((c) => c.type === 'logic');
+  const hasChip = document.components.some(isLogicChipPart);
   let solution: StateSolution | null = null;
   // A motor driver needs a few more rounds: its regulator, then its logic, then its outputs.
   // Logic chips need one round for each gate a signal passes through.
@@ -923,6 +934,22 @@ export function readSolution(
           supply: volts(component.pins.vcc) - volts(component.pins.gnd),
         };
         break;
+      case 'sevenseg': {
+        let total = 0;
+        let highest = 0;
+        for (const segment of SEVEN_SEGMENTS) {
+          const led = netlist.circuit.devices.find((d) => d.id === `${id}:${segment}`);
+          const sample = {
+            voltage: led?.voltage(solution) ?? 0,
+            current: led?.current(solution) ?? 0,
+          };
+          result.channels[`${id}.${segment}`] = sample;
+          total += sample.current;
+          highest = Math.max(highest, sample.voltage);
+        }
+        result.parts[id] = { voltage: highest, current: total };
+        break;
+      }
       case 'rgbled': {
         let total = 0;
         let highest = 0;
@@ -1019,7 +1046,7 @@ export function readSolution(
   // A logic chip's reading is its supply and what it takes from it; each output's current is kept,
   // and an input joined to nothing at all is noted.
   for (const component of document.components) {
-    if (component.type !== 'logic') continue;
+    if (!isLogicChipPart(component)) continue;
     const { id } = component;
     const pin = (n: number) => component.pins[`p${n}`]!;
     const model = CHIP_MODELS[component.props.chip];
@@ -1180,7 +1207,11 @@ export class Observation {
         current: average((s) => s.parts[id]!.current),
         power: average((s) => s.parts[id]!.voltage * s.parts[id]!.current),
       };
-      if (component.type === 'led' || component.type === 'rgbled') {
+      if (
+        component.type === 'led' ||
+        component.type === 'rgbled' ||
+        component.type === 'sevenseg'
+      ) {
         // Damage depends on the worst instant; brightness on the average (as the eye sees PWM).
         const judge = (pick: (s: StateSolution) => Sample) => {
           const current = average((s) => pick(s).current);
@@ -1199,14 +1230,23 @@ export class Observation {
         };
         if (component.type === 'led') {
           reading.led = judge((s) => s.parts[id]!);
+        } else if (component.type === 'sevenseg') {
+          // Eight LEDs: each is judged alone, and the worst one is reported.
+          const each = SEVEN_SEGMENTS.map((segment) =>
+            judge((s) => s.channels[`${id}.${segment}`]!),
+          );
+          reading.led = {
+            state: worstLed(each),
+            brightness: Math.max(...each.map((led) => led.brightness)),
+          };
+          reading.segments = Object.fromEntries(
+            SEVEN_SEGMENTS.map((segment, i) => [segment, each[i]!.brightness]),
+          ) as Record<SevenSegment, number>;
         } else {
           // Three LEDs in one case: each is judged alone, and the worst one is reported.
           const each = RGB_CHANNELS.map((channel) => judge((s) => s.channels[`${id}.${channel}`]!));
-          const worst = (['burned', 'overcurrent', 'reversed', 'on', 'off'] as const).find((s) =>
-            each.some((led) => led.state === s),
-          )!;
           reading.led = {
-            state: worst,
+            state: worstLed(each),
             brightness: Math.max(...each.map((led) => led.brightness)),
           };
           reading.rgb = { r: each[0]!.brightness, g: each[1]!.brightness, b: each[2]!.brightness };
@@ -1278,16 +1318,18 @@ export class Observation {
           ? Math.max(-1, Math.min(1, reading.voltage / MOTOR_RATED_VOLTAGE))
           : 0;
       }
-      if (component.type === 'logic') {
-        // A 74HC chip on more than 6 V, or an output asked for more than 25 mA, is being damaged.
+      if (isLogicChipPart(component)) {
+        // A chip above its highest supply (6 V for a 74HC chip), or an output asked for more
+        // than 25 mA, is being damaged.
         const supply = extreme((s) => s.parts[id]!.voltage, Math.max);
-        if (supply > LOGIC_MAX_SUPPLY) {
+        const limit = CHIP_MODELS[component.props.chip].supplyRange[1];
+        if (supply > limit) {
           result.diagnostics.push({
             code: 'chip-overvoltage',
             severity: 'error',
             componentId: id,
             volts: supply,
-            limit: LOGIC_MAX_SUPPLY,
+            limit,
           });
         }
         for (const out of chipOutputs(CHIP_MODELS[component.props.chip])) {
@@ -1527,7 +1569,7 @@ export class Observation {
     }
 
     if (states.some(([s]) => s.unsettled)) {
-      const chip = document.components.find((c) => c.type === 'logic');
+      const chip = document.components.find(isLogicChipPart);
       result.diagnostics.push({
         code: 'logic-oscillates',
         severity: 'warning',

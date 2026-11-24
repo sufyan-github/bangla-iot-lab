@@ -1,0 +1,238 @@
+{
+  "id": "flip-flop",
+  "order": 45,
+  "after": ["logic-gates"],
+  "parts": ["74hc74", "push-button", "resistor", "led-5mm"],
+  "title": {
+    "bn": "ফ্লিপ-ফ্লপ: যে চিপ মনে রাখে",
+    "en": "The flip-flop: a chip that remembers"
+  },
+  "summary": {
+    "bn": "একটা D ফ্লিপ-ফ্লপ দিয়ে এমন বোতাম বানাও, যা প্রতি চাপে LED একবার জ্বালায় আর একবার নেভায়।",
+    "en": "Make a button with a D flip-flop that turns an LED on with one press and off with the next."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "steps": [
+    {
+      "text": {
+        "bn": "গেটের আউটপুট শুধু এই মুহূর্তের ইনপুট দেখে। **ফ্লিপ-ফ্লপ** আলাদা: এটা একটা বিট **মনে রাখে**। D ফ্লিপ-ফ্লপের ঘড়ির (CLK) পা যে মুহূর্তে LOW থেকে HIGH হয়, তখন এটা D পায়ের মান নিয়ে Q পায়ে রাখে, আর পরের সেই মুহূর্ত পর্যন্ত ধরে থাকে।\n\nএকটা **লজিক চিপ** খাঁজের ওপর বসাও, আর ডানের প্যানেলে **74HC74** বেছে নাও। পা ১৪ **3V3**-এ, পা ৭ **GND**-তে।",
+        "en": "A gate’s output looks only at its inputs right now. A **flip-flop** is different: it **remembers** one bit. At the moment a D flip-flop’s clock (CLK) leg goes from LOW to HIGH, it takes the level on its D leg and keeps it on Q until the next such moment.\n\nPlace a **logic chip** across the gap and choose **74HC74** in the panel on the right. Leg 14 to **3V3**, leg 7 to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "logic",
+          "prop": "chip",
+          "equals": "74HC74"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p14"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p7"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "প্রথম ফ্লিপ-ফ্লপের **CLR** (পা ১) আর **PRE** (পা ৪) পা LOW হলে Q-কে জোর করে LOW বা HIGH করে। এখানে সেটা চাই না, তাই দুটোকেই তার দিয়ে **3V3**-এ লাগাও।",
+        "en": "The first flip-flop’s **CLR** (leg 1) and **PRE** (leg 4) force Q LOW or HIGH while they are LOW. We do not want that here, so wire both to **3V3**."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p1"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p4"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার আসল কৌশল: **Q̅** (পা ৬) সবসময় Q-এর উল্টো। Q̅ থেকে একটা তার **D**-তে (পা ২) লাগাও। তাহলে ঘড়ির প্রতি উঠতি ধারে Q নেয় নিজেরই উল্টো মান: LOW থাকলে HIGH, HIGH থাকলে LOW।",
+        "en": "Now the trick: **Q̅** (leg 6) is always the opposite of Q. Run a wire from Q̅ to **D** (leg 2). Then on every rising clock edge Q takes its own opposite: LOW becomes HIGH, HIGH becomes LOW."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p6"
+          },
+          "to": {
+            "part": "logic",
+            "pin": "p2"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "ঘড়ি হবে একটা **বোতাম**: এর এক পা **CLK**-এ (পা ৩), অন্য পা **3V3**-এ। আর CLK থেকে একটা **১০ kΩ রেজিস্টর** **GND**-তে, যাতে বোতাম ছাড়া থাকলে CLK LOW থাকে। চাপলে CLK HIGH হবে: সেটাই উঠতি ধার।",
+        "en": "The clock will be a **button**: one leg to **CLK** (leg 3), the other to **3V3**. And a **10 kΩ resistor** from CLK to **GND**, so CLK stays LOW while the button is let go. Pressing makes CLK HIGH: that is the rising edge."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "button"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "part": "logic",
+            "pin": "p3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "button",
+            "pin": "*"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p3"
+          },
+          "to": {
+            "board": "gnd"
+          },
+          "through": "resistor",
+          "ohms": [4700, 47000]
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**Q** (পা ৫) থেকে একটা রেজিস্টর (২২০ Ω থেকে ১ kΩ) হয়ে **LED**-র লম্বা পায়ে, LED-র ছোট পা **GND**-তে।",
+        "en": "From **Q** (leg 5) go through a resistor (220 Ω to 1 kΩ) to an **LED**’s long leg, and the LED’s short leg to **GND**."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic",
+            "pin": "p5"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [220, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সার্কিট চালু করো। চালুর সময় Q LOW, তাই LED নেভা। বোতামটা একবার চাপো: LED জ্বলবে, আর বোতাম ছেড়ে দিলেও জ্বলে থাকবে। ফ্লিপ-ফ্লপ মনে রেখেছে।",
+        "en": "Switch the circuit on. At power-on Q is LOW, so the LED is dark. Press the button once: the LED lights, and stays lit when you let go. The flip-flop remembers."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "no-errors"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on",
+          "label": {
+            "bn": "এক চাপে LED জ্বলেছে",
+            "en": "One press lit the LED"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "আবার চাপো: এবার LED নিভবে। প্রতি দুই চাপে একবার জ্বলা-নেভা, তাই একে বলে **২ দিয়ে ভাগ**: কাউন্টারের প্রথম বিট ঠিক এভাবেই কাজ করে।\n\nআসল বোতাম চাপার সময় কয়েক মিলিসেকেন্ড কাঁপে (bounce), তাই আসল সার্কিটে এক চাপে কয়েকটা ধার হতে পারে। ল্যাবের বোতাম কাঁপে না।",
+        "en": "Press again: now the LED goes out. One on-and-off for every two presses, so this is called **dividing by two**: the first bit of a counter works just like this.\n\nA real button shakes for a few milliseconds when pressed (bounce), so in a real circuit one press can make several edges. The lab’s button does not bounce."
+      },
+      "checks": [
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "off",
+          "label": {
+            "bn": "পরের চাপে LED নিভেছে",
+            "en": "The next press put the LED out"
+          }
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "ফ্লিপ-ফ্লপ একটা বিট মনে রাখে, আর ঘড়ির উঠতি ধারে সেটা বদলায়।",
+      "Q̅ থেকে D-তে তার দিলে প্রতি ধারে Q উল্টে যায়: ২ দিয়ে ভাগ।",
+      "CLR আর PRE ব্যবহার না করলে HIGH-এ লাগিয়ে রাখতে হয়।"
+    ],
+    "en": [
+      "A flip-flop remembers one bit, and changes it on the clock’s rising edge.",
+      "A wire from Q̅ to D makes Q turn over on every edge: dividing by two.",
+      "CLR and PRE, when unused, must be tied HIGH."
+    ]
+  },
+  "tryNext": {
+    "bn": "দ্বিতীয় ফ্লিপ-ফ্লপটাও একইভাবে বানাও, আর তার ঘড়ি দাও প্রথমটার Q̅ থেকে। দুটো LED মিলে ০ থেকে ৩ গোনে কি না দেখো।",
+    "en": "Build the second flip-flop the same way, and clock it from the first one’s Q̅. See whether the two LEDs together count from 0 to 3."
+  }
+}

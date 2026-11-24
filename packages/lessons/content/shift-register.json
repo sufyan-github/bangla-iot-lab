@@ -1,0 +1,229 @@
+{
+  "id": "shift-register",
+  "order": 47,
+  "after": ["logic-gates"],
+  "parts": ["74hc595", "resistor", "led-5mm"],
+  "title": {
+    "bn": "শিফট রেজিস্টার: তিন পিনে আট LED",
+    "en": "The shift register: eight LEDs from three pins"
+  },
+  "summary": {
+    "bn": "74HC595 চিপে বিট একটা একটা করে পাঠাও, আর shiftOut() দিয়ে একটা চলন্ত আলো বানাও।",
+    "en": "Send bits one at a time into a 74HC595, and make a running light with shiftOut()."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "program": "shift",
+  "steps": [
+    {
+      "text": {
+        "bn": "বোর্ডের পিন কম পড়লে **শিফট রেজিস্টার** কাজে আসে: তিনটা পিন দিয়ে আটটা আউটপুট।\n\nএকটা **১৬ পায়ের চিপ** খাঁজের ওপর বসাও, প্যানেলে **74HC595** বেছে নাও। পা ১৬ (VCC) **3V3**-এ, পা ৮ (GND) **GND**-তে। **MR̅** (পা ১০) **3V3**-এ, যাতে চিপ নিজেকে মুছে না ফেলে; **OE̅** (পা ১৩) **GND**-তে, যাতে আউটপুট চালু থাকে।",
+        "en": "When a board runs short of pins, a **shift register** helps: eight outputs from three pins.\n\nPlace a **16-pin chip** across the gap and choose **74HC595** in the panel. Leg 16 (VCC) to **3V3**, leg 8 (GND) to **GND**. **MR̅** (leg 10) to **3V3**, so that the chip does not clear itself; **OE̅** (leg 13) to **GND**, so that its outputs are on."
+      },
+      "checks": [
+        {
+          "kind": "prop",
+          "part": "logic16",
+          "prop": "chip",
+          "equals": "74HC595"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p16"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p8"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p10"
+          },
+          "to": {
+            "board": "3v3"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p13"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "তিনটা তার বোর্ড থেকে চিপে:\n\n- **D23** → **DS** (পা ১৪): পরের বিটটা।\n- **D18** → **SHCP** (পা ১১): এটা LOW থেকে HIGH হলে DS-এর বিট ঢোকে, আগের বিটগুলো এক ঘর সরে।\n- **D5** → **STCP** (পা ১২): এটা LOW থেকে HIGH হলে জমানো আট বিট একসঙ্গে আউটপুটে যায়।",
+        "en": "Three wires from the board to the chip:\n\n- **D23** → **DS** (leg 14): the next bit.\n- **D18** → **SHCP** (leg 11): when it goes from LOW to HIGH the bit on DS comes in, and the bits before it move up one place.\n- **D5** → **STCP** (leg 12): when it goes from LOW to HIGH the eight bits held go out to the outputs together."
+      },
+      "checks": [
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p14"
+          },
+          "to": {
+            "board": "d23"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p11"
+          },
+          "to": {
+            "board": "d18"
+          }
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p12"
+          },
+          "to": {
+            "board": "d5"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "আউটপুট **Q0** খাঁজের ওপরের সারিতে, পা ১৫; **Q1** থেকে **Q7** নিচের সারিতে, পা ১ থেকে ৭। অন্তত **Q0** আর **Q1** থেকে একটা করে রেজিস্টর (৩৩০ Ω থেকে ১ kΩ) হয়ে একটা করে **LED**, LED-র ছোট পা **GND**-তে। জায়গা থাকলে আটটাই লাগাও।",
+        "en": "Output **Q0** is in the row above the gap, leg 15; **Q1** to **Q7** are in the row below, legs 1 to 7. From at least **Q0** and **Q1**, go through a resistor (330 Ω to 1 kΩ) to an **LED** each, the LED’s short leg to **GND**. If there is room, wire all eight."
+      },
+      "checks": [
+        {
+          "kind": "part",
+          "type": "led"
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p15"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [330, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "logic16",
+            "pin": "p1"
+          },
+          "to": {
+            "part": "led",
+            "pin": "anode"
+          },
+          "through": "resistor",
+          "ohms": [330, 1000]
+        },
+        {
+          "kind": "connected",
+          "from": {
+            "part": "led",
+            "pin": "cathode"
+          },
+          "to": {
+            "board": "gnd"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "কোড ভিউতে তৈরি প্রোগ্রাম **চলন্ত আলো** বেছে নিয়ে বোর্ডে তোলো। `show()` প্রথমে STCP LOW করে, তারপর `shiftOut()` আটটা বিট পাঠায় (প্রতিটার জন্য DS-এ বিট রেখে SHCP-তে একটা পালস), শেষে STCP HIGH করে সবগুলো একসঙ্গে দেখায়।",
+        "en": "In the code view, choose the ready-made program **Running light** and upload it. `show()` first takes STCP LOW, then `shiftOut()` sends the eight bits (for each, the bit on DS and a pulse on SHCP), and last STCP goes HIGH to show them all at once."
+      },
+      "program": true,
+      "checks": [
+        {
+          "kind": "program",
+          "starter": "shift"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সার্কিট চালু করো। আলো Q0 থেকে Q7-এর দিকে এক ঘর করে সরে, প্রতিটায় ৩০০ ms। সিরিয়াল মনিটরে দেখো কোনটা জ্বলছে।",
+        "en": "Switch the circuit on. The light moves from Q0 towards Q7 one place at a time, 300 ms on each. The serial monitor says which one is lit."
+      },
+      "checks": [
+        {
+          "kind": "running"
+        },
+        {
+          "kind": "no-errors"
+        },
+        {
+          "kind": "serial",
+          "matches": "চলন্ত আলো শুরু"
+        },
+        {
+          "kind": "reading",
+          "part": "led",
+          "path": "led.state",
+          "equals": "on",
+          "label": {
+            "bn": "একটা LED জ্বলেছে",
+            "en": "An LED lit"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "আলোটা শেষ ঘর পর্যন্ত যেতে দাও: সিরিয়াল মনিটরে **জ্বলছে Q7** আসবে, তারপর আবার Q0।\n\nআট বিট একসঙ্গে দেখানোয় মাঝের অবস্থাগুলো চোখে পড়ে না: STCP-এর আগে আউটপুট বদলায় না।",
+        "en": "Let the light reach the last place: **জ্বলছে Q7** (“Q7 lit”) appears in the serial monitor, then Q0 again.\n\nBecause the eight bits are shown together, the states in between are never seen: the outputs do not change before STCP."
+      },
+      "checks": [
+        {
+          "kind": "serial",
+          "matches": "জ্বলছে Q7"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "শিফট রেজিস্টারে বিট ঢোকে একটা একটা করে (SHCP), আর বেরোয় একসঙ্গে (STCP)।",
+      "shiftOut() প্রতিটা বিট ডেটা পিনে রেখে ক্লক পিনে একটা পালস দেয়।",
+      "তিনটা পিনে আটটা আউটপুট; Q7S দিয়ে আরেকটা চিপ জুড়লে ষোলোটা।"
+    ],
+    "en": [
+      "Bits go into a shift register one at a time (SHCP) and come out together (STCP).",
+      "shiftOut() puts each bit on the data pin and gives the clock pin a pulse.",
+      "Eight outputs from three pins; a second chip on Q7S gives sixteen."
+    ]
+  },
+  "tryNext": {
+    "bn": "প্রোগ্রাম বদলাও: `show(1 << i)`-এর বদলে `show((1 << (i + 1)) - 1)` লিখলে কী হয়? আলো কি এবার ভরে উঠতে থাকে?",
+    "en": "Change the program: what happens if `show(1 << i)` becomes `show((1 << (i + 1)) - 1)`? Does the light now fill up?"
+  }
+}

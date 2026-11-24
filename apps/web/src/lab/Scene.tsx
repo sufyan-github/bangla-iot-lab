@@ -67,6 +67,7 @@ import {
   OledView,
   PirView,
   ClockView,
+  SevenSegmentView,
   PotentiometerView,
   RelayModuleView,
   RelayView,
@@ -553,6 +554,28 @@ export function BoardPartDrawing(props: {
           p7={at(part.pins.p7!)}
           p14={at(part.pins.p14!)}
           name={part.props.chip}
+          selected={selected}
+        />
+      );
+    case 'logic16':
+      return (
+        <ChipView
+          p1={at(part.pins.p1!)}
+          p7={at(part.pins.p8!)}
+          p14={at(part.pins.p16!)}
+          perSide={8}
+          name={part.props.chip}
+          selected={selected}
+        />
+      );
+    case 'sevenseg':
+      return (
+        <SevenSegmentView
+          e={at(part.pins.e)}
+          dp={at(part.pins.dp)}
+          g={at(part.pins.g)}
+          segments={reading?.segments}
+          state={reading?.led?.state}
           selected={selected}
         />
       );

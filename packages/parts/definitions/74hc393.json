@@ -1,0 +1,111 @@
+{
+  "formatVersion": 1,
+  "id": "74hc393",
+  "simulates": "logic",
+  "status": "simulated",
+  "family": "logic",
+  "tier": 2,
+  "name": {
+    "bn": "74HC393 (দুটো ৪-বিট কাউন্টার)",
+    "en": "74HC393 dual 4-bit counter"
+  },
+  "summary": {
+    "bn": "দুটো বাইনারি কাউন্টার: ক্লকের প্রতি নামতি ধারে এক করে বাড়ে, ০ থেকে ১৫",
+    "en": "Two binary counters: each counts up by one on every falling edge of its clock, 0 to 15"
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": [
+      "Each counter answers at once: the few nanoseconds a real one takes, and the ripple from one bit to the next, are left out.",
+      "It counts when its clock goes from HIGH to LOW. MR HIGH holds the counter at 0 at once, whatever the clock does.",
+      "Without power it forgets its count and starts at 0. A real chip may start anywhere until it is reset.",
+      "An input is HIGH above 70 % of the supply and LOW below 30 %; in between it keeps its last level. An output is the supply or ground through about 50 Ω. These are typical datasheet figures, not measured.",
+      "It is placed across the centre gap with pin 1 at the bottom left, and cannot be turned round."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "p1",
+      "label": "1",
+      "role": "input"
+    },
+    {
+      "id": "p2",
+      "label": "2",
+      "role": "input"
+    },
+    {
+      "id": "p3",
+      "label": "3",
+      "role": "output"
+    },
+    {
+      "id": "p4",
+      "label": "4",
+      "role": "output"
+    },
+    {
+      "id": "p5",
+      "label": "5",
+      "role": "output"
+    },
+    {
+      "id": "p6",
+      "label": "6",
+      "role": "output"
+    },
+    {
+      "id": "p7",
+      "label": "7",
+      "role": "ground"
+    },
+    {
+      "id": "p8",
+      "label": "8",
+      "role": "output"
+    },
+    {
+      "id": "p9",
+      "label": "9",
+      "role": "output"
+    },
+    {
+      "id": "p10",
+      "label": "10",
+      "role": "output"
+    },
+    {
+      "id": "p11",
+      "label": "11",
+      "role": "output"
+    },
+    {
+      "id": "p12",
+      "label": "12",
+      "role": "input"
+    },
+    {
+      "id": "p13",
+      "label": "13",
+      "role": "input"
+    },
+    {
+      "id": "p14",
+      "label": "14",
+      "role": "power"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["74hc393"]
+  },
+  "placement": {
+    "idPrefix": "U",
+    "offsets": [0, 1, 2, 3, 4, 5, 6, 6, 5, 4, 3, 2, 1, 0],
+    "rows": ["f", "f", "f", "f", "f", "f", "f", "e", "e", "e", "e", "e", "e", "e"]
+  }
+}
