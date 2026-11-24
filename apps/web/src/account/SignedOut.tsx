@@ -116,7 +116,9 @@ export function SignedOut() {
             onSent={(email, username) => setStep({ name: 'ask-guardian', email, username })}
           />
         )}
-        {step.name === 'new-teacher' && <TeacherSignUp />}
+        {step.name === 'new-teacher' && (
+          <TeacherSignUp onSent={(email) => setStep({ name: 'check-email', email })} />
+        )}
         {step.name === 'class' && <ClassEntry />}
         {step.name === 'check-email' && (
           <Sent
@@ -490,10 +492,13 @@ function Sent({ title, text, identifier }: { title: string; text: string; identi
   );
 }
 
-/** A teacher's account, for a school: a new school, or one whose admin sent an invitation. */
-function TeacherSignUp() {
+/**
+ * A teacher's account, for a school: a new school (which waits for the lab's
+ * approval) or one whose admin sent an invitation. The email is confirmed by
+ * a link before the first sign-in.
+ */
+function TeacherSignUp({ onSent }: { onSent: (email: string) => void }) {
   const { t } = useT();
-  const refresh = useAccount((s) => s.refresh);
   const [invited, setInvited] = useState(false);
   const [form, setForm] = useState({
     inviteCode: '',
@@ -515,7 +520,7 @@ function TeacherSignUp() {
         ? { email, password, displayName, inviteCode }
         : { email, password, displayName, schoolName, district: district || undefined },
     );
-    if (done) await refresh();
+    if (done) onSent(email);
   };
   return (
     <form onSubmit={send} className="space-y-3" data-testid="teacher-form">

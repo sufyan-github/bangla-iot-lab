@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { makeClass, openTeacherSignUp, teacherWithClass } from './account-helpers';
+import { confirmEmail, makeClass, openTeacherSignUp, teacherWithClass } from './account-helpers';
 
 /** A teacher makes a class; a learner joins it with the code and a nickname. */
 
@@ -13,6 +13,7 @@ test('a teacher signs up and makes a class; a learner joins with its code', asyn
   await page.getByTestId('teacher-email').fill(email);
   await page.getByTestId('teacher-password').fill('a long pass phrase');
   await page.getByTestId('teacher-submit').click();
+  await confirmEmail(page, email);
   await expect(page.getByTestId('nav-account')).toContainText('রিনা আপা');
 
   // The class can be made only once the school's permission is confirmed.
@@ -51,10 +52,14 @@ test('a school admin invites a teacher, who signs up with the code', async ({ pa
   await openTeacherSignUp(page);
   await page.getByTestId('teacher-name').fill('প্রধান শিক্ষক');
   await page.getByTestId('teacher-school').fill('আমন্ত্রণ বিদ্যালয়');
-  await page.getByTestId('teacher-email').fill(`admin-${stamp}@example.test`);
+  const pageEmail = `admin-${stamp}@example.test`;
+  await page.getByTestId('teacher-email').fill(pageEmail);
   await page.getByTestId('teacher-password').fill('a long pass phrase');
   await page.getByTestId('teacher-submit').click();
+  await confirmEmail(page, pageEmail);
 
+  // The school's teachers and invitations are under the School tab.
+  await page.getByTestId('teacher-tab-school').click();
   await expect(page.getByTestId('school-teacher')).toHaveCount(1);
   await page.getByTestId('invite-teacher').click();
   const code = (await page.getByTestId('invite-code-shown').textContent())!.trim();
@@ -66,12 +71,15 @@ test('a school admin invites a teacher, who signs up with the code', async ({ pa
   await page.getByTestId('teacher-name').fill('নতুন শিক্ষক');
   await page.getByTestId('teacher-invited').click();
   await page.getByTestId('teacher-invite').fill(code);
-  await page.getByTestId('teacher-email').fill(`invited-${stamp}@example.test`);
+  const invitedEmail = `invited-${stamp}@example.test`;
+  await page.getByTestId('teacher-email').fill(invitedEmail);
   await page.getByTestId('teacher-password').fill('a long pass phrase');
   await page.getByTestId('teacher-submit').click();
+  await confirmEmail(page, invitedEmail);
   await expect(page.getByTestId('nav-account')).toContainText('নতুন শিক্ষক');
   // A teacher here, not its admin: classes, but no invitations.
   await expect(page.getByTestId('new-class')).toBeVisible();
+  await page.getByTestId('teacher-tab-school').click();
   await expect(page.getByTestId('school-teachers')).toHaveCount(0);
 
   // The code is used up.
@@ -100,6 +108,7 @@ test('a project saved to the cloud can be opened again on a device without it', 
   await page.getByTestId('teacher-email').fill(email);
   await page.getByTestId('teacher-password').fill('a long pass phrase');
   await page.getByTestId('teacher-submit').click();
+  await confirmEmail(page, email);
   await expect(page.getByTestId('sign-out')).toBeVisible();
 
   await page.goto('/');
@@ -119,7 +128,8 @@ test('a project saved to the cloud can be opened again on a device without it', 
   await expect(page.getByTestId('cloud-list')).toBeVisible();
   await page.getByTestId('open-cloud').first().click();
   await expect(page).toHaveURL(/\/lab\//);
-  await expect(page.locator('[data-part="LED1"]')).toBeVisible();
+  // While the lab settles on a phone the part can be drawn in more than one layer at once.
+  await expect(page.locator('[data-part="LED1"]').first()).toBeVisible();
 });
 
 const stamp = () => `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -151,6 +161,7 @@ test('a teacher moves a learner between classes; an admin removes a teacher', as
   await expect(classB.getByTestId('roster-learner')).toHaveText(/নদী/);
 
   // An invited teacher joins; the admin removes them again.
+  await page.getByTestId('teacher-tab-school').click();
   await page.getByTestId('invite-teacher').click();
   const invite = (await page.getByTestId('invite-code-shown').textContent())!.trim();
   const otherContext = await browser.newContext();
@@ -160,13 +171,16 @@ test('a teacher moves a learner between classes; an admin removes a teacher', as
   await other.getByTestId('teacher-name').fill('অতিথি');
   await other.getByTestId('teacher-invited').click();
   await other.getByTestId('teacher-invite').fill(invite);
-  await other.getByTestId('teacher-email').fill(`guest-${stamp()}@example.test`);
+  const otherEmail = `guest-${stamp()}@example.test`;
+  await other.getByTestId('teacher-email').fill(otherEmail);
   await other.getByTestId('teacher-password').fill('a long pass phrase');
   await other.getByTestId('teacher-submit').click();
+  await confirmEmail(other, otherEmail);
   await expect(other.getByTestId('new-class')).toBeVisible();
   await otherContext.close();
 
   await page.reload();
+  await page.getByTestId('teacher-tab-school').click();
   const guest = page.getByTestId('school-teacher').filter({ hasText: 'অতিথি' });
   await guest.getByTestId('remove-teacher').click();
   await guest.getByTestId('confirm-remove-teacher').click();

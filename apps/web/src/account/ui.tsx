@@ -35,6 +35,7 @@ const KNOWN_ERRORS = [
   'too-many-tries',
   'link-not-working',
   'account-suspended',
+  'wrong-password',
 ];
 
 export function Problem({ error }: { error: string | null }) {

@@ -384,8 +384,8 @@ function Schools({ onChanged }: { onChanged: () => void }) {
                     {shown !== 'active' && (
                       <Confirmable
                         testId="school-activate"
-                        label={t('owner.act.activate')}
-                        question={ask('activate')}
+                        label={t(shown === 'pending' ? 'owner.act.approve' : 'owner.act.activate')}
+                        question={ask(shown === 'pending' ? 'approve' : 'activate')}
                         onConfirm={() => act(school.id, 'activate')}
                       />
                     )}

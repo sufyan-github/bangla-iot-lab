@@ -20,7 +20,13 @@ export interface Me {
     /** "platform_admin" for the lab's owners. */
     platformRole: string | null;
   };
-  schools: { schoolId: string; schoolName: string; role: string }[];
+  schools: {
+    schoolId: string;
+    schoolName: string;
+    role: string;
+    /** Whether the school works yet: waiting for the owner's approval, working, or suspended. */
+    schoolStatus: 'pending' | 'active' | 'suspended';
+  }[];
   classes: { classId: string; className: string; grade: number; pseudonym: string }[];
 }
 

@@ -21,6 +21,14 @@ function Roster({
   const [learners, setLearners] = useState<Learner[] | null>(null);
   const [newKey, setNewKey] = useState<{ pseudonym: string; key: string } | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [confirmingKey, setConfirmingKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  /** Calls an action and keeps its error, if any, to show. */
+  const act = async <T,>(path: string, body: unknown) => {
+    const answer = await call<T>(path, body);
+    setError(answer.ok ? null : answer.error);
+    return answer;
+  };
   const load = async () => {
     const answer = await call<{ learners: Learner[] }>(`/v1/classes/${classId}/learners`);
     setLearners(answer.ok ? answer.value.learners : []);
@@ -37,6 +45,7 @@ function Roster({
           label={t('account.newKeyFor', { name: newKey.pseudonym })}
           value={newKey.key}
           testId="new-learner-key"
+          note={t('account.newKeyNote')}
         />
       )}
       {learners.length === 0 ? (
@@ -59,7 +68,7 @@ function Roster({
                   onChange={async (event) => {
                     const to = event.target.value;
                     if (!to) return;
-                    await call(`/v1/classes/${classId}/learners/${learner.enrolment}/move`, { to });
+                    await act(`/v1/classes/${classId}/learners/${learner.enrolment}/move`, { to });
                     await load();
                     onChanged();
                   }}
@@ -72,26 +81,41 @@ function Roster({
                   ))}
                 </select>
               )}
-              <button
-                type="button"
-                className="btn btn-quiet min-h-9 text-sm"
-                onClick={async () => {
-                  const answer = await call<{ key: string }>(
-                    `/v1/classes/${classId}/learners/${learner.enrolment}/key`,
-                    {},
-                  );
-                  if (answer.ok) setNewKey({ pseudonym: learner.pseudonym, key: answer.value.key });
-                }}
-              >
-                {t('account.newKey')}
-              </button>
+              {/* A new key stops the old one at once, so it asks first. */}
+              {confirmingKey === learner.enrolment ? (
+                <button
+                  type="button"
+                  data-testid="confirm-new-learner-key"
+                  className="btn min-h-9 bg-mat px-3 text-sm text-chalk"
+                  onClick={async () => {
+                    const answer = await act<{ key: string }>(
+                      `/v1/classes/${classId}/learners/${learner.enrolment}/key`,
+                      {},
+                    );
+                    setConfirmingKey(null);
+                    if (answer.ok)
+                      setNewKey({ pseudonym: learner.pseudonym, key: answer.value.key });
+                  }}
+                >
+                  {t('account.confirmNewKeyFor', { name: learner.pseudonym })}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  data-testid="new-learner-key-ask"
+                  className="btn btn-quiet min-h-9 text-sm"
+                  onClick={() => setConfirmingKey(learner.enrolment)}
+                >
+                  {t('account.newKey')}
+                </button>
+              )}
               {confirming === learner.enrolment ? (
                 <button
                   type="button"
                   data-testid="confirm-remove"
                   className="btn min-h-9 bg-danger px-3 text-sm text-paper"
                   onClick={async () => {
-                    await call(`/v1/classes/${classId}/learners/${learner.enrolment}/remove`, {});
+                    await act(`/v1/classes/${classId}/learners/${learner.enrolment}/remove`, {});
                     setConfirming(null);
                     await load();
                   }}
@@ -111,6 +135,7 @@ function Roster({
           ))}
         </ul>
       )}
+      <Problem error={error} />
       <p className="text-xs text-ink-soft">
         {t('account.learnerCount', { count: number(learners.length) })}
       </p>
@@ -252,7 +277,15 @@ function SchoolTeachers({ schoolId, schoolName }: { schoolId: string; schoolName
     null,
   );
   const [shown, setShown] = useState<string | null>(null);
+  const [resetLink, setResetLink] = useState<{ id: string; link: string } | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const me = useAccount((s) => s.me);
   const { busy, error, submit } = useSubmit();
+  const act = async <T,>(path: string) => {
+    const answer = await call<T>(path, {});
+    setActionError(answer.ok ? null : answer.error);
+    return answer;
+  };
   const load = async () => {
     const answer = await call<{ teachers: SchoolTeacher[]; invites: OpenInvite[] }>(
       `/v1/schools/${schoolId}/teachers`,
@@ -275,9 +308,24 @@ function SchoolTeachers({ schoolId, schoolName }: { schoolId: string; schoolName
             <li
               key={teacher.userId}
               data-testid="school-teacher"
-              className="flex items-center gap-2 px-4 py-2.5"
+              className="flex flex-wrap items-center gap-2 px-4 py-2.5"
             >
               <span className="flex-1">{teacher.displayName}</span>
+              {teacher.userId !== me?.user.id && (
+                <button
+                  type="button"
+                  data-testid="teacher-reset-link"
+                  className="btn btn-quiet min-h-9 text-sm"
+                  onClick={async () => {
+                    const answer = await act<{ link: string }>(
+                      `/v1/schools/${schoolId}/teachers/${teacher.userId}/reset-link`,
+                    );
+                    if (answer.ok) setResetLink({ id: teacher.userId, link: answer.value.link });
+                  }}
+                >
+                  {t('account.resetLink')}
+                </button>
+              )}
               {teacher.admin ? (
                 <span className="rounded-full bg-mat-soft px-2 py-0.5 text-xs font-medium text-accent">
                   {t('account.admin')}
@@ -292,7 +340,7 @@ function SchoolTeachers({ schoolId, schoolName }: { schoolId: string; schoolName
                   }`}
                   onClick={async () => {
                     const action = confirming.what === 'admin' ? 'make-admin' : 'remove';
-                    await call(`/v1/schools/${schoolId}/teachers/${teacher.userId}/${action}`, {});
+                    await act(`/v1/schools/${schoolId}/teachers/${teacher.userId}/${action}`);
                     setConfirming(null);
                     // Handing on the role ends this page's admin view.
                     if (action === 'make-admin') await refresh();
@@ -330,6 +378,15 @@ function SchoolTeachers({ schoolId, schoolName }: { schoolId: string; schoolName
           ))}
         </ul>
       )}
+      {resetLink && (
+        <LinkToHandOn
+          link={resetLink.link}
+          about={t('account.resetLinkAbout', {
+            name: list?.teachers.find((x) => x.userId === resetLink.id)?.displayName ?? '',
+          })}
+        />
+      )}
+      <Problem error={actionError} />
       {shown && (
         <ShownOnce
           label={t('account.inviteShown')}
@@ -358,7 +415,7 @@ function SchoolTeachers({ schoolId, schoolName }: { schoolId: string; schoolName
                   data-testid="invite-withdraw"
                   className="btn btn-quiet min-h-9 text-sm"
                   onClick={async () => {
-                    await call(`/v1/schools/${schoolId}/invites/${invite.id}/withdraw`, {});
+                    await act(`/v1/schools/${schoolId}/invites/${invite.id}/withdraw`);
                     setShown(null);
                     await load();
                   }}
@@ -449,6 +506,8 @@ function TeacherDashboard() {
   const [open, setOpen] = useState<string | null>(null);
   const [lessonsOpen, setLessonsOpen] = useState<string | null>(null);
   const [archiving, setArchiving] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [tab, setTab] = useState<'classes' | 'school' | 'account'>('classes');
   const { busy, error, submit } = useSubmit();
   const load = async () => {
     const answer = await call<{ classes: ClassSummary[] }>('/v1/classes');
@@ -456,216 +515,384 @@ function TeacherDashboard() {
   };
   useEffect(() => void load(), []);
 
+  const waiting = me.schools.filter(
+    (s, i, all) =>
+      s.schoolStatus !== 'active' && all.findIndex((o) => o.schoolId === s.schoolId) === i,
+  );
   return (
     <div className="space-y-6">
-      <section>
-        <h2 className="text-lg font-semibold">{t('account.yourClasses')}</h2>
-        {teaching.length === 1 && <p className="text-sm text-ink-soft">{school!.schoolName}</p>}
-        {shownCode && (
-          <div className="mt-3">
-            <ShownOnce
-              label={t('account.joinCodeFor')}
-              value={shownCode.code}
-              testId="join-code-shown"
-            />
-          </div>
-        )}
-        {classes === null ? (
-          <p className="text-sm text-ink-soft">{t('account.loading')}</p>
-        ) : classes.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-soft">{t('account.noClasses')}</p>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {classes.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-[var(--radius-card)] border border-line bg-surface p-4"
-                data-testid="class-item"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="flex-1 font-semibold">
-                    {item.name} · {t('account.grade', { grade: number(item.grade) })}
-                    {teaching.length > 1 && (
-                      <span className="block text-sm font-normal text-ink-soft">
-                        {teaching.find((s) => s.schoolId === item.schoolId)?.schoolName}
+      {waiting.map((s) => (
+        <p
+          key={s.schoolId}
+          role="status"
+          data-testid="school-waiting"
+          data-status={s.schoolStatus}
+          className="rounded-lg border-l-4 border-amber bg-amber-soft px-4 py-3"
+        >
+          {t(s.schoolStatus === 'pending' ? 'account.schoolPending' : 'account.schoolSuspended', {
+            name: s.schoolName,
+          })}
+        </p>
+      ))}
+      <div className="flex gap-1 border-b border-line" role="tablist">
+        {(['classes', 'school', 'account'] as const).map((name) => (
+          <button
+            key={name}
+            type="button"
+            role="tab"
+            data-testid={`teacher-tab-${name}`}
+            aria-selected={tab === name}
+            onClick={() => setTab(name)}
+            className={`-mb-px min-h-11 border-b-2 px-4 font-medium ${
+              tab === name ? 'border-accent text-ink' : 'border-transparent text-ink-soft'
+            }`}
+          >
+            {t(`account.tab.${name}`)}
+          </button>
+        ))}
+      </div>
+      {tab === 'account' && <MyAccount />}
+      {tab === 'school' && (
+        <>
+          {running.map((s) => (
+            <SchoolTeachers key={s.schoolId} schoolId={s.schoolId} schoolName={s.schoolName} />
+          ))}
+          <JoinSchool />
+        </>
+      )}
+      {tab === 'classes' && (
+        <>
+          <section>
+            <h2 className="text-lg font-semibold">{t('account.yourClasses')}</h2>
+            {teaching.length === 1 && <p className="text-sm text-ink-soft">{school!.schoolName}</p>}
+            {shownCode && (
+              <div className="mt-3">
+                <ShownOnce
+                  label={t('account.joinCodeFor')}
+                  value={shownCode.code}
+                  testId="join-code-shown"
+                />
+              </div>
+            )}
+            {classes === null ? (
+              <p className="text-sm text-ink-soft">{t('account.loading')}</p>
+            ) : classes.length === 0 ? (
+              <p className="mt-2 text-sm text-ink-soft">{t('account.noClasses')}</p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                <Problem error={actionError} />
+                {classes.map((item) => (
+                  <li
+                    key={item.id}
+                    className="rounded-[var(--radius-card)] border border-line bg-surface p-4"
+                    data-testid="class-item"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="flex-1 font-semibold">
+                        {item.name} · {t('account.grade', { grade: number(item.grade) })}
+                        {teaching.length > 1 && (
+                          <span className="block text-sm font-normal text-ink-soft">
+                            {teaching.find((s) => s.schoolId === item.schoolId)?.schoolName}
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </span>
-                  <span className="text-sm text-ink-soft">
-                    {t('account.learnerCount', { count: number(item.learners) })}
-                  </span>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    data-testid="class-roster"
-                    className={secondary}
-                    onClick={() => setOpen(open === item.id ? null : item.id)}
-                  >
-                    {t('account.learners')}
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="class-lessons-open"
-                    className={secondary}
-                    onClick={() => setLessonsOpen(lessonsOpen === item.id ? null : item.id)}
-                  >
-                    {t('account.lessons')}
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="class-new-code"
-                    className={secondary}
-                    onClick={async () => {
-                      const answer = await call<{ joinCode: string }>(
-                        `/v1/classes/${item.id}/join-code`,
-                        {},
-                      );
-                      if (answer.ok)
-                        setShownCode({ classId: item.id, code: answer.value.joinCode });
-                      await load();
-                    }}
-                  >
-                    {t('account.newCode')}
-                  </button>
-                  {archiving === item.id ? (
-                    <button
-                      type="button"
-                      className="btn bg-danger text-paper"
-                      onClick={async () => {
-                        await call(`/v1/classes/${item.id}/archive`, {});
-                        setArchiving(null);
-                        await load();
-                      }}
-                    >
-                      {t('account.confirmArchive')}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className={secondary}
-                      onClick={() => setArchiving(item.id)}
-                    >
-                      {t('account.archive')}
-                    </button>
-                  )}
-                </div>
-                {item.joinCodeExpiresAt && (
-                  <p className="mt-1 text-xs text-ink-soft">
-                    {t('account.codeUntil', {
-                      date: new Date(item.joinCodeExpiresAt).toLocaleDateString(),
-                    })}
-                  </p>
-                )}
-                {lessonsOpen === item.id && (
-                  <div className="mt-3">
-                    <ClassLessons classId={item.id} />
-                  </div>
-                )}
-                {open === item.id && (
-                  <div className="mt-3">
-                    <Roster
-                      classId={item.id}
-                      others={(classes ?? []).filter(
-                        (other) => other.id !== item.id && other.schoolId === item.schoolId,
+                      <span className="text-sm text-ink-soft">
+                        {t('account.learnerCount', { count: number(item.learners) })}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        data-testid="class-roster"
+                        className={secondary}
+                        onClick={() => setOpen(open === item.id ? null : item.id)}
+                      >
+                        {t('account.learners')}
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="class-lessons-open"
+                        className={secondary}
+                        onClick={() => setLessonsOpen(lessonsOpen === item.id ? null : item.id)}
+                      >
+                        {t('account.lessons')}
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="class-new-code"
+                        className={secondary}
+                        onClick={async () => {
+                          const answer = await call<{ joinCode: string }>(
+                            `/v1/classes/${item.id}/join-code`,
+                            {},
+                          );
+                          setActionError(answer.ok ? null : answer.error);
+                          if (answer.ok)
+                            setShownCode({ classId: item.id, code: answer.value.joinCode });
+                          await load();
+                        }}
+                      >
+                        {t('account.newCode')}
+                      </button>
+                      {archiving === item.id ? (
+                        <button
+                          type="button"
+                          className="btn bg-danger text-paper"
+                          onClick={async () => {
+                            const answer = await call(`/v1/classes/${item.id}/archive`, {});
+                            setActionError(answer.ok ? null : answer.error);
+                            setArchiving(null);
+                            await load();
+                          }}
+                        >
+                          {t('account.confirmArchive')}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className={secondary}
+                          onClick={() => setArchiving(item.id)}
+                        >
+                          {t('account.archive')}
+                        </button>
                       )}
-                      onChanged={() => void load()}
-                    />
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                    </div>
+                    {item.joinCodeExpiresAt &&
+                      (new Date(item.joinCodeExpiresAt).getTime() < Date.now() ? (
+                        <p
+                          className="mt-1 text-xs font-medium text-amber-deep"
+                          data-testid="code-expired"
+                        >
+                          {t('account.codeExpired')}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-xs text-ink-soft">
+                          {t('account.codeUntil', {
+                            date: new Date(item.joinCodeExpiresAt).toLocaleDateString(),
+                          })}
+                        </p>
+                      ))}
+                    {lessonsOpen === item.id && (
+                      <div className="mt-3">
+                        <ClassLessons classId={item.id} />
+                      </div>
+                    )}
+                    {open === item.id && (
+                      <div className="mt-3">
+                        <Roster
+                          classId={item.id}
+                          others={(classes ?? []).filter(
+                            (other) => other.id !== item.id && other.schoolId === item.schoolId,
+                          )}
+                          onChanged={() => void load()}
+                        />
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-      {school && (
-        <form
-          className="space-y-3 rounded-[var(--radius-card)] border border-line bg-paper p-4"
-          data-testid="new-class"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            const made = await submit<{ id: string; joinCode: string }>('/v1/classes', {
-              schoolId: school.schoolId,
-              name: form.name,
-              grade: form.grade,
-              schoolConsent: form.consent,
-            });
-            if (made) {
-              setShownCode({ classId: made.id, code: made.joinCode });
-              setForm({ name: '', grade: form.grade, consent: false });
-              await load();
-            }
+          {school && (
+            <form
+              className="space-y-3 rounded-[var(--radius-card)] border border-line bg-paper p-4"
+              data-testid="new-class"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const made = await submit<{ id: string; joinCode: string }>('/v1/classes', {
+                  schoolId: school.schoolId,
+                  name: form.name,
+                  grade: form.grade,
+                  schoolConsent: form.consent,
+                });
+                if (made) {
+                  setShownCode({ classId: made.id, code: made.joinCode });
+                  setForm({ name: '', grade: form.grade, consent: false });
+                  await load();
+                }
+              }}
+            >
+              <h2 className="text-lg font-semibold">{t('account.newClass')}</h2>
+              {teaching.length > 1 && (
+                <Field label={t('account.classSchool')}>
+                  <select
+                    data-testid="class-school"
+                    value={school.schoolId}
+                    onChange={(e) => setSchoolChoice(e.target.value)}
+                    className={input}
+                  >
+                    {teaching.map((s) => (
+                      <option key={s.schoolId} value={s.schoolId}>
+                        {s.schoolName}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
+              <Field label={t('account.className')}>
+                <input
+                  data-testid="class-name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                  maxLength={60}
+                  className={input}
+                />
+              </Field>
+              <Field label={t('account.gradeLabel')}>
+                <select
+                  data-testid="class-grade"
+                  value={form.grade}
+                  onChange={(e) => setForm({ ...form, grade: Number(e.target.value) })}
+                  className={input}
+                >
+                  {[6, 7, 8, 9, 10, 11, 12].map((grade) => (
+                    <option key={grade} value={grade}>
+                      {t('account.grade', { grade: number(grade) })}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  data-testid="class-consent"
+                  checked={form.consent}
+                  onChange={(e) => setForm({ ...form, consent: e.target.checked })}
+                  className="mt-1 h-5 w-5 accent-amber"
+                />
+                {t('account.consent')}
+              </label>
+              <Problem error={error} />
+              <button
+                type="submit"
+                data-testid="class-submit"
+                disabled={busy || !form.consent}
+                className={primary}
+              >
+                {t('account.makeClass')}
+              </button>
+            </form>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** A link for someone to hand on by hand, with a way to copy it. */
+function LinkToHandOn({ link, about }: { link: string; about: string }) {
+  const { t } = useT();
+  const [copied, setCopied] = useState(false);
+  return (
+    <div
+      className="space-y-2 rounded-[var(--radius-control)] border border-line bg-paper p-3"
+      data-testid="reset-link-shown"
+    >
+      <p className="text-sm">{about}</p>
+      <p className="font-mono text-sm break-all" data-testid="reset-link-value">
+        {link}
+      </p>
+      <button
+        type="button"
+        className="btn btn-secondary min-h-9 text-sm"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(link);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          } catch {
+            // The link stays on screen to copy by hand.
+          }
+        }}
+      >
+        {copied ? t('account.copied') : t('account.copy')}
+      </button>
+    </div>
+  );
+}
+
+/** One's own password, and signing out on every device. */
+function MyAccount() {
+  const { t } = useT();
+  const signOut = useAccount((s) => s.signOut);
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [changed, setChanged] = useState(false);
+  const change = useSubmit();
+  const everywhere = useSubmit();
+  return (
+    <section className="space-y-6" data-testid="my-account">
+      <form
+        className="space-y-3"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          setChanged(false);
+          if (await change.submit('/v1/me/password', { current, next })) {
+            setChanged(true);
+            setCurrent('');
+            setNext('');
+          }
+        }}
+      >
+        <h2 className="text-lg font-semibold">{t('account.changePassword')}</h2>
+        <Field label={t('account.currentPassword')}>
+          <input
+            data-testid="current-password"
+            type="password"
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            required
+            className={input}
+          />
+        </Field>
+        <Field label={t('account.newPassword')}>
+          <input
+            data-testid="next-password"
+            type="password"
+            autoComplete="new-password"
+            minLength={10}
+            value={next}
+            onChange={(e) => setNext(e.target.value)}
+            required
+            className={input}
+          />
+        </Field>
+        <p className="text-sm text-ink-soft">{t('account.passwordRule')}</p>
+        <Problem error={change.error} />
+        {changed && (
+          <p role="status" data-testid="password-changed" className="font-medium text-accent">
+            {t('account.passwordChanged')}
+          </p>
+        )}
+        <button
+          type="submit"
+          data-testid="change-password"
+          disabled={change.busy}
+          className={primary}
+        >
+          {t('account.changePassword')}
+        </button>
+      </form>
+      <div className="space-y-2 border-t border-line pt-5">
+        <h2 className="text-lg font-semibold">{t('account.signOutEverywhere')}</h2>
+        <p className="text-sm text-ink-soft">{t('account.signOutEverywhereAbout')}</p>
+        <Problem error={everywhere.error} />
+        <button
+          type="button"
+          data-testid="sign-out-everywhere"
+          disabled={everywhere.busy}
+          className={secondary}
+          onClick={async () => {
+            if (await everywhere.submit('/v1/auth/sign-out-everywhere', {})) await signOut();
           }}
         >
-          <h2 className="text-lg font-semibold">{t('account.newClass')}</h2>
-          {teaching.length > 1 && (
-            <Field label={t('account.classSchool')}>
-              <select
-                data-testid="class-school"
-                value={school.schoolId}
-                onChange={(e) => setSchoolChoice(e.target.value)}
-                className={input}
-              >
-                {teaching.map((s) => (
-                  <option key={s.schoolId} value={s.schoolId}>
-                    {s.schoolName}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          )}
-          <Field label={t('account.className')}>
-            <input
-              data-testid="class-name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-              maxLength={60}
-              className={input}
-            />
-          </Field>
-          <Field label={t('account.gradeLabel')}>
-            <select
-              data-testid="class-grade"
-              value={form.grade}
-              onChange={(e) => setForm({ ...form, grade: Number(e.target.value) })}
-              className={input}
-            >
-              {[6, 7, 8, 9, 10, 11, 12].map((grade) => (
-                <option key={grade} value={grade}>
-                  {t('account.grade', { grade: number(grade) })}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              data-testid="class-consent"
-              checked={form.consent}
-              onChange={(e) => setForm({ ...form, consent: e.target.checked })}
-              className="mt-1 h-5 w-5 accent-amber"
-            />
-            {t('account.consent')}
-          </label>
-          <Problem error={error} />
-          <button
-            type="submit"
-            data-testid="class-submit"
-            disabled={busy || !form.consent}
-            className={primary}
-          >
-            {t('account.makeClass')}
-          </button>
-        </form>
-      )}
-
-      {running.map((s) => (
-        <SchoolTeachers key={s.schoolId} schoolId={s.schoolId} schoolName={s.schoolName} />
-      ))}
-      <JoinSchool />
-    </div>
+          {t('account.signOutEverywhere')}
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -878,6 +1105,9 @@ function LearnerHome() {
           </button>
         </form>
       )}
+
+      {me.user.account === 'individual' && me.user.kind === 'adult' && <MyAccount />}
+      {me.user.username && <MyAccount />}
 
       {/* A key is how a class learner signs in; others have a password. */}
       {me.user.account === 'class' && (

@@ -49,6 +49,8 @@ export default defineConfig({
         REQUESTS_PER_MINUTE: '5000',
         // The local mailbox, readable by tests, so they can follow emailed links.
         DEV_MAILBOX: '1',
+        // Schools work at once here; their approval by an owner is tested in the API's tests.
+        SCHOOL_APPROVAL: 'automatic',
       },
     },
   ],

@@ -2,6 +2,14 @@ import { expect, type Page } from '@playwright/test';
 
 /** Steps on the account page that several browser tests share. */
 
+/** After signing up: open the link the email brought, which confirms it and signs in. */
+export async function confirmEmail(page: Page, email: string) {
+  await expect(page.getByTestId('check-email')).toBeVisible();
+  await page.goto(await emailedLink(page, email.toLowerCase(), 'verify'));
+  await page.getByTestId('verify-submit').click();
+  await expect(page.getByTestId('nav-account')).not.toContainText(/সাইন ইন|Sign in/);
+}
+
 /** From the signed-out account page to the teacher's sign-up form. */
 export async function openTeacherSignUp(page: Page) {
   await page.getByTestId('entry-new').click();
@@ -22,6 +30,7 @@ export async function teacherWithClass(
   await page.getByTestId('teacher-email').fill(email);
   await page.getByTestId('teacher-password').fill('a long pass phrase');
   await page.getByTestId('teacher-submit').click();
+  await confirmEmail(page, email);
   return makeClass(page, className);
 }
 export async function makeClass(page: Page, className: string) {
