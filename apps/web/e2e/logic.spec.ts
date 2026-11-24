@@ -105,6 +105,7 @@ test('a seven-segment display lights the segment it is given current for', async
     await tap(page, from!);
     await tap(page, to!);
   }
+  await page.getByTestId('run').click();
   await expect(display.locator('[data-segment="a"]')).toHaveAttribute('data-lit', 'true');
   await expect(display.locator('[data-segment="b"]')).toHaveAttribute('data-lit', 'false');
   await page.getByTestId('tool-select').click();
