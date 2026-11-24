@@ -111,3 +111,48 @@ test('a clock and a D flip-flop with Q̅ to D: the flip-flop turns over by itsel
   await page.waitForTimeout(1200);
   expect(await changes(0)).toBe(held);
 });
+
+/** Drags a box over the sheet, from one grid step to another. */
+async function dragBox(page: Page, from: [number, number], to: [number, number]) {
+  const box = (await page.getByTestId('sheet-canvas').boundingBox())!;
+  const at = ([gx, gy]: [number, number]) =>
+    [box.x + (gx / 40) * box.width, box.y + (gy / 24) * box.height] as const;
+  await page.mouse.move(...at(from));
+  await page.mouse.down();
+  await page.mouse.move(...at([(from[0] + to[0]) / 2, (from[1] + to[1]) / 2]), { steps: 4 });
+  await page.mouse.move(...at(to), { steps: 4 });
+  await page.mouse.up();
+}
+
+test('a box chooses several; they are copied with their wire, pasted and removed together', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await page.getByTestId('view-sheet').click();
+  await place(page, 'NOT', 3, 3);
+  await place(page, 'output', 9, 3);
+  await page.getByTestId('sheet-tool-select').click();
+  await port(page, 'G1.y');
+  await port(page, 'OUT1.a');
+  await expect(page.locator('[data-wire]')).toHaveCount(1);
+
+  await dragBox(page, [1, 1], [14, 7]);
+  await expect(page.locator('[data-selected="true"]')).toHaveCount(2);
+  await page.getByTestId('sheet-copy').click();
+  await page.getByTestId('sheet-paste').click();
+  // Two more elements, with new ids, joined as the originals are; the copies are chosen.
+  await expect(page.locator('[data-element]')).toHaveCount(4);
+  await expect(page.locator('[data-element="G2"]')).toHaveCount(1);
+  await expect(page.locator('[data-element="OUT2"]')).toHaveCount(1);
+  await expect(page.locator('[data-wire]')).toHaveCount(2);
+  await expect(page.locator('[data-selected="true"]')).toHaveCount(2);
+  // The copied NOT gate lights its own copied lamp.
+  await expect(page.locator('[data-element="OUT2"]')).toHaveAttribute('data-high', 'true');
+
+  await page.getByTestId('sheet-delete').click();
+  await expect(page.locator('[data-element]')).toHaveCount(2);
+  await expect(page.locator('[data-wire]')).toHaveCount(1);
+  await page.getByTestId('sheet-undo').click();
+  await expect(page.locator('[data-element]')).toHaveCount(4);
+});

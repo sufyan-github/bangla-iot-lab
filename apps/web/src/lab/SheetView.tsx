@@ -6,14 +6,18 @@ import {
   SHEET_WIDTH,
   addSheetElement,
   connectSheet,
-  moveSheetElement,
+  copyFromSheet,
+  moveSheetElements,
+  pasteIntoSheet,
   removeFromSheet,
+  removeManyFromSheet,
   setSheetElement,
   sheetName,
   sheetPorts,
   type LogicSheet,
   type SheetElement,
   type SheetError,
+  type SheetClip,
   type SheetKind,
 } from '@banglalab/shared';
 import {
@@ -37,6 +41,9 @@ const HIGH = '#e8a21a';
 const LOW = 'var(--color-line)';
 
 type SheetTool = 'select' | SheetKind;
+
+/** What was copied last; it outlives the view, so it can be pasted into another project. */
+let sheetClipboard: SheetClip | null = null;
 
 /** Where a port sits, in grid steps: inputs on the left edge, outputs on the right. */
 function portPoint(element: SheetElement, port: string): { x: number; y: number } {
@@ -440,17 +447,30 @@ export function SheetView() {
   const state = useSheetState(sheet, trace, clock);
   const [timing, setTiming] = useState(false);
   const [tool, setTool] = useState<SheetTool>('select');
-  const [selected, setSelected] = useState<string | null>(null);
+  /** The elements chosen, or one wire. */
+  const [selection, setSelection] = useState<string[]>([]);
+  const selected = selection.length === 1 ? selection[0]! : null;
+  const [clip, setClip] = useState<SheetClip | null>(sheetClipboard);
+  /** A box being dragged out over the background to choose what is inside it. */
+  const [box, setBox] = useState<{
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+    adding: boolean;
+  } | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [problem, setProblem] = useState<SheetError | null>(null);
   /** The table made, or 'none' when the button was pressed and the sheet has none. */
   const [table, setTable] = useState<SheetTruthTable | 'none' | null>(null);
+  /** Elements being dragged: where the pointer started, and how far they have come. */
   const [drag, setDrag] = useState<{
-    id: string;
+    ids: string[];
+    tapped: string;
+    sx: number;
+    sy: number;
     dx: number;
     dy: number;
-    x: number;
-    y: number;
     moved: boolean;
   } | null>(null);
   const svg = useRef<SVGSVGElement>(null);
@@ -472,18 +492,70 @@ export function SheetView() {
     };
   };
 
+  const isElement = (id: string) => sheet.elements.some((e) => e.id === id);
+  const chosen = selection.filter(isElement);
+  /** Where an element is drawn: moved along with a drag. */
+  const place = (e: SheetElement) =>
+    drag?.ids.includes(e.id) ? { ...e, x: e.x + drag.dx, y: e.y + drag.dy } : e;
+
   const onBackground = (event: PointerEvent) => {
     setPending(null);
+    const at = gridAt(event);
     if (tool === 'select') {
-      setSelected(null);
+      // Dragging over the background chooses what the box takes in.
+      const adding = event.shiftKey || event.ctrlKey || event.metaKey;
+      if (!adding) setSelection([]);
+      setBox({ x0: at.x, y0: at.y, x1: at.x, y1: at.y, adding });
       return;
     }
-    const at = gridAt(event);
     const result = apply((s) =>
       addSheetElement(s, tool, Math.floor(at.x - 1), Math.floor(at.y - 1)),
     );
-    if (result.ok) setSelected(result.id ?? null);
+    if (result.ok) setSelection(result.id ? [result.id] : []);
   };
+  const removeSelection = () => {
+    if (selected && !isElement(selected)) apply((s) => removeFromSheet(s, selected));
+    else if (chosen.length > 0) apply((s) => removeManyFromSheet(s, chosen));
+    setSelection([]);
+  };
+  const copySelection = () => {
+    if (chosen.length === 0) return;
+    sheetClipboard = copyFromSheet(sheet, chosen);
+    setClip(sheetClipboard);
+  };
+  const paste = () => {
+    if (!clip) return;
+    const result = apply((s) => pasteIntoSheet(s, clip));
+    if (result.ok) setSelection(result.ids ?? []);
+  };
+  // Keys, while the sheet is open: not while typing in a field.
+  const keys = useRef<(event: KeyboardEvent) => void>(() => undefined);
+  keys.current = (event: KeyboardEvent) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+    const command = event.ctrlKey || event.metaKey;
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (selection.length === 0) return;
+      event.preventDefault();
+      removeSelection();
+    } else if (command && event.key.toLowerCase() === 'c') {
+      copySelection();
+    } else if (command && event.key.toLowerCase() === 'v') {
+      event.preventDefault();
+      paste();
+    } else if (command && event.key.toLowerCase() === 'a') {
+      event.preventDefault();
+      setSelection(sheet.elements.map((e) => e.id));
+    } else if (event.key === 'Escape') {
+      setSelection([]);
+      setPending(null);
+    }
+  };
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => keys.current(event);
+    window.addEventListener('keydown', listener);
+    return () => window.removeEventListener('keydown', listener);
+  }, []);
   const onPort = (port: string) => {
     if (pending && pending !== port) {
       apply((s) => connectSheet(s, pending, port));
@@ -571,17 +643,32 @@ export function SheetView() {
           className="block w-full max-w-[60rem] touch-none rounded-xl bg-surface text-ink"
           onPointerDown={(event) => event.target === event.currentTarget && onBackground(event)}
           onPointerMove={(event) => {
-            if (!drag) return;
             const at = gridAt(event);
-            const x = Math.round(at.x - drag.dx);
-            const y = Math.round(at.y - drag.dy);
-            if (x !== drag.x || y !== drag.y) setDrag({ ...drag, x, y, moved: true });
+            if (box) setBox({ ...box, x1: at.x, y1: at.y });
+            if (!drag) return;
+            const dx = Math.round(at.x - drag.sx);
+            const dy = Math.round(at.y - drag.sy);
+            if (dx !== drag.dx || dy !== drag.dy) setDrag({ ...drag, dx, dy, moved: true });
           }}
           onPointerUp={() => {
+            if (box) {
+              const [left, right] = [Math.min(box.x0, box.x1), Math.max(box.x0, box.x1)];
+              const [top, bottom] = [Math.min(box.y0, box.y1), Math.max(box.y0, box.y1)];
+              // A box takes in every element it touches; a tap with no drag takes in nothing.
+              if (right - left > 0.3 || bottom - top > 0.3) {
+                const inBox = sheet.elements
+                  .filter(
+                    (e) => e.x < right && e.x + SIZE > left && e.y < bottom && e.y + SIZE > top,
+                  )
+                  .map((e) => e.id);
+                setSelection(box.adding ? [...new Set([...chosen, ...inBox])] : inBox);
+              }
+              setBox(null);
+            }
             if (!drag) return;
-            if (drag.moved) apply((s) => moveSheetElement(s, drag.id, drag.x, drag.y));
+            if (drag.moved) apply((s) => moveSheetElements(s, drag.ids, drag.dx, drag.dy));
             else {
-              const element = sheet.elements.find((e) => e.id === drag.id);
+              const element = sheet.elements.find((e) => e.id === drag.tapped);
               // A tap on a switch turns it over.
               if (element?.kind === 'input')
                 apply((s) => setSheetElement(s, element.id, { on: !element.on }));
@@ -606,8 +693,6 @@ export function SheetView() {
             const from = sheet.elements.find((e) => e.id === fromId);
             const to = sheet.elements.find((e) => e.id === toId);
             if (!from || !to) return null;
-            const place = (e: SheetElement) =>
-              drag?.id === e.id ? { ...e, x: drag.x, y: drag.y } : e;
             const a = portPoint(place(from), fromPort!);
             const b = portPoint(place(to), toPort!);
             const middle = b.x > a.x ? (a.x + b.x) / 2 : a.x + 1;
@@ -623,7 +708,7 @@ export function SheetView() {
                   fill="none"
                   stroke="transparent"
                   strokeWidth={12}
-                  onPointerDown={() => setSelected(wire.id)}
+                  onPointerDown={() => setSelection([wire.id])}
                 />
                 <path
                   d={d}
@@ -636,7 +721,7 @@ export function SheetView() {
             );
           })}
           {sheet.elements.map((element) => {
-            const at = drag?.id === element.id ? { x: drag.x, y: drag.y } : element;
+            const at = place(element);
             const ports = sheetPorts(element);
             return (
               <g
@@ -656,19 +741,34 @@ export function SheetView() {
                   width={SIZE * CELL}
                   height={SIZE * CELL}
                   rx={6}
-                  fill={selected === element.id ? 'var(--color-amber-soft)' : 'transparent'}
+                  data-selected={selection.includes(element.id) ? 'true' : undefined}
+                  fill={selection.includes(element.id) ? 'var(--color-amber-soft)' : 'transparent'}
                   className="cursor-grab"
                   onPointerDown={(event) => {
                     event.stopPropagation();
-                    setSelected(element.id);
                     setPending(null);
+                    // Shift (or Ctrl) adds to the elements chosen, or takes one out again.
+                    const adding = event.shiftKey || event.ctrlKey || event.metaKey;
+                    let ids: string[];
+                    if (adding) {
+                      ids = chosen.includes(element.id)
+                        ? chosen.filter((id) => id !== element.id)
+                        : [...chosen, element.id];
+                      setSelection(ids);
+                      if (!ids.includes(element.id)) return;
+                    } else {
+                      // Dragging one of several chosen moves them all.
+                      ids = chosen.includes(element.id) ? chosen : [element.id];
+                      setSelection(ids);
+                    }
                     const grid = gridAt(event);
                     setDrag({
-                      id: element.id,
-                      dx: grid.x - element.x,
-                      dy: grid.y - element.y,
-                      x: element.x,
-                      y: element.y,
+                      ids,
+                      tapped: element.id,
+                      sx: grid.x,
+                      sy: grid.y,
+                      dx: 0,
+                      dy: 0,
                       moved: false,
                     });
                   }}
@@ -729,6 +829,19 @@ export function SheetView() {
               </g>
             );
           })}
+          {box && (
+            <rect
+              x={Math.min(box.x0, box.x1) * CELL}
+              y={Math.min(box.y0, box.y1) * CELL}
+              width={Math.abs(box.x1 - box.x0) * CELL}
+              height={Math.abs(box.y1 - box.y0) * CELL}
+              fill="var(--color-amber-soft)"
+              fillOpacity={0.4}
+              stroke="var(--color-amber)"
+              strokeDasharray="6 4"
+              pointerEvents="none"
+            />
+          )}
         </svg>
         <div className="mt-3 max-w-[60rem] space-y-2 text-sm">
           {problem && (
@@ -744,17 +857,36 @@ export function SheetView() {
           )}
           {sheet.elements.length === 0 && <p className="text-ink-soft">{t('sheet.empty')}</p>}
           <div className="flex flex-wrap items-center gap-2">
-            {selected && (
+            {selection.length > 0 && (
               <button
                 type="button"
                 data-testid="sheet-delete"
-                onClick={() => {
-                  apply((s) => removeFromSheet(s, selected));
-                  setSelected(null);
-                }}
+                onClick={removeSelection}
                 className="min-h-11 rounded-lg border-2 border-line px-3 font-medium hover:border-danger hover:text-danger"
               >
-                {t('sheet.delete', { id: selected })}
+                {selected
+                  ? t('sheet.delete', { id: nameOf(selected) })
+                  : t('sheet.deleteMany', { count: chosen.length })}
+              </button>
+            )}
+            {chosen.length > 0 && (
+              <button
+                type="button"
+                data-testid="sheet-copy"
+                onClick={copySelection}
+                className="min-h-11 rounded-lg border-2 border-line px-3 font-medium hover:border-ink-soft"
+              >
+                {t('sheet.copy')}
+              </button>
+            )}
+            {clip && (
+              <button
+                type="button"
+                data-testid="sheet-paste"
+                onClick={paste}
+                className="min-h-11 rounded-lg border-2 border-line px-3 font-medium hover:border-ink-soft"
+              >
+                {t('sheet.paste', { count: clip.elements.length })}
               </button>
             )}
             {selectedElement && (

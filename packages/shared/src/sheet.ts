@@ -193,7 +193,7 @@ const PREFIX: Record<SheetKind, string> = {
 };
 
 export type SheetEdit =
-  { ok: true; sheet: LogicSheet; id?: string } | { ok: false; error: SheetError };
+  { ok: true; sheet: LogicSheet; id?: string; ids?: string[] } | { ok: false; error: SheetError };
 export type SheetError = 'full' | 'taken' | 'not-output' | 'not-input' | 'input-taken' | 'missing';
 
 function nextId(sheet: LogicSheet, prefix: string): string {
@@ -325,4 +325,104 @@ export function connectSheet(sheet: LogicSheet, a: string, b: string): SheetEdit
 /** What a gate on the sheet gives for its inputs. */
 export function sheetGateOutput(kind: (typeof SHEET_GATES)[number], inputs: readonly boolean[]) {
   return gateOutput(kind as GateKind, inputs);
+}
+
+/** Elements copied from a sheet, with the wires between them. */
+export interface SheetClip {
+  elements: SheetElement[];
+  wires: SheetWire[];
+}
+
+/** The elements with these ids, and the wires that join them to each other. */
+export function copyFromSheet(sheet: LogicSheet, ids: readonly string[]): SheetClip {
+  const chosen = new Set(ids);
+  const owner = (port: string) => port.split('.')[0]!;
+  return {
+    elements: sheet.elements.filter((e) => chosen.has(e.id)),
+    wires: sheet.wires.filter((w) => chosen.has(owner(w.from)) && chosen.has(owner(w.to))),
+  };
+}
+
+const inside = (e: { x: number; y: number }) =>
+  e.x >= 0 && e.y >= 0 && e.x <= SHEET_WIDTH - SIZE && e.y <= SHEET_HEIGHT - SIZE;
+
+/**
+ * Puts a copy of copied elements on the sheet, with new ids and the wires
+ * between them, moved by (dx, dy). If that place is taken it tries further
+ * along, step by step down and to the right. Returns the new elements' ids.
+ */
+export function pasteIntoSheet(sheet: LogicSheet, clip: SheetClip, dx = 2, dy = 2): SheetEdit {
+  if (clip.elements.length === 0) return { ok: false, error: 'missing' };
+  if (sheet.elements.length + clip.elements.length > MAX_SHEET_ELEMENTS)
+    return { ok: false, error: 'full' };
+  if (sheet.wires.length + clip.wires.length > MAX_SHEET_WIRES) return { ok: false, error: 'full' };
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const ox = dx + attempt;
+    const oy = dy + attempt;
+    const placed = clip.elements.map((e) => ({ ...e, x: e.x + ox, y: e.y + oy }));
+    if (!placed.every(inside)) continue;
+    if (placed.some((p) => sheet.elements.some((e) => overlaps(e, p)))) continue;
+    // New ids, kind by kind, after those already on the sheet.
+    let working: LogicSheet = sheet;
+    const rename = new Map<string, string>();
+    for (const element of placed) {
+      const id = nextId(working, PREFIX[element.kind]);
+      rename.set(element.id, id);
+      working = { ...working, elements: [...working.elements, { ...element, id }] };
+    }
+    const used = new Set(working.wires.map((w) => w.id));
+    let n = 1;
+    const wires = clip.wires.map((wire) => {
+      while (used.has(`N${n}`)) n++;
+      used.add(`N${n}`);
+      const port = (p: string) => {
+        const [id, name] = p.split('.');
+        return `${rename.get(id!)}.${name}`;
+      };
+      return { id: `N${n}`, from: port(wire.from), to: port(wire.to) };
+    });
+    return {
+      ok: true,
+      ids: [...rename.values()],
+      sheet: { ...working, wires: [...working.wires, ...wires] },
+    };
+  }
+  return { ok: false, error: 'taken' };
+}
+
+/** Takes away these elements, and every wire to or from them. */
+export function removeManyFromSheet(sheet: LogicSheet, ids: readonly string[]): SheetEdit {
+  const gone = new Set(ids);
+  if (!sheet.elements.some((e) => gone.has(e.id))) return { ok: false, error: 'missing' };
+  const owner = (port: string) => port.split('.')[0]!;
+  return {
+    ok: true,
+    sheet: {
+      ...sheet,
+      elements: sheet.elements.filter((e) => !gone.has(e.id)),
+      wires: sheet.wires.filter((w) => !gone.has(owner(w.from)) && !gone.has(owner(w.to))),
+    },
+  };
+}
+
+/** Moves these elements together by (dx, dy), if all of them still fit. */
+export function moveSheetElements(
+  sheet: LogicSheet,
+  ids: readonly string[],
+  dx: number,
+  dy: number,
+): SheetEdit {
+  const moving = new Set(ids);
+  const moved = sheet.elements
+    .filter((e) => moving.has(e.id))
+    .map((e) => ({ ...e, x: e.x + Math.round(dx), y: e.y + Math.round(dy) }));
+  if (moved.length === 0) return { ok: false, error: 'missing' };
+  if (!moved.every(inside)) return { ok: false, error: 'taken' };
+  const staying = sheet.elements.filter((e) => !moving.has(e.id));
+  if (moved.some((m) => staying.some((e) => overlaps(e, m)))) return { ok: false, error: 'taken' };
+  const byId = new Map(moved.map((e) => [e.id, e]));
+  return {
+    ok: true,
+    sheet: { ...sheet, elements: sheet.elements.map((e) => byId.get(e.id) ?? e) },
+  };
 }

@@ -192,10 +192,13 @@ export const bn = {
   'sheet.letters': 'সমীকরণে: {list}। দাগ মানে উল্টো (NOT), · মানে AND, + মানে OR।',
   'sheet.kind.DFF': 'D ফ্লিপ-ফ্লপ',
   'sheet.hint.select':
-    'কিছু টেনে সরাও, সুইচে ট্যাপ করে চালু-বন্ধ করো। একটা আউটপুটের গোল বিন্দু, তারপর একটা ইনপুটের বিন্দুতে ট্যাপ করলে তার জোড়া লাগে।',
+    'কিছু টেনে সরাও, সুইচে ট্যাপ করে চালু-বন্ধ করো। একটা আউটপুটের গোল বিন্দু, তারপর একটা ইনপুটের বিন্দুতে ট্যাপ করলে তার জোড়া লাগে। খালি জায়গায় টেনে বাক্স বানালে ভেতরের সব বাছাই হয় (Shift চেপে আরও যোগ করো)।',
   'sheet.hint.place': 'শিটের খালি জায়গায় ট্যাপ করে বসাও।',
   'sheet.hint.wire': 'এবার যে বিন্দুতে তার যাবে সেখানে ট্যাপ করো। আউটপুট ডানে, ইনপুট বাঁয়ে।',
   'sheet.delete': '{id} সরাও',
+  'sheet.deleteMany': '{count}টা সরাও',
+  'sheet.copy': 'কপি',
+  'sheet.paste': 'পেস্ট ({count}টা)',
   'sheet.hz': 'ঘড়ি: {count} Hz',
   'sheet.floating': '{count}টা ইনপুট কিছুর সঙ্গে জোড়া নেই (লাল বিন্দু); শিট সেগুলোকে LOW ধরে।',
   'sheet.unsettled': 'এই শিট কখনো স্থির হয় না: একটা লুপ নিজেই বারবার বদলাচ্ছে।',
@@ -1181,11 +1184,14 @@ export const en: Record<MessageKey, string> = {
   'sheet.letters': 'In the expressions: {list}. A bar means NOT, · means AND, + means OR.',
   'sheet.kind.DFF': 'D flip-flop',
   'sheet.hint.select':
-    'Drag things to move them; tap a switch to turn it over. Tap an output’s dot, then an input’s dot, to wire them.',
+    'Drag things to move them; tap a switch to turn it over. Tap an output’s dot, then an input’s dot, to wire them. Drag a box over empty space to choose everything in it (hold Shift to add more).',
   'sheet.hint.place': 'Tap an empty spot on the sheet to put it there.',
   'sheet.hint.wire':
     'Now tap the dot the wire goes to. Outputs are on the right, inputs on the left.',
   'sheet.delete': 'Remove {id}',
+  'sheet.deleteMany': 'Remove {count}',
+  'sheet.copy': 'Copy',
+  'sheet.paste': 'Paste ({count})',
   'sheet.hz': 'Clock: {count} Hz',
   'sheet.floating':
     '{count} inputs are joined to nothing (the red dots); the sheet reads them as LOW.',

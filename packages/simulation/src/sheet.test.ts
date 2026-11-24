@@ -1,10 +1,14 @@
 import {
   addSheetElement,
   connectSheet,
+  copyFromSheet,
   emptySheet,
   isLogicSheet,
   moveSheetElement,
+  moveSheetElements,
+  pasteIntoSheet,
   removeFromSheet,
+  removeManyFromSheet,
   setSheetElement,
   sheetName,
   type LogicSheet,
@@ -301,5 +305,60 @@ describe('logic sheet, part 2', () => {
         table((a) => a),
       ),
     ).toBe('A');
+  });
+});
+
+describe('logic sheet, part 3: several at once', () => {
+  // A half adder: A and B into an XOR (sum) and an AND (carry).
+  const halfAdder = () =>
+    build(
+      ['input', 'input', 'XOR', 'AND', 'output', 'output'],
+      [
+        ['IN1.q', 'G1.a'],
+        ['IN2.q', 'G1.b'],
+        ['IN1.q', 'G2.a'],
+        ['IN2.q', 'G2.b'],
+        ['G1.y', 'OUT1.a'],
+        ['G2.y', 'OUT2.a'],
+      ],
+    );
+
+  it('copies elements with the wires between them, and pastes them with new ids', () => {
+    const sheet = halfAdder();
+    const clip = copyFromSheet(sheet, ['G1', 'G2', 'OUT1']);
+    // Wires from the switches are left behind; the one from G1 to OUT1 comes.
+    expect(clip.wires.map((w) => `${w.from}>${w.to}`)).toEqual(['G1.y>OUT1.a']);
+    const pasted = pasteIntoSheet(sheet, clip, 0, 4);
+    if (!pasted.ok) throw new Error(pasted.error);
+    expect(pasted.ids).toEqual(['G3', 'G4', 'OUT3']);
+    expect(pasted.sheet.wires.at(-1)).toMatchObject({ from: 'G3.y', to: 'OUT3.a' });
+    expect(pasted.sheet.elements.find((e) => e.id === 'G3')).toMatchObject({ kind: 'XOR', y: 4 });
+    expect(isLogicSheet(pasted.sheet)).toBe(true);
+  });
+
+  it('pastes further along when the place is taken, and refuses when nothing fits', () => {
+    const sheet = halfAdder();
+    // Straight on top of the originals is taken, so it goes one step further each time.
+    const pasted = ok(pasteIntoSheet(sheet, copyFromSheet(sheet, ['IN1']), 0, 0));
+    const copy = pasted.elements.at(-1)!;
+    expect(copy.id).toBe('IN3');
+    expect(copy.x).toBeGreaterThan(0);
+    const all = copyFromSheet(
+      sheet,
+      sheet.elements.map((e) => e.id),
+    );
+    expect(pasteIntoSheet(sheet, all, 40, 0)).toEqual({ ok: false, error: 'taken' });
+  });
+
+  it('takes several away with their wires, and moves several together', () => {
+    const sheet = halfAdder();
+    const fewer = ok(removeManyFromSheet(sheet, ['G1', 'OUT1']));
+    expect(fewer.elements.map((e) => e.id)).toEqual(['IN1', 'IN2', 'G2', 'OUT2']);
+    expect(fewer.wires).toHaveLength(3);
+    const moved = ok(moveSheetElements(sheet, ['IN1', 'IN2'], 0, 5));
+    expect(moved.elements.filter((e) => e.kind === 'input').map((e) => e.y)).toEqual([5, 5]);
+    // Not onto another element, and not off the sheet.
+    expect(moveSheetElements(sheet, ['IN1'], 4, 0)).toEqual({ ok: false, error: 'taken' });
+    expect(moveSheetElements(sheet, ['IN1'], -1, 0)).toEqual({ ok: false, error: 'taken' });
   });
 });
