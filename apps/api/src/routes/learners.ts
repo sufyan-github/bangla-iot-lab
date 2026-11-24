@@ -17,6 +17,7 @@ import { PLATFORM_POLICY_VERSION, Pseudonym } from './classes';
 export { Pseudonym };
 
 /** The policy a guardian agrees to for a learner who signs up on their own. */
+/** The policy of the older nickname-only self sign-up (D-087), kept on its records. */
 export const SELF_LEARNER_POLICY_VERSION = 'self-learner-2026-11';
 
 /**
@@ -43,7 +44,11 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
         ...strict,
         schema: {
           body: Type.Object(
-            { code: Type.String({ minLength: 4, maxLength: 20 }), pseudonym: Pseudonym },
+            {
+              code: Type.String({ minLength: 4, maxLength: 20 }),
+              pseudonym: Pseudonym,
+              keep: Type.Optional(Type.Boolean()),
+            },
             { additionalProperties: false },
           ),
         },
@@ -125,48 +130,9 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
           targetType: 'class',
           targetId: found.id,
         });
-        if (!existing) await startSession(database, reply, joined, secure);
+        if (!existing)
+          await startSession(database, reply, joined, secure, request.body.keep ?? false);
         return reply.code(201).send({ className: found.name, pseudonym, ...(key ? { key } : {}) });
-      },
-    );
-
-    /**
-     * A learner signs up on their own, to learn and build at their own pace: a
-     * nickname, and a guardian's permission, which is recorded. Nothing else.
-     */
-    app.post(
-      '/v1/auth/learner-sign-up',
-      {
-        ...strict,
-        schema: {
-          body: Type.Object(
-            { pseudonym: Pseudonym, guardianConsent: Type.Literal(true) },
-            { additionalProperties: false },
-          ),
-        },
-      },
-      async (request, reply) => {
-        const pseudonym = request.body.pseudonym.trim();
-        const key = makeCode(3);
-        const learnerId = await database.db.transaction(async (tx) => {
-          const [learner] = await tx
-            .insert(users)
-            .values({ kind: 'learner', displayName: pseudonym, signInKeyHash: hashCode(key) })
-            .returning({ id: users.id });
-          await tx.insert(consentRecords).values({
-            learnerId: learner!.id,
-            schoolId: null,
-            scope: 'platform_use',
-            grantedBy: 'guardian',
-            policyVersion: SELF_LEARNER_POLICY_VERSION,
-            // Confirmed on the sign-up form, so the learner's own account records it.
-            recordedBy: learner!.id,
-          });
-          return learner!.id;
-        });
-        await audit(database, { actorId: learnerId, action: 'auth.learner-sign-up' });
-        await startSession(database, reply, learnerId, secure);
-        return reply.code(201).send({ pseudonym, key });
       },
     );
 
@@ -177,7 +143,10 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
         ...strict,
         schema: {
           body: Type.Object(
-            { key: Type.String({ minLength: 8, maxLength: 30 }) },
+            {
+              key: Type.String({ minLength: 8, maxLength: 30 }),
+              keep: Type.Optional(Type.Boolean()),
+            },
             { additionalProperties: false },
           ),
         },
@@ -196,7 +165,7 @@ export function learnerRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox 
           .limit(1);
         if (!learner) return reply.code(401).send({ error: 'wrong-key' });
         await audit(database, { actorId: learner.id, action: 'auth.key-sign-in' });
-        await startSession(database, reply, learner.id, secure);
+        await startSession(database, reply, learner.id, secure, request.body.keep ?? false);
         return { ok: true };
       },
     );

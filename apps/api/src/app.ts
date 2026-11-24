@@ -4,7 +4,9 @@ import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import Fastify from 'fastify';
 import type { ApiConfig } from './config';
 import type { Database } from './db/client';
+import { LocalMailbox, type Mailer } from './mail';
 import { authRoutes } from './routes/auth';
+import { individualRoutes } from './routes/individuals';
 import { classRoutes } from './routes/classes';
 import { learnerRoutes } from './routes/learners';
 import { lessonRoutes } from './routes/lessons';
@@ -18,9 +20,12 @@ export interface AppDependencies {
   database: Database;
   /** Injected so tests can stand in for the compile worker. */
   fetch: typeof globalThis.fetch;
+  /** Sends the lab's emails. */
+  mailer: Mailer;
 }
 
-export async function buildApp(deps: AppDependencies) {
+export async function buildApp(options: Omit<AppDependencies, 'mailer'> & { mailer?: Mailer }) {
+  const deps: AppDependencies = { ...options, mailer: options.mailer ?? new LocalMailbox() };
   const app = Fastify({
     logger: { level: deps.config.logLevel },
     bodyLimit: 256 * 1024,
@@ -41,11 +46,13 @@ export async function buildApp(deps: AppDependencies) {
       return reply.code(403).send({ error: 'wrong-origin' });
     }
   });
-  await app.register(rateLimit, { max: 300, timeWindow: '1 minute' });
+  await app.register(rateLimit, { max: deps.config.requestsPerMinute, timeWindow: '1 minute' });
 
   // Validation errors are safe to show; anything else is logged and hidden.
   app.setErrorHandler((error: { statusCode?: number; message: string }, request, reply) => {
     const status = error.statusCode ?? 500;
+    // Too many tries from this address: say so, so the page can ask to wait a minute.
+    if (status === 429) return reply.code(429).send({ error: 'too-many-tries' });
     if (status >= 500) {
       request.log.error({ err: error }, 'request failed');
       return reply.code(500).send({ error: 'internal-error' });
@@ -56,6 +63,15 @@ export async function buildApp(deps: AppDependencies) {
   registerHealthRoutes(app, deps);
   await app.register(compileRoutes(deps));
   await app.register(authRoutes(deps));
+  await app.register(individualRoutes(deps));
+  // Development and browser tests only: the local mailbox, so a test can follow a link.
+  if (deps.config.devMailbox && deps.mailer instanceof LocalMailbox) {
+    const mailbox = deps.mailer;
+    app.get('/v1/dev/mail', async (request) => {
+      const to = String((request.query as { to?: string }).to ?? '').toLowerCase();
+      return { messages: mailbox.sent.filter((m) => !to || m.to === to) };
+    });
+  }
   await app.register(classRoutes(deps));
   await app.register(learnerRoutes(deps));
   await app.register(projectRoutes(deps));

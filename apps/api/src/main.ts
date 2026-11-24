@@ -1,10 +1,13 @@
 import { buildApp } from './app';
 import { loadConfig } from './config';
 import { createDatabase } from './db/client';
+import { LocalMailbox } from './mail';
 
 const config = loadConfig();
 const database = createDatabase(config.databaseUrl);
-const app = await buildApp({ config, database, fetch: globalThis.fetch });
+// No email provider is chosen yet: emails stay in the local mailbox (development only).
+const mailer = new LocalMailbox((line) => console.log(line));
+const app = await buildApp({ config, database, fetch: globalThis.fetch, mailer });
 await app.listen({ host: config.host, port: config.port });
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

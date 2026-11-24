@@ -158,5 +158,10 @@ describe('configuration', () => {
     expect(() => loadConfig({ NODE_ENV: 'production', DATABASE_URL: 'postgres://x' })).toThrow(
       /WEB_ORIGIN/,
     );
+    // No email provider yet: production refuses to start rather than lose verification emails.
+    expect(() =>
+      loadConfig({ NODE_ENV: 'production', DATABASE_URL: 'postgres://x', WEB_ORIGIN: 'https://x' }),
+    ).toThrow(/email provider/);
+    expect(() => loadConfig({ MAIL_TRANSPORT: 'smtp' })).toThrow(/not supported yet/);
   });
 });

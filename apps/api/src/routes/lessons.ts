@@ -1,6 +1,7 @@
 import { Type, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { and, countDistinct, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AppDependencies } from '../app';
+import { isStaff } from './individuals';
 import { ownClass, requireUser } from '../auth/access';
 import { audit } from '../auth/session';
 import { classEnrollments, classes, lessonAssignments, progressEvents } from '../db/schema';
@@ -204,8 +205,9 @@ export function lessonRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
       async (request, reply) => {
         const who = await requireUser(database, request, reply);
         if (!who) return;
-        // Only learners' progress is recorded; a teacher trying a lesson leaves no trace.
-        if (who.kind !== 'learner') return { kept: 0 };
+        // Learners' and individual adults' progress is recorded; a teacher trying a
+        // lesson leaves no trace in a class's totals.
+        if (who.kind !== 'learner' && (await isStaff(database, who.userId))) return { kept: 0 };
         const now = Date.now();
         const kept = await database.db
           .insert(progressEvents)

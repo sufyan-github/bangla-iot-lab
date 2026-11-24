@@ -11,6 +11,7 @@
 import { sql } from 'drizzle-orm';
 import {
   bigint,
+  boolean,
   check,
   index,
   integer,
@@ -65,6 +66,14 @@ export const users = pgTable(
      * its SHA-256 so that it can be found; adults have none.
      */
     signInKeyHash: text('sign_in_key_hash').unique(),
+    /**
+     * A learner with an account of their own, outside any school, signs in with
+     * a name they chose (letters, digits, dot, dash, underscore) and a password.
+     * It is not contact information; their guardian's email is kept apart.
+     */
+    username: text('username'),
+    /** When the adult opened the link sent to their email. */
+    emailVerifiedAt: at('email_verified_at'),
     platformRole: platformRole('platform_role'),
     locale: text('locale').notNull().default('bn'),
     createdAt: createdAt(),
@@ -72,6 +81,8 @@ export const users = pgTable(
   },
   (t) => [
     uniqueIndex('users_email_unique').on(sql`lower(${t.email})`),
+    uniqueIndex('users_username_unique').on(sql`lower(${t.username})`),
+    check('users_username_is_for_learners', sql`${t.kind} = 'learner' OR ${t.username} IS NULL`),
     check('users_learner_has_no_contact_details', sql`${t.kind} = 'adult' OR ${t.email} IS NULL`),
     check(
       'users_learner_has_no_platform_role',
@@ -245,6 +256,8 @@ export const sessions = pgTable(
     createdAt: createdAt(),
     expiresAt: at('expires_at').notNull(),
     revokedAt: at('revoked_at'),
+    /** "Keep me signed in on this device": otherwise the cookie ends with the browser. */
+    persistent: boolean('persistent').notNull().default(true),
   },
   (t) => [index('sessions_user_idx').on(t.userId)],
 );
@@ -315,4 +328,50 @@ export const teacherInvites = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index('teacher_invites_school_idx').on(t.schoolId)],
+);
+
+/**
+ * The guardian of a learner under 18 with an account of their own: the email
+ * that approved the account and that receives its password resets. Kept apart
+ * from the learner's row, which never holds contact details.
+ */
+export const guardianLinks = pgTable(
+  'guardian_links',
+  {
+    id: id(),
+    learnerId: uuid('learner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    email: text('email').notNull(),
+    /** When the guardian approved the account through the emailed link. */
+    approvedAt: at('approved_at'),
+    createdAt: createdAt(),
+    revokedAt: at('revoked_at'),
+  },
+  (t) => [index('guardian_links_learner_idx').on(t.learnerId)],
+);
+
+export const emailTokenPurpose = pgEnum('email_token_purpose', [
+  'verify-email',
+  'approve-learner',
+  'reset-password',
+]);
+
+/** A one-time link sent by email: only its SHA-256 is kept. */
+export const emailTokens = pgTable(
+  'email_tokens',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    purpose: emailTokenPurpose('purpose').notNull(),
+    /** The address it went to. */
+    email: text('email').notNull(),
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: at('expires_at').notNull(),
+    usedAt: at('used_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('email_tokens_user_idx').on(t.userId, t.purpose)],
 );

@@ -7,6 +7,7 @@ import { audit, clearSessionCookie, endSession, signedIn, startSession } from '.
 import { classEnrollments, classes, schoolMemberships, schools, users } from '../db/schema';
 import { acceptInvite } from './schools';
 import { onOwnAccount } from '../auth/access';
+import { approvedGuardian, isStaff } from './individuals';
 
 /** Thrown inside the sign-up transaction to undo it when the invitation does not work. */
 class NoSuchInvite extends Error {}
@@ -48,6 +49,7 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
               /** Joins an existing school instead of naming a new one. */
               inviteCode: Type.Optional(Type.String({ minLength: 4, maxLength: 40 })),
               district: Type.Optional(Type.String({ maxLength: 60 })),
+              keep: Type.Optional(Type.Boolean()),
             },
             { additionalProperties: false },
           ),
@@ -92,36 +94,74 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
           throw error;
         }
         await audit(database, { actorId: userId, action: 'auth.sign-up' });
-        await startSession(database, reply, userId, secure);
+        await startSession(database, reply, userId, secure, request.body.keep ?? false);
         return reply.code(201).send({ ok: true });
       },
     );
 
+    /**
+     * Signs in with an email (adults) or a sign-in name (learners with their own
+     * account), and a password. An adult on their own must have confirmed their
+     * email, and a learner's guardian must have approved the account; teachers'
+     * emails are not checked yet (D-096).
+     */
     app.post(
       '/v1/auth/sign-in',
       {
         ...strict,
         schema: {
           body: Type.Object(
-            { email: Email, password: Type.String({ maxLength: 200 }) },
+            {
+              identifier: Type.Optional(Type.String({ minLength: 3, maxLength: 254 })),
+              /** The older name of the field, for adults. */
+              email: Type.Optional(Email),
+              password: Type.String({ maxLength: 200 }),
+              keep: Type.Optional(Type.Boolean()),
+            },
             { additionalProperties: false },
           ),
         },
       },
       async (request, reply) => {
-        const { email, password } = request.body;
+        const { password } = request.body;
+        const identifier = (request.body.identifier ?? request.body.email ?? '')
+          .trim()
+          .toLowerCase();
+        if (!identifier) return reply.code(400).send({ error: 'bad-request' });
+        const byEmail = identifier.includes('@');
         const [user] = await database.db
-          .select({ id: users.id, passwordHash: users.passwordHash })
+          .select({
+            id: users.id,
+            kind: users.kind,
+            passwordHash: users.passwordHash,
+            emailVerifiedAt: users.emailVerifiedAt,
+          })
           .from(users)
           .where(
-            and(sql`lower(${users.email}) = ${email.toLowerCase()}`, isNull(users.deactivatedAt)),
+            and(
+              byEmail
+                ? sql`lower(${users.email}) = ${identifier}`
+                : sql`lower(${users.username}) = ${identifier}`,
+              isNull(users.deactivatedAt),
+            ),
           )
           .limit(1);
         // Checked even when there is no such user, so the answer takes as long either way.
         const matches = await verifyPassword(password, user?.passwordHash ?? DUMMY_HASH);
         if (!user || !matches) return reply.code(401).send({ error: 'wrong-email-or-password' });
+        // Only after the right password, so these say nothing to someone guessing.
+        if (
+          user.kind === 'adult' &&
+          user.emailVerifiedAt === null &&
+          !(await isStaff(database, user.id))
+        ) {
+          return reply.code(403).send({ error: 'email-not-verified' });
+        }
+        if (user.kind === 'learner' && !(await approvedGuardian(database, user.id))) {
+          return reply.code(403).send({ error: 'awaiting-guardian' });
+        }
         await audit(database, { actorId: user.id, action: 'auth.sign-in' });
-        await startSession(database, reply, user.id, secure);
+        await startSession(database, reply, user.id, secure, request.body.keep ?? false);
         return { ok: true };
       },
     );
@@ -156,6 +196,11 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
         .from(classEnrollments)
         .innerJoin(classes, eq(classes.id, classEnrollments.classId))
         .where(and(eq(classEnrollments.learnerId, who.userId), isNull(classEnrollments.revokedAt)));
+      const ownAccount = who.kind === 'learner' && (await onOwnAccount(database, who.userId));
+      const [details] = await database.db
+        .select({ username: users.username })
+        .from(users)
+        .where(eq(users.id, who.userId));
       return {
         user: {
           id: who.userId,
@@ -163,7 +208,21 @@ export function authRoutes(deps: AppDependencies): FastifyPluginAsyncTypebox {
           displayName: who.displayName,
           locale: who.locale,
           // A learner who signed up on their own, rather than only through a class.
-          ownAccount: who.kind === 'learner' && (await onOwnAccount(database, who.userId)),
+          ownAccount,
+          /**
+           * - staff: an adult in a school (teacher or admin);
+           * - individual: an adult in no school, or a learner with their own account;
+           * - class: a learner who exists only through their classes.
+           */
+          account:
+            who.kind === 'adult'
+              ? roles.length > 0
+                ? 'staff'
+                : 'individual'
+              : ownAccount
+                ? 'individual'
+                : 'class',
+          username: details?.username ?? null,
         },
         schools: roles,
         classes: enrolled,

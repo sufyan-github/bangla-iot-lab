@@ -43,6 +43,13 @@
       "when": 1795516804664,
       "tag": "0005_self_learners",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795536165107,
+      "tag": "0006_individual_accounts",
+      "breakpoints": true
     }
   ]
 }
