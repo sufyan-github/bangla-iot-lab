@@ -1716,3 +1716,42 @@ owner's word.
   time. Headers are accepted but not used. The web panel lists each request
   a board's program made and its status. A new ready-made program,
   `webclient`, uses all of this.
+
+## D-087 — Learners on their own, and running a school
+
+The owner asked (24 November 2026) that the lab not be only for schools: any
+student should be able to sign up, follow the lessons as a guide on their
+own and build their own projects. Built with the rest of the accounts work.
+
+- **Learners on their own.** A learner signs up with a **nickname** and a
+  tick that a **parent or guardian knows and agrees**. Nothing else is asked:
+  no email, phone, real name, age or school. The guardian's permission is
+  recorded as a consent record with no school (policy version
+  `self-learner-2026-11`); the database allows a record without a school only
+  when a guardian gave it. The learner gets a sign-in key like a class
+  learner's.
+- **The key is the only way back in.** With no email kept there is nothing to
+  recover a lost key with, and the page says so. A learner can make a new key
+  while signed in (the old one and other devices stop working). If they join a
+  class, their teacher can also give them a new key.
+- **One account.** A learner signed in who joins a class does so on the same
+  account, keeping their key and progress. Taken out of a class, a learner on
+  their own account keeps it; a learner who came only through a class is
+  signed out, as before.
+- **Their page** shows their progress in each lesson, links to the lessons and
+  to building a project, their classes, joining a class and a new key. Their
+  progress and projects are kept as any learner's are (D-081).
+- **Running a school.** The admin removes a teacher (their classes pass to the
+  admin, so none is left without a teacher) or hands the admin role to another
+  teacher, who must already teach there. A teacher who has left a school no
+  longer manages its classes. A teacher moves a learner to another of their
+  classes in the same school, under the same nickname.
+- **Sign-in rate limit.** Still 10 tries a minute per address on each sign-up,
+  sign-in and code route, now a setting (`SIGN_INS_PER_MINUTE`) so the browser
+  tests, which sign up afresh on two screen sizes at once, can allow more.
+
+**Needs the owner's and a lawyer's confirmation (with B3 of the remaining
+work):** whether a guardian's tick on the learner's own device is enough
+permission under the PDPO, and whether an age or school year should be asked.
+**Not done:** password reset by email, the retention job, and a way for a
+guardian to see or close a learner's account.
