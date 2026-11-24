@@ -1,0 +1,111 @@
+{
+  "formatVersion": 1,
+  "id": "74hc74",
+  "simulates": "logic",
+  "status": "simulated",
+  "family": "logic",
+  "tier": 2,
+  "name": {
+    "bn": "74HC74 (D ফ্লিপ-ফ্লপ)",
+    "en": "74HC74 D flip-flops"
+  },
+  "summary": {
+    "bn": "দুটো D ফ্লিপ-ফ্লপ: ক্লকের প্রতি উঠতি ধারে D-এর মান মনে রাখে",
+    "en": "Two D flip-flops: each remembers D on every rising edge of its clock"
+  },
+  "model": {
+    "level": "electrical",
+    "simplified": [
+      "Each flip-flop answers at once: the few nanoseconds a real one takes, and its set-up and hold times, are left out.",
+      "Q takes D when the clock goes from LOW to HIGH. CLR and PRE work at once, whatever the clock does; both LOW make Q and Q̅ both HIGH, as the datasheet's function table says.",
+      "Without power it forgets what it held, and starts with Q LOW. A real chip starts with Q either way.",
+      "An input is HIGH above 70 % of the supply and LOW below 30 %; in between it keeps its last level. An output is the supply or ground through about 50 Ω. These are typical datasheet figures, not measured.",
+      "It is placed across the centre gap with pin 1 at the bottom left, and cannot be turned round."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    {
+      "id": "p1",
+      "label": "1",
+      "role": "input"
+    },
+    {
+      "id": "p2",
+      "label": "2",
+      "role": "input"
+    },
+    {
+      "id": "p3",
+      "label": "3",
+      "role": "input"
+    },
+    {
+      "id": "p4",
+      "label": "4",
+      "role": "input"
+    },
+    {
+      "id": "p5",
+      "label": "5",
+      "role": "output"
+    },
+    {
+      "id": "p6",
+      "label": "6",
+      "role": "output"
+    },
+    {
+      "id": "p7",
+      "label": "7",
+      "role": "ground"
+    },
+    {
+      "id": "p8",
+      "label": "8",
+      "role": "output"
+    },
+    {
+      "id": "p9",
+      "label": "9",
+      "role": "output"
+    },
+    {
+      "id": "p10",
+      "label": "10",
+      "role": "input"
+    },
+    {
+      "id": "p11",
+      "label": "11",
+      "role": "input"
+    },
+    {
+      "id": "p12",
+      "label": "12",
+      "role": "input"
+    },
+    {
+      "id": "p13",
+      "label": "13",
+      "role": "input"
+    },
+    {
+      "id": "p14",
+      "label": "14",
+      "role": "power"
+    }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["74hc74"]
+  },
+  "placement": {
+    "idPrefix": "U",
+    "offsets": [0, 1, 2, 3, 4, 5, 6, 6, 5, 4, 3, 2, 1, 0],
+    "rows": ["f", "f", "f", "f", "f", "f", "f", "e", "e", "e", "e", "e", "e", "e"]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "formatVersion": 1,
+  "id": "clock-555",
+  "simulates": "clock",
+  "status": "simulated",
+  "family": "logic",
+  "tier": 2,
+  "name": {
+    "bn": "ক্লক পালস মডিউল (৫৫৫)",
+    "en": "Clock pulse module (555)"
+  },
+  "summary": {
+    "bn": "নিজে নিজে টিক দেয়: আউটপুট নির্দিষ্ট গতিতে HIGH আর LOW হয়, লজিক চিপের ক্লক হিসেবে।",
+    "en": "Ticks by itself: its output goes HIGH and LOW at a set rate, as a clock for logic chips."
+  },
+  "model": {
+    "level": "behaviour",
+    "simplified": [
+      "Its output is HIGH and LOW for equal times, at the rate set in the inspector (0.2 to 20 times a second). On a real module the rate is set with its knob and the HIGH part is usually a little longer.",
+      "HIGH is joined to its supply and LOW to its ground through about 100 Ω (an estimate); the real 555's HIGH is a little below its supply.",
+      "It needs at least 4.5 V, as the NE555's datasheet gives. Its current is an estimate.",
+      "Its legs are in the order VCC, OUT, GND. Modules differ: read the labels on yours."
+    ]
+  },
+  "validation": {
+    "state": "not-checked",
+    "tests": []
+  },
+  "pins": [
+    { "id": "vcc", "label": "VCC", "role": "power" },
+    { "id": "out", "label": "OUT", "role": "output" },
+    { "id": "gnd", "label": "GND", "role": "ground" }
+  ],
+  "variants": [],
+  "catalog": {
+    "keywords": ["555 timer module", "ne555 module"]
+  },
+  "placement": {
+    "idPrefix": "CLK",
+    "offsets": [0, 1, 2]
+  }
+}

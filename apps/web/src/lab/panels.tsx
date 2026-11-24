@@ -6,6 +6,7 @@ import {
   ACS712_RANGES,
   LOGIC_CHIPS,
   LOGIC_CHIP_GATES,
+  isGateChip,
   LED_RING_SIZES,
   onBreadboard,
   updateProps,
@@ -547,7 +548,7 @@ function PartSettings({ part }: { part: CircuitComponent }) {
     );
   }
   if (part.type === 'logic') {
-    // The six chips share a shape, so one can be swapped for another where it sits.
+    // The chips share a shape, so one can be swapped for another where it sits.
     return (
       <label className="block">
         <span className="mb-1.5 block text-sm text-ink-soft">{t('inspector.chip')}</span>
@@ -559,7 +560,10 @@ function PartSettings({ part }: { part: CircuitComponent }) {
         >
           {LOGIC_CHIPS.map((chip) => (
             <option key={chip} value={chip}>
-              {chip} · {t(`gate.${LOGIC_CHIP_GATES[chip].kind}` as MessageKey)}
+              {chip} ·{' '}
+              {isGateChip(chip)
+                ? t(`gate.${LOGIC_CHIP_GATES[chip].kind}` as MessageKey)
+                : t('chip.flipflop')}
             </option>
           ))}
         </select>
@@ -609,6 +613,30 @@ function PartSettings({ part }: { part: CircuitComponent }) {
           </fieldset>
         ))}
       </div>
+    );
+  }
+  if (part.type === 'clock') {
+    return (
+      <label className="block">
+        <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+          {t('inspector.hz')}
+          <span className="font-medium text-ink tabular-nums">
+            {t('inspector.hzValue', { count: number(part.props.hz) })}
+          </span>
+        </span>
+        <input
+          type="range"
+          data-testid="slider-hz"
+          min={0.2}
+          max={20}
+          step={0.2}
+          value={part.props.hz}
+          onChange={(event) =>
+            setProps(part.id, { hz: Math.round(Number(event.target.value) * 10) / 10 })
+          }
+          className="h-11 w-full accent-amber"
+        />
+      </label>
     );
   }
   if (part.type === 'pir') {

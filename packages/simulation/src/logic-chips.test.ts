@@ -1,6 +1,6 @@
 import {
   CIRCUIT_SCHEMA_VERSION,
-  LOGIC_CHIPS,
+  GATE_CHIPS,
   LOGIC_CHIP_GATES,
   gateOutput,
   updateProps,
@@ -59,7 +59,7 @@ const outputVolts = (document: CircuitDocument, n: number) =>
 
 describe('74HC logic chips', () => {
   it('every gate of every chip follows its truth table', () => {
-    for (const model of LOGIC_CHIPS) {
+    for (const model of GATE_CHIPS) {
       const { kind, gates } = LOGIC_CHIP_GATES[model];
       for (const gate of gates) {
         for (let combination = 0; combination < 1 << gate.inputs.length; combination++) {
@@ -188,5 +188,103 @@ describe('74HC logic chips', () => {
     session.update(document, []);
     expect(q()).toBe(false); // remembered
     expect(updateProps(document, 'U1', { chip: '74HC32' }).ok).toBe(true);
+  });
+});
+
+describe('74HC74 D flip-flop', () => {
+  /**
+   * The first flip-flop wired to divide by two: Q̄ (pin 6) back to D (pin 2), clear and
+   * preset (pins 1 and 4) held HIGH. Its clock (pin 3) is held LOW by 10 kΩ and taken
+   * HIGH by a button.
+   */
+  const divider = (clear = true) =>
+    circuit(
+      [
+        battery(),
+        chip('74HC74'),
+        { id: 'CLK', type: 'button', pins: { a: 'BB1.i12', b: 'BB1.i20' }, props: {} },
+        {
+          id: 'RD',
+          type: 'resistor',
+          pins: { a: 'BB1.h12', b: 'BB1.h21' },
+          props: { resistance: 10_000 },
+        },
+      ],
+      [
+        ...power,
+        ['BAT1.pos', 'BB1.j20'],
+        ['BAT1.neg', 'BB1.j21'],
+        [beside(6), beside(2)],
+        tie(1, clear),
+        tie(4, true),
+      ],
+    );
+  /** Q (pin 5), after the circuit has had a moment to settle. */
+  const q = (session: SimulationSession) => {
+    session.advance(10);
+    return session.frame().result.nodeVoltages[`BB1:strip:${COLUMN + 4}:bottom`]! > 2.5;
+  };
+
+  it('takes D on each rising clock edge, and keeps it in between: it divides by two', () => {
+    const document = divider();
+    const session = new SimulationSession(document);
+    expect(q(session)).toBe(false); // starts with Q LOW
+    const seen: boolean[] = [];
+    for (let press = 0; press < 4; press++) {
+      session.update(document, ['CLK']);
+      seen.push(q(session));
+      session.update(document, []);
+      seen.push(q(session)); // the falling edge changes nothing
+    }
+    expect(seen).toEqual([true, true, false, false, true, true, false, false]);
+  });
+
+  it('clear held LOW keeps Q LOW whatever the clock does', () => {
+    const document = divider(false);
+    const session = new SimulationSession(document);
+    session.update(document, ['CLK']);
+    expect(q(session)).toBe(false);
+    expect(outputVolts(document, 6)).toBeCloseTo(4.5, 1); // Q̄ HIGH
+  });
+
+  it('a 555 clock module ticks by itself, and the flip-flop halves its frequency', () => {
+    // The module stands in row g from column 24: VCC, OUT, GND. OUT goes to the clock pin.
+    const document = circuit(
+      [
+        battery(5),
+        chip('74HC74'),
+        {
+          id: 'CLK1',
+          type: 'clock',
+          pins: { vcc: 'BB1.g24', out: 'BB1.g25', gnd: 'BB1.g26' },
+          props: { hz: 1 },
+        },
+      ],
+      [
+        ...power,
+        ['BAT1.pos', 'BB1.j24'],
+        ['BAT1.neg', 'BB1.j26'],
+        ['BB1.j25', beside(3)],
+        [beside(6), beside(2)],
+        tie(1, true),
+        tie(4, true),
+      ],
+    );
+    const session = new SimulationSession(document);
+    const clock: boolean[] = [];
+    const q: boolean[] = [];
+    // At 1 Hz OUT is LOW for the first half of each second and HIGH for the second.
+    // Look at a quarter second, then every half second after. A frame reports the whole
+    // stretch since the last one, so each look is a frame of its own millisecond.
+    for (let look = 0; look < 8; look++) {
+      session.advance(look === 0 ? 249 : 499);
+      session.frame();
+      session.advance(1);
+      const frame = session.frame().result;
+      clock.push(frame.readings.CLK1?.activity === 1);
+      q.push(frame.nodeVoltages[`BB1:strip:${COLUMN + 4}:bottom`]! > 2.5);
+    }
+    expect(clock).toEqual([false, true, false, true, false, true, false, true]);
+    expect(q).toEqual([false, true, true, false, false, true, true, false]);
   });
 });

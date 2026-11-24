@@ -67,3 +67,22 @@ test('the diagram draws a chip with its gates in use inside it', async ({ page }
   if (process.env.GATE_SHOT)
     await page.getByTestId('diagram').screenshot({ path: process.env.GATE_SHOT });
 });
+
+test('a 74HC74 flip-flop and a clock module, whose frequency the inspector sets', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await place(page, 'logic', 'BB1.e10');
+  await page.locator('[data-hit="U1"]').click();
+  await page.getByTestId('logic-chip').selectOption('74HC74');
+  await expect(page.locator('[data-part="U1"]')).toContainText('74HC74');
+  // The clock module's legs: c20 VCC, c21 OUT, c22 GND.
+  await place(page, 'clock', 'BB1.c20');
+  const clock = page.locator('[data-part="CLK1"]');
+  await expect(clock).toContainText('1 Hz');
+  await page.getByTestId('tool-select').click();
+  await page.locator('[data-hit="CLK1"]').click();
+  await page.getByTestId('slider-hz').fill('2');
+  await expect(clock).toContainText('2 Hz');
+});

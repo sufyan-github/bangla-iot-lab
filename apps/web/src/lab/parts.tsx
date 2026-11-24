@@ -1869,6 +1869,47 @@ export function PirView(props: {
   );
 }
 
+/** 555 clock module: a small blue board with the 8-pin timer chip and a light that blinks with OUT. */
+export function ClockView(props: {
+  vcc: Point;
+  gnd: Point;
+  /** Its output is HIGH. */
+  high: boolean;
+  hz: number;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.vcc, props.gnd);
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-54} width={length + 24} height={58} color="#1f4f8a" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {[-length / 2, 0, length / 2].map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      {/* The 555 chip, a black 8-pin package. */}
+      <rect x={-14} y={-46} width={20} height={16} rx={1.5} fill="#1b1b1d" />
+      <circle cx={-10} cy={-42} r={1.4} fill="#3a3a3e" />
+      <text x={-4} y={-35.5} textAnchor="middle" fontSize={5.5} fill="#c8c8cc" pointerEvents="none">
+        555
+      </text>
+      {/* The light on OUT. */}
+      <circle cx={15} cy={-38} r={4.5} fill={props.high ? '#ff5a4a' : '#5a2320'} stroke="#2a0f0d" />
+      {props.high && <circle cx={15} cy={-38} r={8} fill="#ff5a4a" opacity={0.3} />}
+      <text
+        y={-12}
+        textAnchor="middle"
+        fontSize={9}
+        fontWeight={700}
+        fill="#d6e4f5"
+        pointerEvents="none"
+      >
+        {props.hz} Hz
+      </text>
+    </g>
+  );
+}
+
 /** RGB LED module: one clear LED that shows the mixture of its three colours. */
 export function RgbLedView(props: {
   first: Point;

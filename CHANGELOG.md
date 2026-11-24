@@ -8,6 +8,12 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **74HC74 flip-flop and a 555 clock module** (circuit format version 23): the
+  logic chip list gains the 74HC74, two D flip-flops that take D on the clock's
+  rising edge and keep it, with active-LOW clear and preset. The new clock
+  module ticks by itself at 0.2 to 20 Hz, set in the inspector, to drive a
+  flip-flop's clock pin. The diagram names the flip-flop's pins as in its
+  datasheet.
 - **Programs in several files**: tabs in the code editor for more `.ino`
   files, headers and `.c`/`.cpp` files, built together for the UNO-compatible
   board and the ESP32. A compile error names the tab it is in.

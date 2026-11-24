@@ -12,7 +12,9 @@ import {
 } from '@banglalab/circuit-engine';
 import {
   L298N_TERMINALS,
-  LOGIC_CHIP_GATES,
+  CHIP_MODELS,
+  chipInputs,
+  chipOutputs,
   boardPinNumber,
   boardTerminals,
   isHole,
@@ -89,6 +91,8 @@ import {
   PIR_OUTPUT_RESISTANCE,
   PIR_OUTPUT_VOLTS,
   PIR_SUPPLY_RESISTANCE,
+  CLOCK_SUPPLY_RESISTANCE,
+  CLOCK_OUTPUT_RESISTANCE,
   RGB_CHANNELS,
   RGB_FORWARD_VOLTAGE,
   NPN_TRANSISTOR,
@@ -135,6 +139,8 @@ export interface CircuitState {
    * is absent the output simply follows the movement, on a powered sensor.
    */
   motion?: Readonly<Record<string, boolean>>;
+  /** Clock modules whose output is HIGH at the moment. Absent, every clock's output is LOW. */
+  clocks?: Readonly<Record<string, boolean>>;
   /**
    * What each motor driver is doing. It follows from the circuit's own voltages
    * (the driver's supply and the levels on its inputs), so whoever solves the
@@ -186,11 +192,13 @@ export interface ChipState {
   powered: boolean;
   /** The level last read on each input pin, by pin number. */
   inputs: Readonly<Record<number, boolean>>;
-  /** The level each output pin drives, by pin number. */
-  outputs: Readonly<Record<number, boolean>>;
+  /** The level each output pin drives, by pin number; null for an output let go. */
+  outputs: Readonly<Record<number, boolean | null>>;
+  /** What the chip remembers: a flip-flop's Q, a counter's count. Empty for gates. */
+  memory: readonly number[];
 }
 
-export const CHIP_IDLE: ChipState = { powered: false, inputs: {}, outputs: {} };
+export const CHIP_IDLE: ChipState = { powered: false, inputs: {}, outputs: {}, memory: [] };
 
 /** A motor driver module at one instant. */
 export interface DriverState {
@@ -570,26 +578,22 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         // Inputs take almost nothing; a powered chip's outputs are its supply or its
         // ground through a small resistance, so what they give is taken from its supply.
         const chip = state.chips?.[id] ?? CHIP_IDLE;
+        const model = CHIP_MODELS[component.props.chip];
         const pin = (n: number) => node(component.pins[`p${n}`]!);
-        const supply = pin(14);
-        const ground = pin(7);
+        const supply = pin(model.supply);
+        const ground = pin(model.ground);
         partDevice.set(id, add(resistor(id, supply, ground, LOGIC_QUIESCENT_RESISTANCE)));
-        for (const gate of LOGIC_CHIP_GATES[component.props.chip].gates) {
-          for (const input of gate.inputs) {
-            add(resistor(`${id}:p${input}`, pin(input), ground, LOGIC_INPUT_RESISTANCE));
-          }
-          const out = gate.output;
-          if (chip.powered && out in chip.outputs) {
+        for (const input of chipInputs(model)) {
+          add(resistor(`${id}:p${input}`, pin(input), ground, LOGIC_INPUT_RESISTANCE));
+        }
+        for (const out of chipOutputs(model)) {
+          const level = chip.outputs[out];
+          if (chip.powered && level !== undefined && level !== null) {
             add(
-              resistor(
-                `${id}:p${out}`,
-                pin(out),
-                chip.outputs[out] ? supply : ground,
-                LOGIC_OUTPUT_RESISTANCE,
-              ),
+              resistor(`${id}:p${out}`, pin(out), level ? supply : ground, LOGIC_OUTPUT_RESISTANCE),
             );
           } else {
-            // An unpowered chip's outputs are let go.
+            // An unpowered chip's outputs, and outputs it lets go, take almost nothing.
             add(resistor(`${id}:p${out}`, pin(out), ground, LOGIC_INPUT_RESISTANCE));
           }
         }
@@ -933,6 +937,21 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           state.motion?.[id]
             ? theveninSource(`${id}:out`, out, ground, PIR_OUTPUT_VOLTS, PIR_OUTPUT_RESISTANCE)
             : resistor(`${id}:out`, out, ground, PIR_OUTPUT_RESISTANCE),
+        );
+        break;
+      }
+      case 'clock': {
+        // A supply load, and an output joined to the module's supply or its ground.
+        const supply = node(component.pins.vcc);
+        const ground = node(component.pins.gnd);
+        partDevice.set(id, add(resistor(id, supply, ground, CLOCK_SUPPLY_RESISTANCE)));
+        add(
+          resistor(
+            `${id}:out`,
+            node(component.pins.out),
+            state.clocks?.[id] ? supply : ground,
+            CLOCK_OUTPUT_RESISTANCE,
+          ),
         );
         break;
       }

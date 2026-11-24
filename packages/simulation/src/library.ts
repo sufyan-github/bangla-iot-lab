@@ -481,6 +481,14 @@ export const LORA_MAX_SUPPLY = 3.7;
 export const LORA_SUPPLY_RESISTANCE = 275;
 
 /**
+ * Clock pulse module: a 555 timer wired to run on its own. REPORTED, from the
+ * NE555 datasheet: a supply of 4.5 V to 16 V, and an output a little below the
+ * supply when HIGH. ESTIMATE: about 5 mA at 5 V, and 100 Ω of output resistance.
+ */
+export const CLOCK_SUPPLY_RESISTANCE = 1000;
+export const CLOCK_OUTPUT_RESISTANCE = 100;
+
+/**
  * L298N dual motor driver module. REPORTED, from the chip's datasheet
  * (STMicroelectronics, "L298", electrical characteristics): what its outputs
  * lose, typically 1.35 V on the supply side and 1.2 V on the ground side at
@@ -613,6 +621,7 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   mp3: 3.2,
   gsm: 3.4,
   pir: 4.5,
+  clock: 4.5,
   oled: 3,
   ledring: 3.5,
   tft: 3,

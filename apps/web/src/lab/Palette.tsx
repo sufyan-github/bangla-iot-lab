@@ -205,6 +205,12 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M8 9.5h8M7 12.5h10M8.5 15.5h7" {...stroke} strokeWidth={1.6} />
     </>
   ),
+  clock: (
+    <>
+      <path d="M3 16h4V8h5v8h5V8h4" {...stroke} />
+      <path d="M3 20h18" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
   pir: (
     <>
       <path d="M5 16a7 7 0 0 1 14 0z" {...stroke} />
@@ -429,7 +435,7 @@ const GROUPS: PaletteItem[][] = [
   ['breadboard', 'battery', 'uno', 'esp32'],
   ['resistor', 'led', 'button', 'switch', 'potentiometer', 'capacitor', 'diode', 'transistor'],
   ['buzzer', 'motor', 'l298n', 'relay', 'relaymodule', 'servo', 'rgbled', 'lcd', 'oled'],
-  ['logic'],
+  ['logic', 'clock'],
   ['ldr', 'ldrmodule', 'temperature', 'dht11', 'soil', 'rain', 'mq135', 'ir', 'pir', 'ultrasonic'],
   ['voltagesensor', 'acs712', 'mq7', 'ph', 'tds', 'turbidity'],
   ['cell', 'tp4056', 'lm2596', 'solar'],

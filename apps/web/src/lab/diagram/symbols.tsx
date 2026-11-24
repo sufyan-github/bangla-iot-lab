@@ -1,4 +1,9 @@
-import { LOGIC_CHIP_GATES, type CircuitComponent, type GateKind } from '@banglalab/shared';
+import {
+  LOGIC_CHIP_GATES,
+  isGateChip,
+  type CircuitComponent,
+  type GateKind,
+} from '@banglalab/shared';
 import type { ReactNode } from 'react';
 import { GATE_CELL, gatesInUse, pinLabel, type DiagramPart } from './layout';
 
@@ -186,7 +191,8 @@ function GateSymbol(props: {
 /** A logic chip's gates in use, in a row across its box. */
 function ChipGates({ part }: { part: DiagramPart }) {
   const { component } = part;
-  if (component.type !== 'logic') return null;
+  // A flip-flop chip is a plain box with its pins named, as its datasheet draws it.
+  if (component.type !== 'logic' || !isGateChip(component.props.chip)) return null;
   const connected = new Set(part.pins.filter((pin) => pin.net !== null).map((pin) => pin.name));
   const used = gatesInUse(component, (name) => connected.has(name));
   const { kind, gates } = LOGIC_CHIP_GATES[component.props.chip];

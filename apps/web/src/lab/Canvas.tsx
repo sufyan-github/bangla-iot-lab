@@ -114,6 +114,7 @@ const BODY_HEIGHT: Partial<Record<string, number>> = {
   mp3: 56,
   gsm: 56,
   pir: 42,
+  clock: 42,
   rgbled: 38,
   oled: 86,
   ledring: 110,

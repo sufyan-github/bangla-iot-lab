@@ -28,12 +28,13 @@ import { holeExists, holeName, isHole, parseHole, type BreadboardSize } from './
  * 21 — the breadboard becomes a part: a circuit holds one or more, of three
  *     sizes, and each hole is named after its breadboard ("BB1.a12").
  * 22 — adds the Ra-02 LoRa radio.
+ * 23 — adds the 74HC74 flip-flop chip and the clock module.
  * Up to version 20 each version only adds part types or optional fields, so an
  * older document is valid in a newer version apart from the number. Version
  * 21 renames every hole: `migrateCircuit` puts the one fixed breadboard of an
  * older circuit in as BB1, where it was, and names its holes after it.
  */
-export const CIRCUIT_SCHEMA_VERSION = 22;
+export const CIRCUIT_SCHEMA_VERSION = 23;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 /** A breadboard hole: the breadboard's id, a dot and the hole, as "BB1.a12". */
@@ -551,6 +552,17 @@ export const PirSchema = Type.Object({
   }),
 });
 
+/**
+ * Clock pulse module (a 555 timer on a small board): its output is a square
+ * wave, HIGH and LOW for equal times, `hz` times a second.
+ */
+export const ClockSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('clock'),
+  pins: sensorLeads,
+  props: Type.Object({ hz: Type.Number({ minimum: 0.2, maximum: 20 }) }),
+});
+
 /** RGB LED module: a red, a green and a blue LED in one case, sharing their negative leg. */
 export const RgbLedSchema = Type.Object({
   id: Id,
@@ -642,9 +654,17 @@ export const RelayModuleSchema = Type.Object({
   props: Type.Object({ trigger: Type.Union([Type.Literal('high'), Type.Literal('low')]) }),
 });
 
-/** The 74HC logic chips the lab has, each with fourteen pins. */
-export const LOGIC_CHIPS = ['74HC00', '74HC02', '74HC04', '74HC08', '74HC32', '74HC86'] as const;
+/** The 74HC chips made of gates, each with fourteen pins. */
+export const GATE_CHIPS = ['74HC00', '74HC02', '74HC04', '74HC08', '74HC32', '74HC86'] as const;
+export type GateChip = (typeof GATE_CHIPS)[number];
+/** The 74HC logic chips with fourteen pins the lab has: the gate chips and a flip-flop. */
+export const LOGIC_CHIPS = [...GATE_CHIPS, '74HC74'] as const;
 export type LogicChip = (typeof LOGIC_CHIPS)[number];
+
+/** True for a chip made of gates, which the diagram draws as gate symbols. */
+export function isGateChip(chip: LogicChip): chip is GateChip {
+  return (GATE_CHIPS as readonly string[]).includes(chip);
+}
 export type GateKind = 'NAND' | 'NOR' | 'NOT' | 'AND' | 'OR' | 'XOR';
 
 /** One gate of a chip: its input pins and its output pin, by pin number. */
@@ -665,7 +685,7 @@ const QUAD: readonly Gate[] = [
  * and pin 14 the supply on all of them. The 74HC02 is the odd one: its outputs
  * come first in each gate.
  */
-export const LOGIC_CHIP_GATES: Record<LogicChip, { kind: GateKind; gates: readonly Gate[] }> = {
+export const LOGIC_CHIP_GATES: Record<GateChip, { kind: GateKind; gates: readonly Gate[] }> = {
   '74HC00': { kind: 'NAND', gates: QUAD },
   '74HC08': { kind: 'AND', gates: QUAD },
   '74HC32': { kind: 'OR', gates: QUAD },
@@ -730,6 +750,7 @@ export const LogicSchema = Type.Object({
       Type.Literal('74HC08'),
       Type.Literal('74HC32'),
       Type.Literal('74HC86'),
+      Type.Literal('74HC74'),
     ]),
   }),
 });
@@ -824,6 +845,7 @@ export const ComponentSchema = Type.Union([
   Mp3Schema,
   GsmSchema,
   PirSchema,
+  ClockSchema,
   RgbLedSchema,
   OledSchema,
   LedRingSchema,

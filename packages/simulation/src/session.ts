@@ -118,6 +118,7 @@ const EMPTY_SOLUTION: StateSolution = {
   bridged: [],
   relays: {},
   motion: {},
+  clocks: {},
   channels: {},
   drivers: {},
   chips: {},
@@ -207,6 +208,35 @@ export class SimulationSession {
   /** True when the circuit changes by itself as time passes: a program is running or a capacitor is present. */
   get isTimeDependent(): boolean {
     return this.boards.size > 0 || this.hasCapacitors;
+  }
+
+  /** Clock modules whose output is HIGH now. */
+  private clocks: Record<string, boolean> = {};
+
+  /** Each clock module's output at this moment: HIGH in the second half of each period. */
+  private stepClocks(): void {
+    const next: Record<string, boolean> = {};
+    let changed = false;
+    for (const clock of this.document.components) {
+      if (clock.type !== 'clock') continue;
+      const halves = Math.floor((this.time * 2 * clock.props.hz) / 1000 + 1e-9);
+      next[clock.id] = halves % 2 === 1;
+      changed ||= next[clock.id] !== (this.clocks[clock.id] ?? false);
+    }
+    if (!changed) return;
+    this.clocks = next;
+    this.feedInputs();
+  }
+
+  /** The next moment a clock module's output changes, or Infinity. */
+  private clockDeadline(): number {
+    let soonest = Infinity;
+    for (const clock of this.document.components) {
+      if (clock.type !== 'clock') continue;
+      const half = 1000 / (2 * clock.props.hz);
+      soonest = Math.min(soonest, (Math.floor(this.time / half + 1e-9) + 1) * half);
+    }
+    return soonest;
   }
 
   /** Applies an edit or a button press. Running programs keep running; capacitors keep their charge. */
@@ -385,6 +415,7 @@ export class SimulationSession {
       relays: this.relays,
       echo: this.echo,
       motion: this.motion,
+      clocks: this.clocks,
       drivers: this.drivers,
       chips: this.chips,
       sensing: this.sensing,
@@ -399,13 +430,20 @@ export class SimulationSession {
     for (const [id, closed] of Object.entries(this.relays)) if (closed) key += `${id};`;
     for (const [id, high] of Object.entries(this.echo)) if (high) key += `${id}^;`;
     for (const [id, high] of Object.entries(this.motion)) if (high) key += `${id}~;`;
+    for (const [id, high] of Object.entries(this.clocks)) if (high) key += `${id}^^;`;
     // A latch made of gates remembers: the same pin levels can leave it either way.
     // A charger's protection remembers that it cut off.
     for (const [id, charger] of Object.entries(this.chargers)) {
       if (charger.tripped) key += `${id}!;`;
     }
     for (const [id, chip] of Object.entries(this.chips)) {
-      key += `${id}#${Object.values(chip.outputs).map(Number).join('')};`;
+      key += `${id}#${Object.values(chip.outputs).map(Number).join('')}`;
+      // A chip that remembers answers the same pin levels differently by what it holds,
+      // and sees a clock edge by comparing with the levels it read last.
+      if (chip.memory.length) {
+        key += `@${chip.memory.join(',')}<${Object.values(chip.inputs).map(Number).join('')}`;
+      }
+      key += ';';
     }
     return key;
   }
@@ -687,12 +725,14 @@ export class SimulationSession {
     // however long the stretch asked for.
     for (;;) {
       this.stepMotion();
-      const until = Math.min(end, this.motionDeadline());
+      this.stepClocks();
+      const until = Math.min(end, this.motionDeadline(), this.clockDeadline());
       if (until > this.time) this.run(until - this.time);
       if (this.time >= end - 1e-9) break;
     }
     this.time = end;
     this.stepMotion();
+    this.stepClocks();
   }
 
   private run(milliseconds: number): void {

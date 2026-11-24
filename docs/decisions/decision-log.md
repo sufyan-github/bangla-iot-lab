@@ -1344,3 +1344,39 @@ tab it is in, at that tab's own line. The files are saved with the project; a
 change to any of them shows that the program needs uploading again.
 
 Ready-made programs stay single files.
+
+## D-074 — Chips that remember: the 74HC74 flip-flop, and a 555 clock module
+
+The first of the logic segments (L1). The lab had six gate chips, each worked
+out from its inputs alone. A flip-flop also depends on what it held a moment
+ago and on the clock's edge, so every chip now has one model
+(`packages/shared/src/logic.ts`): given its input levels now, its input levels
+a moment ago, and what it remembers, it gives its output levels and what it
+remembers next. A gate chip remembers nothing; the six gate chips are unchanged.
+
+**74HC74.** Two D flip-flops with preset and clear, both active LOW, as the
+datasheet's function table gives: on the clock's rising edge (an input LOW a
+moment ago and HIGH now) Q takes D; CLR LOW forces Q LOW, PRE LOW forces it
+HIGH, both LOW make Q and Q̄ both HIGH. At power-on Q is LOW. The chip fits the
+same 14-pin shape as the gate chips, so it is picked from the same list. The
+diagram draws it as a box with its pins named (1CLK, 1D, 1Q …), not as gates.
+
+**Settling.** The solver repeats until the chips' outputs stop changing. For a
+chip that remembers, that is not enough: the outputs can agree while the inputs
+it read are stale, and the next edge is then missed. It now also waits for
+those inputs to settle, and the session keeps a solution apart by the chip's
+memory and the inputs it last read.
+
+**555 clock module** (circuit format version 23). OUT is HIGH and LOW for equal
+halves of each period, at 0.2 to 20 Hz set in the inspector; HIGH is joined to
+the supply and LOW to ground through 100 Ω (ESTIMATE). It needs at least 4.5 V,
+as the NE555's datasheet gives. The session steps it like the motion sensor:
+simulated time stops at each change of OUT, so a fast clock is never skipped.
+
+**Not modelled.** Propagation delay, set-up and hold times (a D that changes
+exactly at the edge is taken at its new level), and the real module's uneven
+HIGH and LOW times.
+
+Tests: the flip-flop divides a button's presses by two and stays cleared while
+CLR is LOW; the clock module ticks at 1 Hz and the flip-flop halves it. A
+browser test picks the chip and sets the clock's frequency.

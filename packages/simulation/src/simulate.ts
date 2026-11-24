@@ -2,10 +2,11 @@ import { solveDc, type Device, type NpnTransistor, type Solution } from '@bangla
 import type { PhoneMessage } from './uart-devices';
 import type { RadioStatus } from './lora';
 import {
-  LOGIC_CHIP_GATES,
+  CHIP_MODELS,
+  chipInputs,
+  chipOutputs,
   boardPinNumber,
   boardTerminals,
-  gateOutput,
   isProgrammable,
   terminalsOf,
   withoutBreadboards,
@@ -240,6 +241,8 @@ export interface StateSolution {
   relays: Record<string, boolean>;
   /** Which motion sensors have their output HIGH in this state. */
   motion: Record<string, boolean>;
+  /** Which clock modules have their output HIGH in this state. */
+  clocks: Record<string, boolean>;
   /** Each LED of an RGB LED module, keyed "RGB1.r". */
   channels: Record<string, Sample>;
   /** What each motor driver is doing in this state. */
@@ -349,29 +352,28 @@ export function chipStates(
   for (const component of document.components) {
     if (component.type !== 'logic') continue;
     const before = current[component.id] ?? CHIP_IDLE;
+    const model = CHIP_MODELS[component.props.chip];
     const at = (n: number) => solution.nodes[netName(component.pins[`p${n}`]!)] ?? 0;
-    const ground = at(7);
-    const supply = at(14) - ground;
+    const ground = at(model.ground);
+    const supply = at(model.supply) - ground;
     const powered = supply >= MIN_SUPPLY.logic!;
     const inputs: Record<number, boolean> = {};
-    const outputs: Record<number, boolean> = {};
-    const { kind, gates } = LOGIC_CHIP_GATES[component.props.chip];
-    for (const gate of gates) {
-      for (const input of gate.inputs) {
-        const volts = at(input) - ground;
-        inputs[input] =
-          volts > LOGIC_HIGH_FRACTION * supply
-            ? true
-            : volts < LOGIC_LOW_FRACTION * supply
-              ? false
-              : (before.inputs[input] ?? false);
-      }
-      outputs[gate.output] = gateOutput(
-        kind,
-        gate.inputs.map((input) => inputs[input]!),
-      );
+    for (const input of chipInputs(model)) {
+      const volts = at(input) - ground;
+      inputs[input] =
+        volts > LOGIC_HIGH_FRACTION * supply
+          ? true
+          : volts < LOGIC_LOW_FRACTION * supply
+            ? false
+            : (before.inputs[input] ?? false);
     }
-    next[component.id] = { powered, inputs, outputs };
+    // Without power a chip forgets what it held; it starts afresh when power comes back.
+    if (!powered) {
+      next[component.id] = { powered, inputs, outputs: {}, memory: [] };
+      continue;
+    }
+    const step = model.step(inputs, before.powered ? before.inputs : {}, before.memory);
+    next[component.id] = { powered, inputs, outputs: step.outputs, memory: step.memory };
   }
   return next;
 }
@@ -542,6 +544,15 @@ export function sameChips(
   return Object.entries(b).every(([id, state]) => {
     const other = a[id];
     if (!other || other.powered !== state.powered) return false;
+    if (other.memory.join() !== state.memory.join()) return false;
+    // A chip that remembers reads its inputs again until they settle too: the levels it
+    // last read are what it compares with to see a clock's edge next time.
+    if (
+      state.memory.length &&
+      !Object.entries(state.inputs).every(([pin, level]) => other.inputs[Number(pin)] === level)
+    ) {
+      return false;
+    }
     return Object.entries(state.outputs).every(
       ([pin, level]) => other.outputs[Number(pin)] === level,
     );
@@ -632,6 +643,7 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
     const regulating = hasRegulator ? regulatorStates(document, solution) : regulators;
     solution.relays = next;
     solution.motion = moving;
+    solution.clocks = { ...(state.clocks ?? {}) };
     solution.drivers = drivers;
     solution.chips = chips;
     solution.sensing = sensing;
@@ -704,6 +716,7 @@ export function readSolution(
     bridged: netlist.bridgedParts,
     relays: {},
     motion: {},
+    clocks: {},
     channels: {},
     drivers: {},
     chips: {},
@@ -1009,16 +1022,19 @@ export function readSolution(
     if (component.type !== 'logic') continue;
     const { id } = component;
     const pin = (n: number) => component.pins[`p${n}`]!;
+    const model = CHIP_MODELS[component.props.chip];
     result.parts[id] = {
-      voltage: volts(pin(14)) - volts(pin(7)),
-      current: result.legs[`${id}.p14`] ?? 0,
+      voltage: volts(pin(model.supply)) - volts(pin(model.ground)),
+      current: result.legs[`${id}.p${model.supply}`] ?? 0,
     };
-    for (const gate of LOGIC_CHIP_GATES[component.props.chip].gates) {
-      const output = netlist.circuit.devices.find((d) => d.id === `${id}:p${gate.output}`);
-      result.channels[`${id}.p${gate.output}`] = {
-        voltage: volts(pin(gate.output)) - volts(pin(7)),
-        current: output?.current(solution) ?? 0,
-      };
+    for (const gate of model.units) {
+      for (const out of gate.outputs) {
+        const output = netlist.circuit.devices.find((d) => d.id === `${id}:p${out}`);
+        result.channels[`${id}.p${out}`] = {
+          voltage: volts(pin(out)) - volts(pin(model.ground)),
+          current: output?.current(solution) ?? 0,
+        };
+      }
       const touches = (n: number) => {
         const node = netlist.nodeOf(pin(n));
         return netlist.circuit.devices.filter(
@@ -1026,7 +1042,7 @@ export function readSolution(
         ).length;
       };
       // Only for a gate that is in use: one of its pins is joined to something.
-      const used = [...gate.inputs, gate.output].some((n) => touches(n) > 0);
+      const used = [...gate.inputs, ...gate.outputs].some((n) => touches(n) > 0);
       if (!used) continue;
       for (const input of gate.inputs) {
         if (touches(input) === 0) result.floating.push(`${id}.p${input}`);
@@ -1228,6 +1244,10 @@ export class Observation {
         reading.activity = average((s) => (s.drivers[id]?.awake ? 1 : 0)) >= 0.5 ? 1 : 0;
       } else if (component.type === 'pir') {
         reading.activity = average((s) => (s.motion[id] ? 1 : 0)) >= 0.5 ? 1 : 0;
+      } else if (component.type === 'clock') {
+        // Its light follows its output, while it has power.
+        const powered = reading.voltage >= MIN_SUPPLY.clock!;
+        reading.activity = powered && average((s) => (s.clocks[id] ? 1 : 0)) >= 0.5 ? 1 : 0;
       } else if (
         component.type === 'ldrmodule' ||
         component.type === 'rain' ||
@@ -1270,15 +1290,15 @@ export class Observation {
             limit: LOGIC_MAX_SUPPLY,
           });
         }
-        for (const gate of LOGIC_CHIP_GATES[component.props.chip].gates) {
-          const key = `${id}.p${gate.output}`;
+        for (const out of chipOutputs(CHIP_MODELS[component.props.chip])) {
+          const key = `${id}.p${out}`;
           const peak = extreme((s) => Math.abs(s.channels[key]?.current ?? 0), Math.max);
           if (peak > LOGIC_MAX_OUTPUT_CURRENT) {
             result.diagnostics.push({
               code: 'chip-output-overcurrent',
               severity: 'error',
               componentId: id,
-              socket: `p${gate.output}`,
+              socket: `p${out}`,
             });
           }
         }

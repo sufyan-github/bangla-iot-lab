@@ -498,8 +498,15 @@ export const bn = {
   'tool.logic': 'লজিক চিপ',
   'part.logic': 'লজিক চিপ (74HC)',
   'part.logic.about':
-    'এক চিপে কয়েকটা লজিক গেট। চিপটা বোর্ডের মাঝের খাঁজের ওপর বসে: খাঁজের নিচে ১ থেকে ৭ নম্বর পা, ওপরে ১৪ থেকে ৮। ১৪ নম্বর পা VCC (২ থেকে ৬ V), ৭ নম্বর GND। চিপের যে মাথায় খাঁজ (নচ) আছে, ১ নম্বর পা সেই দিকে। ব্যবহার করা গেটের কোনো ইনপুট খালি রেখো না: ঠিক করে HIGH বা LOW-তে লাগাও।',
+    'এক চিপে কয়েকটা লজিক গেট। চিপটা বোর্ডের মাঝের খাঁজের ওপর বসে: খাঁজের নিচে ১ থেকে ৭ নম্বর পা, ওপরে ১৪ থেকে ৮। ১৪ নম্বর পা VCC (২ থেকে ৬ V), ৭ নম্বর GND। চিপের যে মাথায় খাঁজ (নচ) আছে, ১ নম্বর পা সেই দিকে। ব্যবহার করা গেটের কোনো ইনপুট খালি রেখো না: ঠিক করে HIGH বা LOW-তে লাগাও। 74HC74-এ দুটো D ফ্লিপ-ফ্লপ: ঘড়ির (CLK) পা LOW থেকে HIGH হওয়ার মুহূর্তে Q নেয় D-র মান, আর পরের সেই মুহূর্ত পর্যন্ত মনে রাখে। CLR LOW করলে Q LOW, PRE LOW করলে Q HIGH; ব্যবহার না করলে দুটোকেই HIGH-এ লাগাও।',
   'inspector.chip': 'কোন চিপ',
+  'chip.flipflop': 'D ফ্লিপ-ফ্লপ',
+  'tool.clock': 'ঘড়ি (ক্লক)',
+  'part.clock': '555 ক্লক মডিউল',
+  'part.clock.about':
+    '555 টাইমার চিপ দিয়ে বানানো ছোট একটা বোর্ড, যার OUT পা নিজে থেকেই বারবার HIGH আর LOW হয়: এক সেকেন্ডে যতবার, সেটাই এর ফ্রিকোয়েন্সি (Hz)। অর্ধেক সময় HIGH, অর্ধেক সময় LOW, আর HIGH মানে প্রায় সাপ্লাইয়ের ভোল্টেজ। এর অন্তত 4.5 V লাগে, তাই 5 V থেকে চালাও। ফ্লিপ-ফ্লপ বা কাউন্টারের ঘড়ির পায়ে লাগানোর জন্য এটা। আসল মডিউলে ফ্রিকোয়েন্সি একটা ট্রিমার ঘুরিয়ে ঠিক করা হয়, ল্যাবে ডানের প্যানেল থেকে। পা: VCC, OUT, GND।',
+  'inspector.hz': 'ফ্রিকোয়েন্সি',
+  'inspector.hzValue': '{count} Hz',
   'gate.NAND': 'NAND',
   'gate.NOR': 'NOR',
   'gate.NOT': 'NOT',
@@ -1235,8 +1242,15 @@ export const en: Record<MessageKey, string> = {
   'tool.logic': 'Logic chip',
   'part.logic': 'Logic chip (74HC)',
   'part.logic.about':
-    'Several logic gates in one chip. It sits across the centre gap: pins 1 to 7 below the gap, 14 to 8 above it. Pin 14 is VCC (2 to 6 V), pin 7 is GND. Pin 1 is at the notched end. Leave no input of a gate in use unconnected: tie it HIGH or LOW.',
+    'Several logic gates in one chip. It sits across the centre gap: pins 1 to 7 below the gap, 14 to 8 above it. Pin 14 is VCC (2 to 6 V), pin 7 is GND. Pin 1 is at the notched end. Leave no input of a gate in use unconnected: tie it HIGH or LOW. The 74HC74 holds two D flip-flops: at the moment its clock (CLK) pin goes from LOW to HIGH, Q takes the level on D and keeps it until the next such moment. CLR LOW makes Q LOW, PRE LOW makes Q HIGH; when you do not use them, tie both HIGH.',
   'inspector.chip': 'Which chip',
+  'chip.flipflop': 'D flip-flop',
+  'tool.clock': 'Clock',
+  'part.clock': '555 clock module',
+  'part.clock.about':
+    'A small board built round a 555 timer chip. Its OUT pin goes HIGH and LOW again and again by itself; how many times a second is its frequency, in hertz (Hz). It is HIGH for half the time and LOW for the other half, and HIGH is about the supply voltage. It needs at least 4.5 V, so power it from 5 V. Use it to drive the clock pin of a flip-flop or a counter. On a real module a trimmer sets the frequency; in the lab, the panel on the right does. Legs: VCC, OUT, GND.',
+  'inspector.hz': 'Frequency',
+  'inspector.hzValue': '{count} Hz',
   'gate.NAND': 'NAND',
   'gate.NOR': 'NOR',
   'gate.NOT': 'NOT',

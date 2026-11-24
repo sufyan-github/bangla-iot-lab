@@ -66,6 +66,7 @@ import {
   MotorView,
   OledView,
   PirView,
+  ClockView,
   PotentiometerView,
   RelayModuleView,
   RelayView,
@@ -657,6 +658,16 @@ export function BoardPartDrawing(props: {
         />
       );
     }
+    case 'clock':
+      return (
+        <ClockView
+          vcc={at(part.pins.vcc)}
+          gnd={at(part.pins.gnd)}
+          high={reading?.activity === 1}
+          hz={part.props.hz}
+          selected={selected}
+        />
+      );
     case 'pir':
       return (
         <PirView

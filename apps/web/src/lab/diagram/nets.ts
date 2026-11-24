@@ -1,10 +1,12 @@
 import {
   BATTERY_TERMINALS,
+  CHIP_MODELS,
   L298N_TERMINALS,
   LOGIC_CHIP_GATES,
   PART_SHAPES,
   boardPinNumber,
   boardTerminals,
+  isGateChip,
   isProgrammable,
   isHole,
   stripOf,
@@ -125,6 +127,7 @@ export const BOX_TYPES = new Set([
   'mp3',
   'gsm',
   'pir',
+  'clock',
   'rgbled',
   'oled',
   'ledring',
@@ -164,7 +167,10 @@ export function pinLabel(component: CircuitComponent, pin: string): string {
     const n = Number(pin.slice(1));
     if (n === 7) return 'GND';
     if (n === 14) return 'VCC';
-    const gates = LOGIC_CHIP_GATES[component.props.chip].gates;
+    const chip = component.props.chip;
+    // A chip that is not a row of gates has its pins named in its own model.
+    if (!isGateChip(chip)) return CHIP_MODELS[chip].labels[n] ?? String(n);
+    const gates = LOGIC_CHIP_GATES[chip].gates;
     const index = gates.findIndex((gate) => gate.output === n || gate.inputs.includes(n));
     const gate = gates[index]!;
     const role =
@@ -206,7 +212,7 @@ export function gatesInUse(
   component: CircuitComponent,
   connected: (pin: string) => boolean,
 ): number[] {
-  if (component.type !== 'logic') return [];
+  if (component.type !== 'logic' || !isGateChip(component.props.chip)) return [];
   return LOGIC_CHIP_GATES[component.props.chip].gates.flatMap((gate, index) =>
     [...gate.inputs, gate.output].some((n) => connected(`p${n}`)) ? [index] : [],
   );
