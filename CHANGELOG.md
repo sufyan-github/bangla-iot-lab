@@ -8,6 +8,11 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Classes and accounts**: teachers sign up and make classes for Class 6 to
+  12 with join codes; learners join with a code and a nickname only (no
+  email, phone or real name) and get a key to sign in elsewhere. Teachers
+  manage the roster, set lessons and see class totals of progress. Projects
+  can be saved to the cloud and opened on another device.
 - **74HC74 flip-flop and a 555 clock module** (circuit format version 23): the
   logic chip list gains the 74HC74, two D flip-flops that take D on the clock's
   rising edge and keep it, with active-LOW clear and preset. The new clock

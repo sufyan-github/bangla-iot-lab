@@ -1380,3 +1380,50 @@ HIGH and LOW times.
 Tests: the flip-flop divides a button's presses by two and stays cleared while
 CLR is LOW; the clock module ticks at 1 Hz and the flip-flop halves it. A
 browser test picks the chip and sets the clock's frequency.
+
+## D-081 — Accounts, classes, cloud projects and class progress
+
+The owner asked (24 November 2026) for classes and accounts next. Built on the
+Phase 0 schema and its rules (pseudonymous learners, nothing hard-deleted).
+
+**Teachers** sign up with an email, a password (at least 10 characters) and
+their school's name; they become its teacher and school admin. Passwords are
+hashed with scrypt (N = 2^15, r = 8, p = 1) from Node's own crypto. A session
+is a random 32-byte token in an HttpOnly, SameSite=Lax cookie (Secure over
+HTTPS), kept 30 days; the database keeps only its SHA-256. Sign-in answers the
+same, and takes as long, for a wrong email as for a wrong password. Sign-up,
+sign-in, joining and key sign-in are limited to 10 a minute per address. A
+request that changes anything is refused when the browser says it comes from
+another site.
+
+**Classes** (Class 6 to 12) are made only after the teacher confirms that the
+school has permission for its learners to use the lab. A join code (8
+characters from 31 that cannot be confused) is shown once, kept as a hash,
+and works for 14 days; the teacher can renew it or close the class.
+
+**Learners** join with the code and a nickname (2 to 24 letters or digits, any
+script), and nothing else: no email, phone or real name. They get a sign-in
+key (12 characters, about 59 bits) for other devices, shown once and kept as a
+hash. Joining records the school's consent for that learner (scope
+`platform_use`, granted by the school, recorded by the teacher, policy
+version `platform-use-2026-11`). A teacher sees the nicknames, can give a new
+key (the old one and the learner's sessions stop working) and can remove a
+learner (a learner in no other class can no longer sign in).
+
+**Cloud projects.** A signed-in person saves a project from its card; each save
+adds a version (append-only), with the circuit, the programs' source and the
+logic sheet, not the compiled firmware. Projects in the cloud but not on the
+device can be opened there. Up to 200 projects, 1 MB each.
+
+**Lessons and progress.** A teacher sets lessons for a class, with a date if
+they like. The lab queues a learner's finished steps and lessons on the device
+and sends them when online; each event has its own id, so a resend is kept
+once. The teacher sees, for each lesson, how many of the class started and
+finished it: totals only, never one learner's record. A teacher trying a
+lesson leaves no progress.
+
+**Needs the owner's and a lawyer's confirmation before real schools use it:**
+the consent wording and process, the retention periods in database.md, and
+whether a school's confirmation is enough for learners under 18 under the
+PDPO. **Not done:** password reset by email, school admins adding teachers,
+moving a learner between classes, the retention job, and deployment.
