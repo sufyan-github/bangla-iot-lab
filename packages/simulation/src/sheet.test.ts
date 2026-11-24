@@ -13,6 +13,7 @@ import {
   removeFromSheet,
   removeBlock,
   removeManyFromSheet,
+  setSheetDelay,
   setSheetElement,
   sheetName,
   updateBlock,
@@ -810,5 +811,41 @@ describe('logic sheet, part 4: changing a block', () => {
       ok: false,
       error: 'no-pins',
     });
+  });
+});
+
+describe('logic sheet, part 4: a gate delay', () => {
+  it('stepping one gate delay at a time, A AND (NOT A) gives a glitch when A rises', () => {
+    let sheet = build(
+      ['input', 'NOT', 'AND', 'output'],
+      [
+        ['IN1.q', 'G1.a'],
+        ['IN1.q', 'G2.a'],
+        ['G1.y', 'G2.b'],
+        ['G2.y', 'OUT1.a'],
+      ],
+    );
+    // Settled at once, the lamp is never lit: A and NOT A are never both HIGH.
+    expect(sheetTruthTable(sheet)!.rows.map((row) => row.outputs[0])).toEqual([false, false]);
+    let state = evaluateSheet(sheet, 0);
+    sheet = ok(setSheetElement(sheet, 'IN1', { on: true }));
+    const lamp: boolean[] = [];
+    for (let step = 1; step <= 5; step++) {
+      state = evaluateSheet(sheet, step * 10, state, { oneStep: true });
+      lamp.push(state.levels['OUT1.a'] === true);
+    }
+    // For one step the AND sees the new A and the NOT's old answer: a glitch, then LOW again.
+    expect(lamp).toContain(true);
+    expect(lamp.at(-1)).toBe(false);
+    expect(lamp.filter(Boolean)).toHaveLength(1);
+  });
+
+  it('the delay is kept with the sheet, from a few choices', () => {
+    const sheet = build(['input'], []);
+    const slow = ok(setSheetDelay(sheet, 20));
+    expect(slow.delayMs).toBe(20);
+    expect(isLogicSheet(slow)).toBe(true);
+    expect(ok(setSheetDelay(slow, 0)).delayMs).toBeUndefined();
+    expect(setSheetDelay(sheet, 33).ok).toBe(false);
   });
 });

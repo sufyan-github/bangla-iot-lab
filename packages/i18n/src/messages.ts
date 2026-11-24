@@ -256,6 +256,8 @@ export const bn = {
   'sheet.insideBlock':
     '“{name}” ব্লকের ভেতরে: যা বদলাবে, তা এর প্রতিটা কপিতে যাবে। সুইচ আর বাতিগুলোই এর পিন।',
   'sheet.blockDone': 'হয়ে গেছে',
+  'sheet.delay': 'গেটের দেরি',
+  'sheet.delayNone': 'নেই',
   'sheet.label': 'নাম',
   'sheet.timing': 'টাইমিং ডায়াগ্রাম',
   'sheet.timingHold': 'থামিয়ে দেখো',
@@ -1330,6 +1332,8 @@ export const en: Record<MessageKey, string> = {
   'sheet.insideBlock':
     'Inside the block “{name}”: what you change reaches every copy of it. Its switches and lamps are its pins.',
   'sheet.blockDone': 'Done',
+  'sheet.delay': 'Gate delay',
+  'sheet.delayNone': 'none',
   'sheet.label': 'Name',
   'sheet.timing': 'Timing diagram',
   'sheet.timingHold': 'Hold still',

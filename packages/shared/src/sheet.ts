@@ -124,6 +124,19 @@ export function sheetPorts(element: Pick<SheetElement, 'kind' | 'inputs'> & { pi
   return base;
 }
 
+/** The gate delays the sheet offers, in milliseconds: none, or long enough to see. */
+export const SHEET_DELAYS = [0, 10, 20, 50] as const;
+
+/** Sets how long each gate takes to answer (0 for at once). */
+export function setSheetDelay(sheet: LogicSheet, delayMs: number): SheetEdit {
+  if (!(SHEET_DELAYS as readonly number[]).includes(delayMs))
+    return { ok: false, error: 'missing' };
+  const next: LogicSheet = { ...sheet };
+  if (delayMs === 0) delete next.delayMs;
+  else next.delayMs = delayMs as 10 | 20 | 50;
+  return { ok: true, sheet: next };
+}
+
 /** The longest name an element may be given. */
 export const MAX_LABEL = 12;
 
@@ -219,6 +232,8 @@ export const LogicSheetSchema = Type.Object({
   wires: Type.Array(SheetWireSchema, { maxItems: MAX_SHEET_WIRES }),
   /** Blocks made on this sheet, which can be placed on it like any element. */
   blocks: Type.Optional(Type.Array(SheetBlockSchema, { maxItems: MAX_BLOCKS })),
+  /** How long each gate takes to answer, in milliseconds; none (at once) when absent. */
+  delayMs: Type.Optional(Type.Union([Type.Literal(10), Type.Literal(20), Type.Literal(50)])),
 });
 export type LogicSheet = Static<typeof LogicSheetSchema>;
 

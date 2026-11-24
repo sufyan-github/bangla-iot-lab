@@ -1,6 +1,7 @@
 import type { MessageKey } from '@banglalab/i18n';
 import {
   MAX_LABEL,
+  SHEET_DELAYS,
   SHEET_GATES,
   SHEET_HEIGHT,
   SHEET_WIDTH,
@@ -18,6 +19,7 @@ import {
   removeManyFromSheet,
   pinGroupOf,
   sheetPinGroups,
+  setSheetDelay,
   setSheetElement,
   sheetName,
   sheetPorts,
@@ -80,13 +82,20 @@ function wirePath(a: { x: number; y: number }, b: { x: number; y: number }): str
  * Works the sheet out as time passes, stopping at every clock change so no
  * edge is lost, and notes each moment's levels for the timing diagram.
  */
-function useSheetState(sheet: LogicSheet, trace: TimingTrace, clock: () => number): SheetState {
+function useSheetState(
+  sheet: LogicSheet,
+  trace: TimingTrace,
+  clock: () => number,
+  /** How long each gate takes to answer; 0 settles at once. */
+  delayMs: number,
+): SheetState {
   const last = useRef<SheetState | undefined>(undefined);
   const [state, setState] = useState<SheetState>(() => evaluateSheet(sheet, 0));
   useEffect(() => {
     const ports = timingSignals(sheet).map((signal) => signal.port);
+    const stepping = delayMs > 0;
     const work = (at: number, before: SheetState | undefined) => {
-      const next = evaluateSheet(sheet, at, before);
+      const next = evaluateSheet(sheet, at, before, { oneStep: stepping });
       trace.record(at, next.levels, ports);
       return next;
     };
@@ -101,22 +110,34 @@ function useSheetState(sheet: LogicSheet, trace: TimingTrace, clock: () => numbe
     };
     let time = clock();
     publish(work(time, last.current));
-    if (!sheet.elements.some((e) => e.kind === 'clock')) return;
+    // Time matters with a clock anywhere (inside a block too), or while changes ripple through.
+    if (nextSheetClockChange(sheet, time) === Infinity && !stepping) return;
     let frame = 0;
     const tick = () => {
       const now = clock();
       let current = last.current;
-      for (let at = nextSheetClockChange(sheet, time); at <= now;) {
-        current = work(at, current);
-        at = nextSheetClockChange(sheet, at);
+      if (stepping) {
+        // One gate delay at a time, and a step at each clock change, so no edge is missed.
+        for (let steps = 0; steps < 5000; steps++) {
+          const at = Math.min(time + delayMs, nextSheetClockChange(sheet, time));
+          if (at > now) break;
+          current = work(at, current);
+          time = at;
+        }
+        if (current) publish(current);
+      } else {
+        for (let at = nextSheetClockChange(sheet, time); at <= now;) {
+          current = work(at, current);
+          at = nextSheetClockChange(sheet, at);
+        }
+        time = now;
+        publish(work(now, current));
       }
-      time = now;
-      publish(work(now, current));
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [sheet, trace, clock]);
+  }, [sheet, trace, clock, delayMs]);
   return state;
 }
 
@@ -635,7 +656,8 @@ export function SheetView() {
   const start = useRef(performance.now());
   const clock = useCallback(() => performance.now() - start.current, []);
   const [trace] = useState(() => new TimingTrace());
-  const state = useSheetState(sheet, trace, clock);
+  const delayMs = main.delayMs ?? 0;
+  const state = useSheetState(sheet, trace, clock, delayMs);
   const [timing, setTiming] = useState(false);
   // What the displays and lamps show, for a lesson's checks.
   useEffect(() => {
@@ -1381,6 +1403,28 @@ export function SheetView() {
             >
               {t('table.make')}
             </button>
+            <fieldset className="flex items-center gap-1" data-testid="sheet-delay">
+              <legend className="sr-only">{t('sheet.delay')}</legend>
+              <span className="text-sm text-ink-soft">{t('sheet.delay')}</span>
+              {SHEET_DELAYS.map((ms) => (
+                <button
+                  key={ms}
+                  type="button"
+                  data-testid={`sheet-delay-${ms}`}
+                  aria-pressed={delayMs === ms}
+                  className="chip min-h-9 px-2.5 text-sm"
+                  onClick={() => {
+                    // The delay belongs to the whole sheet, even while a block is open.
+                    const before = useLab.getState().openBlockId;
+                    useLab.getState().openBlock(null);
+                    apply((s) => setSheetDelay(s, ms));
+                    useLab.getState().openBlock(before);
+                  }}
+                >
+                  {ms === 0 ? t('sheet.delayNone') : `${ms} ms`}
+                </button>
+              ))}
+            </fieldset>
             <button
               type="button"
               data-testid="sheet-timing"

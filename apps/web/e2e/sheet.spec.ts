@@ -303,3 +303,32 @@ test('a bus joins a counter to a hex digit in one go, and shows the value it car
   await expect(page.locator('[data-bus]')).toHaveCount(0);
   await expect(page.locator('[data-wire]')).toHaveCount(1);
 });
+
+test('with a gate delay, A AND (NOT A) shows a glitch on the timing diagram', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('new-project').click();
+  await page.getByTestId('view-sheet').click();
+  await place(page, 'input', 3, 4);
+  await place(page, 'NOT', 10, 1);
+  await place(page, 'AND', 17, 4);
+  await place(page, 'output', 24, 4);
+  await page.getByTestId('sheet-tool-select').click();
+  for (const [a, b] of [
+    ['IN1.q', 'G1.a'],
+    ['IN1.q', 'G2.a'],
+    ['G1.y', 'G2.b'],
+    ['G2.y', 'OUT1.a'],
+  ]) {
+    await port(page, a!);
+    await port(page, b!);
+  }
+  await page.getByTestId('sheet-delay-50').click();
+  await expect(page.getByTestId('sheet-delay-50')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByTestId('sheet-timing').click();
+  const lamp = page.locator('[data-testid="timing-row"][data-signal="OUT1"]');
+  await expect(lamp).toHaveAttribute('data-changes', '1');
+  // A rises: for one gate delay the AND sees the new A and the NOT's old answer.
+  await page.locator('[data-element="IN1"] rect').first().click();
+  await expect(lamp).toHaveAttribute('data-changes', '3');
+  await expect(lamp).toHaveAttribute('data-level', 'low');
+});

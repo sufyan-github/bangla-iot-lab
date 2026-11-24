@@ -143,10 +143,24 @@ export function nextSheetClockChange(sheet: LogicSheet, timeMs: number): number 
   return soonest;
 }
 
-export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetState): SheetState {
-  if (!hasBlocks(sheet)) return evaluateFlat(sheet, timeMs, before);
+/**
+ * How to work a sheet out. `oneStep`: move on by one gate delay only, every
+ * element answering what its inputs were a step ago, instead of settling at
+ * once; stepped again and again, changes ripple through and glitches show.
+ */
+export interface SheetOptions {
+  oneStep?: boolean;
+}
+
+export function evaluateSheet(
+  sheet: LogicSheet,
+  timeMs: number,
+  before?: SheetState,
+  options: SheetOptions = {},
+): SheetState {
+  if (!hasBlocks(sheet)) return evaluateFlat(sheet, timeMs, before, options);
   const flat = flattenSheet(sheet);
-  const state = evaluateFlat(flat.sheet, timeMs, before);
+  const state = evaluateFlat(flat.sheet, timeMs, before, options);
   // Each block port shows the level of what drives it.
   for (const element of sheet.elements) {
     if (element.kind !== 'SUB') continue;
@@ -169,9 +183,16 @@ export function evaluateSheet(sheet: LogicSheet, timeMs: number, before?: SheetS
   return state;
 }
 
-function evaluateFlat(sheet: LogicSheet, timeMs: number, before?: SheetState): SheetState {
+function evaluateFlat(
+  sheet: LogicSheet,
+  timeMs: number,
+  before?: SheetState,
+  options: SheetOptions = {},
+): SheetState {
   const source = new Map(sheet.wires.map((wire) => [wire.to, wire.from]));
   const levels: Record<string, boolean> = { ...(before?.levels ?? {}) };
+  // With a gate delay, every element reads what the wires carried a step ago.
+  let reading: Record<string, boolean> = levels;
   const memory: Record<string, boolean> = {};
   const store: Record<string, number[]> = {};
   const clocks: Record<string, boolean> = {};
@@ -193,13 +214,14 @@ function evaluateFlat(sheet: LogicSheet, timeMs: number, before?: SheetState): S
   }
   const input = (element: SheetElement, port: string) => {
     const from = source.get(`${element.id}.${port}`);
-    return from ? (levels[from] ?? false) : false;
+    return from ? (reading[from] ?? false) : false;
   };
 
   /** Settles the gates with the flip-flops holding what they hold; false if it never settles. */
   const settle = (): boolean => {
-    const rounds = sheet.elements.length + 2;
+    const rounds = options.oneStep ? 1 : sheet.elements.length + 2;
     for (let round = 0; round < rounds; round++) {
+      if (options.oneStep) reading = { ...levels };
       let changed = false;
       const put = (port: string, level: boolean) => {
         if (levels[port] !== level) changed = true;
@@ -242,7 +264,8 @@ function evaluateFlat(sheet: LogicSheet, timeMs: number, before?: SheetState): S
 
   let settled = settle();
   const flipFlops = sheet.elements.filter((e) => remembers(e.kind) || stores(e.kind));
-  for (let pass = 0; pass <= flipFlops.length; pass++) {
+  // With a gate delay, an edge is taken once a step; what it changes shows at the next.
+  for (let pass = 0; pass <= (options.oneStep ? 0 : flipFlops.length); pass++) {
     let changed = false;
     for (const element of flipFlops) {
       const clock = input(element, 'clk');
@@ -281,9 +304,18 @@ function evaluateFlat(sheet: LogicSheet, timeMs: number, before?: SheetState): S
       clocks[element.id] = clock;
     }
     if (!changed) break;
+    if (options.oneStep) break;
     settled = settle() && settled;
   }
-  return { levels, memory, store, clocks, floating, unsettled: !settled };
+  // Stepping one gate delay at a time, a circuit is not expected to settle in one step.
+  return {
+    levels,
+    memory,
+    store,
+    clocks,
+    floating,
+    unsettled: options.oneStep ? false : !settled,
+  };
 }
 
 export interface SheetTruthTable {
