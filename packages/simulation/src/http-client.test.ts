@@ -4,7 +4,7 @@ import { Esp32SketchBoard } from './esp32-sketch-board';
 import { LabWebServices, madeUpWeather } from './web-services';
 
 /**
- * The program's own HTTP requests, with the ready-made program `weather`: it
+ * The program's own HTTP requests, with the ready-made program `webclient`: it
  * asks the lab's made-up weather service, lights the LED when it is hot, and
  * keeps each reading in log.lab.
  */
@@ -19,7 +19,7 @@ const starter = (name: string) =>
 
 describe('HTTPClient', () => {
   it('asks weather.lab, acts on the answer and keeps it in log.lab', () => {
-    const board = new Esp32SketchBoard(starter('weather'));
+    const board = new Esp32SketchBoard(starter('webclient'));
     const web = new LabWebServices();
     let now = 0;
     board.onWeb((method, url, body) => web.handle({ from: 'U1', method, url, body, timeMs: now }));
@@ -53,7 +53,7 @@ describe('HTTPClient', () => {
 
   it('finds nobody without Wi-Fi or the lab’s services, and says why', () => {
     // No services given: as if the address had nobody behind it.
-    const board = new Esp32SketchBoard(starter('weather'));
+    const board = new Esp32SketchBoard(starter('webclient'));
     let serial = '';
     board.onSerial((text) => (serial += text));
     for (let now = 0; now <= 3000; now += 100) board.runUntil(now);
