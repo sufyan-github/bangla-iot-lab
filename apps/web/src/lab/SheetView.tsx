@@ -623,6 +623,21 @@ export function SheetView() {
   const [trace] = useState(() => new TimingTrace());
   const state = useSheetState(sheet, trace, clock);
   const [timing, setTiming] = useState(false);
+  // What the displays and lamps show, for a lesson's checks.
+  useEffect(() => {
+    const values = sheet.elements.flatMap((e): { type: string; value: number }[] => {
+      const level = (port: string) => state.levels[`${e.id}.${port}`] === true;
+      if (e.kind === 'output') return [{ type: e.kind, value: level('a') ? 1 : 0 }];
+      if (e.kind === 'HEX') {
+        const value = [0, 1, 2, 3].reduce((sum, bit) => sum + (level(`d${bit}`) ? 1 << bit : 0), 0);
+        return [{ type: e.kind, value }];
+      }
+      if (e.kind === 'CNT' || e.kind === 'REG')
+        return [{ type: e.kind, value: state.store[e.id]?.[0] ?? 0 }];
+      return [];
+    });
+    useLab.getState().setSheetValues(values);
+  }, [sheet, state]);
   const [tool, setTool] = useState<SheetTool>('select');
   /** The elements chosen, or one wire. */
   const [selection, setSelection] = useState<string[]>([]);

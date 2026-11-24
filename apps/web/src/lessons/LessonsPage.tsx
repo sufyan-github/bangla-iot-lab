@@ -43,6 +43,7 @@ export function LessonsPage() {
     (a, b) => (latest.get(b.id)?.updatedAt ?? 0) - (latest.get(a.id)?.updatedAt ?? 0),
   )[0];
   const logic = (lesson: Lesson) =>
+    lesson.sheet === true ||
     lesson.parts.some((id) => /^(74hc|cd4511|seven-segment|clock-555)/.test(id));
   const tracks = [
     { id: 'kit', title: t('lessons.track.kit'), lessons: parts.filter((l) => !logic(l)) },

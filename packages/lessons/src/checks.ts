@@ -3,8 +3,9 @@ import {
   terminalsOf,
   type CircuitComponent,
   type CircuitDocument,
+  type LogicSheet,
 } from '@banglalab/shared';
-import { netName, type SimulationResult } from '@banglalab/simulation';
+import { netName, sheetTruthTable, type SimulationResult } from '@banglalab/simulation';
 import type { Check, Place, Step } from './schema';
 
 /** What a lesson can see of the student's work at one moment. */
@@ -19,6 +20,9 @@ export interface LessonWorld {
   uploadedStarter: string | null;
   /** The same two for each board, in order, when there is more than one. */
   boards?: { serial: string; uploadedStarter: string | null }[];
+  /** The project's logic sheet, and the numbers its displays and lamps show now. */
+  sheet?: LogicSheet;
+  sheetValues?: { type: string; value: number }[];
 }
 
 /** What a board printed and had put on it: the first, or the second in a lesson with two. */
@@ -29,7 +33,12 @@ function boardWorld(world: LessonWorld, unit: 2 | undefined) {
 
 /** Checks about something that happened while the circuit ran. They count once seen. */
 export function isEvent(check: Check): boolean {
-  return check.kind === 'reading' || check.kind === 'serial' || check.kind === 'diagnostic';
+  return (
+    check.kind === 'reading' ||
+    check.kind === 'serial' ||
+    check.kind === 'diagnostic' ||
+    check.kind === 'sheet-value'
+  );
 }
 
 /** Joins wire ends and breadboard strips into nets, and answers which net a place is on. */
@@ -139,6 +148,33 @@ export function evaluate(check: Check, world: LessonWorld): boolean {
       return new RegExp(check.matches, 'u').test(boardWorld(world, check.unit).serial);
     case 'diagnostic':
       return result?.diagnostics.some((d) => d.code === check.code) ?? false;
+    case 'sheet-part':
+      return (
+        (world.sheet?.elements.filter((e) => e.kind === check.type).length ?? 0) >=
+        (check.count ?? 1)
+      );
+    case 'sheet-wired': {
+      const sheet = world.sheet;
+      if (!sheet) return false;
+      const kindOf = (port: string) =>
+        sheet.elements.find((e) => e.id === port.split('.')[0])?.kind;
+      const matches = (port: string, end: { type: string; port: string }) =>
+        kindOf(port) === end.type && (end.port === '*' || port.split('.')[1] === end.port);
+      return sheet.wires.some((w) => matches(w.from, check.from) && matches(w.to, check.to));
+    }
+    case 'sheet-column': {
+      const table = world.sheet ? sheetTruthTable(world.sheet) : null;
+      if (!table) return false;
+      return table.outputs.some(
+        (_, o) => table.rows.map((row) => (row.outputs[o] ? '1' : '0')).join('') === check.column,
+      );
+    }
+    case 'sheet-block':
+      return (world.sheet?.blocks?.length ?? 0) > 0;
+    case 'sheet-value':
+      return (world.sheetValues ?? []).some(
+        (shown) => shown.type === check.type && shown.value === check.equals,
+      );
   }
 }
 

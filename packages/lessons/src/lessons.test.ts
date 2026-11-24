@@ -7,7 +7,23 @@ import {
   type CircuitDocument,
   type Wire,
 } from '@banglalab/shared';
-import { SimulationSession } from '@banglalab/simulation';
+import {
+  addSheetElement,
+  connectBus,
+  connectSheet,
+  emptySheet,
+  makeBlock,
+  setSheetElement,
+  type LogicSheet,
+  type SheetEdit,
+  type SheetKind,
+} from '@banglalab/shared';
+import {
+  SimulationSession,
+  evaluateSheet,
+  nextSheetClockChange,
+  type SheetState,
+} from '@banglalab/simulation';
 import { describe, expect, it } from 'vitest';
 import { LESSONS, lessonProblems } from './index';
 import { checkStep, type LessonWorld } from './checks';
@@ -59,6 +75,27 @@ describe('lesson files', () => {
     }
   });
 
+  it('keep logic sheet checks to logic sheet lessons, naming real elements', () => {
+    const lesson = LESSONS.find((l) => !l.sheet)!;
+    const withSheetCheck = {
+      ...lesson,
+      steps: [{ ...lesson.steps[0]!, checks: [{ kind: 'sheet-block' }] }, ...lesson.steps.slice(1)],
+    };
+    expect(lessonProblems(withSheetCheck)).toContain(
+      'a sheet-block check belongs in a lesson on the logic sheet',
+    );
+    const sheetLesson = LESSONS.find((l) => l.sheet)!;
+    const unknown = {
+      ...sheetLesson,
+      steps: [
+        { ...sheetLesson.steps[0]!, checks: [{ kind: 'sheet-part', type: 'FLUX' }] },
+        ...sheetLesson.steps.slice(1),
+      ],
+    };
+    expect(lessonProblems(unknown)).toContain('no element "FLUX" on the logic sheet');
+    expect(lessonProblems({ ...lesson, parts: [] })).toContain('a lesson needs a part');
+  });
+
   it('refuse a lesson that is malformed or points at nothing', () => {
     const lesson = LESSONS[0]!;
     expect(lessonProblems({ ...lesson, steps: [] }).length).toBeGreaterThan(0);
@@ -101,7 +138,36 @@ type Action =
   | { release: string; afterMs?: number }
   | { edit: (circuit: CircuitDocument) => CircuitDocument; afterMs?: number }
   /** The circuit is stopped and started again: the board keeps only what it saved. */
-  | { restart: true; afterMs?: number };
+  | { restart: true; afterMs?: number }
+  /** An edit to the logic sheet, as the student makes it there. */
+  | { sheet: (sheet: LogicSheet) => LogicSheet; afterMs?: number };
+
+/** Sheet edits that must succeed. */
+const sheetOk = (edit: SheetEdit): LogicSheet => {
+  if (!edit.ok) throw new Error(edit.error);
+  return edit.sheet;
+};
+const place = (kind: SheetKind, x: number, y: number) => (s: LogicSheet) =>
+  sheetOk(addSheetElement(s, kind, x, y));
+const wire = (pairs: [string, string][]) => (s: LogicSheet) =>
+  pairs.reduce((sheet, [a, b]) => sheetOk(connectSheet(sheet, a, b)), s);
+/** What the sheet's displays and lamps show, as the lab's sheet view reports it. */
+function sheetValues(sheet: LogicSheet, state: SheetState) {
+  return sheet.elements.flatMap((e): { type: string; value: number }[] => {
+    const level = (port: string) => state.levels[`${e.id}.${port}`] === true;
+    if (e.kind === 'output') return [{ type: e.kind, value: level('a') ? 1 : 0 }];
+    if (e.kind === 'HEX')
+      return [
+        {
+          type: e.kind,
+          value: [0, 1, 2, 3].reduce((sum, bit) => sum + (level(`d${bit}`) ? 1 << bit : 0), 0),
+        },
+      ];
+    if (e.kind === 'CNT' || e.kind === 'REG')
+      return [{ type: e.kind, value: state.store[e.id]?.[0] ?? 0 }];
+    return [];
+  });
+}
 
 const esp32: CircuitComponent = { id: 'ESP1', type: 'esp32', props: {} };
 /** A Ra-02's legs, and the ESP32 pins the LoRa lesson joins them to, in the same order. */
@@ -139,6 +205,96 @@ const dip = (id: string, type: 'logic' | 'logic16', chip: string, pins: 14 | 16)
   );
 
 const WALKTHROUGHS: Record<string, Walkthrough> = {
+  'half-adder': {
+    components: [esp32],
+    wires: [],
+    actions: {
+      0: [{ sheet: place('input', 2, 2) }, { sheet: place('input', 2, 8) }],
+      1: [{ sheet: place('XOR', 8, 2) }, { sheet: place('AND', 8, 8) }],
+      2: [
+        {
+          sheet: wire([
+            ['IN1.q', 'G1.a'],
+            ['IN2.q', 'G1.b'],
+            ['IN1.q', 'G2.a'],
+            ['IN2.q', 'G2.b'],
+          ]),
+        },
+      ],
+      3: [
+        { sheet: place('output', 14, 2) },
+        { sheet: place('output', 14, 8) },
+        {
+          sheet: wire([
+            ['G1.y', 'OUT1.a'],
+            ['G2.y', 'OUT2.a'],
+          ]),
+        },
+        { sheet: (s) => sheetOk(setSheetElement(s, 'OUT1', { label: 'Sum' })) },
+      ],
+      5: [
+        {
+          sheet: (s) =>
+            sheetOk(
+              makeBlock(
+                s,
+                s.elements.map((e) => e.id),
+                'Half add',
+              ),
+            ),
+        },
+      ],
+    },
+  },
+  'binary-counter': {
+    components: [esp32],
+    wires: [],
+    actions: {
+      0: [{ sheet: place('clock', 2, 4) }, { sheet: place('CNT', 8, 3) }],
+      1: [{ sheet: wire([['CLK1.q', 'CNT1.clk']]) }],
+      2: [
+        { sheet: place('HEX', 14, 4) },
+        { sheet: (s) => sheetOk(connectBus(s, 'CNT1.q', 'HEX1.d')) },
+      ],
+      // Faster, as the step suggests, so 9 comes in under two seconds.
+      3: [{ sheet: (s) => sheetOk(setSheetElement(s, 'CLK1', { hz: 5 })) }],
+    },
+  },
+  'majority-vote': {
+    components: [esp32],
+    wires: [],
+    actions: {
+      0: [
+        { sheet: place('input', 2, 1) },
+        { sheet: place('input', 2, 7) },
+        { sheet: place('input', 2, 13) },
+        { sheet: place('output', 26, 7) },
+      ],
+      1: [
+        { sheet: place('AND', 9, 1) },
+        { sheet: place('AND', 9, 7) },
+        { sheet: place('AND', 9, 13) },
+        { sheet: place('OR', 17, 7) },
+        { sheet: (s) => sheetOk(setSheetElement(s, 'G4', { inputs: 3 })) },
+      ],
+      2: [
+        {
+          sheet: wire([
+            ['IN1.q', 'G1.a'],
+            ['IN2.q', 'G1.b'],
+            ['IN1.q', 'G2.a'],
+            ['IN3.q', 'G2.b'],
+            ['IN2.q', 'G3.a'],
+            ['IN3.q', 'G3.b'],
+            ['G1.y', 'G4.a'],
+            ['G2.y', 'G4.b'],
+            ['G3.y', 'G4.c'],
+            ['G4.y', 'OUT1.a'],
+          ]),
+        },
+      ],
+    },
+  },
   'shift-register': {
     // The 74HC595 at f10: pins 1-8 f10-f17 (Q1-Q7, GND), 16-9 e10-e17 (VCC, Q0, DS, OE̅,
     // STCP, SHCP, MR̅, Q7S). LEDs on Q0 (column 11, top) and Q1 (column 10, bottom).
@@ -1330,6 +1486,10 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
   let serial = '';
   let serial2 = '';
   let result: LessonWorld['result'] = null;
+  // The logic sheet, worked out over time as the sheet view does.
+  let sheet: LogicSheet = emptySheet();
+  let sheetState: SheetState | undefined;
+  let sheetTime = 0;
   const running = () => session !== null;
   const load = (target: SimulationSession) => {
     if (uploadedStarter) target.loadFirmware('ESP1', starter(uploadedStarter));
@@ -1349,6 +1509,8 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
       { serial, uploadedStarter },
       { serial: serial2, uploadedStarter: uploadedStarter2 },
     ],
+    sheet,
+    sheetValues: sheetState ? sheetValues(sheet, sheetState) : [],
   });
   const timeline: string[] = [];
 
@@ -1376,6 +1538,10 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
           circuit = changed.circuit;
         } else if ('edit' in action) {
           circuit = action.edit(circuit);
+        } else if ('sheet' in action) {
+          sheet = action.sheet(sheet);
+          since = 0;
+          continue;
         } else if ('restart' in action) {
           const saved = (session as SimulationSession | null)?.savedSettings('ESP1') ?? '';
           session = new SimulationSession(circuit, pressed);
@@ -1396,6 +1562,16 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
         (session as SimulationSession | null)?.update(circuit, pressed);
         since = 0;
       }
+      if (lesson.sheet) {
+        // Every clock change in this frame, so no edge is missed, then the frame's end.
+        const end = sheetTime + FRAME_MS;
+        for (let at = nextSheetClockChange(sheet, sheetTime); at <= end;) {
+          sheetState = evaluateSheet(sheet, at, sheetState);
+          at = nextSheetClockChange(sheet, at);
+        }
+        sheetTime = end;
+        sheetState = evaluateSheet(sheet, sheetTime, sheetState);
+      }
       if (session) {
         (session as SimulationSession).advance(FRAME_MS);
         const frame = (session as SimulationSession).frame();
@@ -1408,7 +1584,7 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
       if (status.done && pending.length === 0) break;
       waited += FRAME_MS;
       since += FRAME_MS;
-      if (waited > STEP_LIMIT_MS || (!session && pending.length === 0)) {
+      if (waited > STEP_LIMIT_MS || (!session && !lesson.sheet && pending.length === 0)) {
         throw new Error(
           `${lesson.id}, step ${index + 1}: not done (checks ${JSON.stringify(status.checks)}); ` +
             `serial so far: ${JSON.stringify(serial.slice(-200))}; ` +

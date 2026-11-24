@@ -46,6 +46,9 @@ import l43 from '../content/temperature-probe.json' with { type: 'json' };
 import l44 from '../content/ultrasonic.json' with { type: 'json' };
 import l45 from '../content/water-quality.json' with { type: 'json' };
 import l46 from '../content/weather-station.json' with { type: 'json' };
+import l47 from '../content/half-adder.json' with { type: 'json' };
+import l48 from '../content/binary-counter.json' with { type: 'json' };
+import l49 from '../content/majority-vote.json' with { type: 'json' };
 
 export const LESSON_FILES: unknown[] = [
   l0,
@@ -95,4 +98,7 @@ export const LESSON_FILES: unknown[] = [
   l44,
   l45,
   l46,
+  l47,
+  l48,
+  l49,
 ];

@@ -1,5 +1,6 @@
 import { Value } from 'typebox/value';
 import { partDefinition } from '@banglalab/parts';
+import { SHEET_KINDS } from '@banglalab/shared';
 import { LESSON_FILES } from './registry';
 import { LessonSchema, type Check, type Lesson } from './schema';
 
@@ -18,6 +19,7 @@ export function lessonProblems(value: unknown): string[] {
   }
   const lesson = value;
   const problems: string[] = [];
+  if (lesson.parts.length === 0 && !lesson.sheet) problems.push('a lesson needs a part');
   for (const id of lesson.parts) {
     try {
       partDefinition(id);
@@ -54,6 +56,18 @@ export function lessonProblems(value: unknown): string[] {
       // The student sees plain text as it is; a pattern needs words of its own.
       if (/[\\^$.*+?()[\]{}|]/.test(check.matches) && !check.label) {
         problems.push(`the pattern ${check.matches} needs a label to show the student`);
+      }
+    }
+    if (check.kind.startsWith('sheet-') && !lesson.sheet) {
+      problems.push(`a ${check.kind} check belongs in a lesson on the logic sheet`);
+    }
+    for (const type of [
+      'type' in check && check.kind.startsWith('sheet-') ? check.type : null,
+      check.kind === 'sheet-wired' ? check.from.type : null,
+      check.kind === 'sheet-wired' ? check.to.type : null,
+    ]) {
+      if (type !== null && !(SHEET_KINDS as readonly string[]).includes(type)) {
+        problems.push(`no element "${type}" on the logic sheet`);
       }
     }
     if (check.kind === 'diagnostic' && !check.label) {

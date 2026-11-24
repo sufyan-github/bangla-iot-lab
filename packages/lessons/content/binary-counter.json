@@ -1,0 +1,173 @@
+{
+  "id": "binary-counter",
+  "order": 49,
+  "after": ["half-adder"],
+  "parts": [],
+  "sheet": true,
+  "title": {
+    "bn": "বাইনারি কাউন্টার আর হেক্স অঙ্ক",
+    "en": "A binary counter and a hex digit"
+  },
+  "summary": {
+    "bn": "একটা ঘড়ি কাউন্টারকে চালায়, আর একটা বাস তার চারটা বিট হেক্স অঙ্কে নিয়ে যায়: 0 থেকে F পর্যন্ত গোনা।",
+    "en": "A clock drives a counter, and a bus carries its four bits to a hex digit: counting from 0 to F."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "steps": [
+    {
+      "text": {
+        "bn": "একটা **কাউন্টার** ঘড়ির প্রতিটা উঠতি ধারে এক বাড়ে, আর সংখ্যাটা চারটা বিটে রাখে: Q0 সবচেয়ে ছোট, Q3 সবচেয়ে বড়।\n\nশিটে একটা **ঘড়ি** আর **স্মৃতি** দল থেকে একটা **কাউন্টার** বসাও।",
+        "en": "A **counter** goes up by one on each rising edge of its clock, and holds the number in four bits: Q0 the smallest, Q3 the largest.\n\nPlace a **Clock**, and a **Counter** from the **Memory** group."
+      },
+      "checks": [
+        {
+          "kind": "sheet-part",
+          "type": "clock"
+        },
+        {
+          "kind": "sheet-part",
+          "type": "CNT"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "ঘড়ির আউটপুট কাউন্টারের ঘড়ির ইনপুটে জোড়ো: বাঁ পাশে ত্রিভুজ আঁকা পিন।",
+        "en": "Join the clock’s output to the counter’s clock input: the pin with the triangle on its left side."
+      },
+      "checks": [
+        {
+          "kind": "sheet-wired",
+          "from": {
+            "type": "clock",
+            "port": "q"
+          },
+          "to": {
+            "type": "CNT",
+            "port": "clk"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "একটা **হেক্স অঙ্ক** বসাও। চারটা তার না দিয়ে একটা **বাস** দাও: কাউন্টারের Q0–Q3-এর পাশের দণ্ডে ট্যাপ করো, তারপর অঙ্কের D0–D3-এর পাশের দণ্ডে। একটা মোটা রেখায় চারটা বিটই যায়।",
+        "en": "Place a **Hex digit**. Instead of four wires, join them with a **bus**: tap the bar beside the counter’s Q0–Q3, then the bar beside the digit’s D0–D3. One thick line carries all four bits."
+      },
+      "checks": [
+        {
+          "kind": "sheet-wired",
+          "from": {
+            "type": "CNT",
+            "port": "q0"
+          },
+          "to": {
+            "type": "HEX",
+            "port": "d0"
+          }
+        },
+        {
+          "kind": "sheet-wired",
+          "from": {
+            "type": "CNT",
+            "port": "q3"
+          },
+          "to": {
+            "type": "HEX",
+            "port": "d3"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "দেখো, অঙ্ক গুনছে: 0, 1, 2 … 9, তারপর A, B … F, আবার 0। চার বিটে 0 থেকে 15 রাখা যায়; হেক্সে 10 থেকে 15 হলো A থেকে F। তাড়াতাড়ি চাইলে ঘড়ি বেছে তার গতি বাড়াও। অঙ্কে 9 আসা পর্যন্ত দেখো।",
+        "en": "Watch the digit count: 0, 1, 2 … 9, then A, B … F, and 0 again. Four bits hold 0 to 15; in hex, 10 to 15 are A to F. To go faster, choose the clock and raise its speed. Watch until the digit shows 9."
+      },
+      "checks": [
+        {
+          "kind": "sheet-value",
+          "type": "HEX",
+          "equals": 9
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "**টাইমিং ডায়াগ্রাম** খোলো। Q0 ঘড়ির প্রতি টিকে বদলায়, Q1 প্রতি দুইয়ে, Q2 প্রতি চারে, Q3 প্রতি আটে: প্রতিটা বিট আগেরটার অর্ধেক গতিতে চলে।",
+        "en": "Open the **Timing diagram**. Q0 changes on every tick, Q1 every two, Q2 every four, Q3 every eight: each bit runs at half the speed of the one before."
+      },
+      "checks": []
+    }
+  ],
+  "learned": {
+    "bn": [
+      "কাউন্টার ঘড়ির প্রতিটা উঠতি ধারে এক বাড়ে, আর 15-এর পরে আবার 0-তে ফেরে।",
+      "চার বিটে 16টা সংখ্যা: 0 থেকে 15, হেক্সে 0 থেকে F।",
+      "একটা বাস একবারে অনেকগুলো পিন জোড়ে।"
+    ],
+    "en": [
+      "A counter goes up by one on each rising clock edge, and after 15 goes back to 0.",
+      "Four bits hold 16 numbers: 0 to 15, or 0 to F in hex.",
+      "A bus joins many pins at once."
+    ]
+  },
+  "tryNext": {
+    "bn": "কাউন্টারের CLR-এ একটা সুইচ দাও: চালু থাকলে পরের টিকে গোনা আবার 0 থেকে শুরু হয়।",
+    "en": "Put a switch on the counter’s CLR: while it is on, the next tick starts the count again from 0."
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "হেক্সে B মানে কত?",
+        "en": "What is B in hex?"
+      },
+      "choices": [
+        {
+          "bn": "10",
+          "en": "10"
+        },
+        {
+          "bn": "11",
+          "en": "11"
+        },
+        {
+          "bn": "12",
+          "en": "12"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "হেক্সে A = 10, B = 11, C = 12 … F = 15।",
+        "en": "In hex A = 10, B = 11, C = 12 … F = 15."
+      }
+    },
+    {
+      "question": {
+        "bn": "ঘড়ি প্রতি সেকেন্ডে একবার টিক দিলে Q3 কত সেকেন্ডে একবার বদলায়?",
+        "en": "With the clock ticking once a second, how often does Q3 change?"
+      },
+      "choices": [
+        {
+          "bn": "প্রতি সেকেন্ডে",
+          "en": "Every second"
+        },
+        {
+          "bn": "প্রতি 4 সেকেন্ডে",
+          "en": "Every 4 seconds"
+        },
+        {
+          "bn": "প্রতি 8 সেকেন্ডে",
+          "en": "Every 8 seconds"
+        }
+      ],
+      "answer": 2,
+      "why": {
+        "bn": "প্রতিটা বিট আগেরটার অর্ধেক গতিতে চলে: Q0 প্রতি 1, Q1 প্রতি 2, Q2 প্রতি 4, Q3 প্রতি 8 সেকেন্ডে।",
+        "en": "Each bit runs at half the speed of the one before: Q0 every 1, Q1 every 2, Q2 every 4, Q3 every 8 seconds."
+      }
+    }
+  ]
+}

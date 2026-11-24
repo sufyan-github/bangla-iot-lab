@@ -1,0 +1,204 @@
+{
+  "id": "half-adder",
+  "order": 48,
+  "after": ["logic-gates"],
+  "parts": [],
+  "sheet": true,
+  "title": {
+    "bn": "হাফ অ্যাডার: দুটো বিট যোগ",
+    "en": "The half adder: adding two bits"
+  },
+  "summary": {
+    "bn": "লজিক শিটে XOR আর AND গেট দিয়ে দুটো এক-বিটের সংখ্যা যোগ করো, তারপর সেটাকে একটা ব্লক বানাও।",
+    "en": "Add two one-bit numbers on the logic sheet with an XOR and an AND gate, then make it a block."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "steps": [
+    {
+      "text": {
+        "bn": "কম্পিউটার সংখ্যা যোগ করে বিট দিয়ে। দুটো বিট যোগ করলে আসে **যোগফল** (Sum) আর **হাতে থাকা** (Carry): 1 + 1 = 10, মানে যোগফল 0, হাতে 1।\n\nল্যাব খুলেছে **লজিক শিটে**। টুলবার থেকে **সুইচ** বেছে শিটে দুবার ট্যাপ করো: একটা ওপরে, একটা নিচে। এরা A আর B।",
+        "en": "Computers add numbers bit by bit. Adding two bits gives a **sum** and a **carry**: 1 + 1 = 10, so the sum is 0 and 1 is carried.\n\nThe lab has opened on the **logic sheet**. Choose **Switch** in the toolbar and tap the sheet twice: one above, one below. They are A and B."
+      },
+      "checks": [
+        {
+          "kind": "sheet-part",
+          "type": "input",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "যোগফল 1 হয় শুধু তখন, যখন A আর B আলাদা: এটাই **XOR**। হাতে 1 থাকে শুধু দুটোই 1 হলে: এটাই **AND**।\n\nশিটে একটা **XOR** আর একটা **AND** গেট বসাও।",
+        "en": "The sum is 1 only when A and B differ: that is **XOR**. A 1 is carried only when both are 1: that is **AND**.\n\nPlace an **XOR** gate and an **AND** gate on the sheet."
+      },
+      "checks": [
+        {
+          "kind": "sheet-part",
+          "type": "XOR"
+        },
+        {
+          "kind": "sheet-part",
+          "type": "AND"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এবার তার: **বাছাই** বেছে, একটা আউটপুটের গোল বিন্দুতে, তারপর একটা ইনপুটের বিন্দুতে ট্যাপ করো। A-কে দুটো গেটেরই একটা ইনপুটে জোড়ো, আর B-কে দুটোরই অন্য ইনপুটে।",
+        "en": "Now the wires: choose **Select**, tap an output’s dot, then an input’s. Join A to one input of each gate, and B to the other input of each."
+      },
+      "checks": [
+        {
+          "kind": "sheet-wired",
+          "from": {
+            "type": "input",
+            "port": "q"
+          },
+          "to": {
+            "type": "XOR",
+            "port": "*"
+          }
+        },
+        {
+          "kind": "sheet-wired",
+          "from": {
+            "type": "input",
+            "port": "q"
+          },
+          "to": {
+            "type": "AND",
+            "port": "*"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "দুটো **বাতি** বসাও। XOR-এর আউটপুট একটায় জোড়ো, AND-এর আউটপুট অন্যটায়। বাতি বেছে **নাম** ঘরে লেখো: একটা Sum, অন্যটা Carry।",
+        "en": "Place two **lamps**. Join XOR’s output to one and AND’s output to the other. Choose each lamp and type its **Name**: Sum and Carry."
+      },
+      "checks": [
+        {
+          "kind": "sheet-wired",
+          "from": {
+            "type": "XOR",
+            "port": "y"
+          },
+          "to": {
+            "type": "output",
+            "port": "a"
+          }
+        },
+        {
+          "kind": "sheet-wired",
+          "from": {
+            "type": "AND",
+            "port": "y"
+          },
+          "to": {
+            "type": "output",
+            "port": "a"
+          }
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সুইচে ট্যাপ করে চারটাই চেষ্টা করো: 0+0, 0+1, 1+0, 1+1। তারপর **সারণি বানাও** চাপো। Sum-এর কলাম 0110, Carry-র 0001।",
+        "en": "Tap the switches to try all four: 0+0, 0+1, 1+0, 1+1. Then press **Make the table**. Sum’s column reads 0110, and Carry’s 0001."
+      },
+      "checks": [
+        {
+          "kind": "sheet-column",
+          "column": "0110"
+        },
+        {
+          "kind": "sheet-column",
+          "column": "0001"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "এটাকে একটা **ব্লক** বানাও, যাতে বারবার ব্যবহার করা যায়। খালি জায়গা থেকে টেনে সবগুলোর চারপাশে বাক্স বানাও, **ব্লক বানাও** চাপো, নাম দাও Half add। সুইচগুলো হবে তার ইনপুট, বাতিগুলো আউটপুট।",
+        "en": "Make it a **block** you can use again and again. Drag a box from empty space around all of them, press **Make a block**, and name it Half add. The switches become its inputs and the lamps its outputs."
+      },
+      "checks": [
+        {
+          "kind": "sheet-block"
+        }
+      ]
+    }
+  ],
+  "learned": {
+    "bn": [
+      "দুটো বিট যোগ করলে আসে যোগফল (A XOR B) আর হাতে থাকা (A AND B)।",
+      "সত্যক সারণির একটা কলাম একটা বাতির পুরো আচরণ বলে দেয়।",
+      "একটা সার্কিট ব্লক বানালে সেটা একটা উপাদানের মতো বারবার বসানো যায়।"
+    ],
+    "en": [
+      "Adding two bits gives a sum (A XOR B) and a carry (A AND B).",
+      "One column of a truth table tells everything a lamp does.",
+      "A circuit made into a block can be placed again and again, like one element."
+    ]
+  },
+  "tryNext": {
+    "bn": "দুটো Half add ব্লক আর একটা OR গেট দিয়ে একটা ফুল অ্যাডার বানাও, যা তিনটা বিট যোগ করে।",
+    "en": "Make a full adder, which adds three bits, from two Half add blocks and an OR gate."
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "1 + 1 যোগ করলে হাফ অ্যাডারের যোগফল (Sum) আর হাতে থাকা (Carry) কত?",
+        "en": "For 1 + 1, what are the half adder’s sum and carry?"
+      },
+      "choices": [
+        {
+          "bn": "Sum 1, Carry 0",
+          "en": "Sum 1, Carry 0"
+        },
+        {
+          "bn": "Sum 0, Carry 1",
+          "en": "Sum 0, Carry 1"
+        },
+        {
+          "bn": "Sum 1, Carry 1",
+          "en": "Sum 1, Carry 1"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "বাইনারিতে 1 + 1 = 10: যোগফলের ঘরে 0, আর 1 হাতে যায়।",
+        "en": "In binary 1 + 1 = 10: the sum digit is 0 and 1 is carried."
+      }
+    },
+    {
+      "question": {
+        "bn": "যোগফল (Sum) কোন গেট দেয়?",
+        "en": "Which gate gives the sum?"
+      },
+      "choices": [
+        {
+          "bn": "XOR",
+          "en": "XOR"
+        },
+        {
+          "bn": "AND",
+          "en": "AND"
+        },
+        {
+          "bn": "OR",
+          "en": "OR"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "যোগফল 1 হয় শুধু ইনপুট দুটো আলাদা হলে: এটা XOR-এর কাজ।",
+        "en": "The sum is 1 only when the inputs differ: that is what XOR does."
+      }
+    }
+  ]
+}

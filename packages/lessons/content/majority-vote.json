@@ -1,0 +1,137 @@
+{
+  "id": "majority-vote",
+  "order": 50,
+  "after": ["half-adder"],
+  "parts": [],
+  "sheet": true,
+  "title": {
+    "bn": "তিনজনের ভোট: কারনো ম্যাপে সরল রাশি",
+    "en": "Three votes: the simplest expression from a K-map"
+  },
+  "summary": {
+    "bn": "তিন বিচারকের অন্তত দুজন হ্যাঁ বললে বাতি জ্বলবে। কারনো ম্যাপ থেকে সবচেয়ে সরল সার্কিট বের করে বানাও।",
+    "en": "A lamp lights when at least two of three judges say yes. Find the simplest circuit from a K-map, and build it."
+  },
+  "setup": {
+    "board": "esp32"
+  },
+  "steps": [
+    {
+      "text": {
+        "bn": "তিনজন বিচারক তিনটা সুইচে ভোট দেন: A, B আর C। অন্তত দুজন হ্যাঁ (1) দিলে বাতি জ্বলবে।\n\nশিটে তিনটা **সুইচ** আর একটা **বাতি** বসাও।",
+        "en": "Three judges vote with three switches: A, B and C. The lamp lights when at least two say yes (1).\n\nPlace three **switches** and a **lamp** on the sheet."
+      },
+      "checks": [
+        {
+          "kind": "sheet-part",
+          "type": "input",
+          "count": 3
+        },
+        {
+          "kind": "sheet-part",
+          "type": "output"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "সত্যক সারণিতে বাতি জ্বলে চারটা সারিতে: 011, 101, 110, 111। কারনো ম্যাপে এই চারটা ঘর তিনটা জোড়ায় ধরা যায়: A·B, A·C আর B·C। তাই বাতি = A·B + A·C + B·C।\n\nতিনটা **AND** গেট আর একটা **OR** গেট বসাও। OR বেছে তার ইনপুট 3 করো।",
+        "en": "In the truth table the lamp lights in four rows: 011, 101, 110, 111. On a K-map these four cells are covered by three pairs: A·B, A·C and B·C. So lamp = A·B + A·C + B·C.\n\nPlace three **AND** gates and one **OR** gate. Choose the OR and give it 3 inputs."
+      },
+      "checks": [
+        {
+          "kind": "sheet-part",
+          "type": "AND",
+          "count": 3
+        },
+        {
+          "kind": "sheet-part",
+          "type": "OR"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "তার দাও: A আর B প্রথম AND-এ, A আর C দ্বিতীয়টায়, B আর C তৃতীয়টায়। তিনটা AND-এর আউটপুট OR-এ, আর OR-এর আউটপুট বাতিতে। তারপর **সারণি বানাও** চাপো।",
+        "en": "Wire it: A and B into the first AND, A and C into the second, B and C into the third. The three ANDs’ outputs into the OR, and the OR’s output to the lamp. Then press **Make the table**."
+      },
+      "checks": [
+        {
+          "kind": "sheet-column",
+          "column": "00010111"
+        }
+      ]
+    },
+    {
+      "text": {
+        "bn": "রাশির নিচে **কারনো ম্যাপ**। প্রতিটা দলের পদে ট্যাপ করো: তার দুটো ঘর দাগ দেওয়া হবে। প্রতিটা 1 অন্তত একটা দলে আছে, আর প্রতিটা দল যত বড় সম্ভব: তাই রাশিটা সবচেয়ে সরল।",
+        "en": "Below the expression is the **K-map**. Tap each group’s term: its two cells are outlined. Every 1 is in at least one group, and each group is as large as it can be: that is why the expression is the simplest."
+      },
+      "checks": []
+    }
+  ],
+  "learned": {
+    "bn": [
+      "কারনো ম্যাপে পাশাপাশি ঘর শুধু একটা ইনপুটে আলাদা, তাই 1-গুলোকে দলে ধরা যায়।",
+      "প্রতিটা দল একটা AND পদ; সব পদ OR করলে রাশি।",
+      "দল যত বড়, পদে ইনপুট তত কম।"
+    ],
+    "en": [
+      "Next-door cells of a K-map differ in one input only, so the 1s can be grouped.",
+      "Each group is one AND term; the terms ORed together make the expression.",
+      "The larger the group, the fewer inputs in its term."
+    ]
+  },
+  "tryNext": {
+    "bn": "বদলে নাও: তিনজনই হ্যাঁ বললে তবে বাতি জ্বলবে। কারনো ম্যাপে এখন কয়টা দল?",
+    "en": "Change it: the lamp lights only when all three say yes. How many groups does the K-map have now?"
+  },
+  "quiz": [
+    {
+      "question": {
+        "bn": "কারনো ম্যাপে পাশাপাশি দুটো ঘর কয়টা ইনপুটে আলাদা?",
+        "en": "In a K-map, how many inputs do two next-door cells differ in?"
+      },
+      "choices": [
+        {
+          "bn": "একটায়",
+          "en": "One"
+        },
+        {
+          "bn": "দুটোয়",
+          "en": "Two"
+        },
+        {
+          "bn": "সবগুলোয়",
+          "en": "All of them"
+        }
+      ],
+      "answer": 0,
+      "why": {
+        "bn": "ঘরগুলো গ্রে কোডে সাজানো, তাই পাশাপাশি ঘর ঠিক একটা ইনপুটে আলাদা।",
+        "en": "The cells are in Gray-code order, so next-door cells differ in exactly one input."
+      }
+    },
+    {
+      "question": {
+        "bn": "A=1, B=0, C=1 হলে বাতি জ্বলবে?",
+        "en": "With A=1, B=0, C=1, does the lamp light?"
+      },
+      "choices": [
+        {
+          "bn": "না",
+          "en": "No"
+        },
+        {
+          "bn": "হ্যাঁ",
+          "en": "Yes"
+        }
+      ],
+      "answer": 1,
+      "why": {
+        "bn": "দুজন হ্যাঁ বলেছেন; A·C পদটা 1, তাই বাতি জ্বলে।",
+        "en": "Two said yes; the term A·C is 1, so the lamp lights."
+      }
+    }
+  ]
+}

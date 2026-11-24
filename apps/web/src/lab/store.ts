@@ -133,6 +133,9 @@ interface LabState {
   /** Earlier and undone states of the logic sheet, for undo and redo. */
   sheetPast: LogicSheet[];
   sheetFuture: LogicSheet[];
+  /** What the sheet's hex digits, counters, registers and lamps show now, for a lesson's checks. */
+  sheetValues: { type: string; value: number }[];
+  setSheetValues(values: { type: string; value: number }[]): void;
   undoSheet(): void;
   redoSheet(): void;
   setTool(tool: Tool): void;
@@ -313,6 +316,11 @@ export const useLab = create<LabState>((set, get) => {
     },
     sheetPast: [],
     sheetFuture: [],
+    sheetValues: [],
+    setSheetValues(values) {
+      const before = get().sheetValues;
+      if (JSON.stringify(before) !== JSON.stringify(values)) set({ sheetValues: values });
+    },
     undoSheet() {
       const past = get().sheetPast;
       if (past.length === 0) return;

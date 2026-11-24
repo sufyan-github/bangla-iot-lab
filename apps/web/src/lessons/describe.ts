@@ -70,6 +70,11 @@ function comparison(
   return parts.join(', ');
 }
 
+/** A logic sheet element's name: a gate by its own name, anything else in words. */
+function sheetKind(type: string, { t }: Describer): string {
+  return /^(AND|OR|NOT|NAND|NOR|XOR)$/.test(type) ? type : t(`sheet.kind.${type}` as MessageKey);
+}
+
 export function describeCheck(check: Check, describer: Describer): string {
   const { t, locale, number } = describer;
   if (check.label) return check.label[locale];
@@ -100,6 +105,25 @@ export function describeCheck(check: Check, describer: Describer): string {
       return t('lesson.check.serial', { text: check.matches });
     case 'diagnostic':
       return t('lesson.check.diagnostic');
+    case 'sheet-part':
+      return t('lesson.check.sheetPart', {
+        count: number(check.count ?? 1),
+        kind: sheetKind(check.type, describer),
+      });
+    case 'sheet-wired': {
+      const end = (e: { type: string; port: string }) =>
+        `${sheetKind(e.type, describer)}${e.port === '*' ? '' : ` ${e.port.toUpperCase()}`}`;
+      return t('lesson.check.sheetWired', { from: end(check.from), to: end(check.to) });
+    }
+    case 'sheet-column':
+      return t('lesson.check.sheetColumn', { column: check.column });
+    case 'sheet-block':
+      return t('lesson.check.sheetBlock');
+    case 'sheet-value':
+      return t('lesson.check.sheetValue', {
+        kind: sheetKind(check.type, describer),
+        value: number(check.equals),
+      });
     case 'reading': {
       const name = part(check.part);
       if (check.path === 'led.state') {

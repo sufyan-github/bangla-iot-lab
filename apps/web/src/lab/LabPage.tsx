@@ -158,6 +158,8 @@ function useLessonChecks() {
             serial: boards[0]?.serial ?? '',
             uploadedStarter: boards[0]?.uploadedStarter ?? null,
             boards,
+            sheet: lab.sheet,
+            sheetValues: lab.sheetValues,
           },
           progress.seen,
         ),
@@ -337,6 +339,11 @@ export function LabPage() {
   useEffect(() => setTab(hasLesson ? 'lesson' : 'circuit'), [hasLesson]);
   /** The breadboard is where the circuit is built; the diagram is the same circuit as a schematic. */
   const [view, setView] = useState<'board' | 'diagram' | 'sheet'>('board');
+  // A lesson on the logic sheet opens there.
+  const sheetLesson = useLessonState((s) => s.lesson?.sheet === true);
+  useEffect(() => {
+    if (sheetLesson) setView('sheet');
+  }, [sheetLesson]);
   const showCode = tab === 'code' && boardId !== undefined;
   const { setName, setRunning } = useLab.getState();
   const { t } = useT();

@@ -103,6 +103,41 @@ export const Check = Type.Union([
   }),
   /** The lab gave this explanation (a lesson may lead a student into a mistake on purpose). */
   Type.Object({ kind: Type.Literal('diagnostic'), code: Type.String(), ...Labelled }),
+  /** On the logic sheet: at least `count` (1 if not said) elements of this kind ("XOR", "input"). */
+  Type.Object({
+    kind: Type.Literal('sheet-part'),
+    type: Type.String(),
+    count: Type.Optional(Type.Integer({ minimum: 1 })),
+    ...Labelled,
+  }),
+  /**
+   * On the logic sheet: a wire from a port of an element of one kind to a
+   * port of an element of another ("XOR" "y" to "output" "a").
+   */
+  Type.Object({
+    kind: Type.Literal('sheet-wired'),
+    from: Type.Object({ type: Type.String(), port: Type.String() }),
+    to: Type.Object({ type: Type.String(), port: Type.String() }),
+    ...Labelled,
+  }),
+  /**
+   * The logic sheet's truth table has a lamp whose column, from the first row
+   * (all switches off) to the last, reads like this ("0110").
+   */
+  Type.Object({
+    kind: Type.Literal('sheet-column'),
+    column: Type.String({ pattern: '^[01]{2,16}$' }),
+    ...Labelled,
+  }),
+  /** A block has been made on the logic sheet. */
+  Type.Object({ kind: Type.Literal('sheet-block'), ...Labelled }),
+  /** While the sheet ran, an element of this kind showed this number (a hex digit, a counter; a lamp 1 when lit). */
+  Type.Object({
+    kind: Type.Literal('sheet-value'),
+    type: Type.String(),
+    equals: Type.Integer(),
+    ...Labelled,
+  }),
 ]);
 export type Check = Static<typeof Check>;
 
@@ -129,8 +164,10 @@ export const LessonSchema = Type.Object({
   kind: Type.Optional(Type.Union([Type.Literal('part'), Type.Literal('project')])),
   /** Lessons worth taking first, by id. */
   after: Type.Optional(Type.Array(Type.String())),
-  /** The kit parts the lesson is about, by part definition id. */
-  parts: Type.Array(Type.String(), { minItems: 1 }),
+  /** The kit parts the lesson is about, by part definition id; none for a lesson on the logic sheet. */
+  parts: Type.Array(Type.String()),
+  /** True for a lesson on the logic sheet, which opens there. */
+  sheet: Type.Optional(Type.Literal(true)),
   title: Text,
   summary: Text,
   /** What the new project starts with: the board, and a battery of this voltage. */
