@@ -2157,3 +2157,36 @@ Built on 24 November 2026, chosen by the owner as the next step.
   withdrawn. The data stays until the retention job removes it; that job is
   not built yet, and its periods wait for the lawyer.
 - Migration `0009` adds the `close-account` kind of email link.
+
+## D-101 — The retention job
+
+Built on 25 November 2026, chosen by the owner as the next step.
+
+- **Report first.** `pnpm --filter @banglalab/api retention` only reports, per
+  rule, how many rows it would touch; nothing changes. `--apply` does it, in one
+  transaction, and writes one `retention.run` audit entry holding the counts
+  and nothing else. The report and the applied run select the same rows, so
+  what is reported is what is done (tested).
+- **Periods are settings.** Each period is a `RETENTION_*` setting whose default
+  is the proposed value in [the database design](../architecture/database.md).
+  None is confirmed: the owner and a lawyer decide them before the lab goes
+  live, and only the settings change.
+- **Emptied, not deleted.** Consent records, classes and the audit log point
+  to an account, so a closed account is emptied rather than removed: after its
+  waiting period its projects, progress, guardian's email, email links,
+  sessions and class places are deleted, and its row keeps no name, email,
+  sign-in name, password or key. `users.erased_at` (migration `0010`) records
+  when.
+- **Closing on the lab's behalf.** Three new proposed rules close accounts
+  nobody is using: an adult's sign-up never confirmed after 30 days, a
+  learner's sign-up no guardian approved after 30 days, and a class learner
+  whose every class ended (archived, or the place removed) more than 12 months
+  ago. Closing here does what closing by hand does (D-100), and the account is
+  then emptied after the same waiting period as any other.
+- **Progress is compacted, not summarised.** After two years, repeats of the
+  same step are reduced to the latest one. Every progress page counts distinct
+  steps and learners and shows the latest time, so none of them changes. A
+  table of yearly totals can come later, if the lawyer asks for less.
+- **Not yet scheduled.** Nothing runs it on its own: it is meant to run once a
+  day on the server, which is set up with hosting. AI usage and payment records
+  have no tables yet, so no rules either.

@@ -31,6 +31,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The retention job**: removes what the lab no longer needs to keep, by the
+  proposed periods, which are settings until they are confirmed. It only
+  reports unless told to apply; closed accounts are emptied of personal data.
 - **Closing accounts**: anyone can close their own account from My account; a
   parent or guardian can close a learner's own account by a link sent to the
   email that approved it.

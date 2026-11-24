@@ -83,17 +83,28 @@ untested guesses.
 
 ## Data retention (proposed; needs owner and legal confirmation)
 
-| Data                           | Retention                                                                                    |
-| ------------------------------ | -------------------------------------------------------------------------------------------- |
-| Learner account and enrolments | Until the school removes the learner, or 12 months after the class is archived               |
-| Projects and versions          | Life of the account; soft-deleted projects purged after 30 days; keep the newest 20 versions |
-| Progress events                | Current academic year plus one, then only aggregates                                         |
-| Consent records                | Life of the account plus 3 years (evidence of consent)                                       |
-| Guardian's email               | Life of the learner's account; then deleted with it                                          |
-| Email links (`email_tokens`)   | 30 days after they are used or run out                                                       |
-| Audit logs                     | 24 months                                                                                    |
-| AI usage records               | 24 months (billing)                                                                          |
-| Payments                       | As tax law requires                                                                          |
+The retention job applies these periods (D-101). Each is a setting, shown in
+the last column with its proposed default; none is confirmed yet.
+
+| Data                           | Retention                                                                                    | Setting (default)                                                        |
+| ------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| A closed account               | Emptied after 30 days: personal data deleted, the row kept with nothing personal in it       | `RETENTION_CLOSED_ACCOUNT_DAYS` (30)                                     |
+| An adult's unconfirmed sign-up | Closed after 30 days                                                                         | `RETENTION_UNCONFIRMED_DAYS` (30)                                        |
+| A learner's unapproved sign-up | Closed after 30 days                                                                         | `RETENTION_UNAPPROVED_DAYS` (30)                                         |
+| Class learner and enrolments   | Until the school removes the learner, or 12 months after their last class is archived        | `RETENTION_ARCHIVED_CLASS_DAYS` (365)                                    |
+| Projects and versions          | Life of the account; soft-deleted projects purged after 30 days; keep the newest 20 versions | `RETENTION_DELETED_PROJECT_DAYS` (30), `RETENTION_PROJECT_VERSIONS` (20) |
+| Progress events                | Life of the account; after two years, repeats of the same step are reduced to the latest     | `RETENTION_PROGRESS_DAYS` (730)                                          |
+| Consent records                | Life of the account plus 3 years (evidence of consent)                                       | `RETENTION_CONSENT_DAYS` (1095)                                          |
+| Guardian's email               | Life of the learner's account; then deleted with it                                          | with the closed account                                                  |
+| Email links (`email_tokens`)   | 30 days after they are used or run out                                                       | `RETENTION_EMAIL_LINK_DAYS` (30)                                         |
+| Sessions                       | 30 days after they end                                                                       | `RETENTION_SESSION_DAYS` (30)                                            |
+| Audit logs                     | 24 months                                                                                    | `RETENTION_AUDIT_DAYS` (730)                                             |
+| AI usage records               | 24 months (billing)                                                                          | no table yet                                                             |
+| Payments                       | As tax law requires                                                                          | no table yet                                                             |
+
+Run `pnpm --filter @banglalab/api retention` to see what the job would do, and
+add `--apply` to do it. It is meant to run once a day on the server; nothing
+schedules it yet.
 
 ## Migration strategy
 
