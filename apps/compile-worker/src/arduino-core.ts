@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { access, mkdir, readdir, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { runTool } from './sandbox';
@@ -66,6 +67,25 @@ export const AVR_EXTRA_LIBRARIES = [
   { dir: 'adafruit-ina219', sources: ['Adafruit_INA219.cpp'] },
 ] as const;
 
+/**
+ * The lab's own libraries for the UNO, under the project's Apache-2.0 licence:
+ * so far the NeoPixel interface for WS2812B LEDs (the original library is LGPL).
+ */
+export const AVR_LAB_DIR = path.resolve(import.meta.dirname, '../avr-lib');
+export const AVR_LAB_SOURCES = ['Adafruit_NeoPixel.cpp'] as const;
+/** The lab's libraries change with the project, so build caches key on their contents. */
+export const AVR_LAB_HASH = ['Adafruit_NeoPixel.h', ...AVR_LAB_SOURCES]
+  .reduce(
+    (hash, file) =>
+      hash
+        .update(file)
+        .update('\0')
+        .update(readFileSync(path.join(AVR_LAB_DIR, file))),
+    createHash('sha256'),
+  )
+  .digest('hex')
+  .slice(0, 16);
+
 /** Flags shared by the core and by sketches, for an UNO (ATmega328P at 16 MHz). */
 export const ARDUINO_FLAGS = [
   '-mmcu=atmega328p',
@@ -82,6 +102,7 @@ export const ARDUINO_FLAGS = [
   `-I${VARIANT_DIR}`,
   ...ARDUINO_LIBRARIES.map((library) => `-I${path.join(VENDOR_DIR, library.include)}`),
   ...AVR_EXTRA_LIBRARIES.map((library) => `-I${path.join(THIRD_PARTY, library.dir)}`),
+  `-I${AVR_LAB_DIR}`,
 ];
 export const CXX_FLAGS = [
   '-std=gnu++11',
@@ -114,6 +135,7 @@ export async function ensureArduinoCore(cacheDir: string, toolchain: string): Pr
         ARDUINO_CORE_VERSION,
         ARDUINO_LIBRARIES,
         AVR_EXTRA_LIBRARIES,
+        AVR_LAB_HASH,
         toolchain,
         ARDUINO_FLAGS,
         CXX_FLAGS,
@@ -129,6 +151,7 @@ export async function ensureArduinoCore(cacheDir: string, toolchain: string): Pr
       VENDOR_DIR,
       dir,
       ...AVR_EXTRA_LIBRARIES.map((library) => path.join(THIRD_PARTY, library.dir)),
+      AVR_LAB_DIR,
     ],
   };
   if (
@@ -157,6 +180,7 @@ export async function ensureArduinoCore(cacheDir: string, toolchain: string): Pr
     ...AVR_EXTRA_LIBRARIES.flatMap((library) =>
       library.sources.map((f) => path.join(THIRD_PARTY, library.dir, f)),
     ),
+    ...AVR_LAB_SOURCES.map((f) => path.join(AVR_LAB_DIR, f)),
   ];
   const compileOne = async (file: string) => {
     const flags = file.endsWith('.cpp')

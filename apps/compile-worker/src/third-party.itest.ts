@@ -3,7 +3,8 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * The starter firmware is distributed with its LGPL source in
+ * The starter firmware, and every program the lab builds for the UNO, is
+ * distributed with its LGPL source in
  * third_party/arduino-avr. That copy is only "corresponding source" if it is the
  * same as what the compiler actually reads, which is the pinned upstream fetch in
  * vendor/. This test fails the build if the two ever differ.
@@ -14,6 +15,8 @@ const COPY = path.resolve(import.meta.dirname, '../../../third_party/arduino-avr
 const PAIRS = [
   ['ArduinoCore-avr-1.8.8/cores/arduino', 'ArduinoCore-avr/cores/arduino'],
   ['ArduinoCore-avr-1.8.8/variants/standard', 'ArduinoCore-avr/variants/standard'],
+  ['ArduinoCore-avr-1.8.8/libraries/Wire/src', 'ArduinoCore-avr/libraries/Wire/src'],
+  ['ArduinoCore-avr-1.8.8/libraries/SPI/src', 'ArduinoCore-avr/libraries/SPI/src'],
   ['Servo-1.3.0/src', 'Servo/src'],
   ['LiquidCrystal-1.0.7/src', 'LiquidCrystal/src'],
 ] as const;

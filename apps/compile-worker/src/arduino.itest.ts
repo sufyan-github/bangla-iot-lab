@@ -377,6 +377,109 @@ void loop() {}
     expect(serial.trim()).toBe('3C');
   }, 120_000);
 
+  it('sends WS2812 colours that the board reads back from the pulse timing', async () => {
+    const result = await compile(`#include <Adafruit_NeoPixel.h>
+Adafruit_NeoPixel fast(3, 6, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel slow(2, 5, NEO_RGB + NEO_KHZ400);
+void setup() {
+  fast.begin();
+  slow.begin();
+  fast.setPixelColor(0, 0xAA, 0x55, 0x0F);
+  fast.setPixelColor(2, fast.Color(1, 128, 255));
+  fast.show();
+  slow.setPixelColor(1, 0xF0, 0x0F, 0x81);
+  slow.show();
+}
+void loop() {}
+`);
+    expect(result.ok).toBe(true);
+    const board = new UnoBoard(result.hex);
+    const frames: { pin: number; bytes: number[]; khz: number }[] = [];
+    board.onLedStrip((frame) =>
+      frames.push({ pin: frame.pin, bytes: [...frame.bytes], khz: frame.khz }),
+    );
+    const changes: number[] = [];
+    board.onPinChange((pin, drive) => {
+      if (drive === 'high') changes.push(pin);
+    });
+    board.runFor(50);
+    expect(frames).toEqual([
+      // Green, red, blue for each LED, as the type says; every bit, 0 and 1, read right.
+      { pin: 6, bytes: [0x55, 0xaa, 0x0f, 0, 0, 0, 128, 1, 255], khz: 800 },
+      { pin: 5, bytes: [0, 0, 0, 0xf0, 0x0f, 0x81], khz: 400 },
+    ]);
+    // The data bits are not passed on as ordinary pin changes.
+    expect(changes).toEqual([]);
+  }, 120_000);
+
+  it('still passes on short ordinary pulses, such as shiftOut to a shift register', async () => {
+    const result = await compile(`void setup() {
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
+  for (int i = 0; i < 5; i++) { digitalWrite(7, HIGH); digitalWrite(7, LOW); }
+  shiftOut(8, 9, MSBFIRST, 0xFF);
+}
+void loop() {}
+`);
+    expect(result.ok).toBe(true);
+    const board = new UnoBoard(result.hex);
+    let frames = 0;
+    board.onLedStrip(() => frames++);
+    const highs = new Map<number, number>();
+    board.onPinChange((pin, drive) => {
+      if (drive === 'high') highs.set(pin, (highs.get(pin) ?? 0) + 1);
+    });
+    board.runFor(50);
+    expect(highs.get(7)).toBe(5);
+    // shiftOut sets its pins as they are; it does not make them outputs, so pin 9 stays an input.
+    expect(highs.get(8)).toBe(1);
+    expect(frames).toBe(0);
+  }, 120_000);
+
+  it('lights the lab’s LED ring from D6, through the circuit', async () => {
+    const result = await compile(`#include <Adafruit_NeoPixel.h>
+Adafruit_NeoPixel ring(12, 6, NEO_GRB + NEO_KHZ800);
+void setup() {
+  ring.begin();
+  ring.setBrightness(60);
+  ring.setPixelColor(0, ring.Color(255, 0, 0));
+  ring.setPixelColor(1, ring.Color(0, 255, 0));
+  ring.setPixelColor(11, ring.Color(0, 0, 255));
+  ring.show();
+}
+void loop() {}
+`);
+    expect(result.ok).toBe(true);
+    const document: CircuitDocument = {
+      schemaVersion: CIRCUIT_SCHEMA_VERSION,
+      components: [
+        { id: 'UNO1', type: 'uno', props: {} },
+        {
+          id: 'RING1',
+          type: 'ledring',
+          pins: { vcc: 'BB1.c10', gnd: 'BB1.c11', din: 'BB1.c12', dout: 'BB1.c13' },
+          props: { leds: 12 },
+        } as unknown as CircuitDocument['components'][number],
+      ],
+      wires: (
+        [
+          ['UNO1.5v', 'BB1.a10'],
+          ['UNO1.gnd', 'BB1.a11'],
+          ['UNO1.d6', 'BB1.a12'],
+        ] as const
+      ).map(([from, to], i) => ({ id: `W${i + 1}`, from, to, color: '#000000' })),
+    };
+    const session = new SimulationSession(document);
+    session.loadFirmware('UNO1', result.hex);
+    for (let t = 0; t < 500; t += 50) session.advance(50);
+    const colours = session.frame().result.readings.RING1!.ring!.colours;
+    // Brightness 60 of 255: a full colour arrives as 60 (0x3c).
+    expect(colours[0]).toBe(0x3c0000);
+    expect(colours[1]).toBe(0x003c00);
+    expect(colours[11]).toBe(0x00003c);
+    expect(colours.slice(2, 11).every((colour) => colour === 0)).toBe(true);
+  }, 120_000);
+
   it('cannot read host files from a sketch', async () => {
     const result = await compile('#include "/etc/passwd"\nvoid setup() {}\nvoid loop() {}\n');
     expect(result.ok).toBe(false);

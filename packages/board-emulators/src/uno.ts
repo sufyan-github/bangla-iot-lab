@@ -20,7 +20,14 @@ import {
   usart0Config,
 } from 'avr8js';
 import { parseIntelHex } from './intel-hex';
-import type { I2cHandler, PinDrive, PinListener, ProgrammableBoard, SpiHandler } from './board';
+import type {
+  I2cHandler,
+  LedStripHandler,
+  PinDrive,
+  PinListener,
+  ProgrammableBoard,
+  SpiHandler,
+} from './board';
 
 const FLASH_SIZE = 0x8000; // ATmega328P: 32 KiB
 const CLOCK_HZ = 16_000_000;
@@ -32,6 +39,32 @@ const MOSI = 11;
 const MISO = 12;
 /** The most bytes a device is asked for at once; the program takes what it needs. */
 const I2C_READ_AHEAD = 32;
+
+/**
+ * WS2812-style LED data, timed in clock cycles (62.5 ns each). A HIGH pulse
+ * this long or longer is a 1 bit, a shorter one a 0 (the WS2812B's own dividing
+ * line sits between its 0.4 and 0.8 microsecond pulses).
+ */
+const LED_ONE_CYCLES = 10;
+/** A HIGH longer than 2 microseconds is no LED bit: an ordinary change of the pin. */
+const LED_MAX_HIGH_CYCLES = 32;
+/** The line resting LOW for 50 microseconds ends a frame, and the LEDs take their colours. */
+const LED_LATCH_CYCLES = 800;
+/** Bits further apart than this on average were sent at 400 kHz rather than 800. */
+const LED_400KHZ_PERIOD_CYCLES = 30;
+
+/** A pin's LED data as it arrives. */
+interface LedLine {
+  /** Cycle the pulse being timed went HIGH, or null. */
+  rise: number | null;
+  /** Changes with every edge, so a check scheduled for an earlier one is dropped. */
+  edge: number;
+  bits: number[];
+  firstRise: number;
+  lastRise: number;
+  lastFall: number;
+  latchPending: boolean;
+}
 
 export const UNO_PIN_COUNT = 20;
 /** Supply voltage of the board's logic, volts. */
@@ -50,7 +83,8 @@ const DRIVE: Record<PinState, PinDrive> = {
  *
  * Pins use Arduino numbering: 0-13 are the digital pins (port D then port B)
  * and 14-19 are A0-A5 (port C). Its I²C (TWI) and SPI hardware reach the
- * circuit's devices through the same handlers as the ESP32's. Not emulated:
+ * circuit's devices through the same handlers as the ESP32's, and WS2812 LED
+ * data is read from the timing of a pin's pulses. Not emulated:
  * EEPROM, external interrupts driven from the circuit.
  */
 export class UnoBoard implements ProgrammableBoard {
@@ -62,6 +96,8 @@ export class UnoBoard implements ProgrammableBoard {
   private readonly decoder = new TextDecoder();
   private i2c: I2cHandler | null = null;
   private spi: SpiHandler | null = null;
+  private ledStrip: LedStripHandler | null = null;
+  private readonly ledLines = new Map<number, LedLine>();
 
   constructor(hex: string) {
     const flash = parseIntelHex(hex, FLASH_SIZE);
@@ -82,9 +118,7 @@ export class UnoBoard implements ProgrammableBoard {
         const drives = this.portDrives(port, pinCount);
         for (let bit = 0; bit < pinCount; bit++) {
           if (drives[bit] !== previous[bit]) {
-            for (const listener of this.pinListeners) {
-              listener(firstPin + bit, drives[bit]!, this.timeMs);
-            }
+            this.pinChanged(firstPin + bit, previous[bit]!, drives[bit]!);
           }
         }
         previous = drives;
@@ -162,6 +196,97 @@ export class UnoBoard implements ProgrammableBoard {
       },
       readByte: () => twi.completeRead(reading.shift() ?? 0xff),
     };
+  }
+
+  /**
+   * Every pin change goes through here. A HIGH pulse shorter than 2
+   * microseconds is read as one bit of WS2812 LED data and is not passed on as a
+   * pin change: the circuit could not show so short a pulse anyway. Any longer
+   * HIGH is passed on with the time it began, so the circuit hears of it at
+   * most 2 microseconds late. Nothing else waits.
+   */
+  private pinChanged(pin: number, from: PinDrive, to: PinDrive): void {
+    const now = this.cpu.cycles;
+    let line = this.ledLines.get(pin);
+    if (from === 'low' && to === 'high') {
+      if (!line) {
+        line = {
+          rise: null,
+          edge: 0,
+          bits: [],
+          firstRise: 0,
+          lastRise: 0,
+          lastFall: 0,
+          latchPending: false,
+        };
+        this.ledLines.set(pin, line);
+      }
+      const timed = line;
+      timed.rise = now;
+      const edge = ++timed.edge;
+      this.cpu.addClockEvent(() => {
+        if (timed.edge !== edge) return;
+        // Too long for a bit: any LED data before it is broken off.
+        timed.rise = null;
+        timed.bits = [];
+        this.notify(pin, 'high', now);
+      }, LED_MAX_HIGH_CYCLES + 1);
+      return;
+    }
+    if (line && line.rise !== null) {
+      const rise = line.rise;
+      line.rise = null;
+      line.edge++;
+      if (to === 'low') {
+        if (line.bits.length === 0) line.firstRise = rise;
+        line.lastRise = rise;
+        line.bits.push(now - rise >= LED_ONE_CYCLES ? 1 : 0);
+        line.lastFall = now;
+        if (!line.latchPending) this.awaitLatch(pin, line, LED_LATCH_CYCLES);
+        return;
+      }
+      // The pin stopped driving instead: an ordinary short pulse after all.
+      line.bits = [];
+      this.notify(pin, 'high', rise);
+    }
+    this.notify(pin, to, now);
+  }
+
+  /** Checks back once the line may have rested LOW long enough to end a frame. */
+  private awaitLatch(pin: number, line: LedLine, cycles: number): void {
+    line.latchPending = true;
+    this.cpu.addClockEvent(() => {
+      line.latchPending = false;
+      if (line.bits.length === 0) return;
+      const rested = line.rise === null ? this.cpu.cycles - line.lastFall : 0;
+      if (rested < LED_LATCH_CYCLES) {
+        this.awaitLatch(pin, line, LED_LATCH_CYCLES - rested);
+        return;
+      }
+      const bits = line.bits;
+      line.bits = [];
+      const length = Math.floor(bits.length / 8);
+      if (length === 0 || !this.ledStrip) return;
+      const bytes = new Uint8Array(length);
+      for (let i = 0; i < length * 8; i++) bytes[i >> 3] = (bytes[i >> 3]! << 1) | bits[i]!;
+      const period = bits.length > 1 ? (line.lastRise - line.firstRise) / (bits.length - 1) : 0;
+      this.ledStrip({
+        pin,
+        bytes,
+        khz: period > LED_400KHZ_PERIOD_CYCLES ? 400 : 800,
+        timeMs: this.timeMs,
+      });
+    }, cycles);
+  }
+
+  private notify(pin: number, drive: PinDrive, cycles: number): void {
+    const timeMs = (cycles / CLOCK_HZ) * 1000;
+    for (const listener of this.pinListeners) listener(pin, drive, timeMs);
+  }
+
+  /** Gives the board the circuit's WS2812-style LEDs, on any pin. */
+  onLedStrip(handler: LedStripHandler): void {
+    this.ledStrip = handler;
   }
 
   /** Gives the board the circuit's I²C devices, on A4 (SDA) and A5 (SCL). */

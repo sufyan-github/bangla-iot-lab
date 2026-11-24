@@ -16,7 +16,7 @@
   "model": {
     "level": "behaviour",
     "simplified": [
-      "It works with the ESP32 board and the lab's own model of that board only, through the lab's own version of the NeoPixel library. The UNO-compatible board and the chip emulator cannot drive it yet.",
+      "It works with the ESP32 board (the lab's own model of it) and with the UNO-compatible board on any digital pin, through the lab's own version of the NeoPixel library. On the UNO the library switches the pin with WS2812 timing and the lab reads the colours back from the length of each pulse. The ESP32's chip emulator cannot drive it yet.",
       "The colours travel as whole bytes from the program to the ring; the pulses on the data wire are not produced, so the oscilloscope and logic analyser show the line resting LOW.",
       "Each LED takes three bytes in the order green, red, blue, as the WS2812B does. A program set up for another order shows other colours, as on a real ring.",
       "It lights from 3.5 V, the lowest supply in the WS2812B's datasheet. Below that the lab shows it dark; real rings often still light dimly, with wrong colours.",
