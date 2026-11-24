@@ -31,6 +31,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The glossary**: 48 technical terms in Bangla and English side by side, with
+  a short meaning, other names, and the lessons that use each one. In a lesson,
+  a term shows its other-language name, and a tap gives its meaning.
 - **The retention job**: removes what the lab no longer needs to keep, by the
   proposed periods, which are settings until they are confirmed. It only
   reports unless told to apply; closed accounts are emptied of personal data.

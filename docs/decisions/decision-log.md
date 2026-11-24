@@ -2190,3 +2190,26 @@ Built on 25 November 2026, chosen by the owner as the next step.
 - **Not yet scheduled.** Nothing runs it on its own: it is meant to run once a
   day on the server, which is set up with hosting. AI usage and payment records
   have no tables yet, so no rules either.
+
+## D-102 — The glossary
+
+Built on 25 November 2026, chosen as the next step after the retention job.
+
+- **The lab's own words.** Each of the 48 terms is the word the lab itself uses
+  in each language (ভোল্টেজ, কারেন্ট, রেজিস্টর, সার্কিট), so the glossary explains
+  what students actually read. A test fails if a term's word does not appear in
+  the lessons or on the lab's screens. Other names in use, such as বিভব পার্থক্য
+  or তড়িৎ প্রবাহ, are listed with it and found by the search. They are common
+  Bangla words, not checked against the NCTB textbooks; that check belongs to
+  the curriculum mapping, which is still to come.
+- **A page of its own.** `/glossary`, from the main menu: both names side by
+  side (the reader's language first), the unit, a short meaning, the lessons
+  that use the term and related terms. A search finds a term by any name in
+  either language, then by its meaning. It is part of the app, so it works
+  offline.
+- **Terms in lessons.** A bold word in a lesson's step, points or next idea that
+  names a term shows its name in the other language beside it, the first time
+  in that text. A tap opens its meaning, with a link to the glossary in a new
+  tab, so the lesson stays as it was. Quiz questions are left alone, so a
+  meaning cannot give an answer away.
+- The glossary is content under CC BY 4.0, like the lessons.
