@@ -8,6 +8,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Changed
 
+- **Run checks a lesson's wiring**: in a lesson, Run lists any part or
+  connection the lesson has asked for that is not there yet, with its step,
+  and rings it on the board; each item goes once it is fixed.
 - **Right-angle wires**: besides the jumper wire, a wire can run straight
   and turn at right angles. Choose the kind for new wires in the toolbar, and
   change any wire later from its quick actions; one circuit can mix both.

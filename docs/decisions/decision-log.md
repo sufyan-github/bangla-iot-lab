@@ -2390,3 +2390,27 @@ Asked for by the owner on 25 November 2026 (task 8 of the lab plan).
   wire. That is circuit version 26. An older circuit opens unchanged, with all
   its wires jumper wires.
 - Only the drawing changes: a wire joins the same two places either way.
+
+## D-110 — Run in a lesson checks what was asked for
+
+Asked for by the owner on 25 November 2026 (task 9 of the lab plan): a
+lesson or project built as asked must work with its given program, and a
+wrong connection must be caught before it puzzles the student.
+
+- **What is checked.** When Run is pressed in a lesson, the lab looks at every
+  part and connection the lesson has asked for, in this step and every step
+  before it, and lists the ones the circuit does not have. A connection made
+  with a resistor of the wrong value counts as not made.
+- **What is shown.** A card over the board lists each item, with the step that
+  asked for it. "দেখাও" rings both ends of a missing connection on the board.
+  A board's "any ground" rings all its ground sockets. Each item goes once it
+  is fixed, and the card with the last. A missing part has nothing on the
+  board to point at, so the board points at the first item that does.
+- **The circuit runs all the same.** Some lessons want a fault to be seen and
+  explained, and those explanations (a short circuit, too much current) are
+  the lab's, as before.
+- **No false warnings.** Every lesson's walkthrough test now checks that, at
+  the moment it presses Run, nothing it has been asked for is missing. All 50
+  lessons pass, so a circuit built as a lesson asks never gets the card.
+- **Later, as the owner said:** a student's own circuit, with no lesson to
+  compare against, and telling a wiring fault from a fault in the program.
