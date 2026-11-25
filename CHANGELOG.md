@@ -8,6 +8,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Changed
 
+- **Right-angle wires**: besides the jumper wire, a wire can run straight
+  and turn at right angles. Choose the kind for new wires in the toolbar, and
+  change any wire later from its quick actions; one circuit can mix both.
 - **Parts go where you put them**: a breadboard is picked by its size (170,
   400 or 830 holes); a battery, supply, board or motor driver follows the
   pointer as a half-transparent picture and is put down where the mat is

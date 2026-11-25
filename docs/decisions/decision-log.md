@@ -2368,3 +2368,25 @@ Asked for by the owner on 25 November 2026.
 - **Tests.** The browser tests of what the lab does add these parts as before,
   through `e2e/pick.ts`, which presses twice. `canvas.spec.ts` tests putting
   them down by hand.
+
+## D-109 — Two kinds of wire: jumper and right-angle
+
+Asked for by the owner on 25 November 2026 (task 8 of the lab plan).
+
+- **A wire is a jumper wire unless it is drawn square.** A jumper wire hangs
+  slack between its ends, as before. A square wire runs straight and turns at
+  right angles: between its ends and each bend it goes across first, then up
+  or down, with a small rounded corner, as a wire laid flat on a board is bent.
+- **The kind for new wires is chosen in the toolbar.** On a laptop the rail
+  lists "jumper wire" and "right-angle wire" under the wire tool, and pressing
+  one takes up the wire tool in that kind. On a phone a toggle appears beside
+  the wire tool while it is in hand. The choice is remembered on the device.
+- **Any wire can be changed later.** With a wire selected, its quick actions
+  offer the other kind. Its route (its bends) is kept either way, so one
+  circuit can mix both.
+- **A square wire's route** is laid out as any wire's is: its handles sit at
+  its corners, and dragging one makes a bend there.
+- **Saved format.** A wire may carry `style: 'square'`; left out it is a jumper
+  wire. That is circuit version 26. An older circuit opens unchanged, with all
+  its wires jumper wires.
+- Only the drawing changes: a wire joins the same two places either way.
