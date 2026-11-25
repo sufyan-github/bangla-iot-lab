@@ -2316,3 +2316,29 @@ and right-angle wires, follow.
   open, as a student may choose, so that nothing covers the board mid-test;
   `workspace.spec.ts` tests the rails themselves from a browser that has chosen
   nothing.
+
+## D-107 — A work surface that takes in the project, and has no edge
+
+Asked for by the owner on 25 November 2026, after the rails of D-106 left the
+breadboard filling the window at 125%.
+
+- **A first look takes in the circuit.** The board is shown whole, in width
+  and in height, and at full size at most (it was fitted to the window's width,
+  up to 160%). On a touch screen it never goes below full size, as before, so
+  that holes stay large enough to tap.
+- **The mat has no edge in sight.** It is drawn around the circuit with bare
+  room on every side, never less than the window shows, and without
+  scrollbars. Dragging the bare mat with a mouse moves the view any way; a
+  finger moves it as before. Where the view is moved, more mat is laid down,
+  so it does not run out.
+- **Parts can go any way.** A part put down in the room to the left or above
+  stays there, and the circuit's area and the room around it move out with it.
+  The view stays where it was while the mat grows under it.
+- **It is large, not endless.** A part can lie up to 2000 px left of and above
+  where the first breadboard starts, and 3600 px right of and below it. A
+  saved circuit already allowed positions that far (100 hole pitches before
+  the corner), so no saved circuit changes.
+- **A breadboard's handle** is larger, with arrows four ways for "move me" and
+  a tip on pointing at it. Breadboards could always be moved by it; the owner
+  had not found it.
+- "Fit" goes back to the first view.

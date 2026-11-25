@@ -8,6 +8,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Changed
 
+- **A work surface with no edge**: a first look takes in the whole circuit, at
+  full size at most; the bare mat can be dragged any way and has no
+  scrollbars; parts can be put to the left and above as well, and the mat
+  grows with them. A breadboard's handle is larger and says how to move it.
 - **More room for the circuit**: on a laptop the parts list and the work panel
   are narrow rails that open while the pointer is on them, and can be kept
   open; one button shows the board alone. On a phone the parts are a narrow
