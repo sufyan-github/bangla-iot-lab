@@ -2434,3 +2434,23 @@ the owner after reviewing what is left to build.
   (no left-edge stripe); a learner's own progress in a lesson is a row of LEDs.
 - With this, every page a student or teacher sees is in the new design. The
   owner's office keeps Kumo, with the new colours through its settings.
+
+## D-112 — Pause, step and start again
+
+Built on 25 November 2026, chosen by the owner from the list of what is left
+(requirement "Pause, reset, step").
+
+- **Only where it means something.** The controls appear while a circuit runs
+  that changes over time: a capacitor charging, a board running a program, a
+  clock. A circuit of batteries, resistors and LEDs settles at once, and has
+  none.
+- **Pause** holds the lab's time still; the board stops where it was, and an
+  edit made while paused is shown at once, without time moving for it. **Run
+  on** lets time go from where it stood; the pause is not counted as running
+  slowly.
+- **Step**, while paused, moves time on by 1, 10 or 100 ms, as chosen, and
+  holds it again; the time it stands at is shown to the millisecond.
+- **Start again** begins the running circuit from time zero, with the programs
+  it has.
+- The simulation advances in the same slices of at most 50 ms whether it runs
+  or is stepped, so a stepped circuit behaves as a running one does.

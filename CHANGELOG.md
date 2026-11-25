@@ -64,6 +64,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Pause, step and start again**: a running circuit that changes over time
+  (a capacitor, a board's program, a clock) can be held still, moved on by 1,
+  10 or 100 ms at a time, and started again from the beginning.
 - **The glossary**: 48 technical terms in Bangla and English side by side, with
   a short meaning, other names, and the lessons that use each one. In a lesson,
   a term shows its other-language name, and a tap gives its meaning.
