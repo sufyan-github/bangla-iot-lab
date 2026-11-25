@@ -398,3 +398,103 @@ test('pointing at a hole while the circuit runs shows its voltage', async ({ pag
   await expect(hoverMark(page)).toHaveAttribute('data-hover', 'BB1.j12');
   await expect(hoverMark(page).locator('text')).not.toContainText('V');
 });
+
+/** Where a point of the canvas is on the screen, without moving the view. */
+const screenOf = (page: Page, point: Spot) =>
+  page.evaluate((p) => {
+    const svg = document.querySelector<SVGSVGElement>('[data-testid="canvas-frame"] svg')!;
+    const q = new DOMPoint(p.x, p.y).matrixTransform(svg.getScreenCTM()!);
+    return { x: q.x, y: q.y };
+  }, point);
+
+const viewBoxOf = (page: Page) =>
+  page.evaluate(() =>
+    document
+      .querySelector('[data-testid="canvas-frame"] svg')!
+      .getAttribute('viewBox')!
+      .split(' ')
+      .map(Number),
+  );
+
+test('a first look takes in the whole circuit, at full size at most', async ({
+  page,
+  isMobile,
+}) => {
+  await openExample(page, 'open-example-uno');
+  await expect(page.locator('[data-hit="UNO1"]')).toBeVisible();
+  const scale = await page.evaluate(
+    () =>
+      document.querySelector<SVGSVGElement>('[data-testid="canvas-frame"] svg')!.getScreenCTM()!.a,
+  );
+  expect(scale).toBeLessThanOrEqual(1.001);
+  // The mat has no scrollbars, and reaches past the circuit on every side.
+  const frame = page.getByTestId('canvas-frame');
+  expect(await frame.evaluate((el) => (el as HTMLElement).offsetWidth - el.clientWidth)).toBe(0);
+  const [left, top] = await viewBoxOf(page);
+  expect(left).toBeLessThan(-200);
+  expect(top).toBeLessThan(-200);
+  // On a laptop the breadboard and the board below it are both in sight.
+  if (!isMobile) {
+    await expect(page.locator('[data-hit="UNO1"]')).toBeInViewport({ ratio: 0.99 });
+    await expect(page.locator('[data-part="LED1"]')).toBeInViewport();
+  }
+});
+
+test('dragging the bare mat moves the view, any way', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'on a touch screen a finger moves the mat itself');
+  await openExample(page, 'open-example');
+  await expect(page.locator('[data-hit="BAT1"]')).toBeVisible();
+  // A place on the mat below the breadboard, away from any hole.
+  const grip = { x: 520, y: 640 };
+  await onScreen(page, [grip]);
+  const mark = { x: 190, y: 28 }; // the breadboard's corner
+  const before = await screenOf(page, mark);
+  const hold = await screenOf(page, grip);
+
+  await page.mouse.move(hold.x, hold.y);
+  await page.mouse.down();
+  await page.mouse.move(hold.x - 60, hold.y - 40, { steps: 4 });
+  await expect(page.getByTestId('canvas-frame')).toHaveAttribute('data-panning', 'true');
+  await page.mouse.move(hold.x - 120, hold.y - 80, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.getByTestId('canvas-frame')).toHaveAttribute('data-panning', 'false');
+  const after = await screenOf(page, mark);
+  expect(after.x).toBeCloseTo(before.x - 120, 0);
+  expect(after.y).toBeCloseTo(before.y - 80, 0);
+
+  // And back the other way, past where it started: there is mat to the left and above.
+  const again = await screenOf(page, grip);
+  await page.mouse.move(again.x, again.y);
+  await page.mouse.down();
+  await page.mouse.move(again.x + 220, again.y + 150, { steps: 6 });
+  await page.mouse.up();
+  const back = await screenOf(page, mark);
+  expect(back.x).toBeCloseTo(before.x + 100, 0);
+  expect(back.y).toBeCloseTo(before.y + 70, 0);
+  // Nothing was built by it.
+  await expect(wires(page)).toHaveCount(4);
+});
+
+test('the mat grows where parts are put: a battery far to the left stays there', async ({
+  page,
+}) => {
+  await openExample(page, 'open-example');
+  const start = await placeOf(page, 'BAT1');
+  const [leftBefore] = await viewBoxOf(page);
+
+  // Twice, each time into the bare room the mat keeps on that side.
+  await dragPart(page, 'BAT1', { x: 0.4, y: 0.5 }, { x: -200, y: 0 });
+  await dragPart(page, 'BAT1', { x: 0.4, y: 0.5 }, { x: -200, y: 0 });
+  const moved = await placeOf(page, 'BAT1');
+  expect(moved.x).toBeLessThan(start.x - 300);
+  expect(moved.x).toBeLessThan(0);
+  const [leftAfter] = await viewBoxOf(page);
+  expect(leftAfter).toBeLessThan(leftBefore! - 300);
+  await expect(wires(page)).toHaveCount(4);
+
+  // The place is kept with the circuit.
+  await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
+  await page.reload();
+  await expect(page.locator('[data-hit="BAT1"]')).toBeVisible();
+  expect(await placeOf(page, 'BAT1')).toEqual(moved);
+});

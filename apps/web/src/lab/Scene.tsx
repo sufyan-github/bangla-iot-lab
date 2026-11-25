@@ -23,13 +23,13 @@ import {
   PITCH,
   batteryTerminalPoint,
   breadboardBox,
-  canvasHeight,
-  canvasWidth,
+  canvasBox,
   endpointPoint,
   holePoint,
   partBox,
   boardShift,
   wireBends,
+  type Box,
   type Point,
 } from './geometry';
 import {
@@ -88,7 +88,7 @@ import { tftImage } from './tft-image';
 import { ShadingDefs } from './shading';
 
 /** The mat the breadboards lie on, and the patterns and colours the drawings share. */
-const Mat = memo(function Mat({ width, height }: { width: number; height: number }) {
+const Mat = memo(function Mat({ x, y, width, height }: Box) {
   return (
     <g>
       <defs>
@@ -115,9 +115,9 @@ const Mat = memo(function Mat({ width, height }: { width: number; height: number
           </radialGradient>
         ))}
       </defs>
-      <rect width={width} height={height} fill="#1d5a4e" />
-      <rect width={width} height={height} fill="url(#mat-fine)" />
-      <rect width={width} height={height} fill="url(#mat-coarse)" />
+      <rect x={x} y={y} width={width} height={height} fill="#1d5a4e" />
+      <rect x={x} y={y} width={width} height={height} fill="url(#mat-fine)" />
+      <rect x={x} y={y} width={width} height={height} fill="url(#mat-coarse)" />
     </g>
   );
 });
@@ -147,27 +147,32 @@ const BreadboardDrawing = memo(function BreadboardDrawing(props: {
   const rails = spec.rails;
   return (
     <g transform={`translate(${props.x} ${props.y})`} data-breadboard={props.id}>
-      {/* The tab it is picked up by, with its name. */}
+      {/* The handle it is picked up by: arrows four ways, for "move me", and its name. */}
       <rect
         x={0}
         y={-BREADBOARD_TAB.height}
         width={BREADBOARD_TAB.width}
         height={BREADBOARD_TAB.height + 8}
-        rx={6}
-        fill={props.selected ? '#e8a21a' : '#cfc6aa'}
+        rx={7}
+        fill={props.selected ? '#e8a21a' : '#ded3a8'}
+        stroke={props.selected ? '#8a5a00' : '#9c905f'}
+        strokeWidth={1.2}
       />
       {props.detailed && (
-        <text
-          x={BREADBOARD_TAB.width / 2}
-          y={-6}
-          fontSize={11.5}
-          fontWeight={700}
-          fill="#3d3a2c"
-          textAnchor="middle"
-          pointerEvents="none"
-        >
-          ⠿ {props.id}
-        </text>
+        <g pointerEvents="none">
+          <path
+            transform={`translate(17 ${-BREADBOARD_TAB.height / 2 - 1})`}
+            d="M0 -7.5V7.5M-7.5 0H7.5M-3 -4.5L0 -7.5L3 -4.5M-3 4.5L0 7.5L3 4.5M-4.5 -3L-7.5 0L-4.5 3M4.5 -3L7.5 0L4.5 3"
+            fill="none"
+            stroke="#3d3a2c"
+            strokeWidth={1.7}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <text x={34} y={-9} fontSize={13} fontWeight={700} fill="#3d3a2c">
+            {props.id}
+          </text>
+        </g>
       )}
       {/* The board casts a soft shadow on the mat and has a lit top edge. */}
       <rect x={2} y={6} width={width} height={height} rx={10} fill="#0d3129" opacity={0.55} />
@@ -274,6 +279,8 @@ export interface SceneProps {
   pressed?: readonly string[];
   /** Status of boards with a running program. */
   boards?: Record<string, BoardStatus>;
+  /** The mat's extent: the circuit's own area unless the lab draws room around it. */
+  surface?: Box;
   /**
    * False for thumbnails: leaves out the holes and lettering, which are invisible
    * at that size, and the parts' ids, so that a picture of a circuit is never
@@ -795,6 +802,7 @@ export function Scene({
   pressed = [],
   boards = {},
   detailed = true,
+  surface,
   batteryLabel,
   readingLabel,
   formatNumber = String,
@@ -808,7 +816,7 @@ export function Scene({
       : undefined;
   return (
     <>
-      <Mat width={canvasWidth(circuit)} height={canvasHeight(circuit)} />
+      <Mat {...(surface ?? canvasBox(circuit))} />
       {layoutOf(circuit).boards.map((board) => {
         const box = breadboardBox(board);
         return (

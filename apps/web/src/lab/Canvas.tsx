@@ -20,6 +20,7 @@ import {
 import {
   memo,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -30,12 +31,13 @@ import { useT } from '../i18n';
 import { describeEndpoint, joinedHoles } from './endpoints';
 import { meterReading, voltageAt } from './meter';
 import {
-  canvasWidth,
+  SURFACE_ROOM,
+  canvasBox,
+  surfaceBox,
   holePoints,
   BREADBOARD_TAB,
   PITCH,
   BOARD_SOCKETS,
-  canvasHeight,
   distanceToSegment,
   endpointNear,
   endpointPoint,
@@ -46,6 +48,7 @@ import {
   partBox,
   toPosition,
   wireBends,
+  type Box,
   type Point,
 } from './geometry';
 import { slackMiddle, wirePath } from './parts';
@@ -82,6 +85,8 @@ interface Press {
   /** With the select tool: dragging from a free hole pulls out a wire. */
   candidate: boolean;
   fromSelect: boolean;
+  /** A press on the bare mat: the mat's point at the window's corner then, so dragging moves the view (D-107). */
+  pan: { x: number; y: number; moved: boolean } | null;
 }
 
 /** How far each module's body rises above its row of legs, in canvas units. */
@@ -180,10 +185,10 @@ export function Canvas() {
     straightenSelected,
     clearMeter,
   } = useLab.getState();
-  const height = canvasHeight(circuit);
-  const width = canvasWidth(circuit);
-  const widthRef = useRef(width);
-  widthRef.current = width;
+  // The circuit's own area; the mat is drawn with room around it (D-107).
+  const content = canvasBox(circuit);
+  const contentRef = useRef(content);
+  contentRef.current = content;
   const { t, quantity, number } = useT();
 
   const frameRef = useRef<HTMLDivElement>(null);
@@ -197,28 +202,106 @@ export function Canvas() {
   const [lift, setLift] = useState<{ id: string; x: number; y: number } | null>(null);
   const [floating, setFloating] = useState<{ id: string; key: string; point: Point } | null>(null);
   const [fitZoom, setFitZoom] = useState(1);
+  /** The window's size on the page, in screen pixels. */
+  const [frameSize, setFrameSize] = useState({ width: 0, height: 0 });
+  const [panning, setPanning] = useState(false);
   /** Set once the student changes the zoom; until then the board follows the window. */
   const [chosenZoom, setChosenZoom] = useState<number | null>(null);
   const zoom = chosenZoom ?? fitZoom;
   const zoomRef = useRef(zoom);
   zoomRef.current = zoom;
 
-  // Show the whole board when there is room. On touch screens never go below
-  // full size, because the holes would be too small to tap; the frame scrolls instead.
+  // Show the whole circuit, at full size at most, so that a first look takes in a
+  // project and not one breadboard filling the window (D-107). On touch screens
+  // never go below full size, because the holes would be too small to tap; the
+  // view is moved instead.
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     const measure = () => {
-      const fit = Math.min(1.6, frame.clientWidth / widthRef.current);
+      const { width, height } = contentRef.current;
+      const fit = Math.min(1, frame.clientWidth / width, frame.clientHeight / height);
       setFitZoom(Math.max(coarse ? 1 : 0.5, fit));
+      setFrameSize((was) =>
+        was.width === frame.clientWidth && was.height === frame.clientHeight
+          ? was
+          : { width: frame.clientWidth, height: frame.clientHeight },
+      );
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(frame);
     return () => observer.disconnect();
-    // Measured again when breadboards make the work surface wider or narrower.
-  }, [width]);
+    // Measured again when the circuit's area grows or shrinks.
+  }, [content.width, content.height]);
+
+  /** The furthest the view has been moved; the mat grows past it, so there is always more. */
+  const [reached, setReached] = useState<Box | null>(null);
+  // The mat: the circuit's area with bare room on every side, never less than the window shows.
+  const shown = { width: frameSize.width / zoom, height: frameSize.height / zoom };
+  const surface = surfaceBox(content, shown, reached);
+  const surfaceRef = useRef(surface);
+  surfaceRef.current = surface;
+  /**
+   * The point of the mat at the window's top-left corner. Kept so that the view
+   * stays put when the mat grows to the left or upwards, or the zoom changes.
+   * Null until the student moves the view: until then the circuit is kept in
+   * its first place, centred when there is room to spare.
+   */
+  const view = useRef<Point | null>(null);
+  /** True while the scroll position is being set here, not by the student. */
+  const settling = useRef(false);
+  const [home, setHome] = useState(0);
+  useLayoutEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || frameSize.width === 0) return;
+    const spare = frameSize.width / zoom - content.width;
+    const at = view.current ?? { x: content.x - Math.max(0, spare / 2), y: content.y };
+    settling.current = true;
+    frame.scrollLeft = (at.x - surface.x) * zoom;
+    frame.scrollTop = (at.y - surface.y) * zoom;
+    // The scroll event of a position set here comes later, if at all: stop waiting for it then.
+    const done = requestAnimationFrame(() => (settling.current = false));
+    return () => cancelAnimationFrame(done);
+    // By value: the circuit's area is worked out afresh at every drawing.
+  }, [
+    zoom,
+    surface.x,
+    surface.y,
+    surface.width,
+    surface.height,
+    frameSize,
+    content.x,
+    content.y,
+    content.width,
+    home,
+  ]);
+  const onScroll = () => {
+    const frame = frameRef.current;
+    if (!frame || settling.current) return;
+    const at = {
+      x: surface.x + frame.scrollLeft / zoom,
+      y: surface.y + frame.scrollTop / zoom,
+    };
+    view.current = at;
+    // Near an edge of the mat, lay more of it down that way.
+    const near = SURFACE_ROOM / 2;
+    if (
+      at.x < surface.x + near ||
+      at.y < surface.y + near ||
+      at.x + shown.width > surface.x + surface.width - near ||
+      at.y + shown.height > surface.y + surface.height - near
+    ) {
+      setReached((was) => {
+        const x = Math.min(was?.x ?? at.x, at.x);
+        const y = Math.min(was?.y ?? at.y, at.y);
+        const right = Math.max(was ? was.x + was.width : -Infinity, at.x + shown.width);
+        const bottom = Math.max(was ? was.y + was.height : -Infinity, at.y + shown.height);
+        return { x, y, width: right - x, height: bottom - y };
+      });
+    }
+  };
 
   // Ctrl or ⌘ with the wheel (and a trackpad pinch) zooms the board, not the whole page.
   useEffect(() => {
@@ -344,6 +427,23 @@ export function Canvas() {
 
     const lab = useLab.getState();
     const held = press.current;
+    if (held?.pan && !held.pulling) {
+      // Dragging the bare mat moves the view; a press that barely moves is still a tap.
+      const moveX = event.clientX - held.client.x;
+      const moveY = event.clientY - held.client.y;
+      if (held.pan.moved || Math.hypot(moveX, moveY) > TAP_SLOP) {
+        held.pan.moved = true;
+        setPanning(true);
+        const frame = frameRef.current;
+        if (frame) {
+          // In the mat's own measure, so the hand keeps its hold while the mat grows under it.
+          const scale = zoomRef.current;
+          frame.scrollLeft = (held.pan.x - moveX / scale - surfaceRef.current.x) * scale;
+          frame.scrollTop = (held.pan.y - moveY / scale - surfaceRef.current.y) * scale;
+        }
+        return;
+      }
+    }
     if (held?.candidate && !held.pulling && distance(point, held.canvas) > PULL_DISTANCE) {
       // Dragging away from a free hole with the select tool pulls a wire out of it.
       setTool('wire');
@@ -405,6 +505,7 @@ export function Canvas() {
     const point = toCanvas(event);
     const endpoint = endpointNear(lab.circuit, point);
     const free = endpoint !== undefined && attachError(lab.circuit, endpoint) === null;
+    const frame = frameRef.current;
     const next: Press = {
       endpoint,
       client: { x: event.clientX, y: event.clientY },
@@ -412,6 +513,15 @@ export function Canvas() {
       pulling: false,
       candidate: false,
       fromSelect: false,
+      // A mouse on the bare mat, away from any hole or terminal, takes hold of the view.
+      pan:
+        isMouse(event) && endpoint === undefined && frame
+          ? {
+              x: surfaceRef.current.x + frame.scrollLeft / zoomRef.current,
+              y: surfaceRef.current.y + frame.scrollTop / zoomRef.current,
+              moved: false,
+            }
+          : null,
     };
     if (lab.tool === 'select') {
       select(null);
@@ -433,6 +543,7 @@ export function Canvas() {
     }
     const held = press.current;
     press.current = null;
+    setPanning(false);
     if (!held) return;
     if (svgRef.current?.hasPointerCapture(event.pointerId)) {
       svgRef.current.releasePointerCapture(event.pointerId);
@@ -572,16 +683,24 @@ export function Canvas() {
 
   return (
     <div className="relative min-h-0 flex-1">
-      <div ref={frameRef} className="h-full overflow-auto bg-bench" data-testid="canvas-frame">
+      <div
+        ref={frameRef}
+        onScroll={onScroll}
+        className="no-scrollbar h-full overflow-auto bg-bench"
+        data-testid="canvas-frame"
+        data-panning={panning}
+      >
         <svg
           ref={svgRef}
           role="img"
           aria-label={t('lab.canvasLabel')}
-          viewBox={`0 0 ${width} ${height}`}
-          width={width * zoom}
-          height={height * zoom}
-          className="mx-auto block select-none"
-          style={{ cursor: selecting && !hoverIsFree ? 'default' : 'crosshair' }}
+          viewBox={`${surface.x} ${surface.y} ${surface.width} ${surface.height}`}
+          width={surface.width * zoom}
+          height={surface.height * zoom}
+          className="block select-none"
+          style={{
+            cursor: panning ? 'grabbing' : selecting && !hoverIsFree ? 'default' : 'crosshair',
+          }}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
@@ -594,6 +713,7 @@ export function Canvas() {
             selectedId={selectedId}
             pressed={pressed}
             boards={boards}
+            surface={surface}
             batteryLabel={(volts) => quantity(volts, 'V')}
             readingLabel={(amperes) => quantity(amperes, 'A')}
             formatNumber={number}
@@ -660,7 +780,9 @@ export function Canvas() {
                           corner: { x: box.x, y: box.y },
                         })
                       }
-                    />
+                    >
+                      <title>{t('lab.moveBoard')}</title>
+                    </rect>
                   );
                 }
                 if (!('pins' in component)) {
@@ -925,7 +1047,9 @@ export function Canvas() {
             {hover && hoverPoint && hoverInfo && !lift && (
               <HoverMark
                 circuit={circuit}
-                width={width}
+                left={surface.x}
+                right={surface.x + surface.width}
+                top={surface.y}
                 endpoint={hover}
                 point={hoverPoint}
                 lead={hoverInfo.lead}
@@ -1043,7 +1167,13 @@ export function Canvas() {
           data-testid="zoom-fit"
           title={t('lab.zoomFit')}
           aria-label={t('lab.zoomFit')}
-          onClick={() => setChosenZoom(null)}
+          onClick={() => {
+            // Back to the first view: the whole circuit, in its first place.
+            view.current = null;
+            setReached(null);
+            setChosenZoom(null);
+            setHome((n) => n + 1);
+          }}
           className="min-w-16 border-x border-line px-2 text-sm font-semibold text-ink-soft tabular-nums hover:bg-paper hover:text-ink"
         >
           {number(Math.round(zoom * 100))}%
@@ -1127,8 +1257,10 @@ function LandingRing({ point }: { point: Point }) {
  */
 const HoverMark = memo(function HoverMark(props: {
   circuit: CircuitDocument;
-  /** The canvas's width, which the label stays inside. */
-  width: number;
+  /** The mat's edges, which the label stays inside. */
+  left: number;
+  right: number;
+  top: number;
   endpoint: string;
   point: Point;
   lead: string | undefined;
@@ -1144,8 +1276,8 @@ const HoverMark = memo(function HoverMark(props: {
   const at = (hole: string) => holePoint(props.circuit, hole);
   const text = [lead, name, detail].filter(Boolean).join('  ');
   const width = Math.max(30, text.length * 7.2 + 16);
-  const x = Math.min(props.width - width / 2 - 4, Math.max(width / 2 + 4, point.x));
-  const y = point.y < 52 ? point.y + 30 : point.y - 24;
+  const x = Math.min(props.right - width / 2 - 4, Math.max(props.left + width / 2 + 4, point.x));
+  const y = point.y < props.top + 52 ? point.y + 30 : point.y - 24;
   return (
     <g
       data-testid="hover-mark"

@@ -14,7 +14,11 @@ import {
   BOARD_Y,
   DRIVER_BOX,
   UNO_BOX,
+  SURFACE_ROOM,
+  canvasBox,
   canvasHeight,
+  canvasWidth,
+  surfaceBox,
   endpointNear,
   endpointPoint,
   fitsAt,
@@ -59,12 +63,59 @@ describe('moving batteries and the board', () => {
     expect(moveOffBoardTo(circuit, 'BAT1', { x: UNO_BOX.x + 20, y: UNO_BOX.y + 10 }).ok).toBe(
       false,
     );
-    expect(moveOffBoardTo(circuit, 'BAT1', { x: -500, y: 60 }).ok).toBe(false);
+    // The surface reaches 2000 to the left and above, and 3600 to the right and below.
+    expect(moveOffBoardTo(circuit, 'BAT1', { x: -2100, y: 60 }).ok).toBe(false);
+    expect(moveOffBoardTo(circuit, 'BAT1', { x: 60, y: -2100 }).ok).toBe(false);
+    expect(moveOffBoardTo(circuit, 'BAT1', { x: 3700, y: 60 }).ok).toBe(false);
+    expect(moveOffBoardTo(circuit, 'BAT1', { x: -500, y: 60 }).ok).toBe(true);
     expect(moveOffBoardTo(circuit, 'BAT1', { x: 30, y: 300 }).ok).toBe(true);
     expect(moveOffBoardTo(circuit, 'R1', { x: 30, y: 300 })).toEqual({
       ok: false,
       error: 'unknown-item',
     });
+  });
+
+  it('the circuit’s area reaches as far as its parts lie, in any direction', () => {
+    const circuit = ledCircuitExample();
+    const first = canvasBox(circuit);
+    expect(first.x).toBe(0);
+    expect(first.x + first.width).toBe(canvasWidth(circuit));
+    expect(first.y + first.height).toBe(canvasHeight(circuit));
+
+    // A battery far to the left and above takes the area with it; the right and bottom stay.
+    const moved = ok(moveOffBoardTo(circuit, 'BAT1', { x: -500, y: -300 }));
+    const wider = canvasBox(moved);
+    expect(wider.x).toBeLessThan(-500);
+    expect(wider.y).toBeLessThan(-300);
+    expect(wider.x + wider.width).toBe(canvasWidth(moved));
+  });
+
+  it('the mat keeps room around the circuit, fills the window, and follows the view', () => {
+    const content = { x: 0, y: 0, width: 1000, height: 600 };
+    const small = surfaceBox(content, { width: 800, height: 500 });
+    expect(small).toEqual({
+      x: -SURFACE_ROOM,
+      y: -SURFACE_ROOM,
+      width: 1000 + 2 * SURFACE_ROOM,
+      height: 600 + 2 * SURFACE_ROOM,
+    });
+    // A window larger than the circuit is filled to its right and bottom edges.
+    const large = surfaceBox(content, { width: 3000, height: 2000 });
+    expect(large.x + large.width).toBe(3000);
+    expect(large.y + large.height).toBe(2000);
+    // Where the view has been moved to, the mat reaches past it.
+    const reached = { x: -900, y: -700, width: 800, height: 500 };
+    const followed = surfaceBox(content, { width: 800, height: 500 }, reached);
+    expect(followed.x).toBe(-900 - SURFACE_ROOM);
+    expect(followed.y).toBe(-700 - SURFACE_ROOM);
+    // But no further than a part can be put, and the room beyond that.
+    const far = surfaceBox(
+      content,
+      { width: 800, height: 500 },
+      { x: -9000, y: -9000, width: 20000, height: 20000 },
+    );
+    expect(far.x).toBe(-2000 - SURFACE_ROOM);
+    expect(far.x + far.width).toBe(3600 + SURFACE_ROOM);
   });
 
   it('finds room for a new battery when its usual place is taken', () => {

@@ -27,10 +27,18 @@ const HALF = BREADBOARD_SPECS.half;
 /** The narrowest the work surface gets: room for a half breadboard and the parts beside it. */
 export const CANVAS_WIDTH = BOARD_X + HALF.width * PITCH + 26;
 const BREADBOARD_BOTTOM = BOARD_Y + HALF.height * PITCH;
-/** How far the work surface reaches; it grows to hold what is placed, up to here. */
+/** How far the work surface reaches right and down; it grows to hold what is placed, up to here. */
 const SURFACE_LIMIT = 3600;
+/**
+ * How far it reaches left and up of where the first breadboard starts (D-107).
+ * A saved circuit keeps positions down to 100 hole pitches before that corner,
+ * so every place up to here can be stored.
+ */
+const SURFACE_START = -2000;
+/** The bare surface kept around the circuit on every side, to move about in and to build into. */
+export const SURFACE_ROOM = 12 * PITCH;
 /** The tab above a breadboard's top-left corner, by which it is picked up and moved. */
-export const BREADBOARD_TAB = { width: 76, height: 22 } as const;
+export const BREADBOARD_TAB = { width: 104, height: 26 } as const;
 
 /** Where a breadboard is drawn on the canvas. */
 export function breadboardBox(board: PlacedBreadboard): Box {
@@ -157,8 +165,10 @@ const overlaps = (a: Box, b: Box, gap: number) =>
 /** True when the part fits at `box`: on the work surface, clear of the breadboards and other parts. */
 export function fitsAt(circuit: CircuitDocument, part: OffBoardPart, box: Box): boolean {
   const area = footprint(part.type, box);
-  if (area.x < MARGIN || area.x + area.width > SURFACE_LIMIT - MARGIN) return false;
-  if (area.y < MARGIN || area.y + area.height > SURFACE_LIMIT - MARGIN) return false;
+  if (area.x < SURFACE_START + MARGIN || area.x + area.width > SURFACE_LIMIT - MARGIN) return false;
+  if (area.y < SURFACE_START + MARGIN || area.y + area.height > SURFACE_LIMIT - MARGIN) {
+    return false;
+  }
   return offBoardParts(circuit).every(
     (other) =>
       other.id === part.id || !overlaps(area, footprint(other.type, partBox(circuit, other)), 4),
@@ -273,6 +283,51 @@ export function canvasWidth(circuit: CircuitDocument): number {
     return box.x + box.width;
   });
   return Math.max(CANVAS_WIDTH, ...rights.map((right) => right + 26));
+}
+
+/**
+ * The area the circuit takes up: at least the first breadboard's place with the
+ * room beside it, and further in any direction when parts lie further out.
+ */
+export function canvasBox(circuit: CircuitDocument): Box {
+  const boxes = offBoardParts(circuit).map((part) => footprint(part.type, partBox(circuit, part)));
+  const x = Math.min(0, ...boxes.map((box) => box.x - 26));
+  const y = Math.min(0, ...boxes.map((box) => box.y - MARGIN));
+  return { x, y, width: canvasWidth(circuit) - x, height: canvasHeight(circuit) - y };
+}
+
+/**
+ * The surface that is drawn: the circuit's area with bare room on every side,
+ * and never less than the window shows, so the mat has no edge in sight. A part
+ * put down in that room widens the circuit's area, and the room moves out with it.
+ */
+export function surfaceBox(
+  content: Box,
+  shown: { width: number; height: number },
+  /** How far the view has been moved: the mat reaches past that too, so it never runs out. */
+  reached: Box | null = null,
+): Box {
+  const left = Math.min(content.x, reached?.x ?? content.x) - SURFACE_ROOM;
+  const top = Math.min(content.y, reached?.y ?? content.y) - SURFACE_ROOM;
+  const right = Math.max(
+    content.x + content.width + SURFACE_ROOM,
+    content.x + shown.width,
+    reached ? reached.x + reached.width + SURFACE_ROOM : -Infinity,
+  );
+  const bottom = Math.max(
+    content.y + content.height + SURFACE_ROOM,
+    content.y + shown.height,
+    reached ? reached.y + reached.height + SURFACE_ROOM : -Infinity,
+  );
+  // No further than a part can be put, and the room beyond it.
+  const x = Math.max(left, SURFACE_START - SURFACE_ROOM);
+  const y = Math.max(top, SURFACE_START - SURFACE_ROOM);
+  return {
+    x,
+    y,
+    width: Math.min(right, SURFACE_LIMIT + SURFACE_ROOM) - x,
+    height: Math.min(bottom, SURFACE_LIMIT + SURFACE_ROOM) - y,
+  };
 }
 
 /** Where a hole is on the canvas; off the canvas when no breadboard has it. */

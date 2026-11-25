@@ -11,7 +11,7 @@ import { Link, useNavigate } from 'react-router';
 import { useT } from '../i18n';
 import { listCloud, openFromCloud, saveToCloud } from '../account/cloud';
 import { useAccount } from '../account/client';
-import { canvasHeight, canvasWidth } from '../lab/geometry';
+import { canvasBox } from '../lab/geometry';
 import { starterProgram } from '../lab/starters';
 import { ResumeLesson } from '../lessons/ResumeLesson';
 import { Scene } from '../lab/Scene';
@@ -19,9 +19,10 @@ import { projectStore, type ProjectContent, type ProjectRecord } from '../storag
 
 function Thumbnail({ circuit }: { circuit: CircuitDocument }) {
   const { quantity } = useT();
+  const box = canvasBox(circuit);
   return (
     <svg
-      viewBox={`0 0 ${canvasWidth(circuit)} ${canvasHeight(circuit)}`}
+      viewBox={`${box.x} ${box.y} ${box.width} ${box.height}`}
       preserveAspectRatio="xMidYMid meet"
       className="block aspect-[16/10] w-full rounded-[var(--radius-control)] bg-bench"
       aria-hidden
