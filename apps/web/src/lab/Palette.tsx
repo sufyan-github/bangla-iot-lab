@@ -598,10 +598,27 @@ export function ToolPicker({ compact = false }: { compact?: boolean }) {
 }
 
 /**
- * The parts drawer: a search box and the parts in labelled compartments. A tap
- * picks a part to place (or adds a board or source beside the breadboard).
+ * The parts list (D-106): one column, so it can stand as a narrow rail beside
+ * the board. Folded, a row is the part's drawing alone; open, its name is
+ * beside it, and nothing moves up or down, so a part stays where the pointer
+ * found it. A tap picks a part to place (or adds a board or source beside the
+ * breadboard). `withTools` puts select, wire and probe at the head of the list.
  */
-export function PartsDrawer({ onChosen }: { onChosen?: () => void }) {
+export function PartsDrawer({
+  open = true,
+  withTools = false,
+  icon = 'w-16',
+  header,
+  onChosen,
+}: {
+  open?: boolean;
+  withTools?: boolean;
+  /** The width of the column of drawings: the rail's own width. */
+  icon?: string;
+  /** Something for the end of the search row while the list is open. */
+  header?: ReactNode;
+  onChosen?: () => void;
+}) {
   const tool = useLab((s) => s.tool);
   const choose = useChoose();
   const { t } = useT();
@@ -612,74 +629,110 @@ export function PartsDrawer({ onChosen }: { onChosen?: () => void }) {
   const bins = BINS.map((bin) => ({ ...bin, items: bin.items.filter(matches) })).filter(
     (bin) => bin.items.length > 0,
   );
+  const row = (item: PaletteItem) => (
+    <li key={item}>
+      <button
+        type="button"
+        data-testid={`tool-${item}`}
+        aria-pressed={tool === item}
+        aria-label={t(`tool.${item}`)}
+        title={open ? undefined : t(`tool.${item}`)}
+        onClick={() => {
+          choose(item);
+          onChosen?.();
+        }}
+        className={`flex min-h-11 w-full items-center text-left text-sm font-medium ${
+          tool === item ? 'text-ink' : 'text-ink-soft hover:bg-paper hover:text-ink'
+        }`}
+      >
+        <span className={`grid shrink-0 place-items-center ${icon}`}>
+          <span
+            className={`grid h-10 w-10 place-items-center rounded-[var(--radius-control)] ${
+              tool === item ? 'bg-amber-soft text-ink ring-2 ring-amber' : ''
+            }`}
+          >
+            <Icon item={item} />
+          </span>
+        </span>
+        <span aria-hidden className={`min-w-0 truncate pr-3 ${open ? '' : 'invisible'}`}>
+          {t(`tool.${item}`)}
+        </span>
+      </button>
+    </li>
+  );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col" data-testid="parts-drawer">
-      <div className="px-3 pt-3 pb-2">
-        <label className="relative block">
-          <span className="sr-only">{t('drawer.search')}</span>
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            aria-hidden
-            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-faint"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <circle cx="11" cy="11" r="6.5" />
-            <path d="M16 16l4 4" strokeLinecap="round" />
-          </svg>
-          <input
-            type="search"
-            data-testid="parts-search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t('drawer.search')}
-            className="field pl-9 text-sm"
-          />
-        </label>
+    <div
+      className="flex min-h-0 flex-1 flex-col whitespace-nowrap"
+      data-testid="parts-drawer"
+      data-open={open}
+    >
+      {/* The search row keeps its height folded, so the list below never moves. */}
+      <div className="flex h-14 shrink-0 items-center">
+        {open ? (
+          <>
+            <label className="relative ml-2 block min-w-0 flex-1">
+              <span className="sr-only">{t('drawer.search')}</span>
+              <SearchIcon className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-faint" />
+              <input
+                type="search"
+                data-testid="parts-search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t('drawer.search')}
+                className="field pl-9 text-sm"
+              />
+            </label>
+            <span className="shrink-0 px-1">{header}</span>
+          </>
+        ) : (
+          <span className={`grid shrink-0 place-items-center text-ink-faint ${icon}`}>
+            <SearchIcon />
+          </span>
+        )}
       </div>
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-4">
-        {bins.length === 0 && <p className="px-1 text-sm text-ink-soft">{t('drawer.none')}</p>}
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-4">
+        {withTools && !wanted && (
+          <ul role="toolbar" aria-label={t('tool.select')} className="border-b border-line pb-1">
+            {TOOLS.map(row)}
+          </ul>
+        )}
+        {bins.length === 0 && <p className="px-3 pt-3 text-sm text-ink-soft">{t('drawer.none')}</p>}
         {bins.map((bin) => (
-          <section
-            key={bin.id}
-            aria-label={t(`drawer.bin.${bin.id}` as MessageKey)}
-            className="rounded-[var(--radius-card)] bg-mat-soft p-1.5 pt-0"
-          >
-            {/* The compartment's label, like a strip of tape on the box. */}
-            <h3 className="px-1.5 pt-1.5 pb-1 text-xs font-bold text-accent">
-              {t(`drawer.bin.${bin.id}` as MessageKey)}
+          <section key={bin.id} aria-label={t(`drawer.bin.${bin.id}` as MessageKey)}>
+            {/* The compartment's label; folded, a short line marks where one begins. */}
+            <h3 className="flex h-8 items-end pb-1 text-xs font-bold text-accent">
+              {open ? (
+                <span className="truncate px-3">{t(`drawer.bin.${bin.id}` as MessageKey)}</span>
+              ) : (
+                <span aria-hidden className={`grid place-items-center pb-1.5 ${icon}`}>
+                  <span className="h-0.5 w-5 rounded-full bg-line-strong" />
+                </span>
+              )}
             </h3>
-            <div className="grid grid-cols-3 gap-1">
-              {bin.items.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  data-testid={`tool-${item}`}
-                  aria-pressed={tool === item}
-                  title={t(`tool.${item}`)}
-                  onClick={() => {
-                    choose(item);
-                    onChosen?.();
-                  }}
-                  className={`flex min-h-[4.25rem] flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] px-1 text-center text-xs leading-tight font-medium transition active:scale-95 ${
-                    tool === item
-                      ? 'bg-amber-soft text-ink ring-2 ring-amber'
-                      : 'bg-surface text-ink-soft shadow-[0_1px_0_rgb(0_0_0/0.06)] hover:text-ink'
-                  }`}
-                >
-                  <Icon item={item} />
-                  <span className="line-clamp-2 [overflow-wrap:anywhere]">{t(`tool.${item}`)}</span>
-                </button>
-              ))}
-            </div>
+            <ul>{bin.items.map(row)}</ul>
           </section>
         ))}
       </div>
     </div>
+  );
+}
+
+function SearchIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      aria-hidden
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M16 16l4 4" strokeLinecap="round" />
+    </svg>
   );
 }
 

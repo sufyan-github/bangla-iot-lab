@@ -1,7 +1,7 @@
 import type { MessageKey } from '@banglalab/i18n';
 import { isProgrammable } from '@banglalab/shared';
 import { proxy } from 'comlink';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Link, useParams } from 'react-router';
 import { useT } from '../i18n';
 import { simulation } from '../sim/client';
@@ -22,6 +22,7 @@ import { useLessonState } from '../lessons/progress';
 import { setBuzzing } from './sound';
 import { matchingStarter } from './starters';
 import { useLab } from './store';
+import { useRail, useWorkspace } from './workspace';
 
 const SAVE_DELAY_MS = 400;
 
@@ -275,6 +276,199 @@ function useWide(): boolean {
   return wide;
 }
 
+/** "Keep open": a rail kept open stands beside the board, and no longer folds away. */
+function KeepButton(props: { kept: boolean; testid: string; onClick(): void }) {
+  const { t } = useT();
+  return (
+    <button
+      type="button"
+      data-testid={props.testid}
+      aria-pressed={props.kept}
+      aria-label={t('panel.keepOpen')}
+      title={t('panel.keepOpen')}
+      onClick={props.onClick}
+      className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg ${
+        props.kept
+          ? 'bg-amber-soft text-ink ring-2 ring-amber'
+          : 'text-ink-soft hover:bg-paper hover:text-ink'
+      }`}
+    >
+      {/* A pin. */}
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" aria-hidden>
+        <path
+          d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  );
+}
+
+/**
+ * The parts, as a rail beside the board (D-106): one column of drawings that
+ * widens to show their names while the pointer is on it, and folds away the
+ * moment a part is picked, so the board is clear to place it. On a phone it
+ * opens on a tap.
+ */
+function PartsRail({ wide }: { wide: boolean }) {
+  const kept = useWorkspace((s) => s.parts) && wide;
+  const rail = useRail(kept, 'keyboard');
+  const { t } = useT();
+  // On a touch screen a first tap opens the list, so a part is picked by name, not by guess.
+  const swallow = useRef(false);
+  const folded = wide ? '4rem' : '3rem';
+  const width = wide ? '16rem' : '15rem';
+  return (
+    <aside
+      ref={rail.ref}
+      {...rail.handlers}
+      aria-label={t('drawer.title')}
+      data-testid="parts-rail"
+      data-open={rail.open}
+      data-kept={kept}
+      className="relative z-20 shrink-0"
+      style={{ width: kept ? width : folded }}
+      onPointerDownCapture={(event) => {
+        if (event.pointerType !== 'mouse' && !rail.open) {
+          rail.setTapped(true);
+          swallow.current = true;
+        }
+      }}
+      onClickCapture={(event) => {
+        if (!swallow.current) return;
+        swallow.current = false;
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+    >
+      <div
+        className={`absolute inset-y-0 left-0 flex flex-col overflow-hidden border-r border-line bg-surface transition-[width] duration-150 motion-reduce:transition-none ${
+          rail.open && !kept ? 'shadow-[var(--shadow-raised)]' : ''
+        }`}
+        style={{ width: rail.open ? width : folded }}
+      >
+        {!wide && (
+          <button
+            type="button"
+            data-testid="parts-open"
+            aria-expanded={rail.open}
+            aria-label={t('drawer.title')}
+            onClick={() => rail.setTapped(!rail.tapped)}
+            className="grid h-11 w-12 shrink-0 place-items-center text-ink-soft"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              aria-hidden
+            >
+              <path
+                d={rail.open ? 'M14.5 6L8.5 12l6 6' : 'M9.5 6l6 6-6 6'}
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        )}
+        <PartsDrawer
+          open={rail.open}
+          withTools={wide}
+          icon={wide ? 'w-16' : 'w-12'}
+          onChosen={rail.dismiss}
+          header={
+            wide ? (
+              <KeepButton
+                kept={kept}
+                testid="parts-keep"
+                onClick={() => useWorkspace.getState().keep('parts', !kept)}
+              />
+            ) : null
+          }
+        />
+      </div>
+    </aside>
+  );
+}
+
+/**
+ * The work panel: the lesson, the circuit's readings, the code and the
+ * instruments. On a wide screen it is a rail of tabs at the board's edge
+ * (D-106), and what a tab holds opens over the board while the pointer or the
+ * focus is in it; kept open, it stands beside the board. On a phone it is
+ * below the board, as it was.
+ */
+function WorkPanel(props: {
+  wide: boolean;
+  /** How wide the open panel is, without its rail of tabs. */
+  width: string;
+  panelRef: RefObject<HTMLElement | null>;
+  tabs(upright: boolean): ReactNode;
+  children: ReactNode;
+}) {
+  const kept = useWorkspace((s) => s.panel) && props.wide;
+  const rail = useRail(kept, 'any');
+  if (!props.wide) {
+    return (
+      <aside ref={props.panelRef} className="flex w-full shrink-0 flex-col bg-surface">
+        <div
+          role="tablist"
+          className="flex shrink-0 gap-0.5 border-b border-line bg-surface px-1.5 pt-1.5"
+        >
+          {props.tabs(false)}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">{props.children}</div>
+      </aside>
+    );
+  }
+  return (
+    <aside
+      ref={(element) => {
+        rail.ref.current = element;
+        props.panelRef.current = element;
+      }}
+      {...rail.handlers}
+      data-testid="work-panel"
+      data-open={rail.open}
+      data-kept={kept}
+      className="relative z-20 shrink-0"
+      style={{ width: kept ? `calc(${props.width} + 4.75rem)` : '4.75rem' }}
+    >
+      <div
+        className={`absolute inset-y-0 right-0 flex border-l border-line bg-surface ${
+          rail.open && !kept ? 'shadow-[var(--shadow-raised)]' : ''
+        }`}
+      >
+        {/* Folded, the panel keeps what it holds (a program being written), out of sight. */}
+        <div
+          className={rail.open ? 'flex min-h-0 flex-col' : 'hidden'}
+          style={{ width: props.width }}
+          data-testid="work-panel-body"
+        >
+          <div className="min-h-0 flex-1 overflow-y-auto">{props.children}</div>
+        </div>
+        <div className="flex w-[4.75rem] shrink-0 flex-col border-l border-line">
+          <div role="tablist" aria-orientation="vertical" className="flex flex-col">
+            {props.tabs(true)}
+          </div>
+          <span className="flex-1" />
+          <span className="grid place-items-center pb-2">
+            <KeepButton
+              kept={kept}
+              testid="panel-keep"
+              onClick={() => useWorkspace.getState().keep('panel', !kept)}
+            />
+          </span>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 const TAB_LABELS = {
   lesson: 'lesson.tab',
   circuit: 'code.tabCircuit',
@@ -341,7 +535,8 @@ export function LabPage() {
   };
   const [tab, setTab] = useState<'lesson' | 'circuit' | 'code' | 'signals' | 'network'>('circuit');
   const [networkView, setNetworkView] = useState<'web' | 'iot' | 'ble'>('web');
-  const [partsOpen, setPartsOpen] = useState(false);
+  const canvasOnly = useWorkspace((s) => s.canvasOnly);
+  const messages = useLab((s) => s.result?.diagnostics.length ?? 0);
   const panelRef = useRef<HTMLElement>(null);
   const wide = useWide();
   // A project made from a lesson opens at its lesson.
@@ -410,6 +605,121 @@ export function LabPage() {
     </div>
   );
 
+  /** The lesson, readings, code and instruments: beside the board on a wide screen, below it on a phone. */
+  const workPanel = !(wide && canvasOnly) && (
+    <WorkPanel
+      wide={wide}
+      width={showCode ? '34rem' : '22rem'}
+      panelRef={panelRef}
+      tabs={(upright) =>
+        tabs.map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            data-testid={`tab-${id}`}
+            aria-selected={tab === id}
+            onClick={() => chooseTab(id)}
+            className={
+              upright
+                ? `relative min-h-12 w-full border-r-[3px] px-1 text-xs font-semibold ${
+                    tab === id
+                      ? 'border-amber bg-paper text-ink'
+                      : 'border-transparent text-ink-soft hover:bg-paper hover:text-ink'
+                  }`
+                : `min-h-11 flex-1 rounded-t-lg border-b-[3px] px-1 text-sm font-semibold ${
+                    tab === id
+                      ? 'border-amber text-ink'
+                      : 'border-transparent text-ink-soft hover:bg-paper hover:text-ink'
+                  }`
+            }
+          >
+            {t(TAB_LABELS[id])}
+            {/* Folded, the panel cannot show what the lab has to say: the tab counts it. */}
+            {upright && id === 'circuit' && messages > 0 && (
+              <span
+                data-testid="tab-messages"
+                aria-label={t('panel.messages', { count: messages })}
+                className="absolute top-1 right-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-amber px-1 text-xs font-bold text-graphite tabular-nums"
+              >
+                {messages}
+              </span>
+            )}
+          </button>
+        ))
+      }
+    >
+      {tab === 'lesson' && hasLesson ? (
+        <LessonPanel />
+      ) : showCode ? (
+        <>
+          {boardIds.length > 1 && (
+            <div
+              role="tablist"
+              aria-label={t('code.boards')}
+              className="flex gap-1.5 border-b border-line px-4 pt-3 pb-2"
+            >
+              {boardIds.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  data-testid={`code-board-${id}`}
+                  aria-selected={id === boardId}
+                  aria-pressed={id === boardId}
+                  onClick={() => setChosenBoard(id)}
+                  className="chip px-4 font-semibold"
+                >
+                  {id}
+                </button>
+              ))}
+            </div>
+          )}
+          <CodePanel key={boardId} boardId={boardId!} />
+        </>
+      ) : tab === 'signals' ? (
+        <SignalsPanel />
+      ) : tab === 'network' && esp32Id !== undefined ? (
+        <>
+          <div
+            role="tablist"
+            aria-label={t('network.label')}
+            className="flex gap-1.5 border-b border-line px-4 pt-3 pb-2"
+          >
+            {(['web', 'iot', 'ble'] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                data-testid={`tab-${id}`}
+                aria-selected={networkView === id}
+                aria-pressed={networkView === id}
+                onClick={() => setNetworkView(id)}
+                className="chip px-4 font-semibold"
+              >
+                {t(`${id}.tab`)}
+              </button>
+            ))}
+          </div>
+          {networkView === 'web' ? (
+            <WebPanel boardId={esp32Id} />
+          ) : networkView === 'iot' ? (
+            <IotPanel />
+          ) : (
+            <BlePanel boardId={esp32Id} />
+          )}
+        </>
+      ) : (
+        <>
+          <Messages />
+          <Meter />
+          <Inspector />
+          <TruthTablePanel />
+        </>
+      )}
+    </WorkPanel>
+  );
+
   return (
     <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
@@ -434,6 +744,37 @@ export function LabPage() {
             className="min-h-11 min-w-0 flex-1 truncate rounded-lg border-2 border-transparent bg-transparent px-2 text-base font-semibold hover:border-line focus:border-line lg:text-lg"
           />
           {wide && viewSwitch}
+          {wide && (
+            <button
+              type="button"
+              data-testid="canvas-only"
+              aria-pressed={canvasOnly}
+              aria-label={t('lab.canvasOnly')}
+              title={t('lab.canvasOnly')}
+              onClick={() => useWorkspace.getState().setCanvasOnly(!canvasOnly)}
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg ${
+                canvasOnly
+                  ? 'bg-amber-soft text-ink ring-2 ring-amber'
+                  : 'text-ink-soft hover:bg-paper hover:text-ink'
+              }`}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                aria-hidden
+              >
+                <path
+                  d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
           <span
             data-testid="save-state"
             data-state={saveState}
@@ -478,38 +819,13 @@ export function LabPage() {
         {/* On a phone: the tools, the parts and the view in a slim row, so nothing covers the board. */}
         {!wide && (
           <div className="flex h-[3.25rem] shrink-0 items-center gap-2 border-b border-line bg-surface px-2">
-            {view === 'board' && (
-              <>
-                <ToolPicker compact />
-                <button
-                  type="button"
-                  data-testid="parts-open"
-                  onClick={() => setPartsOpen(true)}
-                  className="btn min-h-10 bg-mat px-3 text-sm text-chalk"
-                >
-                  <span aria-hidden className="text-base leading-none">
-                    ＋
-                  </span>
-                  {t('drawer.title')}
-                </button>
-              </>
-            )}
+            {view === 'board' && <ToolPicker compact />}
             <div className="ml-auto">{viewSwitch}</div>
           </div>
         )}
         <div className="flex min-h-0 flex-1">
-          {/* The parts drawer, beside the board on a wide screen. */}
-          {wide && view === 'board' && (
-            <aside
-              className="flex w-80 shrink-0 flex-col border-r border-line bg-surface"
-              aria-label={t('drawer.title')}
-            >
-              <div className="px-3 pt-3">
-                <ToolPicker />
-              </div>
-              <PartsDrawer />
-            </aside>
-          )}
+          {/* The parts, as a narrow rail beside the board that opens while it is in use. */}
+          {view === 'board' && !(wide && canvasOnly) && <PartsRail wide={wide} />}
           <div
             className={`relative flex min-w-0 flex-1 flex-col ${
               wide ? 'min-h-0' : 'h-[calc(100dvh-3.5rem-6.5rem)] min-h-[20rem]'
@@ -543,141 +859,11 @@ export function LabPage() {
               </div>
             )}
           </div>
+          {wide && workPanel}
         </div>
       </div>
 
-      {/* On a phone the parts come up in a sheet over the board, and go once one is picked. */}
-      {!wide && partsOpen && (
-        <div
-          className="fixed inset-0 z-40 flex flex-col justify-end"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('drawer.title')}
-        >
-          <button
-            type="button"
-            aria-label={t('drawer.close')}
-            className="absolute inset-0 bg-graphite/50"
-            onClick={() => setPartsOpen(false)}
-          />
-          <div className="relative flex max-h-[78dvh] flex-col rounded-t-[var(--radius-sheet)] bg-surface shadow-[var(--shadow-raised)]">
-            <div className="flex items-center justify-between px-4 pt-3">
-              <span
-                aria-hidden
-                className="absolute top-1.5 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-line-strong"
-              />
-              <h2 className="text-lg font-semibold">{t('drawer.title')}</h2>
-              <button
-                type="button"
-                data-testid="parts-close"
-                onClick={() => setPartsOpen(false)}
-                className="btn btn-quiet"
-              >
-                {t('drawer.close')}
-              </button>
-            </div>
-            <PartsDrawer onChosen={() => setPartsOpen(false)} />
-          </div>
-        </div>
-      )}
-
-      <aside
-        ref={panelRef}
-        className={`flex w-full shrink-0 flex-col border-line bg-surface lg:min-h-0 lg:border-l ${showCode ? 'lg:w-[34rem]' : 'lg:w-[22rem]'}`}
-      >
-        <div
-          role="tablist"
-          className="flex shrink-0 gap-0.5 border-b border-line bg-surface px-1.5 pt-1.5"
-        >
-          {tabs.map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              data-testid={`tab-${id}`}
-              aria-selected={tab === id}
-              onClick={() => chooseTab(id)}
-              className={`min-h-11 flex-1 rounded-t-lg border-b-[3px] px-1 text-sm font-semibold ${
-                tab === id
-                  ? 'border-amber text-ink'
-                  : 'border-transparent text-ink-soft hover:bg-paper hover:text-ink'
-              }`}
-            >
-              {t(TAB_LABELS[id])}
-            </button>
-          ))}
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          {tab === 'lesson' && hasLesson ? (
-            <LessonPanel />
-          ) : showCode ? (
-            <>
-              {boardIds.length > 1 && (
-                <div
-                  role="tablist"
-                  aria-label={t('code.boards')}
-                  className="flex gap-1.5 border-b border-line px-4 pt-3 pb-2"
-                >
-                  {boardIds.map((id) => (
-                    <button
-                      key={id}
-                      type="button"
-                      role="tab"
-                      data-testid={`code-board-${id}`}
-                      aria-selected={id === boardId}
-                      aria-pressed={id === boardId}
-                      onClick={() => setChosenBoard(id)}
-                      className="chip px-4 font-semibold"
-                    >
-                      {id}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <CodePanel key={boardId} boardId={boardId!} />
-            </>
-          ) : tab === 'signals' ? (
-            <SignalsPanel />
-          ) : tab === 'network' && esp32Id !== undefined ? (
-            <>
-              <div
-                role="tablist"
-                aria-label={t('network.label')}
-                className="flex gap-1.5 border-b border-line px-4 pt-3 pb-2"
-              >
-                {(['web', 'iot', 'ble'] as const).map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    role="tab"
-                    data-testid={`tab-${id}`}
-                    aria-selected={networkView === id}
-                    aria-pressed={networkView === id}
-                    onClick={() => setNetworkView(id)}
-                    className="chip px-4 font-semibold"
-                  >
-                    {t(`${id}.tab`)}
-                  </button>
-                ))}
-              </div>
-              {networkView === 'web' ? (
-                <WebPanel boardId={esp32Id} />
-              ) : networkView === 'iot' ? (
-                <IotPanel />
-              ) : (
-                <BlePanel boardId={esp32Id} />
-              )}
-            </>
-          ) : (
-            <>
-              <Messages />
-              <Meter />
-              <Inspector />
-              <TruthTablePanel />
-            </>
-          )}
-        </div>
-      </aside>
+      {!wide && workPanel}
     </main>
   );
 }

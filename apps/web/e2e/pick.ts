@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 /**
  * Picks a tool or part. Select, wire and probe are always on screen; the parts
- * are in the drawer beside the board, or on a phone in a sheet opened first.
+ * are in the rail beside the board, which on a phone is opened first.
  */
 export async function pick(page: Page, item: string): Promise<void> {
   // The lab has loaded once its tools are there.

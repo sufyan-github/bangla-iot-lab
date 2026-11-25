@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { panelsKeptOpen } from './e2e/panels';
 
 /**
  * End-to-end tests run against the production build (with its service worker),
@@ -16,7 +17,11 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 768 } },
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1366, height: 768 },
+        storageState: panelsKeptOpen(`http://localhost:${WEB_PORT}`),
+      },
     },
     { name: 'android-phone', use: { ...devices['Pixel 7'] } },
   ],
