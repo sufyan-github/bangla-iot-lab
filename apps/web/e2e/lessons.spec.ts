@@ -46,6 +46,19 @@ test('the lessons page lists the kit lessons, then the projects, in order', asyn
   await expect(leds.and(page.locator('[data-led="off"]'))).toHaveCount(50);
 });
 
+test('in a lesson, a pin name is drawn as a wire end, striped by what the pin is for', async ({
+  page,
+}) => {
+  await page.goto('/lessons');
+  await page.locator('[data-lesson="led-resistor"]').getByTestId('lesson-start').click();
+  const panel = page.getByTestId('lesson-panel');
+  await panel.getByTestId('lesson-step').nth(1).click();
+  // 3V3 is a power pin: the red stripe. Other bold words, like a part's name, stay plain.
+  const pin = panel.locator('.pin', { hasText: '3V3' }).first();
+  await expect(pin).toHaveAttribute('data-pin', 'power');
+  await expect(panel.locator('.pin', { hasText: 'LED' })).toHaveCount(0);
+});
+
 test('a lesson in hand is offered on the home page, with its steps as LEDs', async ({ page }) => {
   await page.goto('/lessons');
   await page.locator('[data-lesson="led-resistor"]').getByTestId('lesson-start').click();

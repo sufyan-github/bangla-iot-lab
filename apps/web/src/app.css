@@ -151,6 +151,11 @@
     --color-group-6: #0e7490;
     --color-group-7: #be123c;
 
+    /* A pin's name in lesson text, striped by what the pin is for. */
+    --color-pin-power: #d8342a;
+    --color-pin-ground: #23282b;
+    --color-pin-signal: #e8a21a;
+
     /* Code, in the editor. */
     --color-code-keyword: #7a1f8f;
     --color-code-type: #0f5f8a;
@@ -195,6 +200,9 @@
     --color-group-5: #fbbf24;
     --color-group-6: #22d3ee;
     --color-group-7: #fb7185;
+    --color-pin-power: #f0695c;
+    --color-pin-ground: #9ba8a2;
+    --color-pin-signal: #f2c744;
     --color-code-keyword: #d7a6ff;
     --color-code-type: #7cc7ff;
     --color-code-string: #ffab91;
@@ -238,6 +246,9 @@
       --color-group-5: #fbbf24;
       --color-group-6: #22d3ee;
       --color-group-7: #fb7185;
+      --color-pin-power: #f0695c;
+      --color-pin-ground: #9ba8a2;
+      --color-pin-signal: #f2c744;
       --color-code-keyword: #d7a6ff;
       --color-code-type: #7cc7ff;
       --color-code-string: #ffab91;
@@ -529,13 +540,35 @@ input {
     background-size: 14px 14px;
     color: var(--color-chalk);
   }
-  .band::after {
+  .band::after,
+  .rails {
     content: '';
     display: block;
     height: 10px;
     border-top: 2px solid var(--color-rail-red);
     border-bottom: 2px solid var(--color-rail-blue);
     background: var(--color-paper);
+  }
+
+  /* A pin's name, drawn as the end of a jumper wire: the stripe says what the pin is for. */
+  .pin {
+    display: inline-block;
+    border: 1px solid var(--color-line-strong);
+    border-left: 7px solid var(--color-pin-signal);
+    border-radius: 4px;
+    background: var(--color-sunk);
+    padding: 0 0.4em;
+    font-family: var(--font-mono);
+    font-size: 0.84em;
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+  .pin[data-pin='power'] {
+    border-left-color: var(--color-pin-power);
+  }
+  .pin[data-pin='ground'] {
+    border-left-color: var(--color-pin-ground);
   }
 
   /* Progress as a row of LEDs: lit for done, a ring for the one in hand, dark for not yet. */

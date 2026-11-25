@@ -74,18 +74,36 @@ export function LessonPanel() {
                 aria-current={current ? 'step' : undefined}
                 aria-label={t('lesson.stepOf', { n: number(index + 1), total: number(total) })}
                 onClick={() => goTo(index)}
-                className={`min-h-11 min-w-11 rounded-full border-2 text-sm font-semibold ${
-                  current ? 'border-ink' : 'border-transparent'
-                } ${done ? 'bg-mat text-chalk' : 'bg-paper text-ink-soft'}`}
+                className={`grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-bold tabular-nums ${
+                  current ? 'border-[3px] border-amber' : done ? '' : 'border-2 border-line-strong'
+                } ${done ? 'bg-ok text-surface' : 'bg-surface text-ink-soft'}`}
               >
-                {done ? '✓' : number(index + 1)}
+                {done ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    aria-hidden
+                  >
+                    <path
+                      d="M5 12.5l4.5 4.5L19 7.5"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  number(index + 1)
+                )}
               </button>
             </li>
           );
         })}
       </ol>
 
-      <div className="rounded-xl border border-line bg-surface p-4">
+      <div className="rounded-[var(--radius-card)] border border-line bg-paper p-4">
         <p className="mb-2 text-sm font-semibold text-ink-soft">
           {t('lesson.stepOf', { n: number(progress.step + 1), total: number(total) })}
         </p>
@@ -96,7 +114,7 @@ export function LessonPanel() {
             data-testid="lesson-program"
             disabled={!boardId}
             onClick={() => void putProgram()}
-            className="mt-3 min-h-11 rounded-lg bg-amber px-4 font-semibold text-graphite hover:brightness-105 disabled:opacity-50"
+            className="btn btn-primary mt-3"
           >
             {unit === 2 ? t('lesson.program2') : t('lesson.program')}
           </button>
@@ -114,15 +132,30 @@ export function LessonPanel() {
                   key={index}
                   data-testid="lesson-check"
                   data-passed={passed}
-                  className="flex gap-2 text-sm leading-snug"
+                  className={`flex items-start gap-2.5 leading-snug ${passed ? '' : 'text-ink-soft'}`}
                 >
                   <span
                     aria-hidden
-                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                      passed ? 'bg-mat text-chalk' : 'border-2 border-line'
+                    className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${
+                      passed ? 'bg-ok text-surface' : 'border-2 border-dashed border-line-strong'
                     }`}
                   >
-                    {passed ? '✓' : ''}
+                    {passed && (
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                      >
+                        <path
+                          d="M5 12.5l4.5 4.5L19 7.5"
+                          strokeWidth="3.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
                   </span>
                   <span>
                     <span className="sr-only">
@@ -138,7 +171,7 @@ export function LessonPanel() {
       )}
 
       {stepDone && !finished && (
-        <p role="status" className="rounded-lg bg-accent/10 px-3 py-2 font-semibold text-accent">
+        <p role="status" className="rounded-lg bg-ok-soft px-3 py-2 font-semibold text-ok">
           {t('lesson.stepDone')}
         </p>
       )}
@@ -149,7 +182,7 @@ export function LessonPanel() {
           data-testid="lesson-back"
           disabled={progress.step === 0}
           onClick={() => goTo(progress.step - 1)}
-          className="min-h-11 rounded-lg border-2 border-line px-4 font-medium hover:border-ink-soft disabled:opacity-40"
+          className="btn btn-secondary"
         >
           ‹ {t('lesson.back')}
         </button>
@@ -158,10 +191,8 @@ export function LessonPanel() {
             type="button"
             data-testid="lesson-next"
             onClick={() => goTo(progress.step + 1)}
-            className={`min-h-11 flex-1 rounded-lg px-4 font-semibold ${
-              stepDone || step.checks.length === 0
-                ? 'bg-amber text-graphite hover:brightness-105'
-                : 'border-2 border-line text-ink-soft hover:border-ink-soft'
+            className={`btn flex-1 ${
+              stepDone || step.checks.length === 0 ? 'btn-primary' : 'btn-secondary text-ink-soft'
             }`}
           >
             {t('lesson.next')} ›
@@ -172,7 +203,7 @@ export function LessonPanel() {
       {finished && (
         <div
           data-testid="lesson-finished"
-          className="space-y-3 rounded-xl border-2 border-accent bg-accent/5 p-4"
+          className="space-y-3 rounded-[var(--radius-card)] border-2 border-ok bg-ok-soft/40 p-4"
         >
           <p className="text-lg font-semibold">{t('lesson.finished')}</p>
           <div>
@@ -195,7 +226,7 @@ export function LessonPanel() {
               type="button"
               data-testid="lesson-open-next"
               onClick={() => void openNext()}
-              className="min-h-11 w-full rounded-lg bg-amber px-4 font-semibold text-graphite hover:brightness-105"
+              className="btn btn-primary w-full"
             >
               {t('lesson.nextLesson', { title: next.title[locale] })}
             </button>

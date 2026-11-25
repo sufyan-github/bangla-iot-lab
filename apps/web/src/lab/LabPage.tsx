@@ -414,7 +414,7 @@ export function LabPage() {
     <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
         {/* One bar: the way back, the name, the view (on a wide screen), the save state and Run. */}
-        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 lg:gap-3 lg:px-3">
+        <div className="flex h-14 shrink-0 items-center gap-2 bg-surface px-2 lg:gap-3 lg:px-3">
           <Link
             to="/"
             aria-label={t('lab.back')}
@@ -471,6 +471,9 @@ export function LabPage() {
             {t(running ? 'lab.stop' : 'lab.run')}
           </button>
         </div>
+
+        {/* The breadboard's two rails, as under every page's title. */}
+        <span aria-hidden className="rails shrink-0" />
 
         {/* On a phone: the tools, the parts and the view in a slim row, so nothing covers the board. */}
         {!wide && (
@@ -596,7 +599,7 @@ export function LabPage() {
               onClick={() => chooseTab(id)}
               className={`min-h-11 flex-1 rounded-t-lg border-b-[3px] px-1 text-sm font-semibold ${
                 tab === id
-                  ? 'border-accent text-ink'
+                  ? 'border-amber text-ink'
                   : 'border-transparent text-ink-soft hover:bg-paper hover:text-ink'
               }`}
             >

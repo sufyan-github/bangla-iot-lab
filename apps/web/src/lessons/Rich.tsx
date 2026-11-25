@@ -1,5 +1,6 @@
 import { termNamed } from '@banglalab/lessons';
 import { Fragment, type ReactNode } from 'react';
+import { pinKind } from './pins';
 import { Term } from './Term';
 
 /**
@@ -7,8 +8,9 @@ import { Term } from './Term';
  * breaks, lists, headings, code blocks, **bold** and `code`. Pictures and the
  * targets of links are left out; tables are shown as they are typed.
  *
- * With `terms`, a bold word that names a glossary term is shown as one (Term):
- * only its first time in the text, so a step is not crowded with them.
+ * With `terms` (lesson text), a bold word that names a glossary term is shown
+ * as one (Term), only its first time in the text, so a step is not crowded with
+ * them; and a bold pin name is drawn as the end of a jumper wire.
  */
 type Terms = Set<string> | null;
 
@@ -21,6 +23,17 @@ function inline(text: string, terms: Terms): ReactNode[] {
   for (const match of plain.matchAll(pattern)) {
     if (match.index > last) parts.push(plain.slice(last, match.index));
     const token = match[0];
+    // In lesson text, a bold pin name is drawn as a wire's end (pins.ts).
+    const pin = terms && token.startsWith('**') ? pinKind(token.slice(2, -2)) : null;
+    if (pin) {
+      parts.push(
+        <span key={parts.length} className="pin" data-pin={pin}>
+          {token.slice(2, -2)}
+        </span>,
+      );
+      last = match.index + token.length;
+      continue;
+    }
     const term = terms && token.startsWith('**') ? termNamed(token.slice(2, -2)) : undefined;
     if (term && terms && !terms.has(term.id)) {
       terms.add(term.id);
