@@ -8,6 +8,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Changed
 
+- **Account, licences and ESP32 pages in the new design**: the same title
+  band as the rest of the lab, the ways in as rows with a drawing, amber tabs
+  for teachers, and a learner's progress as LEDs. Every page now has the new
+  look.
 - **Run checks a lesson's wiring**: in a lesson, Run lists any part or
   connection the lesson has asked for that is not there yet, with its step,
   and rings it on the board; each item goes once it is fixed.

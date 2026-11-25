@@ -2414,3 +2414,23 @@ wrong connection must be caught before it puzzles the student.
   lessons pass, so a circuit built as a lesson asks never gets the card.
 - **Later, as the owner said:** a student's own circuit, with no lesson to
   compare against, and telling a wiring fault from a fault in the program.
+
+## D-111 — The redesign, stage 4: accounts and the remaining pages
+
+Built on 25 November 2026, the last stage of the redesign (D-103), chosen by
+the owner after reviewing what is left to build.
+
+- **One title band for every page.** The account page, the licences page and
+  the ESP32 page now open with the same band as home, lessons and glossary:
+  board green with a breadboard's holes, and the red and blue rails under it
+  (`PageBand`). Signed in, the name and "sign out" sit on the band. Email-link
+  and guardian pages keep their title in their card, under a slim band.
+- **Ways in as rows with a drawing.** On the signed-out page each way in
+  (sign in, a new account, a class code or lab pass, and then adult or
+  under 18) is a row with its drawing and an arrow, like a stop on the lesson
+  path.
+- **The same marks as the rest of the lab.** The teacher's tabs are underlined
+  in amber, as in the lab; a school waiting for approval is a bordered note
+  (no left-edge stripe); a learner's own progress in a lesson is a row of LEDs.
+- With this, every page a student or teacher sees is in the new design. The
+  owner's office keeps Kumo, with the new colours through its settings.
