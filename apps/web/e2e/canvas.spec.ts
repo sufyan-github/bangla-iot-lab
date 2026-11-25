@@ -606,3 +606,63 @@ test('a part for the breadboard rides beside the pointer until it is over a hole
   await expect(page.getByTestId('ghost')).toHaveAttribute('data-ghost', 'resistor');
   await expect(page.getByTestId('ghost-icon')).toHaveCount(0);
 });
+
+/** The drawn path of a wire: its last coloured line. */
+const wireD = (page: Page, id: string) =>
+  page.locator(`[data-wire="${id}"] path`).nth(2).getAttribute('d');
+
+test('a wire can be drawn square, and any wire changed from one kind to the other', async ({
+  page,
+}) => {
+  await openExample(page, 'open-example');
+  await expect(page.locator('[data-hit="BAT1"]')).toBeVisible();
+  await expect(wires(page)).toHaveCount(4);
+  const spot = await places(page, ['BB1.a20', 'BB1.j26']);
+
+  // Chosen in the toolbar: on a phone, a toggle beside the wire tool once it is in hand.
+  const open = page.getByTestId('parts-open');
+  if (await open.isVisible()) {
+    await pick(page, 'wire');
+    await page.getByTestId('wire-style-toggle').click();
+    await expect(page.getByTestId('wire-style-toggle')).toHaveAttribute('data-style', 'square');
+  } else {
+    await page.getByTestId('wire-style-square').click();
+    await expect(page.getByTestId('wire-style-square')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('tool-wire')).toHaveAttribute('aria-pressed', 'true');
+  }
+  const [a, b] = await onScreen(page, [spot['BB1.a20']!, spot['BB1.j26']!]);
+  await page.mouse.click(a!.x, a!.y);
+  await page.mouse.click(b!.x, b!.y);
+  await expect(wires(page)).toHaveCount(5);
+
+  // Straight runs, across and then down: no curves in its path.
+  const square = await wireD(page, 'W5');
+  expect(square).not.toContain('C');
+  expect(square).toMatch(/L/);
+
+  // Selected, it can be made a jumper wire, which hangs slack in a curve; and back.
+  // Pressed on its first run, across, a third of the way along.
+  await pick(page, 'select');
+  const along = {
+    x: spot['BB1.a20']!.x + (spot['BB1.j26']!.x - spot['BB1.a20']!.x) / 3,
+    y: spot['BB1.a20']!.y,
+  };
+  const [onWire] = await onScreen(page, [along]);
+  await page.mouse.click(onWire!.x, onWire!.y);
+  const restyle = page.getByTestId('quick-restyle');
+  await expect(restyle).toHaveAttribute('data-style', 'square');
+  await restyle.click();
+  await expect(restyle).toHaveAttribute('data-style', 'jumper');
+  expect(await wireD(page, 'W5')).toContain('C');
+  await restyle.click();
+  await expect(restyle).toHaveAttribute('data-style', 'square');
+
+  // It is kept with the circuit, and the choice for new wires is kept on the device.
+  await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
+  await page.reload();
+  await expect(page.locator('[data-hit="BAT1"]')).toBeVisible();
+  expect(await wireD(page, 'W5')).not.toContain('C');
+  if (!(await page.getByTestId('parts-open').isVisible())) {
+    await expect(page.getByTestId('wire-style-square')).toHaveAttribute('aria-pressed', 'true');
+  }
+});

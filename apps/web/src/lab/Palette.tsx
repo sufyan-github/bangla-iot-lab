@@ -1,5 +1,5 @@
 import type { MessageKey } from '@banglalab/i18n';
-import { BREADBOARD_SPECS } from '@banglalab/shared';
+import { BREADBOARD_SPECS, type WireStyle } from '@banglalab/shared';
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { useLab, type Tool } from './store';
@@ -554,6 +554,22 @@ function useChoose() {
     standsBeside(item) ? pickUp({ type: item }) : setTool(item);
 }
 
+/** The two ways a wire is drawn (D-109): slack like a jumper wire, or square. */
+export function WireStyleIcon({ style, size = 20 }: { style: WireStyle; size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        d={style === 'square' ? 'M5 18H12V6H19' : 'M5 17C8 6 16 18 19 7'}
+        {...stroke}
+        strokeWidth={2.6}
+        strokeLinejoin="round"
+      />
+      <circle cx="5" cy={style === 'square' ? 18 : 17} r="2.2" fill="currentColor" />
+      <circle cx="19" cy={style === 'square' ? 6 : 7} r="2.2" fill="currentColor" />
+    </svg>
+  );
+}
+
 const Icon = ({ item, size = 24 }: { item: PaletteItem; size?: number }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
     {ICONS[item]}
@@ -571,8 +587,10 @@ export function PartIcon({ type, size = 26 }: { type: string; size?: number }) {
 /** Select, wire and probe: the three ways of working on the board. */
 export function ToolPicker({ compact = false }: { compact?: boolean }) {
   const tool = useLab((s) => s.tool);
+  const wireStyle = useLab((s) => s.wireStyle);
   const choose = useChoose();
   const { t } = useT();
+  const other = wireStyle === 'square' ? 'jumper' : 'square';
   return (
     <div
       role="toolbar"
@@ -594,6 +612,20 @@ export function ToolPicker({ compact = false }: { compact?: boolean }) {
           {!compact && t(`tool.${item}`)}
         </button>
       ))}
+      {/* With the wire tool in hand: how a new wire is drawn, one press to change it (D-109). */}
+      {compact && tool === 'wire' && (
+        <button
+          type="button"
+          data-testid="wire-style-toggle"
+          data-style={wireStyle}
+          aria-label={t(other === 'square' ? 'tool.wireSquare' : 'tool.wireJumper')}
+          title={t(other === 'square' ? 'tool.wireSquare' : 'tool.wireJumper')}
+          onClick={() => useLab.getState().setWireStyle(other)}
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-amber-soft text-ink ring-2 ring-amber"
+        >
+          <WireStyleIcon style={wireStyle} />
+        </button>
+      )}
     </div>
   );
 }
@@ -622,6 +654,7 @@ export function PartsDrawer({
 }) {
   const tool = useLab((s) => s.tool);
   const placing = useLab((s) => s.placing);
+  const wireStyle = useLab((s) => s.wireStyle);
   const choose = useChoose();
   const { t, number } = useT();
   const [query, setQuery] = useState('');
@@ -792,6 +825,47 @@ export function PartsDrawer({
           {withTools && !wanted && (
             <ul role="toolbar" aria-label={t('tool.select')} className="border-b border-line pb-1">
               {TOOLS.map(row)}
+              {/* How a new wire is drawn: a choice made here, kept on the device (D-109). */}
+              {(['jumper', 'square'] as const).map((style) => (
+                <li key={style}>
+                  <button
+                    type="button"
+                    data-testid={`wire-style-${style}`}
+                    aria-pressed={wireStyle === style}
+                    aria-label={t(style === 'square' ? 'tool.wireSquare' : 'tool.wireJumper')}
+                    title={t(style === 'square' ? 'tool.wireSquare' : 'tool.wireJumper')}
+                    onClick={() => {
+                      useLab.getState().setWireStyle(style);
+                      onChosen?.();
+                    }}
+                    className={`flex min-h-10 w-full items-center text-left text-sm font-medium ${
+                      tool === 'wire' && wireStyle === style
+                        ? 'text-ink'
+                        : 'text-ink-soft hover:bg-paper hover:text-ink'
+                    }`}
+                  >
+                    <span className={`grid shrink-0 place-items-center ${icon}`}>
+                      <span
+                        className={`grid h-8 w-8 place-items-center rounded-[var(--radius-control)] ${
+                          wireStyle === style
+                            ? tool === 'wire'
+                              ? 'bg-amber-soft text-ink ring-2 ring-amber'
+                              : 'ring-2 ring-line-strong'
+                            : ''
+                        }`}
+                      >
+                        <WireStyleIcon style={style} size={18} />
+                      </span>
+                    </span>
+                    <span
+                      aria-hidden
+                      className={`min-w-0 truncate pr-3 ${open ? '' : 'invisible'}`}
+                    >
+                      {t(style === 'square' ? 'tool.wireSquare' : 'tool.wireJumper')}
+                    </span>
+                  </button>
+                </li>
+              ))}
             </ul>
           )}
           {bins.length === 0 && (

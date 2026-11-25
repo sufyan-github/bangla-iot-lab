@@ -1016,6 +1016,7 @@ export function Scene({
               selected={wire.id === selectedId}
               lifted={carried !== null}
               bends={wireBends(wire)}
+              style={wire.style}
             />
           </g>
         );

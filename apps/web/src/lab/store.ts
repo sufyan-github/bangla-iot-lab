@@ -12,6 +12,7 @@ import {
   placePart,
   removeItem,
   setWireBends,
+  setWireStyle,
   updateProps,
   type BoardPartType,
   type CircuitDocument,
@@ -20,6 +21,7 @@ import {
   type EditError,
   type EditResult,
   type BreadboardSize,
+  type WireStyle,
 } from '@banglalab/shared';
 import type {
   BleNote,
@@ -90,6 +92,8 @@ interface LabState {
   tool: Tool;
   /** A part that stands beside the breadboards, picked from the list and not yet put down (D-108). */
   placing: Placing | null;
+  /** How new wires are drawn: as jumper wires, or square (D-109). Remembered on the device. */
+  wireStyle: WireStyle;
   /** First end of the wire being drawn. */
   wireStart: string | null;
   running: boolean;
@@ -175,6 +179,10 @@ interface LabState {
   flipSelected(): void;
   /** Takes the bends out of the selected wire. */
   straightenSelected(): void;
+  /** How new wires are drawn; with the wire tool not in hand, it takes it up. */
+  setWireStyle(style: WireStyle): void;
+  /** Draws the selected wire the other way: square, or as a jumper wire. */
+  restyleSelected(style: WireStyle): void;
   setProps(id: string, props: Record<string, unknown>): void;
   /** Used while dragging, when the canvas has already validated the move. */
   replaceCircuit(circuit: CircuitDocument): void;
@@ -215,6 +223,16 @@ const STOPPED = {
   speed: 1,
   labTimeMs: 0,
 };
+
+/** Where the style for new wires is remembered on the device. */
+const WIRE_STYLE_KEY = 'banglalab.wireStyle';
+function readWireStyle(): WireStyle {
+  try {
+    return localStorage.getItem(WIRE_STYLE_KEY) === 'square' ? 'square' : 'jumper';
+  } catch {
+    return 'jumper';
+  }
+}
 
 export const useLab = create<LabState>((set, get) => {
   /** The setting changed by the last edit and when, for merging a slider's steps. */
@@ -312,6 +330,7 @@ export const useLab = create<LabState>((set, get) => {
     selectedId: null,
     tool: 'select',
     placing: null,
+    wireStyle: readWireStyle(),
     wireStart: null,
     notice: null,
     meter: NO_PROBES,
@@ -420,7 +439,7 @@ export const useLab = create<LabState>((set, get) => {
           set(error ? { notice: error } : { wireStart: endpoint, notice: null });
         } else if (wireStart === endpoint) {
           set({ wireStart: null });
-        } else if (apply(addWire(circuit, wireStart, endpoint))) {
+        } else if (apply(addWire(circuit, wireStart, endpoint, undefined, get().wireStyle))) {
           set({ wireStart: null });
         }
       } else if (isHole(endpoint)) {
@@ -464,6 +483,19 @@ export const useLab = create<LabState>((set, get) => {
     straightenSelected() {
       const { selectedId, circuit } = get();
       if (selectedId) apply(setWireBends(circuit, selectedId, []));
+    },
+    setWireStyle(wireStyle) {
+      set({ wireStyle });
+      try {
+        localStorage.setItem(WIRE_STYLE_KEY, wireStyle);
+      } catch {
+        // Private mode: the choice lasts for this visit.
+      }
+      if (get().tool !== 'wire') get().setTool('wire');
+    },
+    restyleSelected(style) {
+      const { selectedId, circuit } = get();
+      if (selectedId) apply(setWireStyle(circuit, selectedId, style));
     },
     setProps: (id, props) =>
       void apply(

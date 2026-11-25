@@ -51,8 +51,8 @@ import {
   type Box,
   type Point,
 } from './geometry';
-import { slackMiddle, wirePath } from './parts';
-import { PartIcon } from './Palette';
+import { slackMiddle, squareRoute, wirePath } from './parts';
+import { PartIcon, WireStyleIcon } from './Palette';
 import { boxOfAdded, withPart, withPartAt } from './placing';
 import { BoardPartDrawing, Scene } from './Scene';
 import { useLab } from './store';
@@ -163,6 +163,7 @@ export function Canvas() {
   const result = useLab((s) => s.result);
   const tool = useLab((s) => s.tool);
   const placing = useLab((s) => s.placing);
+  const wireStyle = useLab((s) => s.wireStyle);
   const selectedId = useLab((s) => s.selectedId);
   const wireStart = useLab((s) => s.wireStart);
   const running = useLab((s) => s.running);
@@ -633,10 +634,14 @@ export function Canvas() {
         {bends.length < MAX_WIRE_BENDS &&
           route.slice(0, -1).map((start, index) => {
             const end = route[index + 1]!;
+            // On a square wire a leg's handle is its corner, where a bend most often goes.
+            const corner = wire.style === 'square' ? squareRoute([start, end])[1] : undefined;
             const middle =
-              bends.length === 0
-                ? slackMiddle(from, to)
-                : { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+              corner && corner !== end
+                ? corner
+                : bends.length === 0 && wire.style !== 'square'
+                  ? slackMiddle(from, to)
+                  : { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
             if (distance(start, end) < PITCH * 1.5) return null; // no room for another bend
             return (
               <g
@@ -778,7 +783,7 @@ export function Canvas() {
                     key={wire.id}
                     className="wire-hit"
                     data-hit={wire.id}
-                    d={wirePath(from, to, wireBends(wire))}
+                    d={wirePath(from, to, wireBends(wire), wire.style)}
                     onPointerDown={(event) => {
                       // Grabbed near an end, the wire comes out of its hole and follows the hand.
                       const point = toCanvas(event);
@@ -1076,7 +1081,7 @@ export function Canvas() {
               <>
                 {previewEnd && (
                   <path
-                    d={wirePath(startPoint, previewEnd)}
+                    d={wirePath(startPoint, previewEnd, [], wireStyle)}
                     fill="none"
                     stroke={suggestWireColor(circuit, wireStart!, hover ?? wireStart!)}
                     strokeWidth={5.4}
@@ -1214,6 +1219,25 @@ export function Canvas() {
                 className="min-h-10 rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
               >
                 {t('inspector.flip')}
+              </button>
+            )}
+            {selectedWire && (
+              <button
+                type="button"
+                data-testid="quick-restyle"
+                data-style={selectedWire.style ?? 'jumper'}
+                onClick={() =>
+                  useLab
+                    .getState()
+                    .restyleSelected(selectedWire.style === 'square' ? 'jumper' : 'square')
+                }
+                className="flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-ink hover:bg-paper"
+              >
+                <WireStyleIcon
+                  style={selectedWire.style === 'square' ? 'jumper' : 'square'}
+                  size={18}
+                />
+                {t(selectedWire.style === 'square' ? 'lab.makeJumper' : 'lab.makeSquare')}
               </button>
             )}
             {selectedWire?.bends && (

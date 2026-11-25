@@ -32,12 +32,14 @@ import { holeExists, holeName, isHole, parseHole, type BreadboardSize } from './
  * 24 — adds the 74HC393 counter, the 16-pin chips (74HC161 counter and CD4511
  *     decoder) and the seven-segment display.
  * 25 — adds the 74HC595 shift register.
- * Up to version 20 each version only adds part types or optional fields, so an
- * older document is valid in a newer version apart from the number. Version
+ * 26 — a wire may carry `style: 'square'`: drawn in straight runs that turn
+ *     at right angles, in place of the slack of a jumper wire.
+ * Apart from version 21, each version only adds part types or optional fields,
+ * so an older document is valid in a newer version apart from the number. Version
  * 21 renames every hole: `migrateCircuit` puts the one fixed breadboard of an
  * older circuit in as BB1, where it was, and names its holes after it.
  */
-export const CIRCUIT_SCHEMA_VERSION = 25;
+export const CIRCUIT_SCHEMA_VERSION = 26;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 /** A breadboard hole: the breadboard's id, a dot and the hole, as "BB1.a12". */
@@ -974,7 +976,15 @@ export const WireSchema = Type.Object({
   color: Type.String({ pattern: '^#[0-9a-fA-F]{6}$' }),
   /** Points the wire is routed through, in order from `from` to `to`, in hole pitches. */
   bends: Type.Optional(Type.Array(PositionSchema, { maxItems: MAX_WIRE_BENDS })),
+  /**
+   * How it is drawn (D-109). Left out, it is a jumper wire hanging slack between
+   * its ends; 'square', it runs straight and turns at right angles.
+   */
+  style: Type.Optional(Type.Literal('square')),
 });
+
+/** The ways a wire can be drawn: a jumper wire, or straight runs at right angles. */
+export type WireStyle = 'jumper' | 'square';
 
 export const CircuitDocumentSchema = Type.Object({
   schemaVersion: Type.Literal(CIRCUIT_SCHEMA_VERSION),

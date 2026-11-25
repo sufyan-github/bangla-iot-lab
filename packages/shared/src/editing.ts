@@ -24,6 +24,7 @@ import {
   type CircuitDocument,
   type Position,
   type Wire,
+  type WireStyle,
 } from './circuit';
 import { Value } from 'typebox/value';
 
@@ -503,11 +504,35 @@ export function addWire(
   from: string,
   to: string,
   color: string = suggestWireColor(circuit, from, to),
+  style: WireStyle = 'jumper',
 ): EditResult {
-  const wire: Wire = { id: nextId(circuit, 'W'), from, to, color };
+  const wire: Wire = {
+    id: nextId(circuit, 'W'),
+    from,
+    to,
+    color,
+    ...(style === 'square' ? { style } : {}),
+  };
   const error = checkWire(circuit, wire);
   if (error) return fail(error);
   return { ok: true, id: wire.id, circuit: { ...circuit, wires: [...circuit.wires, wire] } };
+}
+
+/** Draws a wire as a jumper wire or in straight runs at right angles; its route stays. */
+export function setWireStyle(
+  circuit: CircuitDocument,
+  wireId: string,
+  style: WireStyle,
+): EditResult {
+  const wire = circuit.wires.find((w) => w.id === wireId);
+  if (!wire) return fail('unknown-item');
+  const next: Wire = { ...wire, style: 'square' };
+  if (style === 'jumper') delete next.style;
+  return {
+    ok: true,
+    id: wireId,
+    circuit: { ...circuit, wires: circuit.wires.map((w) => (w.id === wireId ? next : w)) },
+  };
 }
 
 export function moveWireEnd(
@@ -536,7 +561,13 @@ export function setWireBends(
 ): EditResult {
   const wire = circuit.wires.find((w) => w.id === wireId);
   if (!wire) return fail('unknown-item');
-  const straight: Wire = { id: wire.id, from: wire.from, to: wire.to, color: wire.color };
+  const straight: Wire = {
+    id: wire.id,
+    from: wire.from,
+    to: wire.to,
+    color: wire.color,
+    ...(wire.style ? { style: wire.style } : {}),
+  };
   const next: Wire = bends.length > 0 ? { ...straight, bends: [...bends] } : straight;
   if (!Value.Check(WireSchema, next)) return fail('invalid-value');
   return {

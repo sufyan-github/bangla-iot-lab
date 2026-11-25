@@ -1,4 +1,9 @@
-import { SEVEN_SEGMENTS, type LedColor, type SevenSegment } from '@banglalab/shared';
+import {
+  SEVEN_SEGMENTS,
+  type LedColor,
+  type SevenSegment,
+  type WireStyle,
+} from '@banglalab/shared';
 import type { LedState } from '@banglalab/simulation';
 import { PITCH, UNO_BOX, UNO_SOCKETS, type Box, type Point } from './geometry';
 import { resistorBands } from './resistor-bands';
@@ -424,14 +429,37 @@ export function BatteryView(props: {
 }
 
 /**
+ * The points a square wire passes (D-109): its ends and bends, with a corner
+ * put in wherever two of them are not level or plumb, so that it runs across
+ * first and then up or down, as a wire laid flat on a board is bent.
+ */
+export function squareRoute(points: readonly Point[]): Point[] {
+  const route: Point[] = [points[0]!];
+  for (const next of points.slice(1)) {
+    const last = route[route.length - 1]!;
+    if (Math.abs(next.x - last.x) > 0.5 && Math.abs(next.y - last.y) > 0.5) {
+      route.push({ x: next.x, y: last.y });
+    }
+    route.push(next);
+  }
+  return route;
+}
+
+/**
  * Path of a wire. Left alone it hangs slack between its ends like a real jumper
  * wire, so wires that share a row stay tellable apart. Routed through bend
- * points it runs straight between them with rounded corners.
+ * points it runs straight between them with rounded corners. A square wire
+ * (D-109) runs straight and turns at right angles.
  */
-export function wirePath(from: Point, to: Point, bends: readonly Point[] = []): string {
+export function wirePath(
+  from: Point,
+  to: Point,
+  bends: readonly Point[] = [],
+  style: WireStyle = 'jumper',
+): string {
   const r = (value: number) => Math.round(value * 10) / 10;
-  if (bends.length > 0) {
-    const points = [from, ...bends, to];
+  if (bends.length > 0 || style === 'square') {
+    const points = style === 'square' ? squareRoute([from, ...bends, to]) : [from, ...bends, to];
     let d = `M${r(from.x)} ${r(from.y)}`;
     for (let i = 1; i < points.length - 1; i++) {
       const before = points[i - 1]!;
@@ -504,8 +532,9 @@ export function WireView(props: {
   lifted?: boolean;
   /** Points the wire is routed through. */
   bends?: readonly Point[];
+  style?: WireStyle;
 }) {
-  const d = wirePath(props.from, props.to, props.bends);
+  const d = wirePath(props.from, props.to, props.bends, props.style);
   const flowing = props.current !== undefined && Math.abs(props.current) > 1e-6;
   return (
     <g fill="none" strokeLinecap="round" opacity={props.lifted ? 0.85 : 1}>
