@@ -1,4 +1,5 @@
 import { useT } from '../i18n';
+import { PageBand } from './PageBand';
 
 const REPOSITORY = 'https://github.com/sufyan-github/bangla-iot-lab';
 
@@ -177,47 +178,48 @@ const NOTICES = [
 export function LicencesPage() {
   const { t } = useT();
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8" data-testid="licences">
-      <h1 className="text-3xl font-semibold">{t('licences.title')}</h1>
-      <p className="mt-3 text-ink-soft">{t('licences.intro')}</p>
-      <p className="mt-2 text-ink-soft">{t('licences.replace')}</p>
+    <main className="flex-1" data-testid="licences">
+      <PageBand title={t('licences.title')} intro={t('licences.intro')} />
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <p className="text-ink-soft">{t('licences.replace')}</p>
 
-      <ul className="mt-6 space-y-4" lang="en">
-        {NOTICES.map((notice) => (
-          <li
-            key={notice.id}
-            data-notice={notice.id}
-            className="rounded-xl border border-line bg-surface p-4"
+        <ul className="mt-6 space-y-4" lang="en">
+          {NOTICES.map((notice) => (
+            <li
+              key={notice.id}
+              data-notice={notice.id}
+              className="rounded-[var(--radius-card)] border border-line bg-surface p-4"
+            >
+              <h2 className="text-lg font-semibold">{notice.name}</h2>
+              <p className="text-sm font-medium text-amber-deep">{notice.licence}</p>
+              <p className="mt-2 text-sm">{notice.text}</p>
+              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium">
+                <a className="text-accent underline" href={`/licences/${notice.file}`}>
+                  {notice.file}
+                </a>
+                <a className="text-accent underline" href={notice.source} rel="noreferrer">
+                  {t('licences.source')}
+                </a>
+              </p>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-6 text-sm">
+          <a
+            className="font-medium text-accent underline"
+            href="/licences/THIRD_PARTY_LICENSES.md"
+            data-testid="licences-full"
           >
-            <h2 className="text-lg font-semibold">{notice.name}</h2>
-            <p className="text-sm font-medium text-amber-deep">{notice.licence}</p>
-            <p className="mt-2 text-sm">{notice.text}</p>
-            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium">
-              <a className="text-accent underline" href={`/licences/${notice.file}`}>
-                {notice.file}
-              </a>
-              <a className="text-accent underline" href={notice.source} rel="noreferrer">
-                {t('licences.source')}
-              </a>
-            </p>
-          </li>
-        ))}
-      </ul>
-
-      <p className="mt-6 text-sm">
-        <a
-          className="font-medium text-accent underline"
-          href="/licences/THIRD_PARTY_LICENSES.md"
-          data-testid="licences-full"
-        >
-          {t('licences.fullList')}
-        </a>
-      </p>
-      <p className="mt-4 text-sm text-ink-soft" lang="en">
-        Arduino and UNO are trademarks of Arduino S.r.l. This project is not affiliated with or
-        endorsed by Arduino, or by any parts supplier. Product names are used only to say what the
-        software is compatible with.
-      </p>
+            {t('licences.fullList')}
+          </a>
+        </p>
+        <p className="mt-4 text-sm text-ink-soft" lang="en">
+          Arduino and UNO are trademarks of Arduino S.r.l. This project is not affiliated with or
+          endorsed by Arduino, or by any parts supplier. Product names are used only to say what the
+          software is compatible with.
+        </p>
+      </div>
     </main>
   );
 }

@@ -43,18 +43,21 @@ export function SignedOut() {
         <div className="space-y-3">
           <Choice
             testId="entry-sign-in"
+            icon="key"
             title={t('account.entry.signIn')}
             about={t('account.entry.signInAbout')}
             onClick={() => go('sign-in')}
           />
           <Choice
             testId="entry-new"
+            icon="new"
             title={t('account.entry.new')}
             about={t('account.entry.newAbout')}
             onClick={() => go('new')}
           />
           <Choice
             testId="entry-class"
+            icon="class"
             title={t('account.entry.class')}
             about={t('account.entry.classAbout')}
             onClick={() => go('class')}
@@ -97,11 +100,13 @@ export function SignedOut() {
             <div className="grid gap-3 sm:grid-cols-2">
               <Choice
                 testId="new-adult"
+                icon="adult"
                 title={t('account.adult')}
                 onClick={() => go('new-adult')}
               />
               <Choice
                 testId="new-learner"
+                icon="learner"
                 title={t('account.under18')}
                 onClick={() => go('new-learner')}
               />
@@ -155,15 +160,26 @@ function Sheet({ children }: { children: ReactNode }) {
   );
 }
 
-/** One way in: a whole row to press, with a line saying what it is for. */
+/** Drawings for the ways in: a key, a person joining, a class. */
+const CHOICE_ICONS = {
+  key: 'M14.5 9.5a4 4 0 1 1-1.2-2.9M14.5 9.5L20 15m-3-3l2 2m-4 0l2 2',
+  new: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c.8-3.4 3.2-5 6-5s5.2 1.6 6 5M18 8v6M15 11h6',
+  class: 'M4 5h16v10H4zM8 19l4-4 4 4M7.5 9h4M7.5 12h7',
+  adult: 'M12 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 21c.9-4 3.6-6.5 7-6.5s6.1 2.5 7 6.5',
+  learner: 'M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM7 20c.7-3 2.6-5 5-5s4.3 2 5 5M8.5 5.5L12 3l3.5 2.5',
+} as const;
+
+/** One way in: a whole row to press, with its drawing and a line saying what it is for. */
 function Choice({
   title,
   about,
+  icon,
   onClick,
   testId,
 }: {
   title: string;
   about?: string;
+  icon: keyof typeof CHOICE_ICONS;
   onClick: () => void;
   testId: string;
 }) {
@@ -172,10 +188,41 @@ function Choice({
       type="button"
       data-testid={testId}
       onClick={onClick}
-      className="block w-full rounded-[var(--radius-card)] border-2 border-line bg-surface px-4 py-3 text-left transition-colors hover:border-accent"
+      className="group flex w-full items-center gap-4 rounded-[var(--radius-card)] border border-line bg-surface p-3 text-left shadow-[0_1px_0_rgb(0_0_0/0.04)] transition-colors hover:border-amber sm:p-4"
     >
-      <span className="block text-lg font-semibold">{title}</span>
-      {about && <span className="block text-sm text-ink-soft">{about}</span>}
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[var(--radius-control)] bg-sunk text-ink-soft group-hover:bg-amber-soft group-hover:text-amber-deep">
+        <svg
+          viewBox="0 0 24 24"
+          width="26"
+          height="26"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d={CHOICE_ICONS[icon]} />
+        </svg>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-lg leading-snug font-semibold">{title}</span>
+        {about && <span className="block text-sm text-ink-soft">{about}</span>}
+      </span>
+      <svg
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+        className="shrink-0 text-ink-faint group-hover:text-ink"
+      >
+        <path d="M9.5 6l6 6-6 6" />
+      </svg>
     </button>
   );
 }

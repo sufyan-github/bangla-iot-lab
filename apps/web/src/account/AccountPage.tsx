@@ -2,6 +2,8 @@ import { LESSONS } from '@banglalab/lessons';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { useT } from '../i18n';
+import { LedRow, ledsFor } from '../shell/LedRow';
+import { bandButton, PageBand } from '../shell/PageBand';
 import { call, useAccount, type ClassSummary, type Learner } from './client';
 import { LabPass } from './LabPass';
 import { SignedOut } from './SignedOut';
@@ -527,14 +529,14 @@ function TeacherDashboard() {
           role="status"
           data-testid="school-waiting"
           data-status={s.schoolStatus}
-          className="rounded-lg border-l-4 border-amber bg-amber-soft px-4 py-3"
+          className="rounded-[var(--radius-card)] border-2 border-amber bg-amber-soft px-4 py-3"
         >
           {t(s.schoolStatus === 'pending' ? 'account.schoolPending' : 'account.schoolSuspended', {
             name: s.schoolName,
           })}
         </p>
       ))}
-      <div className="flex gap-1 border-b border-line" role="tablist">
+      <div className="flex gap-1 overflow-x-auto border-b border-line" role="tablist">
         {(['classes', 'school', 'account'] as const).map((name) => (
           <button
             key={name}
@@ -543,8 +545,10 @@ function TeacherDashboard() {
             data-testid={`teacher-tab-${name}`}
             aria-selected={tab === name}
             onClick={() => setTab(name)}
-            className={`-mb-px min-h-11 border-b-2 px-4 font-medium ${
-              tab === name ? 'border-accent text-ink' : 'border-transparent text-ink-soft'
+            className={`-mb-px min-h-11 shrink-0 border-b-[3px] px-4 font-semibold ${
+              tab === name
+                ? 'border-amber text-ink'
+                : 'border-transparent text-ink-soft hover:text-ink'
             }`}
           >
             {t(`account.tab.${name}`)}
@@ -1051,12 +1055,13 @@ function LearnerHome() {
                       {t('account.openLesson')}
                     </Link>
                   </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line" aria-hidden>
-                    <div
-                      className="h-full rounded-full bg-mat"
-                      style={{ width: `${total ? (shown / total) * 100 : 0}%` }}
+                  {total > 0 && (
+                    <LedRow
+                      className="mt-2"
+                      leds={ledsFor(shown, total)}
+                      label={t('account.stepsDone', { done: number(shown), total: number(total) })}
                     />
-                  </div>
+                  )}
                 </li>
               );
             })}
@@ -1234,34 +1239,35 @@ export function AccountPage() {
   const { me, refresh, signOut } = useAccount();
   useEffect(() => void refresh(), [refresh]);
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6" data-testid="account-page">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="flex-1 text-3xl font-bold">{t('account.title')}</h1>
+    <main className="flex-1" data-testid="account-page">
+      <PageBand title={t('account.title')}>
         {me && (
-          <>
-            <span className="text-sm text-ink-soft" data-testid="signed-in-as">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm text-chalk/80" data-testid="signed-in-as">
               {t('account.signedInAs', { name: me.user.displayName })}
             </span>
             <button
               type="button"
               data-testid="sign-out"
               onClick={() => void signOut()}
-              className={secondary}
+              className={bandButton}
             >
               {t('account.signOut')}
             </button>
-          </>
+          </div>
+        )}
+      </PageBand>
+      <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6">
+        {me === undefined ? (
+          <p className="text-ink-soft">{t('account.loading')}</p>
+        ) : me === null ? (
+          <SignedOut />
+        ) : me.user.account === 'staff' ? (
+          <TeacherDashboard />
+        ) : (
+          <LearnerHome />
         )}
       </div>
-      {me === undefined ? (
-        <p className="text-ink-soft">{t('account.loading')}</p>
-      ) : me === null ? (
-        <SignedOut />
-      ) : me.user.account === 'staff' ? (
-        <TeacherDashboard />
-      ) : (
-        <LearnerHome />
-      )}
     </main>
   );
 }

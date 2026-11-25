@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useT } from '../i18n';
+import { SlimBand } from '../shell/PageBand';
 import { call, useAccount } from './client';
 import { Field, Problem, input, primary, useSubmit } from './ui';
 
@@ -45,27 +46,30 @@ export function EmailLinkPage({ expected }: { expected: Purpose }) {
   }, [token, expected]);
 
   return (
-    <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-6" data-testid="email-link-page">
-      <section className="space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
-        {info === undefined ? (
-          <p className="text-ink-soft">{t('link.checking')}</p>
-        ) : info === null ? (
-          <>
-            <Problem error="link-not-working" />
-            <Link to="/account" className="btn btn-secondary">
-              {t('link.toSignIn')}
-            </Link>
-          </>
-        ) : expected === 'verify-email' ? (
-          <Verify token={token} info={info} />
-        ) : expected === 'approve-learner' ? (
-          <Approve token={token} info={info} />
-        ) : expected === 'close-account' ? (
-          <CloseByLink token={token} info={info} />
-        ) : (
-          <Reset token={token} info={info} />
-        )}
-      </section>
+    <main className="flex-1" data-testid="email-link-page">
+      <SlimBand />
+      <div className="mx-auto w-full max-w-xl px-4 py-6">
+        <section className="space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
+          {info === undefined ? (
+            <p className="text-ink-soft">{t('link.checking')}</p>
+          ) : info === null ? (
+            <>
+              <Problem error="link-not-working" />
+              <Link to="/account" className="btn btn-secondary">
+                {t('link.toSignIn')}
+              </Link>
+            </>
+          ) : expected === 'verify-email' ? (
+            <Verify token={token} info={info} />
+          ) : expected === 'approve-learner' ? (
+            <Approve token={token} info={info} />
+          ) : expected === 'close-account' ? (
+            <CloseByLink token={token} info={info} />
+          ) : (
+            <Reset token={token} info={info} />
+          )}
+        </section>
+      </div>
     </main>
   );
 }
@@ -247,59 +251,62 @@ export function GuardianPage() {
   const [sent, setSent] = useState(false);
   const ask = useSubmit();
   return (
-    <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-6" data-testid="guardian-page">
-      <section className="space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
-        <h1 className="text-2xl font-bold">{t('guardian.title')}</h1>
-        <p>{t('guardian.about')}</p>
-        <form
-          className="space-y-3"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (await ask.submit('/v1/auth/guardian-close', { username, guardianEmail })) {
-              setSent(true);
-            }
-          }}
-        >
-          <Field label={t('account.username')}>
-            <input
-              data-testid="guardian-username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              autoCapitalize="none"
-              spellCheck={false}
-              className={`${input} font-mono`}
-            />
-          </Field>
-          <Field label={t('guardian.yourEmail')}>
-            <input
-              data-testid="guardian-email"
-              type="email"
-              autoComplete="email"
-              value={guardianEmail}
-              onChange={(e) => setGuardianEmail(e.target.value)}
-              required
-              className={input}
-            />
-          </Field>
-          <Problem error={ask.error} />
-          {sent ? (
-            <p role="status" data-testid="guardian-sent" className="font-medium text-accent">
-              {t('guardian.sent')}
-            </p>
-          ) : (
-            <button
-              type="submit"
-              data-testid="guardian-submit"
-              disabled={ask.busy}
-              className={primary}
-            >
-              {t('guardian.send')}
-            </button>
-          )}
-        </form>
-        <p className="text-sm text-ink-soft">{t('guardian.classNote')}</p>
-      </section>
+    <main className="flex-1" data-testid="guardian-page">
+      <SlimBand />
+      <div className="mx-auto w-full max-w-xl px-4 py-6">
+        <section className="space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
+          <h1 className="text-2xl font-bold">{t('guardian.title')}</h1>
+          <p>{t('guardian.about')}</p>
+          <form
+            className="space-y-3"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              if (await ask.submit('/v1/auth/guardian-close', { username, guardianEmail })) {
+                setSent(true);
+              }
+            }}
+          >
+            <Field label={t('account.username')}>
+              <input
+                data-testid="guardian-username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoCapitalize="none"
+                spellCheck={false}
+                className={`${input} font-mono`}
+              />
+            </Field>
+            <Field label={t('guardian.yourEmail')}>
+              <input
+                data-testid="guardian-email"
+                type="email"
+                autoComplete="email"
+                value={guardianEmail}
+                onChange={(e) => setGuardianEmail(e.target.value)}
+                required
+                className={input}
+              />
+            </Field>
+            <Problem error={ask.error} />
+            {sent ? (
+              <p role="status" data-testid="guardian-sent" className="font-medium text-accent">
+                {t('guardian.sent')}
+              </p>
+            ) : (
+              <button
+                type="submit"
+                data-testid="guardian-submit"
+                disabled={ask.busy}
+                className={primary}
+              >
+                {t('guardian.send')}
+              </button>
+            )}
+          </form>
+          <p className="text-sm text-ink-soft">{t('guardian.classNote')}</p>
+        </section>
+      </div>
     </main>
   );
 }
