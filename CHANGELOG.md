@@ -8,6 +8,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Changed
 
+- **Parts go where you put them**: a breadboard is picked by its size (170,
+  400 or 830 holes); a battery, supply, board or motor driver follows the
+  pointer as a half-transparent picture and is put down where the mat is
+  pressed, or in its usual place when picked twice.
 - **A work surface with no edge**: a first look takes in the whole circuit, at
   full size at most; the bare mat can be dragged any way and has no
   scrollbars; parts can be put to the left and above as well, and the mat

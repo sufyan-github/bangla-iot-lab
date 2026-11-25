@@ -2342,3 +2342,29 @@ breadboard filling the window at 125%.
   a tip on pointing at it. Breadboards could always be moved by it; the owner
   had not found it.
 - "Fit" goes back to the first view.
+
+## D-108 — Parts are put where the student wants them
+
+Asked for by the owner on 25 November 2026.
+
+- **A breadboard is picked by its size.** Its line in the parts list opens
+  the three sizes under it, with their holes (170, 400 and 830). The one chosen
+  is the one added. Before, the list always added the 400-hole board and the
+  size was changed afterwards.
+- **A part beside the breadboards is taken in hand, then put down.** A
+  breadboard, battery, bench supply, function generator, board or motor
+  driver is no longer dropped in its usual place at once. Picked from the
+  list, it is in hand: a half-transparent picture of it follows the mouse, and
+  a press on the mat puts it there, with its middle where the mat was pressed.
+  Where it has no room the picture is outlined in red and a press adds
+  nothing. Picked again in the list, it goes to its usual place, as before. Esc,
+  or choosing a tool, puts it back. On a touch screen there is nothing to
+  follow: a finger presses where the part goes.
+- **A part for the breadboard shows its drawing by the pointer** until the
+  pointer is over a hole, where the part itself is drawn where it would go,
+  as before.
+- Nothing about the ESP32 board changes but where it can be put; its wiring
+  and programs are as they were.
+- **Tests.** The browser tests of what the lab does add these parts as before,
+  through `e2e/pick.ts`, which presses twice. `canvas.spec.ts` tests putting
+  them down by hand.
