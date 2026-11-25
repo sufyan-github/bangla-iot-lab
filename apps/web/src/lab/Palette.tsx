@@ -142,6 +142,13 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M17 8a7 7 0 0 1 0 10M20 5.5a11 11 0 0 1 0 15" {...stroke} />
     </>
   ),
+  buzzermodule: (
+    <>
+      <rect x="3" y="4" width="13" height="16" rx="1.5" {...stroke} />
+      <circle cx="9.5" cy="10.5" r="3.5" fill="currentColor" />
+      <path d="M6 20v2M9.5 20v2M13 20v2M19 8.5a5 5 0 0 1 0 6" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
   motor: (
     <>
       <circle cx="12" cy="12" r="8" {...stroke} />
@@ -491,7 +498,18 @@ const BINS: { id: string; items: PaletteItem[] }[] = [
   },
   {
     id: 'outputs',
-    items: ['buzzer', 'siren', 'rgbled', 'motor', 'servo', 'l298n', 'relay', 'relaymodule', 'mp3'],
+    items: [
+      'buzzer',
+      'buzzermodule',
+      'siren',
+      'rgbled',
+      'motor',
+      'servo',
+      'l298n',
+      'relay',
+      'relaymodule',
+      'mp3',
+    ],
   },
   { id: 'displays', items: ['lcd', 'oled', 'tft', 'ledring', 'sevenseg'] },
   {

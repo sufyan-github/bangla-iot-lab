@@ -55,6 +55,7 @@ import {
   BatteryView,
   InstrumentView,
   BuzzerView,
+  BuzzerModuleView,
   ButtonView,
   CapacitorView,
   ChipView,
@@ -434,6 +435,16 @@ export function BoardPartDrawing(props: {
           pos={at(part.pins.pos)}
           neg={at(part.pins.neg)}
           sounding={reading?.activity === 1}
+          selected={selected}
+        />
+      );
+    case 'buzzermodule':
+      return (
+        <BuzzerModuleView
+          first={at(part.pins.s)}
+          last={at(part.pins.gnd)}
+          sounding={reading?.activity === 1}
+          trigger={part.props.trigger}
           selected={selected}
         />
       );

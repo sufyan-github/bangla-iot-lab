@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "buzzer-module-active",
-  "simulates": "buzzer",
-  "status": "generic",
-  "statusNote": "The bare active buzzer stands in. The three-pin board is not modelled.",
+  "simulates": "buzzermodule",
+  "status": "simulated",
   "family": "output",
   "tier": 1,
   "name": {
@@ -12,11 +11,14 @@
   },
   "summary": {
     "bn": "",
-    "en": "A buzzer on a three-pin board."
+    "en": "An active buzzer on a three-pin board. Boards differ: some sound when S is HIGH, others when S is LOW; the lab has a setting for each."
   },
   "model": {
     "level": "electrical",
-    "simplified": []
+    "simplified": [
+      "The buzzer is a resistor that sounds above a threshold voltage.",
+      "A board that sounds on LOW is modelled with the buzzer between + and S, so S carries the buzzer's current; a real board switches it with a transistor, so S carries only a few milliamps."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -29,9 +31,9 @@
       "role": "input"
     },
     {
-      "id": "nc",
-      "label": "NC",
-      "role": "passive"
+      "id": "vcc",
+      "label": "+",
+      "role": "power"
     },
     {
       "id": "gnd",
@@ -41,6 +43,10 @@
   ],
   "variants": [],
   "catalog": {
-    "keywords": ["active buzzer"]
+    "keywords": ["active buzzer", "buzzer module"]
+  },
+  "placement": {
+    "idPrefix": "BZ",
+    "offsets": [0, 1, 2]
   }
 }

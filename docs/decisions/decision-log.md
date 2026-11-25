@@ -2454,3 +2454,33 @@ Built on 25 November 2026, chosen by the owner from the list of what is left
   it has.
 - The simulation advances in the same slices of at most 50 ms whether it runs
   or is stepped, so a stepped circuit behaves as a running one does.
+
+## D-113 — Two stand-in parts become real models: the TMP36 and the buzzer module
+
+Built on 25 November 2026. Of the five parts the lab showed as generic
+stand-ins, the owner chose what each should become; this covers the first two.
+
+- **The analog temperature sensor is a TMP36**, chosen over the LM35 because it
+  works from 2.7 V, so it suits the ESP32's 3.3 V as well as 5 V. Its output is
+  0.5 V + 10 mV per °C (the maker's datasheet figures; REPORTED, not
+  checked on a real part): 0.75 V at 25 °C, whatever its supply between 2.7 V
+  and 5.5 V. In the lab, below 2.7 V it gives nothing. Its supply current and output resistance are
+  ESTIMATES. Its error, self-heating and readings below 0 °C are not
+  modelled; the part says so.
+- **The active buzzer module is its own part, with three pins: S, + and −.**
+  Boards sold under this name differ: some sound when S is HIGH, others when S
+  is LOW (REPORTED from sellers' listings). The part has a setting for which,
+  HIGH by default. On HIGH the buzzer runs from S to −, and + is not needed, as
+  on the kit's board. On LOW it is fed from + and sounds while S is pulled LOW;
+  a real board of that kind switches it with a transistor, so S carries only a
+  few milliamps, where in the lab it carries the buzzer's current. The part
+  says this.
+- **The five lessons that use the buzzer now use the module**, with the same
+  wiring (S to the pin, − to GND) and the same programs. Their text no longer
+  says a two-leg buzzer stands in. A circuit saved part-way through one of them
+  keeps its two-leg buzzer, which still works but does not meet the lesson's
+  check; the Run check shows what is missing.
+- The two-leg buzzer stays in the parts list as a part of its own.
+- Circuit format 27 adds the module. Older circuits open unchanged.
+- Next: the YL-69 soil sensor as its real four-pin board, then the IR obstacle
+  sensor and the TT gear motor from published figures.

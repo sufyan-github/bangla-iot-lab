@@ -2,21 +2,23 @@
   "formatVersion": 1,
   "id": "analog-temperature",
   "simulates": "temperature",
-  "status": "generic",
-  "statusNote": "A generic analog sensor. No real part is modelled yet.",
+  "status": "simulated",
   "family": "sensor",
   "tier": 3,
   "name": {
-    "bn": "তাপমাত্রা সেন্সর",
-    "en": "Analog temperature sensor"
+    "bn": "TMP36 তাপমাত্রা সেন্সর",
+    "en": "TMP36 analog temperature sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Gives a voltage that follows temperature."
+    "bn": "তাপমাত্রার সঙ্গে বদলানো একটা ভোল্টেজ দেয়: প্রতি ডিগ্রিতে 10 mV, 0 °C-এ 0.5 V।",
+    "en": "Gives a voltage that follows temperature: 10 mV per degree, 0.5 V at 0 °C."
   },
   "model": {
     "level": "electrical",
-    "simplified": ["A divider whose output follows the set temperature; not any one real chip."]
+    "simplified": [
+      "Its output is exact: the datasheet's error of a degree or two, and warming from its own current, are not modelled.",
+      "Temperatures from 0 to 100 °C only; the chip itself reads from −40 to 125 °C."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -48,6 +50,6 @@
   },
   "variants": [],
   "catalog": {
-    "keywords": []
+    "keywords": ["tmp36"]
   }
 }

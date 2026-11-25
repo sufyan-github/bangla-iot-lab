@@ -120,17 +120,29 @@ export const SENSOR_RESISTANCE = 10_000;
  * makes the output fall to zero when the module is not powered.
  */
 export function sensorOutputFraction(
-  sensor: Extract<CircuitComponent, { type: 'temperature' | 'soil' | 'ir' }>,
+  sensor: Extract<CircuitComponent, { type: 'soil' | 'ir' }>,
 ): number {
   switch (sensor.type) {
-    case 'temperature':
-      return (sensor.props.celsius * 0.01) / 5; // LM35: 10 mV per °C
     case 'soil':
       return 0.9 - 0.6 * sensor.props.moisture; // dry reads high, wet reads low
     case 'ir':
       return sensor.props.detected ? 0.01 : 0.999; // output is pulled LOW by an obstacle
   }
 }
+
+/**
+ * TMP36 analog temperature sensor (D-113). REPORTED, from Analog Devices'
+ * "TMP35/TMP36/TMP37" datasheet: 10 mV per °C, 750 mV at 25 °C (so 500 mV at
+ * 0 °C), on a supply from 2.7 V to 5.5 V, drawing under 50 µA. Its output does
+ * not follow the supply, so it reads the same on the ESP32's 3.3 V as on 5 V.
+ */
+export function tmp36Volts(celsius: number): number {
+  return 0.5 + 0.01 * celsius;
+}
+/** What it draws: about 27 µA from 3.3 V and 42 µA from 5 V. ESTIMATE, inside the datasheet's "under 50 µA". */
+export const TMP36_SUPPLY_RESISTANCE = 120_000;
+/** ESTIMATE: an amplifier's output, low enough that a board's converter hardly loads it. */
+export const TMP36_OUTPUT_RESISTANCE = 100;
 
 /**
  * Four-pin sensor modules (LDR, rain, gas): the sensing part and a fixed
@@ -609,6 +621,8 @@ export const MIN_SUPPLY: Partial<Record<CircuitComponent['type'], number>> = {
   mq7: 4.5,
   ph: 4.5,
   acs712: 4.5,
+  // The TMP36's least supply, from its datasheet.
+  temperature: 2.7,
   // DFRobot gives 3.3 V as its least supply; a 3.3 V rail that sags a little under load still counts.
   tds: 3,
   turbidity: 4.5,

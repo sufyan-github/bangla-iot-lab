@@ -64,6 +64,11 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **A three-pin active buzzer module** (S, + and −), with a setting for when
+  it sounds: when S is HIGH (the default, as on the kit's board) or when S is
+  LOW. The five lessons with a buzzer now use it, wired as before.
+- **The analog temperature sensor is now a TMP36**: 0.5 V at 0 °C and 10 mV
+  more for each degree, on 3.3 V or 5 V alike. It was a generic stand-in.
 - **Pause, step and start again**: a running circuit that changes over time
   (a capacitor, a board's program, a clock) can be held still, moved on by 1,
   10 or 100 ms at a time, and started again from the beginning.

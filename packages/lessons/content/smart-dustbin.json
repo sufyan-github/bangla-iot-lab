@@ -125,19 +125,19 @@
     },
     {
       "text": {
-        "bn": "**বাজার** বসাও: + পা যাবে **D25**-এ, − পা GND-তে। ঢাকনা খোলার সময় ছোট একটা বিপ দেবে।",
-        "en": "Place the **buzzer**: + to **D25**, − to GND. It gives a short beep as the lid opens."
+        "bn": "**বাজার** বসাও: S পিন যাবে **D25**-এ, − পিন GND-তে। ঢাকনা খোলার সময় ছোট একটা বিপ দেবে।",
+        "en": "Place the **buzzer**: S to **D25**, − to GND. It gives a short beep as the lid opens."
       },
       "checks": [
         {
           "kind": "part",
-          "type": "buzzer"
+          "type": "buzzermodule"
         },
         {
           "kind": "connected",
           "from": {
-            "part": "buzzer",
-            "pin": "pos"
+            "part": "buzzermodule",
+            "pin": "s"
           },
           "to": {
             "board": "d25"
@@ -146,8 +146,8 @@
         {
           "kind": "connected",
           "from": {
-            "part": "buzzer",
-            "pin": "neg"
+            "part": "buzzermodule",
+            "pin": "gnd"
           },
           "to": {
             "board": "gnd"
@@ -208,7 +208,7 @@
         },
         {
           "kind": "reading",
-          "part": "buzzer",
+          "part": "buzzermodule",
           "path": "activity",
           "equals": 1
         },

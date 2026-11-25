@@ -181,6 +181,81 @@ describe('buzzer', () => {
   });
 });
 
+describe('active buzzer module (three pins)', () => {
+  const module = (trigger: 'high' | 'low'): CircuitComponent => ({
+    id: 'BZ1',
+    type: 'buzzermodule',
+    pins: { s: 'BB1.a1', vcc: 'BB1.a2', gnd: 'BB1.a3' },
+    props: { trigger },
+  });
+  // A 5 V battery: − always to the module's −, + to the module's +, and S to one or the other.
+  const document = (trigger: 'high' | 'low', s: 'pos' | 'neg') =>
+    circuit(
+      [battery(5), module(trigger)],
+      [
+        [`BAT1.${s}`, 'BB1.b1'],
+        ['BAT1.pos', 'BB1.b2'],
+        ['BB1.b3', 'BAT1.neg'],
+      ],
+    );
+
+  it('a board that sounds on HIGH sounds with S HIGH, and draws through S', () => {
+    const on = simulate(document('high', 'pos')).readings.BZ1!;
+    expect(on.activity).toBe(1);
+    expect(on.current).toBeCloseTo(5 / 200.52, 3);
+    expect(simulate(document('high', 'neg')).readings.BZ1!.activity).toBe(0);
+  });
+
+  it('a board that sounds on LOW sounds with S LOW, fed from +', () => {
+    expect(simulate(document('low', 'neg')).readings.BZ1!.activity).toBe(1);
+    expect(simulate(document('low', 'pos')).readings.BZ1!.activity).toBe(0);
+  });
+
+  it('on HIGH, + need not be wired, as on the kit board', () => {
+    const { readings } = simulate(
+      circuit(
+        [battery(5), module('high')],
+        [
+          ['BAT1.pos', 'BB1.b1'],
+          ['BB1.b3', 'BAT1.neg'],
+        ],
+      ),
+    );
+    expect(readings.BZ1!.activity).toBe(1);
+  });
+
+  it('beeps with a blinking pin: on HIGH in step with it, on LOW the other way round', () => {
+    const heard = (trigger: 'high' | 'low') => {
+      const session = new SimulationSession(
+        circuit(
+          [uno, module(trigger)],
+          [
+            ['UNO1.d13', 'BB1.b1'],
+            ['UNO1.5v', 'BB1.b2'],
+            ['BB1.b3', 'UNO1.gnd'],
+          ],
+        ),
+      );
+      session.loadFirmware('UNO1', firmware('blink'));
+      const out: number[] = [];
+      for (let i = 0; i < 40; i++) {
+        session.advance(50);
+        const frame = session.frame().result;
+        out.push(frame.readings.BZ1!.activity! === 1 ? 1 : 0);
+        out.push(frame.sockets['UNO1.d13']!.voltage > 2.5 ? 1 : 0);
+      }
+      return out;
+    };
+    const high = heard('high');
+    const low = heard('low');
+    for (let i = 0; i < high.length; i += 2) {
+      expect(high[i]).toBe(high[i + 1]);
+      expect(low[i]).toBe(1 - low[i + 1]!);
+    }
+    expect(high.filter((_, i) => i % 2 === 0 && high[i] === 1).length).toBeGreaterThan(10);
+  });
+});
+
 describe('motor and transistor', () => {
   it('a motor straight on a pin overloads the pin and barely turns', () => {
     const session = new SimulationSession(
@@ -265,13 +340,29 @@ describe('three-pin sensor modules', () => {
     );
   const pins = { vcc: 'BB1.c10', out: 'BB1.c11', gnd: 'BB1.c12' };
 
-  it('temperature sensor gives 10 mV per degree', () => {
+  it('temperature sensor (TMP36) gives 10 mV per degree, 0.5 V at 0 °C (D-113)', () => {
     const at = (celsius: number) =>
       simulate(module({ id: 'TMP1', type: 'temperature', pins, props: { celsius } })).readings.TMP1!
         .voltage;
-    expect(at(25)).toBeCloseTo(0.25, 3);
-    expect(at(37)).toBeCloseTo(0.37, 3);
-    expect(at(0)).toBeLessThan(0.01);
+    expect(at(25)).toBeCloseTo(0.75, 2);
+    expect(at(37)).toBeCloseTo(0.87, 2);
+    expect(at(0)).toBeCloseTo(0.5, 2);
+  });
+
+  it('the TMP36 reads the same from 3.3 V as from 5 V, and gives nothing below 2.7 V', () => {
+    const on = (volts: number) =>
+      simulate(
+        circuit(
+          [battery(volts), { id: 'TMP1', type: 'temperature', pins, props: { celsius: 25 } }],
+          [
+            ['BAT1.pos', 'BB1.a10'],
+            ['BAT1.neg', 'BB1.a12'],
+          ],
+        ),
+      ).readings.TMP1!.voltage;
+    expect(on(3.3)).toBeCloseTo(0.75, 2);
+    expect(on(5)).toBeCloseTo(0.75, 2);
+    expect(on(2)).toBeLessThan(0.01);
   });
 
   it('a program reads the temperature through analogRead', () => {
@@ -285,9 +376,9 @@ describe('three-pin sensor modules', () => {
       printed += session.frame().boards.UNO1!.serial;
     }
     const value = Number(printed.trim().split(/\r?\n/).at(-1));
-    // 0.30 V of 5 V on a 10-bit converter: 61. Converting back gives the temperature.
-    expect(Math.abs(value - 61)).toBeLessThanOrEqual(1);
-    expect((value * 5 * 100) / 1023).toBeCloseTo(30, 0);
+    // 0.80 V of 5 V on a 10-bit converter: 164. Converting back gives the temperature.
+    expect(Math.abs(value - 164)).toBeLessThanOrEqual(1);
+    expect(((value * 5) / 1023 - 0.5) * 100).toBeCloseTo(30, 0);
   });
 
   it('soil sensor reads high when dry and low when wet', () => {

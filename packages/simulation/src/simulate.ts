@@ -402,7 +402,9 @@ export function sensorStates(
   for (const component of document.components) {
     if (component.type === 'acs712')
       next[component.id] = solution.parts[component.id]?.current ?? 0;
-    if (component.type === 'tds') next[component.id] = solution.parts[component.id]?.supply ?? 0;
+    if (component.type === 'tds' || component.type === 'temperature') {
+      next[component.id] = solution.parts[component.id]?.supply ?? 0;
+    }
   }
   return next;
 }
@@ -627,7 +629,11 @@ export function solveState(document: CircuitDocument, state: CircuitState): Stat
   );
   const hasCharger = document.components.some((c) => c.type === 'tp4056');
   const hasRegulator = document.components.some((c) => c.type === 'lm2596');
-  const hasSensor = document.components.some((c) => c.type === 'acs712' || c.type === 'tds');
+  // Parts whose output depends on something just solved: a current sensor's current, the
+  // supply a TDS meter or a TMP36 has (they give nothing until it is enough).
+  const hasSensor = document.components.some(
+    (c) => c.type === 'acs712' || c.type === 'tds' || c.type === 'temperature',
+  );
   const hasDriver = document.components.some((c) => c.type === 'l298n');
   const hasChip = document.components.some(isLogicChipPart);
   let solution: StateSolution | null = null;
@@ -995,6 +1001,7 @@ export function readSolution(
         result.parts[id] = {
           voltage: volts(component.pins.out) - volts(component.pins.gnd),
           current: device?.current(solution) ?? 0,
+          supply: volts(component.pins.vcc) - volts(component.pins.gnd),
         };
         break;
       default:
@@ -1336,7 +1343,7 @@ export class Observation {
       } else if (component.type === 'siren') {
         // It sounds only with enough voltage the right way round.
         reading.activity = reading.voltage >= SIREN_ON_VOLTAGE ? 1 : 0;
-      } else if (component.type === 'buzzer') {
+      } else if (component.type === 'buzzer' || component.type === 'buzzermodule') {
         reading.activity = reading.voltage >= BUZZER_ON_VOLTAGE ? 1 : 0;
       } else if (component.type === 'motor') {
         const turning = Math.abs(reading.voltage) >= MOTOR_START_VOLTAGE;

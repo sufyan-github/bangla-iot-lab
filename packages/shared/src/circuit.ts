@@ -34,12 +34,13 @@ import { holeExists, holeName, isHole, parseHole, type BreadboardSize } from './
  * 25 — adds the 74HC595 shift register.
  * 26 — a wire may carry `style: 'square'`: drawn in straight runs that turn
  *     at right angles, in place of the slack of a jumper wire.
+ * 27 — adds the three-pin active buzzer module, which sounds on HIGH or on LOW.
  * Apart from version 21, each version only adds part types or optional fields,
  * so an older document is valid in a newer version apart from the number. Version
  * 21 renames every hole: `migrateCircuit` puts the one fixed breadboard of an
  * older circuit in as BB1, where it was, and names its holes after it.
  */
-export const CIRCUIT_SCHEMA_VERSION = 26;
+export const CIRCUIT_SCHEMA_VERSION = 27;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 /** A breadboard hole: the breadboard's id, a dot and the hole, as "BB1.a12". */
@@ -211,6 +212,18 @@ export const BuzzerSchema = Type.Object({
   type: Type.Literal('buzzer'),
   pins: Type.Object({ pos: Hole, neg: Hole }),
   props: noProps,
+});
+
+/**
+ * Active buzzer on a three-pin board: S, + and −. A board that sounds on HIGH
+ * has the buzzer from S to − and leaves + unused; one that sounds on LOW is fed
+ * from + and sounds while S is pulled LOW.
+ */
+export const BuzzerModuleSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('buzzermodule'),
+  pins: Type.Object({ s: Hole, vcc: Hole, gnd: Hole }),
+  props: Type.Object({ trigger: Type.Union([Type.Literal('high'), Type.Literal('low')]) }),
 });
 
 /** Small DC motor. */
@@ -917,6 +930,7 @@ export const ComponentSchema = Type.Union([
   DiodeSchema,
   LdrSchema,
   BuzzerSchema,
+  BuzzerModuleSchema,
   MotorSchema,
   TransistorSchema,
   TemperatureSensorSchema,

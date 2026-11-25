@@ -716,6 +716,24 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </fieldset>
     );
   }
+  if (part.type === 'buzzermodule') {
+    return (
+      <fieldset>
+        <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.buzzer.trigger')}</legend>
+        <div className="flex flex-wrap gap-1.5" data-testid="buzzer-trigger">
+          {(['high', 'low'] as const).map((trigger) => (
+            <Choice
+              key={trigger}
+              selected={part.props.trigger === trigger}
+              onClick={() => setProps(part.id, { trigger })}
+            >
+              {t(`inspector.buzzer.trigger.${trigger}`)}
+            </Choice>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
   if (part.type === 'relaymodule') {
     return (
       <fieldset>

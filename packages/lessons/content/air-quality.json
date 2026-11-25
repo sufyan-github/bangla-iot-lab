@@ -125,8 +125,8 @@
     },
     {
       "text": {
-        "bn": "**RGB LED** বসাও: R, G আর B প্রতিটা নিজের ২২০ Ω রেজিস্টর হয়ে D25, D26 আর D27-এ, আর − পা GND-তে। তারপর **বাজার**: + পা **D32**-এ, − পা GND-তে।",
-        "en": "Place the **RGB LED**: R, G and B each through their own 220 Ω resistor to D25, D26 and D27, and − to GND. Then the **buzzer**: + to **D32**, − to GND."
+        "bn": "**RGB LED** বসাও: R, G আর B প্রতিটা নিজের ২২০ Ω রেজিস্টর হয়ে D25, D26 আর D27-এ, আর − পা GND-তে। তারপর **বাজার**: S পিন **D32**-এ, − পিন GND-তে।",
+        "en": "Place the **RGB LED**: R, G and B each through their own 220 Ω resistor to D25, D26 and D27, and − to GND. Then the **buzzer**: S to **D32**, − to GND."
       },
       "checks": [
         {
@@ -181,13 +181,13 @@
         },
         {
           "kind": "part",
-          "type": "buzzer"
+          "type": "buzzermodule"
         },
         {
           "kind": "connected",
           "from": {
-            "part": "buzzer",
-            "pin": "pos"
+            "part": "buzzermodule",
+            "pin": "s"
           },
           "to": {
             "board": "d32"
@@ -196,8 +196,8 @@
         {
           "kind": "connected",
           "from": {
-            "part": "buzzer",
-            "pin": "neg"
+            "part": "buzzermodule",
+            "pin": "gnd"
           },
           "to": {
             "board": "gnd"
@@ -278,7 +278,7 @@
         },
         {
           "kind": "reading",
-          "part": "buzzer",
+          "part": "buzzermodule",
           "path": "activity",
           "equals": 1
         },

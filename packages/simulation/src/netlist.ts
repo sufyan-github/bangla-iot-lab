@@ -80,6 +80,9 @@ import {
   ACS712_PATH_RESISTANCE,
   ACS712_SUPPLY_RESISTANCE,
   MIN_SUPPLY,
+  TMP36_OUTPUT_RESISTANCE,
+  TMP36_SUPPLY_RESISTANCE,
+  tmp36Volts,
   TDS_OUTPUT_RESISTANCE,
   TDS_SUPPLY_RESISTANCE,
   TURBIDITY_OUTPUT_RESISTANCE,
@@ -454,6 +457,16 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
           add(resistor(id, node(component.pins.pos), node(component.pins.neg), BUZZER_RESISTANCE)),
         );
         break;
+      case 'buzzermodule': {
+        // On HIGH the buzzer runs from S to −, and + is not used; on LOW it is fed
+        // from + and sounds while S is pulled LOW.
+        const [high, low] =
+          component.props.trigger === 'low'
+            ? [component.pins.vcc, component.pins.s]
+            : [component.pins.s, component.pins.gnd];
+        partDevice.set(id, add(resistor(id, node(high), node(low), BUZZER_RESISTANCE)));
+        break;
+      }
       case 'motor':
         partDevice.set(
           id,
@@ -1006,7 +1019,28 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         }
         break;
       }
-      case 'temperature':
+      case 'temperature': {
+        // TMP36: a fixed output for the temperature, which needs a supply but does not follow it.
+        const ground = node(component.pins.gnd);
+        const out = node(component.pins.out);
+        partDevice.set(
+          id,
+          add(resistor(id, node(component.pins.vcc), ground, TMP36_SUPPLY_RESISTANCE)),
+        );
+        const powered = (state.sensing?.[id] ?? 0) >= MIN_SUPPLY.temperature!;
+        add(
+          powered
+            ? theveninSource(
+                `${id}:out`,
+                out,
+                ground,
+                tmp36Volts(component.props.celsius),
+                TMP36_OUTPUT_RESISTANCE,
+              )
+            : resistor(`${id}:out`, out, ground, TMP36_OUTPUT_RESISTANCE),
+        );
+        break;
+      }
       case 'soil':
       case 'ir': {
         // A divider from supply to ground with the output at the tap.

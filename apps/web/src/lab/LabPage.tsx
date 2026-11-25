@@ -192,6 +192,8 @@ function useLessonChecks() {
 }
 
 const MUTE_KEY = 'banglalab.mute';
+/** The parts that make a sound while they are active. */
+const SOUNDING = new Set(['buzzer', 'buzzermodule', 'siren']);
 
 /** Sounds the buzzer tone while any buzzer in the circuit is active, unless muted. */
 function useBuzzerSound(muted: boolean) {
@@ -199,9 +201,7 @@ function useBuzzerSound(muted: boolean) {
     Object.entries(s.result?.readings ?? {}).some(
       ([id, reading]) =>
         reading.activity === 1 &&
-        s.circuit.components.some(
-          (c) => c.id === id && (c.type === 'buzzer' || c.type === 'siren'),
-        ),
+        s.circuit.components.some((c) => c.id === id && SOUNDING.has(c.type)),
     ),
   );
   useEffect(() => {
@@ -517,9 +517,7 @@ export function LabPage() {
     chosenBoard !== null && boardIds.includes(chosenBoard) ? chosenBoard : boardIds[0];
   const esp32Ids = esp32List ? esp32List.split(',') : [];
   const esp32Id = boardId && esp32Ids.includes(boardId) ? boardId : esp32Ids[0];
-  const hasBuzzer = useLab((s) =>
-    s.circuit.components.some((c) => c.type === 'buzzer' || c.type === 'siren'),
-  );
+  const hasBuzzer = useLab((s) => s.circuit.components.some((c) => SOUNDING.has(c.type)));
   const [muted, setMuted] = useState(() => {
     try {
       return localStorage.getItem(MUTE_KEY) === '1';

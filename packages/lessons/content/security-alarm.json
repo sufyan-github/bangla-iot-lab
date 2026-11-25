@@ -92,19 +92,19 @@
     },
     {
       "text": {
-        "bn": "**বাজার** বসাও: + পা **D25**-এ, − পা GND-তে। তারপর একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
-        "en": "Place the **buzzer**: + to **D25**, − to GND. Then place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
+        "bn": "**বাজার** বসাও: S পিন **D25**-এ, − পিন GND-তে। তারপর একটা **রেজিস্টর** (২২০ Ω) আর একটা **LED** বোর্ডে বসাও। D2 পিন থেকে তার দিয়ে রেজিস্টরের এক পায়ে যাও, রেজিস্টরের অন্য পা যাবে LED-র লম্বা পায়ে (+), আর LED-র ছোট পা (−) তার দিয়ে বোর্ডের GND-তে।",
+        "en": "Place the **buzzer**: S to **D25**, − to GND. Then place a **resistor** (220 Ω) and an **LED** on the breadboard. Run a wire from pin D2 to one leg of the resistor; the resistor's other leg goes to the LED's long leg (+), and the LED's short leg (−) goes by wire to the board's GND."
       },
       "checks": [
         {
           "kind": "part",
-          "type": "buzzer"
+          "type": "buzzermodule"
         },
         {
           "kind": "connected",
           "from": {
-            "part": "buzzer",
-            "pin": "pos"
+            "part": "buzzermodule",
+            "pin": "s"
           },
           "to": {
             "board": "d25"
@@ -113,8 +113,8 @@
         {
           "kind": "connected",
           "from": {
-            "part": "buzzer",
-            "pin": "neg"
+            "part": "buzzermodule",
+            "pin": "gnd"
           },
           "to": {
             "board": "gnd"
@@ -246,7 +246,7 @@
       "checks": [
         {
           "kind": "reading",
-          "part": "buzzer",
+          "part": "buzzermodule",
           "path": "activity",
           "equals": 1
         },

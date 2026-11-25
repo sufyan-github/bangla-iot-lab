@@ -17,19 +17,19 @@
   "steps": [
     {
       "text": {
-        "bn": "**অ্যাক্টিভ বাজারের** ভেতরে নিজের দোলক আছে: ভোল্টেজ পেলেই নিজে শব্দ করে। ল্যাবে এটা দুই পায়ের সাধারণ বাজার; কিটের মডিউলে তিনটা পিন থাকে (S, মাঝেরটা, −), আর S এখানকার + পায়ের মতো কাজ করে।\n\nবাজারটা বসাও। **+** পা যাবে **D25**-এ, **−** পা যাবে GND-তে।",
-        "en": "An **active buzzer** has its own oscillator inside: give it a voltage and it sounds. In the lab it is a generic two-leg buzzer; the kit's module has three pins (S, middle, −), and S works like the + leg here.\n\nPlace the buzzer. Its **+** leg goes to **D25**, its **−** leg to GND."
+        "bn": "**অ্যাক্টিভ বাজারের** ভেতরে নিজের দোলক আছে: ভোল্টেজ পেলেই নিজে শব্দ করে। কিটের মডিউলে তিনটা পিন: **S**, **+** আর **−**। এই বোর্ড S HIGH হলে বাজে, তাই এর + পিন লাগে না।\n\n**বাজার মডিউল** বসাও। **S** পিন যাবে **D25**-এ, **−** পিন যাবে GND-তে।",
+        "en": "An **active buzzer** has its own oscillator inside: give it a voltage and it sounds. The kit's module has three pins: **S**, **+** and **−**. This board sounds when S is HIGH, so its + pin is not needed.\n\nPlace the **buzzer module**. Its **S** pin goes to **D25**, its **−** pin to GND."
       },
       "checks": [
         {
           "kind": "part",
-          "type": "buzzer"
+          "type": "buzzermodule"
         },
         {
           "kind": "connected",
           "from": {
-            "part": "buzzer",
-            "pin": "pos"
+            "part": "buzzermodule",
+            "pin": "s"
           },
           "to": {
             "board": "d25"
@@ -38,8 +38,8 @@
         {
           "kind": "connected",
           "from": {
-            "part": "buzzer",
-            "pin": "neg"
+            "part": "buzzermodule",
+            "pin": "gnd"
           },
           "to": {
             "board": "gnd"
@@ -71,13 +71,13 @@
         },
         {
           "kind": "reading",
-          "part": "buzzer",
+          "part": "buzzermodule",
           "path": "activity",
           "equals": 1
         },
         {
           "kind": "reading",
-          "part": "buzzer",
+          "part": "buzzermodule",
           "path": "activity",
           "equals": 0
         },

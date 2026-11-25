@@ -658,7 +658,15 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     },
   },
   buzzer: {
-    components: [esp32, part('BZ1', 'buzzer', { pos: 'BB1.c10', neg: 'BB1.c12' })],
+    components: [
+      esp32,
+      part(
+        'BZ1',
+        'buzzermodule',
+        { s: 'BB1.c10', vcc: 'BB1.c11', gnd: 'BB1.c12' },
+        { trigger: 'high' },
+      ),
+    ],
     wires: [
       ['ESP1.d25', 'BB1.a10'],
       ['ESP1.gnd1', 'BB1.a12'],
@@ -831,7 +839,12 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
         { wetness: 0, threshold: 0.5 },
       ),
       part('SRV1', 'servo', { gnd: 'BB1.c10', vcc: 'BB1.c11', signal: 'BB1.c12' }),
-      part('BZ1', 'buzzer', { pos: 'BB1.c15', neg: 'BB1.c17' }),
+      part(
+        'BZ1',
+        'buzzermodule',
+        { s: 'BB1.c15', vcc: 'BB1.c16', gnd: 'BB1.c17' },
+        { trigger: 'high' },
+      ),
     ],
     wires: [
       ['ESP1.3v3', 'BB1.a1'],
@@ -860,7 +873,12 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       part('R2', 'resistor', { a: 'BB1.d3', b: 'BB1.d7' }, { resistance: 1000 }),
       part('R3', 'resistor', { a: 'BB1.b7', b: 'BB1.b11' }, { resistance: 2000 }),
       part('SRV1', 'servo', { gnd: 'BB1.c14', vcc: 'BB1.c15', signal: 'BB1.c16' }),
-      part('BZ1', 'buzzer', { pos: 'BB1.c20', neg: 'BB1.c22' }),
+      part(
+        'BZ1',
+        'buzzermodule',
+        { s: 'BB1.c20', vcc: 'BB1.c21', gnd: 'BB1.c22' },
+        { trigger: 'high' },
+      ),
     ],
     wires: [
       ['ESP1.vin', 'BB1.a1'],
@@ -886,7 +904,12 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
         { motion: false, hold: 3 },
       ),
       part('SW1', 'button', { a: 'BB1.e6', b: 'BB1.f6' }),
-      part('BZ1', 'buzzer', { pos: 'BB1.c10', neg: 'BB1.c12' }),
+      part(
+        'BZ1',
+        'buzzermodule',
+        { s: 'BB1.c10', vcc: 'BB1.c11', gnd: 'BB1.c12' },
+        { trigger: 'high' },
+      ),
       part('OLED1', 'oled', { gnd: 'BB1.c15', vcc: 'BB1.c16', scl: 'BB1.c17', sda: 'BB1.c18' }),
       ...lamp,
     ],
@@ -962,7 +985,12 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       part('R2', 'resistor', { a: 'BB1.d4', b: 'BB1.d8' }, { resistance: 10_000 }),
       part('R3', 'resistor', { a: 'BB1.b8', b: 'BB1.b12' }, { resistance: 10_000 }),
       part('OLED1', 'oled', { gnd: 'BB1.c14', vcc: 'BB1.c15', scl: 'BB1.c16', sda: 'BB1.c17' }),
-      part('BZ1', 'buzzer', { pos: 'BB1.c25', neg: 'BB1.c27' }),
+      part(
+        'BZ1',
+        'buzzermodule',
+        { s: 'BB1.c25', vcc: 'BB1.c26', gnd: 'BB1.c27' },
+        { trigger: 'high' },
+      ),
       part('R4', 'resistor', { a: 'BB1.f16', b: 'BB1.f20' }, { resistance: 220 }),
       part('R5', 'resistor', { a: 'BB1.h17', b: 'BB1.h21' }, { resistance: 220 }),
       part('R6', 'resistor', { a: 'BB1.i18', b: 'BB1.i22' }, { resistance: 220 }),

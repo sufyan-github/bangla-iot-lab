@@ -94,11 +94,11 @@ test('a temperature sensor on the board follows its slider', async ({ page }) =>
     ['UNO1.gnd', 'BB1.a12'],
   ]);
   await page.getByTestId('run').click();
-  await expect(part(page, 'TMP1')).toHaveAttribute('data-voltage', '0.250'); // 25 °C
+  await expect(part(page, 'TMP1')).toHaveAttribute('data-voltage', '0.750'); // 25 °C on a TMP36
 
   await page.locator('[data-hit="TMP1"]').click();
   await page.getByTestId('slider').fill('40');
-  await expect(part(page, 'TMP1')).toHaveAttribute('data-voltage', '0.400');
+  await expect(part(page, 'TMP1')).toHaveAttribute('data-voltage', '0.900');
   await expect(page.getByTestId('inspector')).toContainText('৪০°C');
 });
 
@@ -116,6 +116,25 @@ test('a buzzer sounds when powered and can be muted', async ({ page }) => {
   await page.getByTestId('mute').click();
   await expect(page.getByTestId('mute')).toHaveAttribute('aria-pressed', 'false');
   await expect(part(page, 'BZ1')).toHaveAttribute('data-activity', '1.00'); // still shown as sounding
+});
+
+test('the buzzer module sounds on HIGH, or on LOW once set so', async ({ page }) => {
+  await newCircuit(page);
+  await pick(page, 'battery');
+  await place(page, 'buzzermodule', 'BB1.a1'); // pins: a1 S, a2 +, a3 −
+  // S and + to the battery's +, − to its −.
+  await wire(page, [
+    ['BAT1.pos', 'BB1.b1'],
+    ['BAT1.pos', 'BB1.b2'],
+    ['BB1.b3', 'BAT1.neg'],
+  ]);
+  await page.getByTestId('run').click();
+  await expect(part(page, 'BZ1')).toHaveAttribute('data-activity', '1.00');
+
+  // A board that sounds on LOW is silent with S HIGH.
+  await page.locator('[data-hit="BZ1"]').click();
+  await page.getByTestId('buzzer-trigger').getByRole('button').nth(1).click();
+  await expect(part(page, 'BZ1')).toHaveAttribute('data-activity', '0.00');
 });
 
 /** Picks a ready-made program for the board, then returns to the circuit. */

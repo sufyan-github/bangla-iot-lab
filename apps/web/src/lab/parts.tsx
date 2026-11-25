@@ -986,6 +986,61 @@ export function BuzzerView(props: {
   );
 }
 
+/**
+ * Active buzzer on a three-pin board: S, + and −, with the black drum above.
+ * The board is marked with when it sounds, HIGH or LOW.
+ */
+export function BuzzerModuleView(props: {
+  first: Point;
+  last: Point;
+  sounding: boolean;
+  trigger: 'high' | 'low';
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const pins = [-length / 2, 0, length / 2];
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-58} width={length + 24} height={62} color="#1d2023" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {pins.map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      <g fontSize={8.5} fontWeight={700} fill="#dfe4e2" textAnchor="middle" pointerEvents="none">
+        {['S', '+', '−'].map((name, i) => (
+          <text key={name} x={pins[i]} y={-9}>
+            {name}
+          </text>
+        ))}
+        <text x={0} y={-49} fontSize={6.5} opacity={0.8}>
+          {props.trigger === 'high' ? 'HIGH' : 'LOW'}
+        </text>
+      </g>
+      <g transform="translate(0 -34)">
+        {props.sounding && (
+          <g
+            className="buzzer-waves"
+            fill="none"
+            stroke="#e8a21a"
+            strokeWidth={2.4}
+            strokeLinecap="round"
+          >
+            <path d="M-11 -14A18 18 0 0 1 11 -14" />
+            <path d="M-16 -19A26 26 0 0 1 16 -19" />
+          </g>
+        )}
+        <circle cx={1.2} cy={2.5} r={12} fill="#000" opacity={0.28} />
+        <circle r={12} fill="#17191b" />
+        <circle r={12} fill="url(#shade-dome)" opacity={0.55} />
+        <circle r={9.2} fill="none" stroke="#000" strokeWidth={1} opacity={0.6} />
+        <circle r={3} fill="#2e3437" />
+        <circle r={1.9} fill="#050606" />
+      </g>
+    </g>
+  );
+}
+
 /** DC motor seen from the shaft end. `speed` is −1 to 1; the rotor turns to match. */
 export function MotorView(props: { a: Point; b: Point; speed: number; selected: boolean }) {
   const { length, transform } = between(props.a, props.b);

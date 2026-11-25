@@ -135,6 +135,7 @@ export const BOX_TYPES = new Set([
   'tft',
   'lora',
   'relaymodule',
+  'buzzermodule',
   'logic',
   'logic16',
   'sevenseg',

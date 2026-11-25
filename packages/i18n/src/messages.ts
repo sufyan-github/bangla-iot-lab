@@ -539,6 +539,7 @@ export const bn = {
   'tool.diode': 'ডায়োড',
   'tool.ldr': 'LDR',
   'tool.buzzer': 'বাজার',
+  'tool.buzzermodule': 'বাজার মডিউল',
   'tool.motor': 'মোটর',
   'tool.transistor': 'ট্রানজিস্টর',
   'tool.temperature': 'তাপমাত্রা',
@@ -584,6 +585,7 @@ export const bn = {
   'part.diode': 'ডায়োড',
   'part.ldr': 'আলোর সেন্সর (LDR)',
   'part.buzzer': 'বাজার',
+  'part.buzzermodule': 'অ্যাকটিভ বাজার মডিউল',
   'part.motor': 'ডিসি মোটর',
   'part.transistor': 'NPN ট্রানজিস্টর',
   'part.temperature': 'তাপমাত্রা সেন্সর',
@@ -598,6 +600,11 @@ export const bn = {
     'LDR এমন রেজিস্টর যার মান আলোর সাথে বদলায়: অন্ধকারে প্রায় 1 MΩ, উজ্জ্বল আলোতে 1 kΩ। একটা সাধারণ রেজিস্টরের সাথে জুড়লে এমন ভোল্টেজ পাওয়া যায় যা বোর্ড পড়তে পারে।',
   'part.buzzer.about':
     'এই বাজারের দুই পায়ে প্রায় 3 V বা বেশি দিলে নিজেই শব্দ করে; + পা পজিটিভ দিকে রাখতে হয়। এটা প্রায় 25 mA নেয়, যা বোর্ডের একটা পিন দিতে পারে।',
+  'part.buzzermodule.about':
+    'তিন পিনের বোর্ডে বসানো অ্যাকটিভ বাজার: S, + আর −। বোর্ড ভেদে আলাদা: কোনোটা S HIGH হলে বাজে (তখন + পিন লাগে না), কোনোটা S LOW হলে বাজে (তখন + পিনে 3.3 V বা 5 V দিতে হয়)। নিজের বোর্ড কোনটা, সেটা নিচে বেছে নাও।',
+  'inspector.buzzer.trigger': 'কখন বাজবে',
+  'inspector.buzzer.trigger.high': 'S HIGH হলে',
+  'inspector.buzzer.trigger.low': 'S LOW হলে',
   'part.motor.about':
     'ভোল্টেজ বাড়ালে মোটর জোরে ঘোরে, আর তার উল্টে দিলে উল্টো দিকে ঘোরে। বোর্ডের পিন যতটা কারেন্ট দিতে পারে মোটর তার চেয়ে অনেক বেশি চায়, তাই ট্রানজিস্টর দিয়ে চালাতে হয়।',
   'part.transistor.about':
@@ -605,7 +612,7 @@ export const bn = {
   'part.dht11.about':
     'DHT11 বাতাসের তাপমাত্রা (০ থেকে ৫০ °C) আর আর্দ্রতা (২০ থেকে ৯০%) মাপে, আর একটা তারেই দুটো মান পাঠায়। পা: VCC (3.3 V বা 5 V), DATA, GND। প্রোগ্রামে DHT লাইব্রেরি দিয়ে পড়ো, আর দুই বার পড়ার মাঝে অন্তত ২ সেকেন্ড অপেক্ষা করো।',
   'part.temperature.about':
-    'এই সেন্সর প্রতি ডিগ্রি সেলসিয়াসে 10 mV দেয়, তাই 25 °C-এ 0.25 V। পা: 5 V, আউটপুট, GND। আউটপুট analogRead দিয়ে পড়ো।',
+    'TMP36: প্রতি ডিগ্রি সেলসিয়াসে 10 mV, আর 0 °C-এ 0.5 V, তাই 25 °C-এ 0.75 V। 3.3 V বা 5 V দুটোতেই চলে। পা: VCC, আউটপুট, GND। আউটপুট analogRead দিয়ে পড়ো।',
   'part.soil.about':
     'মাটি যত ভেজা, এই সেন্সরের আউটপুট ভোল্টেজ তত কম: শুকনো অবস্থায় প্রায় 4.5 V, পুরো ভেজা অবস্থায় 1.5 V। পা: 5 V, আউটপুট, GND।',
   'part.ir.about':
@@ -1884,6 +1891,7 @@ export const en: Record<MessageKey, string> = {
   'tool.diode': 'Diode',
   'tool.ldr': 'LDR',
   'tool.buzzer': 'Buzzer',
+  'tool.buzzermodule': 'Buzzer module',
   'tool.motor': 'Motor',
   'tool.transistor': 'Transistor',
   'tool.temperature': 'Temperature',
@@ -1933,6 +1941,7 @@ export const en: Record<MessageKey, string> = {
   'part.diode': 'Diode',
   'part.ldr': 'Light sensor (LDR)',
   'part.buzzer': 'Buzzer',
+  'part.buzzermodule': 'Active buzzer module',
   'part.motor': 'DC motor',
   'part.transistor': 'NPN transistor',
   'part.temperature': 'Temperature sensor',
@@ -1947,6 +1956,11 @@ export const en: Record<MessageKey, string> = {
     'An LDR is a resistor that changes with light: about 1 MΩ in the dark and 1 kΩ in bright light. With a fixed resistor it makes a voltage the board can read.',
   'part.buzzer.about':
     'This buzzer makes its own tone whenever about 3 V or more is across it, + leg to the positive side. It draws about 25 mA, which a board pin can supply.',
+  'part.buzzermodule.about':
+    'An active buzzer on a three-pin board: S, + and −. Boards differ: some sound when S is HIGH (then + is not needed), others when S is LOW (then + takes 3.3 V or 5 V). Choose below the kind your board is.',
+  'inspector.buzzer.trigger': 'When it sounds',
+  'inspector.buzzer.trigger.high': 'When S is HIGH',
+  'inspector.buzzer.trigger.low': 'When S is LOW',
   'part.motor.about':
     'A motor turns faster with more voltage and the other way round if you swap its wires. It needs far more current than a board pin can give, so switch it with a transistor.',
   'part.transistor.about':
@@ -1954,7 +1968,7 @@ export const en: Record<MessageKey, string> = {
   'part.dht11.about':
     'The DHT11 measures the air’s temperature (0 to 50 °C) and humidity (20 to 90%), and sends both on one wire. Legs: VCC (3.3 V or 5 V), DATA, GND. Read it in a program with the DHT library, and wait at least 2 seconds between readings.',
   'part.temperature.about':
-    'This sensor puts out 10 mV for every degree Celsius, so 25 °C gives 0.25 V. Legs: 5 V, output, GND. Read the output with analogRead.',
+    'TMP36: 10 mV for every degree Celsius, and 0.5 V at 0 °C, so 25 °C gives 0.75 V. Works on 3.3 V or 5 V. Legs: VCC, output, GND. Read the output with analogRead.',
   'part.soil.about':
     'This sensor’s output voltage falls as the soil gets wetter: about 4.5 V when dry and 1.5 V when soaked. Legs: 5 V, output, GND.',
   'part.ir.about':
