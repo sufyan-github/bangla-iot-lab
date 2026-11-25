@@ -538,6 +538,8 @@ export const bn = {
   'hint.button': 'বোতাম বসাতে একটা ছিদ্রে ট্যাপ করো। সার্কিট চালু থাকলে বোতামে চেপে ধরে রাখা যায়।',
   'hint.potentiometer': 'পটেনশিওমিটার বসাতে একটা ছিদ্রে ট্যাপ করো। তিনটা পা পাশাপাশি তিন কলামে বসবে।',
   'hint.select': 'যন্ত্রাংশ বা তারের মাথা টেনে সরাও। ফাঁকা ছিদ্র থেকে মাউস টানলে নতুন তার বের হয়।',
+  'hint.placing':
+    'মাদুরের যেখানে বসাতে চাও সেখানে চাপো। তালিকায় আবার চাপলে সাধারণ জায়গায় বসবে; Esc চাপলে ফিরে যাবে।',
   'hint.wire.start': 'তার কোথা থেকে শুরু হবে? সেখানে ট্যাপ করো, অথবা সেখান থেকে টেনে নিয়ে যাও।',
   'hint.wire.end': 'এবার দ্বিতীয় মাথার জায়গায় ট্যাপ করো বা সেখানে ছেড়ে দাও।',
   'hint.resistor': 'রেজিস্টর বসাতে বোর্ডের একটা ছিদ্রে ট্যাপ করো।',
@@ -1867,6 +1869,8 @@ export const en: Record<MessageKey, string> = {
     'Tap a hole to place the potentiometer. Its three legs go in three neighbouring columns.',
   'hint.select':
     'Drag a part or a wire end to move it. Drag from an empty hole with the mouse to pull out a new wire.',
+  'hint.placing':
+    'Press on the mat where it should go. Press it in the list again for its usual place; Esc puts it back.',
   'hint.wire.start': 'Where does the wire start? Tap there, or drag from there to the other end.',
   'hint.wire.end': 'Now tap where the other end goes, or let go there.',
   'hint.resistor': 'Tap a hole on the board to place the resistor.',

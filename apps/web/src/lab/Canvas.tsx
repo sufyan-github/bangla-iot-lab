@@ -52,6 +52,8 @@ import {
   type Point,
 } from './geometry';
 import { slackMiddle, wirePath } from './parts';
+import { PartIcon } from './Palette';
+import { boxOfAdded, withPart, withPartAt } from './placing';
 import { BoardPartDrawing, Scene } from './Scene';
 import { useLab } from './store';
 
@@ -160,6 +162,7 @@ export function Canvas() {
   const circuit = useLab((s) => s.circuit);
   const result = useLab((s) => s.result);
   const tool = useLab((s) => s.tool);
+  const placing = useLab((s) => s.placing);
   const selectedId = useLab((s) => s.selectedId);
   const wireStart = useLab((s) => s.wireStart);
   const running = useLab((s) => s.running);
@@ -205,6 +208,8 @@ export function Canvas() {
   /** The window's size on the page, in screen pixels. */
   const [frameSize, setFrameSize] = useState({ width: 0, height: 0 });
   const [panning, setPanning] = useState(false);
+  /** Where the mouse is on the mat while a part is in hand, for the part's picture to follow. */
+  const [cursor, setCursor] = useState<Point | null>(null);
   /** Set once the student changes the zoom; until then the board follows the window. */
   const [chosenZoom, setChosenZoom] = useState<number | null>(null);
   const zoom = chosenZoom ?? fitZoom;
@@ -427,6 +432,8 @@ export function Canvas() {
 
     const lab = useLab.getState();
     const held = press.current;
+    const inHand = lab.placing !== null || !['select', 'wire', 'probe'].includes(lab.tool);
+    if (isMouse(event) && inHand) setCursor(point);
     if (held?.pan && !held.pulling) {
       // Dragging the bare mat moves the view; a press that barely moves is still a tap.
       const moveX = event.clientX - held.client.x;
@@ -552,6 +559,12 @@ export function Canvas() {
     const end = endpointNear(lab.circuit, toCanvas(event));
     const tapped = distance({ x: event.clientX, y: event.clientY }, held.client) < TAP_SLOP;
 
+    if (lab.placing) {
+      // A tap on the mat puts down the part in hand, there; a drag only moved the view.
+      if (tapped) lab.placeAt(held.canvas);
+      if (!isMouse(event)) showHover(null);
+      return;
+    }
     if (held.pulling) {
       // Only a real drag finishes the wire here. A press that barely moved is a tap, even if the
       // page shifted under the pointer meanwhile, and the wire then waits for a tap on its other end.
@@ -667,6 +680,29 @@ export function Canvas() {
     return part && 'pins' in part ? { part, hole: hover } : null;
   }, [circuit, tool, hover]);
 
+  // A part that stands beside the breadboards, in hand: its picture goes where a tap
+  // would put it, and says so when it has no room there (D-108).
+  const beside = useMemo(() => {
+    if (!placing || !cursor) return null;
+    const usual = withPart(circuit, placing);
+    if (!usual.ok) return null;
+    const from = boxOfAdded(usual);
+    const there = withPartAt(circuit, placing, cursor);
+    const to = there.ok
+      ? boxOfAdded(there)
+      : { ...from, x: cursor.x - from.width / 2, y: cursor.y - from.height / 2 };
+    return { circuit: usual.circuit, id: usual.id, fits: there.ok, from, to };
+  }, [circuit, placing, cursor]);
+  // Esc puts the part in hand back.
+  useEffect(() => {
+    if (!placing) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') useLab.getState().cancelPlacing();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [placing]);
+
   const liftedPart = lift && circuit.components.find((c) => c.id === lift.id);
   const hoverInfo = hover ? describeEndpoint(circuit, hover) : null;
   const hoverPoint = hover ? endpointPoint(circuit, hover) : null;
@@ -699,13 +735,22 @@ export function Canvas() {
           height={surface.height * zoom}
           className="block select-none"
           style={{
-            cursor: panning ? 'grabbing' : selecting && !hoverIsFree ? 'default' : 'crosshair',
+            cursor: panning
+              ? 'grabbing'
+              : placing
+                ? 'copy'
+                : selecting && !hoverIsFree
+                  ? 'default'
+                  : 'crosshair',
           }}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
           onPointerDown={onPointerDown}
-          onPointerLeave={() => !drag.current && !press.current && showHover(null)}
+          onPointerLeave={() => {
+            setCursor(null);
+            if (!drag.current && !press.current) showHover(null);
+          }}
         >
           <Scene
             circuit={circuit}
@@ -962,6 +1007,53 @@ export function Canvas() {
               Object.values(liftedPart.pins).map((hole) => (
                 <LandingRing key={hole} point={holePoint(circuit, hole)} />
               ))}
+
+            {beside && (
+              <g
+                data-testid="ghost-beside"
+                data-ghost={placing?.type}
+                data-fits={beside.fits}
+                opacity={0.55}
+                pointerEvents="none"
+                transform={`translate(${beside.to.x - beside.from.x} ${beside.to.y - beside.from.y})`}
+              >
+                <Scene
+                  circuit={beside.circuit}
+                  result={null}
+                  only={beside.id}
+                  detailed={false}
+                  batteryLabel={(volts) => quantity(volts, 'V')}
+                />
+                {!beside.fits && (
+                  <rect
+                    x={beside.from.x - 4}
+                    y={beside.from.y - 4}
+                    width={beside.from.width + 8}
+                    height={beside.from.height + 8}
+                    rx={8}
+                    fill="none"
+                    stroke={DANGER}
+                    strokeWidth={3}
+                    strokeDasharray="8 6"
+                  />
+                )}
+              </g>
+            )}
+            {/* A part for the breadboard, in hand and not over a hole yet: its drawing rides beside the pointer. */}
+            {!placing && !selecting && tool !== 'wire' && tool !== 'probe' && cursor && !ghost && (
+              <g
+                data-testid="ghost-icon"
+                data-ghost={tool}
+                opacity={0.8}
+                pointerEvents="none"
+                transform={`translate(${cursor.x + 12} ${cursor.y + 12})`}
+              >
+                <rect width={34} height={34} rx={9} fill="#fffdf4" stroke="#b5c3bc" />
+                <g transform="translate(4 4)" style={{ color: '#13231f' }}>
+                  <PartIcon type={tool} size={26} />
+                </g>
+              </g>
+            )}
 
             {ghost?.part && (
               <g opacity={0.6} data-testid="ghost" data-ghost={ghost.part.type}>

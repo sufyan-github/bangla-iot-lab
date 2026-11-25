@@ -1,9 +1,4 @@
 import {
-  addBattery,
-  addBreadboard,
-  addEsp32,
-  addMotorDriver,
-  addUno,
   isProgrammable,
   addWire,
   attachError,
@@ -24,6 +19,7 @@ import {
   type SheetEdit,
   type EditError,
   type EditResult,
+  type BreadboardSize,
 } from '@banglalab/shared';
 import type {
   BleNote,
@@ -37,7 +33,8 @@ import type {
 } from '@banglalab/simulation';
 import { create } from 'zustand';
 import type { BoardProgram, ProjectContent, SketchTab } from '../storage/projects';
-import { freeBreadboardPlace, placeBesideOtherBoard, settleOffBoardPart } from './geometry';
+import type { Point } from './geometry';
+import { samePlacing, withPart, withPartAt, type Placing } from './placing';
 import { signals } from './signals';
 import { starterProgram } from './starters';
 
@@ -91,6 +88,8 @@ interface LabState {
   sheet: LogicSheet;
   selectedId: string | null;
   tool: Tool;
+  /** A part that stands beside the breadboards, picked from the list and not yet put down (D-108). */
+  placing: Placing | null;
   /** First end of the wire being drawn. */
   wireStart: string | null;
   running: boolean;
@@ -156,10 +155,19 @@ interface LabState {
   endWire(toSelect: boolean): void;
   /** Takes both multimeter probes off the circuit. */
   clearMeter(): void;
-  /** Adds a battery, or (given) a bench power supply or a function generator. */
+  /**
+   * Picks up a part that stands beside the breadboards, to be put down with a
+   * tap on the mat. Picked again while in hand, it goes to its usual place.
+   */
+  pickUp(placing: Placing): void;
+  /** Puts the part in hand down with its middle at this point; false when it has no room there. */
+  placeAt(point: Point): boolean;
+  /** Puts the part in hand back. */
+  cancelPlacing(): void;
+  /** Adds a battery, or (given) a bench power supply or a function generator, in its usual place. */
   addBattery(source?: 'supply' | 'generator'): void;
-  /** Adds a half breadboard in a free place, below what is already there. */
-  addBreadboard(): void;
+  /** Adds a breadboard in a free place, below what is already there. */
+  addBreadboard(size?: BreadboardSize): void;
   addUno(): void;
   addEsp32(): void;
   addMotorDriver(): void;
@@ -237,6 +245,30 @@ export const useLab = create<LabState>((set, get) => {
   };
 
   /**
+   * Adds a part that stands beside the breadboards: at `point`, or in its usual
+   * place when there is none. A part with no room stays in hand, and the lab says so.
+   */
+  const putDown = (placing: Placing, point: Point | null): boolean => {
+    const { circuit } = get();
+    const id = apply(point ? withPartAt(circuit, placing, point) : withPart(circuit, placing));
+    if (!id) return false;
+    set({ tool: 'select', placing: null, selectedId: id, wireStart: null });
+    if (placing.type === 'uno' || placing.type === 'esp32') {
+      // A new board arrives with Blink already on it, as a real one does.
+      const starter =
+        placing.type === 'uno' ? starterProgram('blink') : starterProgram('blink', 'esp32');
+      void starter.then((program) => {
+        // Only if the board is still there and nothing was written for it meanwhile.
+        const now = get();
+        if (now.circuit.components.some((c) => c.id === id) && !now.programs[id]) {
+          now.uploadProgram(id, program);
+        }
+      });
+    }
+    return true;
+  };
+
+  /**
    * Goes to a circuit from the history. Programs follow their boards: a board
    * that comes back gets the program it had, and a board that goes takes its
    * program with it. Program text typed since is never rolled back.
@@ -279,6 +311,7 @@ export const useLab = create<LabState>((set, get) => {
     probes: [],
     selectedId: null,
     tool: 'select',
+    placing: null,
     wireStart: null,
     notice: null,
     meter: NO_PROBES,
@@ -304,6 +337,7 @@ export const useLab = create<LabState>((set, get) => {
         sheetFuture: [],
         selectedId: null,
         tool: 'select',
+        placing: null,
         wireStart: null,
         notice: null,
         saveState: 'saved',
@@ -358,7 +392,8 @@ export const useLab = create<LabState>((set, get) => {
       if (!next) return;
       set({ sheet: next, sheetPast: [...get().sheetPast, get().sheet], sheetFuture: rest });
     },
-    setTool: (tool) => set({ tool, wireStart: null, selectedId: null, notice: null }),
+    setTool: (tool) =>
+      set({ tool, placing: null, wireStart: null, selectedId: null, notice: null }),
     select: (selectedId) => set({ selectedId }),
 
     tapEndpoint(endpoint) {
@@ -398,55 +433,23 @@ export const useLab = create<LabState>((set, get) => {
     endWire: (toSelect) =>
       set(toSelect ? { wireStart: null, tool: 'select' } : { wireStart: null }),
 
-    addBreadboard() {
-      const place = freeBreadboardPlace(get().circuit, 'half');
-      if (!place) {
-        set({ notice: 'no-room' });
+    pickUp(placing) {
+      if (samePlacing(get().placing, placing)) {
+        putDown(placing, null);
         return;
       }
-      const id = apply(addBreadboard(get().circuit, 'half', place));
-      if (id) set({ tool: 'select', selectedId: id, wireStart: null });
+      set({ placing, tool: 'select', wireStart: null, selectedId: null, notice: null });
     },
-    addBattery(source) {
-      const id = apply(addBattery(get().circuit, 9, source));
-      if (!id) return;
-      // Its usual place may be taken by something the student moved there.
-      set({ circuit: settleOffBoardPart(get().circuit, id) });
-      set({ tool: 'select', selectedId: id, wireStart: null });
+    placeAt(point) {
+      const { placing } = get();
+      return placing !== null && putDown(placing, point);
     },
-    addUno() {
-      const id = apply(addUno(get().circuit));
-      if (!id) return;
-      set({ circuit: placeBesideOtherBoard(get().circuit, id) });
-      // A new board arrives with Blink already on it, as a real UNO does.
-      set({ tool: 'select', selectedId: id, wireStart: null });
-      void starterProgram('blink').then((program) => {
-        // Only if the board is still there and nothing was written for it meanwhile.
-        const { circuit, programs } = get();
-        if (circuit.components.some((c) => c.id === id) && !programs[id]) {
-          get().uploadProgram(id, program);
-        }
-      });
-    },
-    addMotorDriver() {
-      const id = apply(addMotorDriver(get().circuit));
-      if (!id) return;
-      set({ circuit: settleOffBoardPart(get().circuit, id) });
-      set({ tool: 'select', selectedId: id, wireStart: null });
-    },
-    addEsp32() {
-      const id = apply(addEsp32(get().circuit));
-      if (!id) return;
-      set({ circuit: placeBesideOtherBoard(get().circuit, id) });
-      set({ tool: 'select', selectedId: id, wireStart: null });
-      // Like the UNO-compatible board, it arrives with Blink on it.
-      void starterProgram('blink', 'esp32').then((program) => {
-        const { circuit, programs } = get();
-        if (circuit.components.some((c) => c.id === id) && !programs[id]) {
-          get().uploadProgram(id, program);
-        }
-      });
-    },
+    cancelPlacing: () => set({ placing: null }),
+    addBreadboard: (size = 'half') => void putDown({ type: 'breadboard', size }, null),
+    addBattery: (source) => void putDown({ type: source ?? 'battery' }, null),
+    addUno: () => void putDown({ type: 'uno' }, null),
+    addMotorDriver: () => void putDown({ type: 'l298n' }, null),
+    addEsp32: () => void putDown({ type: 'esp32' }, null),
     removeSelected() {
       const { selectedId, circuit, programs } = get();
       if (!selectedId || !apply(removeItem(circuit, selectedId))) return;

@@ -1,5 +1,6 @@
 import type { MessageKey } from '@banglalab/i18n';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { BREADBOARD_SPECS } from '@banglalab/shared';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { useLab, type Tool } from './store';
 
@@ -533,24 +534,24 @@ const HINTS: Partial<Record<Tool, MessageKey>> = {
   capacitor: 'hint.capacitor',
 };
 
-/** What a tap on a palette item does: add a part beside the board, or pick a tool. */
+/** The breadboard's sizes, smallest first, as the list offers them. */
+const BOARD_SIZES = ['mini', 'half', 'full'] as const;
+
+/** The parts that stand beside the breadboards: picked up from the list, then put down on the mat. */
+const BESIDE = ['battery', 'supply', 'generator', 'uno', 'esp32', 'l298n'] as const;
+type Beside = (typeof BESIDE)[number];
+const standsBeside = (item: PaletteItem): item is Beside =>
+  (BESIDE as readonly string[]).includes(item);
+
+/**
+ * What a tap on a palette item does: picks a tool, or picks up a part that
+ * stands beside the breadboards (D-108). The breadboard is not chosen here: it
+ * asks for its size first.
+ */
 function useChoose() {
-  const { setTool, addBreadboard, addBattery, addUno, addEsp32, addMotorDriver } =
-    useLab.getState();
-  return (item: PaletteItem) =>
-    item === 'breadboard'
-      ? addBreadboard()
-      : item === 'battery'
-        ? addBattery()
-        : item === 'supply' || item === 'generator'
-          ? addBattery(item)
-          : item === 'uno'
-            ? addUno()
-            : item === 'esp32'
-              ? addEsp32()
-              : item === 'l298n'
-                ? addMotorDriver()
-                : setTool(item);
+  const { setTool, pickUp } = useLab.getState();
+  return (item: Exclude<PaletteItem, 'breadboard'>) =>
+    standsBeside(item) ? pickUp({ type: item }) : setTool(item);
 }
 
 const Icon = ({ item, size = 24 }: { item: PaletteItem; size?: number }) => (
@@ -620,9 +621,13 @@ export function PartsDrawer({
   onChosen?: () => void;
 }) {
   const tool = useLab((s) => s.tool);
+  const placing = useLab((s) => s.placing);
   const choose = useChoose();
-  const { t } = useT();
+  const { t, number } = useT();
   const [query, setQuery] = useState('');
+  /** The breadboard asks which size before it is picked up. */
+  const [sizes, setSizes] = useState(false);
+  const chosen = (item: PaletteItem) => (placing ? placing.type === item : tool === item);
   const wanted = query.trim().toLowerCase();
   const matches = (item: PaletteItem) =>
     !wanted || item.includes(wanted) || t(`tool.${item}`).toLowerCase().includes(wanted);
@@ -652,37 +657,94 @@ export function PartsDrawer({
   }, [wanted, open]);
   const page = (direction: 1 | -1) =>
     listRef.current?.scrollBy({ top: direction * listRef.current.clientHeight * 0.7 });
-  const row = (item: PaletteItem) => (
-    <li key={item}>
+  /** One line of the list: a drawing, and its name beside it while the list is open. */
+  const line = (entry: {
+    key: string;
+    testid: string;
+    label: string;
+    item: PaletteItem;
+    pressed: boolean;
+    /** Set for a line that opens more lines under it, in place of being chosen. */
+    expanded?: boolean;
+    /** A line under another: drawn smaller. */
+    under?: boolean;
+    onClick(): void;
+  }) => (
+    <li key={entry.key}>
       <button
         type="button"
-        data-testid={`tool-${item}`}
-        aria-pressed={tool === item}
-        aria-label={t(`tool.${item}`)}
-        title={t(`tool.${item}`)}
-        onClick={() => {
-          choose(item);
-          onChosen?.();
-        }}
+        data-testid={entry.testid}
+        aria-pressed={entry.expanded === undefined ? entry.pressed : undefined}
+        aria-expanded={entry.expanded}
+        aria-label={entry.label}
+        title={entry.label}
+        onClick={entry.onClick}
         className={`flex min-h-11 w-full items-center text-left text-sm font-medium ${
-          tool === item ? 'text-ink' : 'text-ink-soft hover:bg-paper hover:text-ink'
+          entry.pressed ? 'text-ink' : 'text-ink-soft hover:bg-paper hover:text-ink'
         }`}
       >
         <span className={`grid shrink-0 place-items-center ${icon}`}>
           <span
-            className={`grid h-10 w-10 place-items-center rounded-[var(--radius-control)] ${
-              tool === item ? 'bg-amber-soft text-ink ring-2 ring-amber' : ''
-            }`}
+            className={`grid place-items-center rounded-[var(--radius-control)] ${
+              entry.under ? 'h-8 w-8' : 'h-10 w-10'
+            } ${entry.pressed ? 'bg-amber-soft text-ink ring-2 ring-amber' : ''}`}
           >
-            <Icon item={item} />
+            <Icon item={entry.item} size={entry.under ? 18 : 24} />
           </span>
         </span>
         <span aria-hidden className={`min-w-0 truncate pr-3 ${open ? '' : 'invisible'}`}>
-          {t(`tool.${item}`)}
+          {entry.label}
         </span>
       </button>
     </li>
   );
+  const row = (item: PaletteItem) => {
+    if (item !== 'breadboard') {
+      return line({
+        key: item,
+        testid: `tool-${item}`,
+        label: t(`tool.${item}`),
+        item,
+        pressed: chosen(item),
+        onClick: () => {
+          choose(item);
+          onChosen?.();
+        },
+      });
+    }
+    // A breadboard is picked by its size (D-108): the line opens the three sizes under it.
+    const inHand = placing?.type === 'breadboard' ? placing.size : null;
+    return (
+      <Fragment key="breadboard">
+        {line({
+          key: 'breadboard',
+          testid: 'tool-breadboard',
+          label: t('tool.breadboard'),
+          item,
+          pressed: inHand !== null,
+          expanded: sizes,
+          onClick: () => setSizes(!sizes),
+        })}
+        {sizes &&
+          BOARD_SIZES.map((size) =>
+            line({
+              key: `breadboard-${size}`,
+              testid: `tool-breadboard-${size}`,
+              label: t(`inspector.boardSize.${size}`, {
+                holes: number(BREADBOARD_SPECS[size].holes),
+              }),
+              item,
+              under: true,
+              pressed: inHand === size,
+              onClick: () => {
+                useLab.getState().pickUp({ type: 'breadboard', size });
+                onChosen?.();
+              },
+            }),
+          )}
+      </Fragment>
+    );
+  };
 
   return (
     <div
@@ -811,8 +873,10 @@ export function CanvasHint() {
   const running = useLab((s) => s.running);
   const wireSelected = useLab((s) => s.circuit.wires.some((wire) => wire.id === s.selectedId));
   const { t } = useT();
-  const hint: MessageKey =
-    tool === 'wire' && wireStart
+  const placing = useLab((s) => s.placing !== null);
+  const hint: MessageKey = placing
+    ? 'hint.placing'
+    : tool === 'wire' && wireStart
       ? 'hint.wire.end'
       : tool === 'select' && wireSelected
         ? 'hint.wireSelected'

@@ -282,6 +282,11 @@ export interface SceneProps {
   /** The mat's extent: the circuit's own area unless the lab draws room around it. */
   surface?: Box;
   /**
+   * Draws this one part or breadboard alone, with no mat and no wires: the
+   * picture of a part still in the hand (D-108).
+   */
+  only?: string;
+  /**
    * False for thumbnails: leaves out the holes and lettering, which are invisible
    * at that size, and the parts' ids, so that a picture of a circuit is never
    * taken for the circuit on the bench.
@@ -803,6 +808,7 @@ export function Scene({
   boards = {},
   detailed = true,
   surface,
+  only,
   batteryLabel,
   readingLabel,
   formatNumber = String,
@@ -814,25 +820,31 @@ export function Scene({
     lift?.id === id
       ? { transform: `translate(${lift.x}px, ${lift.y}px)`, transition: 'none' }
       : undefined;
+  const components = only
+    ? circuit.components.filter((component) => component.id === only)
+    : circuit.components;
+  const wires = only ? [] : circuit.wires;
   return (
     <>
-      <Mat {...(surface ?? canvasBox(circuit))} />
-      {layoutOf(circuit).boards.map((board) => {
-        const box = breadboardBox(board);
-        return (
-          <g key={board.id}>
-            <BreadboardDrawing
-              id={board.id}
-              size={board.size}
-              x={box.x}
-              y={box.y}
-              detailed={detailed}
-              selected={board.id === selectedId}
-            />
-          </g>
-        );
-      })}
-      {circuit.components.map((component) => {
+      {!only && <Mat {...(surface ?? canvasBox(circuit))} />}
+      {layoutOf(circuit)
+        .boards.filter((board) => !only || board.id === only)
+        .map((board) => {
+          const box = breadboardBox(board);
+          return (
+            <g key={board.id}>
+              <BreadboardDrawing
+                id={board.id}
+                size={board.size}
+                x={box.x}
+                y={box.y}
+                detailed={detailed}
+                selected={board.id === selectedId}
+              />
+            </g>
+          );
+        })}
+      {components.map((component) => {
         const selected = component.id === selectedId;
         const reading = result?.readings[component.id];
         if (component.type === 'breadboard') return null;
@@ -989,7 +1001,7 @@ export function Scene({
         );
       })}
 
-      {circuit.wires.map((wire) => {
+      {wires.map((wire) => {
         const carried = floating?.id === wire.id ? floating : null;
         const from = carried?.key === 'from' ? carried.point : endpointPoint(circuit, wire.from);
         const to = carried?.key === 'to' ? carried.point : endpointPoint(circuit, wire.to);
@@ -1011,7 +1023,7 @@ export function Scene({
 
       {result && readingLabel && (
         <g pointerEvents="none" fontSize={11.5} fontWeight={600} textAnchor="middle">
-          {circuit.components.map((component) => {
+          {components.map((component) => {
             const reading = result.readings[component.id];
             if (!reading || (component.type !== 'resistor' && component.type !== 'led'))
               return null;

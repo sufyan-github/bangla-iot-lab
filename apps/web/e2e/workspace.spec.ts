@@ -43,7 +43,8 @@ test.describe('on a wide screen', () => {
 
     // Open, it is 200 px wide with its edge. It has no scrollbar: a fading edge says
     // there is more below, and a press on it goes there; then there is more above too.
-    expect(await widthOf(page, 'parts-drawer')).toBe(199);
+    // (It widens over 150 ms: wait for it.)
+    await expect.poll(() => widthOf(page, 'parts-drawer')).toBe(199);
     const list = page.getByTestId('parts-list');
     expect(await list.evaluate((el) => (el as HTMLElement).offsetWidth - el.clientWidth)).toBe(0);
     await expect(page.getByTestId('parts-more-up')).toHaveCount(0);

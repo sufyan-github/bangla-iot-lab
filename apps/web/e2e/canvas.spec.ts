@@ -498,3 +498,111 @@ test('the mat grows where parts are put: a battery far to the left stays there',
   await expect(page.locator('[data-hit="BAT1"]')).toBeVisible();
   expect(await placeOf(page, 'BAT1')).toEqual(moved);
 });
+
+/** The middle of a battery or board, in canvas coordinates. */
+async function middleOf(page: Page, id: string): Promise<Spot> {
+  const hit = page.locator(`[data-hit="${id}"]`);
+  const corner = await placeOf(page, id);
+  return {
+    x: corner.x + Number(await hit.getAttribute('width')) / 2,
+    y: corner.y + Number(await hit.getAttribute('height')) / 2,
+  };
+}
+
+test('a battery in hand follows the pointer, and is put down where the mat is pressed', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'a picture follows a mouse; a finger just presses where the part goes');
+  await openExample(page, 'open-example');
+  await expect(page.locator('[data-hit="BAT1"]')).toBeVisible();
+  await page.getByTestId('tool-battery').click();
+  await expect(page.getByTestId('tool-battery')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('canvas-hint')).toContainText(/মাদুরের যেখানে|Press on the mat/);
+  // Nothing is added yet.
+  await expect(page.locator('[data-hit="BAT2"]')).toHaveCount(0);
+
+  // Over the breadboard it has no room, and its picture says so; a press there adds nothing.
+  const ghost = page.getByTestId('ghost-beside');
+  const [onBoard] = await onScreen(page, [{ x: 560, y: 280 }]);
+  await page.mouse.move(onBoard!.x, onBoard!.y);
+  await expect(ghost).toHaveAttribute('data-fits', 'false');
+  await page.mouse.click(onBoard!.x, onBoard!.y);
+  await expect(page.getByTestId('notice')).toBeVisible();
+  await expect(page.locator('[data-hit="BAT2"]')).toHaveCount(0);
+  await expect(page.getByTestId('tool-battery')).toHaveAttribute('aria-pressed', 'true');
+
+  // On the bare mat to the right it fits; a press puts it there, and it is no longer in hand.
+  const place = { x: 1110, y: 640 };
+  const [free] = await onScreen(page, [place]);
+  await page.mouse.move(free!.x, free!.y);
+  await expect(ghost).toHaveAttribute('data-fits', 'true');
+  await page.mouse.click(free!.x, free!.y);
+  await expect(page.locator('[data-hit="BAT2"]')).toBeVisible();
+  await expect(ghost).toHaveCount(0);
+  // Its middle is where the mat was pressed. (What it is picked up by reaches a little
+  // further right than its body, to take in its terminals.)
+  const middle = await middleOf(page, 'BAT2');
+  expect(Math.abs(middle.x - place.x)).toBeLessThan(20);
+  expect(Math.abs(middle.y - place.y)).toBeLessThan(6);
+
+  // Esc puts a part in hand back.
+  await page.getByTestId('tool-supply').click();
+  await expect(page.getByTestId('tool-supply')).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('tool-supply')).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('a breadboard is picked by its size, and put where the mat is pressed', async ({ page }) => {
+  await openExample(page, 'open-example');
+  await expect(page.locator('[data-hit="BAT1"]')).toBeVisible();
+  const open = page.getByTestId('parts-open');
+  if (await open.isVisible()) await open.click();
+
+  // The breadboard's line opens its three sizes, with their holes.
+  await page.getByTestId('tool-breadboard').click();
+  await expect(page.getByTestId('tool-breadboard')).toHaveAttribute('aria-expanded', 'true');
+  for (const [size, holes] of [
+    ['mini', '১৭০'],
+    ['half', '৪০০'],
+    ['full', '৮৩০'],
+  ]) {
+    await expect(page.getByTestId(`tool-breadboard-${size}`)).toHaveAttribute(
+      'aria-label',
+      new RegExp(holes!),
+    );
+  }
+  await page.getByTestId('tool-breadboard-mini').click();
+  await expect(page.locator('[data-breadboard="BB2"]')).toHaveCount(0);
+
+  // A press on the bare mat, below the first breadboard, puts the small one there.
+  const [free] = await onScreen(page, [{ x: 500, y: 720 }]);
+  await page.mouse.click(free!.x, free!.y);
+  await expect(page.locator('[data-breadboard="BB2"]')).toBeVisible();
+  // It is selected, and the circuit panel shows it is the mini.
+  const panel = page.getByTestId('tab-circuit');
+  if (await panel.isVisible()) await panel.click();
+  await expect(page.getByTestId('breadboard-mini')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('a part for the breadboard rides beside the pointer until it is over a hole', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'a picture follows a mouse');
+  await openExample(page, 'open-example');
+  const spot = await places(page, ['BB1.c20']);
+  await pick(page, 'resistor');
+
+  // On the bare mat: its drawing, by the pointer.
+  const [bare] = await onScreen(page, [{ x: 520, y: 640 }]);
+  await page.mouse.move(bare!.x, bare!.y);
+  await expect(page.getByTestId('ghost-icon')).toHaveAttribute('data-ghost', 'resistor');
+  await expect(page.getByTestId('ghost')).toHaveCount(0);
+
+  // Over a hole: the part itself, where it would go.
+  const [hole] = await onScreen(page, [spot['BB1.c20']!]);
+  await page.mouse.move(hole!.x, hole!.y);
+  await expect(page.getByTestId('ghost')).toHaveAttribute('data-ghost', 'resistor');
+  await expect(page.getByTestId('ghost-icon')).toHaveCount(0);
+});
