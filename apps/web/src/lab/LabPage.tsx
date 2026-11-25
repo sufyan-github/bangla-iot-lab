@@ -319,7 +319,7 @@ function PartsRail({ wide }: { wide: boolean }) {
   // On a touch screen a first tap opens the list, so a part is picked by name, not by guess.
   const swallow = useRef(false);
   const folded = wide ? '4rem' : '3rem';
-  const width = wide ? '16rem' : '15rem';
+  const width = '12.5rem';
   return (
     <aside
       ref={rail.ref}

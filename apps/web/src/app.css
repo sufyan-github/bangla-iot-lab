@@ -550,6 +550,14 @@ input {
     background: var(--color-paper);
   }
 
+  /* A list that scrolls without a scrollbar; what holds it shows that there is more. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   /* A pin's name, drawn as the end of a jumper wire: the stripe says what the pin is for. */
   .pin {
     display: inline-block;

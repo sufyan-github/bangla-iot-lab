@@ -1,5 +1,5 @@
 import type { MessageKey } from '@banglalab/i18n';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { useLab, type Tool } from './store';
 
@@ -629,6 +629,29 @@ export function PartsDrawer({
   const bins = BINS.map((bin) => ({ ...bin, items: bin.items.filter(matches) })).filter(
     (bin) => bin.items.length > 0,
   );
+  // The list has no scrollbar; a fading edge with an arrow says there is more that way.
+  const listRef = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState({ up: false, down: false });
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const measure = () => {
+      const up = list.scrollTop > 4;
+      const down = list.scrollTop + list.clientHeight < list.scrollHeight - 4;
+      setMore((was) => (was.up === up && was.down === down ? was : { up, down }));
+    };
+    measure();
+    list.addEventListener('scroll', measure, { passive: true });
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    return () => {
+      list.removeEventListener('scroll', measure);
+      observer.disconnect();
+    };
+    // Measured again when the search or the fold changes what the list holds.
+  }, [wanted, open]);
+  const page = (direction: 1 | -1) =>
+    listRef.current?.scrollBy({ top: direction * listRef.current.clientHeight * 0.7 });
   const row = (item: PaletteItem) => (
     <li key={item}>
       <button
@@ -636,7 +659,7 @@ export function PartsDrawer({
         data-testid={`tool-${item}`}
         aria-pressed={tool === item}
         aria-label={t(`tool.${item}`)}
-        title={open ? undefined : t(`tool.${item}`)}
+        title={t(`tool.${item}`)}
         onClick={() => {
           choose(item);
           onChosen?.();
@@ -691,30 +714,75 @@ export function PartsDrawer({
           </span>
         )}
       </div>
-      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-4">
-        {withTools && !wanted && (
-          <ul role="toolbar" aria-label={t('tool.select')} className="border-b border-line pb-1">
-            {TOOLS.map(row)}
-          </ul>
-        )}
-        {bins.length === 0 && <p className="px-3 pt-3 text-sm text-ink-soft">{t('drawer.none')}</p>}
-        {bins.map((bin) => (
-          <section key={bin.id} aria-label={t(`drawer.bin.${bin.id}` as MessageKey)}>
-            {/* The compartment's label; folded, a short line marks where one begins. */}
-            <h3 className="flex h-8 items-end pb-1 text-xs font-bold text-accent">
-              {open ? (
-                <span className="truncate px-3">{t(`drawer.bin.${bin.id}` as MessageKey)}</span>
-              ) : (
-                <span aria-hidden className={`grid place-items-center pb-1.5 ${icon}`}>
-                  <span className="h-0.5 w-5 rounded-full bg-line-strong" />
-                </span>
-              )}
-            </h3>
-            <ul>{bin.items.map(row)}</ul>
-          </section>
-        ))}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <MoreParts way="up" shown={more.up} label={t('drawer.moreUp')} onClick={() => page(-1)} />
+        <MoreParts
+          way="down"
+          shown={more.down}
+          label={t('drawer.moreDown')}
+          onClick={() => page(1)}
+        />
+        <div
+          ref={listRef}
+          data-testid="parts-list"
+          className="no-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-4"
+        >
+          {withTools && !wanted && (
+            <ul role="toolbar" aria-label={t('tool.select')} className="border-b border-line pb-1">
+              {TOOLS.map(row)}
+            </ul>
+          )}
+          {bins.length === 0 && (
+            <p className="px-3 pt-3 text-sm text-ink-soft">{t('drawer.none')}</p>
+          )}
+          {bins.map((bin) => (
+            <section key={bin.id} aria-label={t(`drawer.bin.${bin.id}` as MessageKey)}>
+              {/* The compartment's label; folded, a short line marks where one begins. */}
+              <h3 className="flex h-8 items-end pb-1 text-xs font-bold text-accent">
+                {open ? (
+                  <span className="truncate px-3">{t(`drawer.bin.${bin.id}` as MessageKey)}</span>
+                ) : (
+                  <span aria-hidden className={`grid place-items-center pb-1.5 ${icon}`}>
+                    <span className="h-0.5 w-5 rounded-full bg-line-strong" />
+                  </span>
+                )}
+              </h3>
+              <ul>{bin.items.map(row)}</ul>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
+  );
+}
+
+/** The fading edge of the parts list: there is more this way, and a press goes there. */
+function MoreParts(props: { way: 'up' | 'down'; shown: boolean; label: string; onClick(): void }) {
+  if (!props.shown) return null;
+  const up = props.way === 'up';
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      data-testid={`parts-more-${props.way}`}
+      aria-label={props.label}
+      title={props.label}
+      onClick={props.onClick}
+      className={`absolute inset-x-0 z-10 grid h-9 place-items-center text-ink-soft hover:text-ink ${
+        up
+          ? 'top-0 bg-gradient-to-b from-surface via-surface/85 to-transparent pb-2'
+          : 'bottom-0 bg-gradient-to-t from-surface via-surface/85 to-transparent pt-2'
+      }`}
+    >
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" aria-hidden>
+        <path
+          d={up ? 'M6 14.5l6-6 6 6' : 'M6 9.5l6 6 6-6'}
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
   );
 }
 
