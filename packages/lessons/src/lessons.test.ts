@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { PART_SHAPES } from '@banglalab/shared';
+import { PART_SHAPES, isProgrammable } from '@banglalab/shared';
 import {
   CIRCUIT_SCHEMA_VERSION,
   updateProps,
@@ -25,7 +25,7 @@ import {
   type SheetState,
 } from '@banglalab/simulation';
 import { describe, expect, it } from 'vitest';
-import { LESSONS, lessonProblems } from './index';
+import { LESSONS, hintsFor, lessonProblems } from './index';
 import { checkStep, unmetWiring, type LessonWorld } from './checks';
 import type { Check, Lesson, Place } from './schema';
 
@@ -829,7 +829,6 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       ['ESP1.3v3', 'BB1.a1'],
       ['ESP1.gnd1', 'BB1.a2'],
       ['ESP1.d27', 'BB1.a3'],
-      ['ESP1.d34', 'BB1.a4'],
       ['ESP1.vin', 'BB1.a7'],
       ['ESP1.d26', 'BB1.a8'],
       ['ESP1.gnd1', 'BB1.a9'],
@@ -1669,6 +1668,36 @@ describe('every lesson can be completed in the lab', () => {
       const walkthrough = WALKTHROUGHS[lesson.id];
       if (!walkthrough) throw new Error(`no walkthrough for ${lesson.id}`);
       expect(walk(lesson, walkthrough)).toHaveLength(lesson.steps.length);
+    });
+  }
+});
+
+describe('the tutor’s hints (D-116)', () => {
+  // Built as each lesson asks, with its program on the board, nothing calls for a hint:
+  // a hint the finished lesson would get is a false alarm.
+  for (const lesson of LESSONS) {
+    it(`gives none for the finished ${lesson.id}`, () => {
+      const walkthrough = WALKTHROUGHS[lesson.id]!;
+      const circuit: CircuitDocument = {
+        schemaVersion: CIRCUIT_SCHEMA_VERSION,
+        components: walkthrough.components,
+        wires: walkthrough.wires.map(([from, to], i): Wire => ({
+          id: `W${i + 1}`,
+          from,
+          to,
+          color: '#000000',
+        })),
+      };
+      const boards = circuit.components.filter(isProgrammable);
+      const programs: Record<string, { source: string }> = {};
+      [lesson.program, lesson.program2].forEach((program, i) => {
+        if (program && boards[i]) {
+          programs[boards[i].id] = {
+            source: readFileSync(new URL(`${program}.ino`, STARTERS), 'utf8'),
+          };
+        }
+      });
+      expect(hintsFor(circuit, programs)).toEqual([]);
     });
   }
 });

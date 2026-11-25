@@ -129,6 +129,41 @@ export const bn = {
   'time.ms': '{ms} ms',
   'time.restart': 'শুরু থেকে আবার চালাও',
   'time.at': '{seconds} s',
+  'tutor.button': 'ইঙ্গিত',
+  'tutor.title': 'ইঙ্গিত',
+  'tutor.where': 'কোথায়, দেখাও',
+  'tutor.fix': 'কীভাবে ঠিক করব?',
+  'tutor.count': '{n}টার মধ্যে {i}',
+  'tutor.prev': 'আগের ইঙ্গিত',
+  'tutor.next': 'পরের ইঙ্গিত',
+  'tutor.close': 'ইঙ্গিত বন্ধ করো',
+  'tutor.none': 'আমি যা যা দেখতে পারি, সব ঠিকঠাক জোড়া। তবু কাজ না করলে চালু করো আর বার্তাগুলো পড়ো।',
+  'tutor.part-unconnected.nudge': '{part} বোর্ডে বসানো আছে, কিন্তু কোনো কিছুর সাথে কি জোড়া?',
+  'tutor.part-unconnected.fix':
+    'এর পা যে সারিগুলোতে, সেখানে আর কিছু নেই। প্রতিটা পায়ের সারি থেকে যেখানে যাওয়ার কথা সেখানে তার দাও, অথবা যার সাথে লাগবে তার পাশে সরিয়ে নাও।',
+  'tutor.loose-leg.nudge': '{part}-এর {leg} পা-টা অনুসরণ করো। এর কারেন্ট এরপর কোথায় যায়?',
+  'tutor.loose-leg.fix':
+    'ওই সারিতে আর কিছু নেই, তাই ওই পা দিয়ে কারেন্ট যেতে পারে না। ওই সারি থেকে একটা তার দাও, অথবা পা-টা ঠিক সারিতে সরাও।',
+  'tutor.loose-wire.nudge': 'তোমার একটা তারের এক মাথা কোথাও গিয়ে থেমেছে। সেই মাথায় কী আছে?',
+  'tutor.loose-wire.fix':
+    'ওই মাথাটা এমন সারিতে, যেখানে আর কিছু নেই। যে পায়ে পৌঁছানোর কথা, তার সারিতে সরিয়ে দাও।',
+  'tutor.pin-unwired.nudge': 'তোমার প্রোগ্রাম {pin} পিন ব্যবহার করে। {pin}-এ কী লাগানো আছে?',
+  'tutor.pin-unwired.fix':
+    '{pin}-এ কিছুই লাগানো নেই। যন্ত্রাংশটা {pin}-এ লাগাও, অথবা প্রোগ্রামে পিনের নম্বর বদলে যে পিনে যন্ত্রাংশ আছে সেটা দাও।',
+  'tutor.pin-unused.nudge': '{pin}-এ কিছু একটা লাগানো। তোমার প্রোগ্রাম কি কখনো {pin} ব্যবহার করে?',
+  'tutor.pin-unused.fix':
+    'প্রোগ্রামে এই পিন কোথাও নেই, তাই এতে লাগানো যন্ত্রাংশ কিছু করবে না। প্রোগ্রামে এই পিনের নম্বর ব্যবহার করো, অথবা তারটা প্রোগ্রামের পিনে সরাও।',
+  'tutor.input-floating.nudge': '{pin}-এর বোতাম না চাপলে {pin} কত ভোল্ট দেখে?',
+  'tutor.input-floating.fix':
+    'কিছুই না: পিনটা ঝুলে থাকে, তাই এলোমেলোভাবে HIGH বা LOW পড়তে পারে। pinMode-এ INPUT_PULLUP দাও আর বোতামের অন্য পা GND-তে লাগাও, অথবা পিন থেকে GND-তে একটা 10 kΩ রেজিস্টর দাও।',
+  'tutor.input-only-output.nudge':
+    'তোমার প্রোগ্রাম {pin} দিয়ে কিছু চালাতে চায়। ESP32-এ {pin} কি কিছু চালাতে পারে?',
+  'tutor.input-only-output.fix':
+    'GPIO 34 থেকে 39 শুধু পড়তে পারে, এদের আউটপুট নেই। যন্ত্রাংশ আর প্রোগ্রাম অন্য পিনে নাও, যেমন D25 বা D26।',
+  'tutor.adc2-wifi.nudge':
+    'তোমার প্রোগ্রাম analogRead দিয়ে {pin} পড়ে, আবার Wi-Fi-ও চালু করে। ESP32-এ এই দুটো কি একসাথে চলে?',
+  'tutor.adc2-wifi.fix':
+    'না: Wi-Fi চালু থাকলে দ্বিতীয় কনভার্টারের (ADC2) পিনগুলো পড়তে পারে না। D32 থেকে D35, VP বা VN ব্যবহার করো, এগুলো প্রথমটার।',
   'runCheck.title': 'চালু করার আগে: এগুলো এখনো মেলেনি',
   'runCheck.intro':
     'সার্কিট চলছে, তবে পাঠ যা বানাতে বলেছে তার কিছু এখনো নেই। ঠিক করলে তালিকা থেকে সরে যাবে।',
@@ -1480,6 +1515,43 @@ export const en: Record<MessageKey, string> = {
   'time.ms': '{ms} ms',
   'time.restart': 'Start again from the beginning',
   'time.at': '{seconds} s',
+  'tutor.button': 'Hint',
+  'tutor.title': 'A hint',
+  'tutor.where': 'Show me where',
+  'tutor.fix': 'How do I fix it?',
+  'tutor.count': '{i} of {n}',
+  'tutor.prev': 'Previous hint',
+  'tutor.next': 'Next hint',
+  'tutor.close': 'Close the hint',
+  'tutor.none':
+    'Everything I can check is joined up. If it still does not work, run it and read the messages.',
+  'tutor.part-unconnected.nudge': '{part} is on the board, but is it joined to anything?',
+  'tutor.part-unconnected.fix':
+    'Nothing else is in the rows its legs are in. Run a wire from each leg’s row to where it should go, or move it next to the part it belongs with.',
+  'tutor.loose-leg.nudge': 'Follow {part}’s {leg} leg. Where does its current go next?',
+  'tutor.loose-leg.fix':
+    'Its row has nothing else in it, so no current can flow through that leg. Add a wire from that row, or move the leg into the row it should share.',
+  'tutor.loose-wire.nudge': 'One of your wires ends somewhere. What is at that end?',
+  'tutor.loose-wire.fix':
+    'That end is in a row with nothing else in it. Move it into the row of the leg it should reach.',
+  'tutor.pin-unwired.nudge': 'Your program uses pin {pin}. What is connected to {pin}?',
+  'tutor.pin-unwired.fix':
+    'Nothing is wired to {pin}. Wire the part to {pin}, or change the pin number in the program to the pin the part is on.',
+  'tutor.pin-unused.nudge': 'Something is wired to {pin}. Does your program ever use {pin}?',
+  'tutor.pin-unused.fix':
+    'The program never names this pin, so the part on it will do nothing. Use this pin’s number in the program, or move the wire to the pin the program uses.',
+  'tutor.input-floating.nudge':
+    'When the button on {pin} is not pressed, what voltage does {pin} see?',
+  'tutor.input-floating.fix':
+    'None: the pin is left floating, so it can read HIGH or LOW at random. Set it to INPUT_PULLUP in pinMode and wire the button’s other leg to GND, or add a 10 kΩ resistor from the pin to GND.',
+  'tutor.input-only-output.nudge':
+    'Your program drives {pin}. Can {pin} drive anything on an ESP32?',
+  'tutor.input-only-output.fix':
+    'GPIO 34 to 39 can only read: they have no output. Move the part and the program to another pin, such as D25 or D26.',
+  'tutor.adc2-wifi.nudge':
+    'Your program reads {pin} with analogRead and turns Wi-Fi on. Do those two go together on an ESP32?',
+  'tutor.adc2-wifi.fix':
+    'No: while Wi-Fi is on, the pins of the second converter (ADC2) cannot read. Use D32 to D35, VP or VN, which belong to the first.',
   'runCheck.title': 'Before it runs: these are not met yet',
   'runCheck.intro':
     'The circuit is running, but some of what the lesson asked you to build is not there yet. Each item goes once it is fixed.',

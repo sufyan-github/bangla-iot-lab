@@ -8,6 +8,8 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Changed
 
+- **The street-light lesson** no longer asks for the LDR module's AO on D34,
+  which its program never reads.
 - **Account, licences and ESP32 pages in the new design**: the same title
   band as the rest of the lab, the ways in as rows with a drawing, amber tabs
   for teachers, and a learner's progress as LEDs. Every page now has the new
@@ -64,6 +66,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Hints**: a Hint button beside Run looks for what the simulation cannot
+  see wrong (a leg or wire joined to nothing, a program using a pin nothing is
+  wired to, a button pin left floating, and two ESP32 pin traps) and gives a
+  hint a step at a time: a question, then where, then how to fix it.
 - **The IR obstacle sensor on its three-pin board** (OUT, GND, VCC): OUT
   goes LOW while something is within its trimmer's range, 2 to 30 cm, and a
   dark surface must come nearer. Tap it while running to put something in

@@ -18,8 +18,8 @@
   "steps": [
     {
       "text": {
-        "bn": "রাস্তার বাতি সারারাত পুরো আলোয় জ্বললে অনেক বিদ্যুৎ খরচ হয়। এই বাতি নিজে বুঝবে কখন রাত, আর কখন কেউ আসছে। লাগবে: আলো বোঝার জন্য **LDR মডিউল**, মানুষ বোঝার জন্য **PIR সেন্সর**, আর বাতি হিসেবে একটা **LED**।\n\nLDR মডিউল বসাও: VCC যাবে 3V3-তে, GND যাবে GND-তে, DO যাবে **D27**-এ, AO যাবে D34-এ।",
-        "en": "A street light at full brightness all night uses a lot of electricity. This one works out for itself when it is night and when someone is coming. It needs an **LDR module** to sense light, a **PIR sensor** to sense people, and an **LED** as the lamp.\n\nPlace the LDR module: VCC to 3V3, GND to GND, DO to **D27**, AO to D34."
+        "bn": "রাস্তার বাতি সারারাত পুরো আলোয় জ্বললে অনেক বিদ্যুৎ খরচ হয়। এই বাতি নিজে বুঝবে কখন রাত, আর কখন কেউ আসছে। লাগবে: আলো বোঝার জন্য **LDR মডিউল**, মানুষ বোঝার জন্য **PIR সেন্সর**, আর বাতি হিসেবে একটা **LED**।\n\nLDR মডিউল বসাও: VCC যাবে 3V3-তে, GND যাবে GND-তে, DO যাবে **D27**-এ। AO এখানে লাগবে না।",
+        "en": "A street light at full brightness all night uses a lot of electricity. This one works out for itself when it is night and when someone is coming. It needs an **LDR module** to sense light, a **PIR sensor** to sense people, and an **LED** as the lamp.\n\nPlace the LDR module: VCC to 3V3, GND to GND, DO to **D27**. AO is not used here."
       },
       "checks": [
         {

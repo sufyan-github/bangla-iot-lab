@@ -19,6 +19,7 @@ import { WebPanel } from './WebPanel';
 import { checkStep } from '@banglalab/lessons';
 import { LessonPanel } from '../lessons/LessonPanel';
 import { RunCheckCard, useRunCheckWatch } from '../lessons/RunCheck';
+import { TutorButton, TutorCard, useTutorWatch } from './Tutor';
 import { TimeControls } from './TimeControls';
 import { useLessonState } from '../lessons/progress';
 import { setBuzzing } from './sound';
@@ -487,6 +488,7 @@ export function LabPage() {
   useKeyboardShortcuts();
   useLessonChecks();
   useRunCheckWatch();
+  useTutorWatch();
   const hasLesson = useLessonState((s) => s.lesson !== null);
 
   const name = useLab((s) => s.name);
@@ -802,6 +804,7 @@ export function LabPage() {
               <span className="max-md:sr-only">{t('lab.sound')}</span>
             </button>
           )}
+          <TutorButton />
           <button
             type="button"
             data-testid="run"
@@ -844,8 +847,10 @@ export function LabPage() {
                   <TimeControls />
                 </div>
                 {/* Run pressed in a lesson with something it asked for missing (D-110). */}
-                <div className="pointer-events-none absolute top-3 right-3 z-20 flex justify-end max-sm:left-2">
+                <div className="pointer-events-none absolute top-3 right-3 z-20 flex flex-col items-end gap-2 max-sm:left-2">
                   <RunCheckCard />
+                  {/* The tutor's hint, when asked for (D-116). */}
+                  <TutorCard />
                 </div>
                 {view === 'board' ? <Canvas /> : <Diagram />}
               </>

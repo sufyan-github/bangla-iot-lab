@@ -53,6 +53,7 @@ import {
 } from './geometry';
 import { slackMiddle, squareRoute, wirePath } from './parts';
 import { useRunCheckPlaces } from '../lessons/RunCheck';
+import { useTutorPlaces } from './Tutor';
 import { PartIcon, WireStyleIcon } from './Palette';
 import { boxOfAdded, withPart, withPartAt } from './placing';
 import { BoardPartDrawing, Scene } from './Scene';
@@ -168,7 +169,10 @@ export function Canvas() {
   const tool = useLab((s) => s.tool);
   const placing = useLab((s) => s.placing);
   /** Places a check on Run points at: where a connection the lesson asked for is missing. */
-  const pointedAt = useRunCheckPlaces();
+  const runCheckPlaces = useRunCheckPlaces();
+  // And where the tutor's hint points, once asked where (D-116).
+  const hintPlaces = useTutorPlaces();
+  const pointedAt = [...new Set([...runCheckPlaces, ...hintPlaces])];
   const wireStyle = useLab((s) => s.wireStyle);
   const selectedId = useLab((s) => s.selectedId);
   const wireStart = useLab((s) => s.wireStart);

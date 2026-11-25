@@ -2547,3 +2547,38 @@ sources named in the code; none was measured here.
   sensor's legs are in a different order from the board's, so it is not swapped
   in place (as in D-114). The generic DC motor stays a part of its own.
 - Circuit format 29 adds both. No part definition is a stand-in any more.
+
+## D-116 — The tutor, first stage: hints by fixed rules
+
+Built on 25 November 2026, chosen by the owner from the list of what is left
+(requirement "AI tutor: rule-based hints, then gated LLM").
+
+- **What the simulation cannot see wrong.** The lab already explains what the
+  solver finds (a short, a reversed LED, too much current). The tutor covers a
+  circuit that runs, reports nothing, and does not do what was meant. Eight
+  rules, plainest first: a part joined to nothing; a leg in a row of its own;
+  a wire that ends in an empty row; a pin the program uses with nothing wired
+  to it; a part wired to a pin the program never names; a button read on a
+  pin that floats when it is up; on an ESP32, a read-only pin (34 to 39) asked
+  to drive something; and an analog read on an ADC2 pin while Wi-Fi is on.
+- **Only on request, a step at a time.** A Hint button beside Run opens a card
+  with a question first; then, if asked, where (ringed on the board, as Run's
+  check in a lesson does); then how to fix it. Several hints are stepped
+  through one at a time. The card follows the circuit: a hint goes once fixed.
+- **A leg must be joined only where it matters**: every leg of a two- or
+  three-leg part; a module's supply and ground, and not an output it may
+  leave unused (the buzzer board that sounds on HIGH needs no +).
+- **Programs are read by pattern, not compiled.** Pins given as numbers, `A0`
+  to `A5`, `LED_BUILTIN`, or a name set once by `#define` or `const int` are
+  found; anything else counts as unknown. The rule about unused pins stays
+  quiet whenever a pin is unknown, and pins a library drives on its own (I2C,
+  SPI, the second serial port, USB serial) are left out. Only the program last
+  put on a board is read, so a lesson's wiring steps, before its program, get
+  no hints about one.
+- **No false alarms on any lesson.** A test builds all 50 lessons as they ask,
+  with their programs, and expects no hints. It found one real slip: the
+  street-light lesson asked for the LDR module's AO on D34, which its program
+  never reads. The lesson no longer asks for that wire.
+- Nothing leaves the device and no network is used, so the children's-data
+  rules are unchanged. A tutor built on a language model is the later,
+  separate stage, and waits for the owner's decision.
