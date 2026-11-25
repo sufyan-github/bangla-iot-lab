@@ -26,7 +26,7 @@ import {
 } from '@banglalab/simulation';
 import { describe, expect, it } from 'vitest';
 import { LESSONS, lessonProblems } from './index';
-import { checkStep, type LessonWorld } from './checks';
+import { checkStep, unmetWiring, type LessonWorld } from './checks';
 import type { Check, Lesson, Place } from './schema';
 
 const STARTERS = new URL('../../board-emulators/fixtures/esp32-starters/', import.meta.url);
@@ -1522,8 +1522,18 @@ function walk(lesson: Lesson, walkthrough: Walkthrough) {
       uploadedStarter = lesson.program!;
       if (session) session.loadFirmware('ESP1', starter(uploadedStarter));
     }
-    // The student switches the circuit on when a step asks for it.
-    if (step.checks.some((check: Check) => check.kind === 'running') && !session) start();
+    // The student switches the circuit on when a step asks for it. Built as the lesson
+    // asks, nothing it has asked for so far is missing then: the lab's check on Run
+    // (D-110) never warns about a circuit that is right.
+    if (step.checks.some((check: Check) => check.kind === 'running') && !session) {
+      const unmet = unmetWiring(lesson, index, circuit);
+      if (unmet.length > 0) {
+        throw new Error(
+          `${lesson.id}, step ${index + 1}: Run would warn about ${JSON.stringify(unmet)}`,
+        );
+      }
+      start();
+    }
     const pending = [...(walkthrough.actions?.[index] ?? [])];
     let waited = 0;
     let since = 0;

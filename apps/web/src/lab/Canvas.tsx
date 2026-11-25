@@ -52,6 +52,7 @@ import {
   type Point,
 } from './geometry';
 import { slackMiddle, squareRoute, wirePath } from './parts';
+import { useRunCheckPlaces } from '../lessons/RunCheck';
 import { PartIcon, WireStyleIcon } from './Palette';
 import { boxOfAdded, withPart, withPartAt } from './placing';
 import { BoardPartDrawing, Scene } from './Scene';
@@ -163,6 +164,8 @@ export function Canvas() {
   const result = useLab((s) => s.result);
   const tool = useLab((s) => s.tool);
   const placing = useLab((s) => s.placing);
+  /** Places a check on Run points at: where a connection the lesson asked for is missing. */
+  const pointedAt = useRunCheckPlaces();
   const wireStyle = useLab((s) => s.wireStyle);
   const selectedId = useLab((s) => s.selectedId);
   const wireStart = useLab((s) => s.wireStart);
@@ -1013,6 +1016,29 @@ export function Canvas() {
                 <LandingRing key={hole} point={holePoint(circuit, hole)} />
               ))}
 
+            {pointedAt.map((endpoint) => {
+              const point = endpointPoint(circuit, endpoint);
+              return (
+                point && (
+                  <g
+                    key={endpoint}
+                    data-testid="run-check-ring"
+                    data-ring={endpoint}
+                    pointerEvents="none"
+                  >
+                    <circle
+                      className="run-check-ring"
+                      cx={point.x}
+                      cy={point.y}
+                      r={14}
+                      fill="rgba(232,162,26,.18)"
+                      stroke={AMBER}
+                      strokeWidth={3}
+                    />
+                  </g>
+                )
+              );
+            })}
             {beside && (
               <g
                 data-testid="ghost-beside"

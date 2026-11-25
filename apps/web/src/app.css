@@ -284,6 +284,22 @@ input {
   font: inherit;
 }
 
+/* A ring on a place a lesson's check on Run points at: it pulses, gently, unless motion is reduced. */
+@keyframes run-check-pulse {
+  50% {
+    stroke-width: 6;
+    opacity: 0.55;
+  }
+}
+.run-check-ring {
+  animation: run-check-pulse 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .run-check-ring {
+    animation: none;
+  }
+}
+
 /* Moving dashes on a wire show conventional current, from + towards −. */
 @keyframes current-flow {
   to {

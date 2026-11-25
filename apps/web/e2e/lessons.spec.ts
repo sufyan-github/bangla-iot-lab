@@ -46,6 +46,53 @@ test('the lessons page lists the kit lessons, then the projects, in order', asyn
   await expect(leds.and(page.locator('[data-led="off"]'))).toHaveCount(50);
 });
 
+test('Run in a lesson says what the lesson asked for is still missing, and points at it', async ({
+  page,
+}) => {
+  await page.goto('/lessons');
+  await page.locator('[data-lesson="esp32-blink"]').getByTestId('lesson-start').click();
+  await expect(page.getByTestId('lesson-panel')).toHaveAttribute('data-lesson', 'esp32-blink');
+  await page.getByTestId('lesson-next').click();
+
+  // Step 2 asks for the LED and its resistor wired to D2 and GND. The GND wire is left out.
+  await page.getByTestId('tab-circuit').click();
+  await place(page, 'resistor', 'BB1.c20');
+  await place(page, 'led', 'BB1.e24');
+  await wire(page, [['ESP1.d2', 'BB1.a20']]);
+
+  // Run anyway: the circuit runs, and the lab says what is missing, from which step.
+  await page.getByTestId('run').click();
+  await expect(page.getByTestId('run')).toHaveAttribute('aria-pressed', 'true');
+  const card = page.getByTestId('run-check');
+  await expect(card).toBeVisible();
+  await expect(card.getByTestId('run-check-item')).toHaveCount(1);
+  await expect(card).toContainText(/GND/);
+  await expect(card).toContainText(/ধাপ ২|step 2/);
+  // It points at both ends of the missing connection: the LED's short leg, and the
+  // board's two ground sockets, as either will do.
+  const rings = page.getByTestId('run-check-ring');
+  await expect(rings).toHaveCount(3);
+  for (const place of ['BB1.e25', 'ESP1.gnd1', 'ESP1.gnd2']) {
+    await expect(page.locator(`[data-ring="${place}"]`)).toHaveCount(1);
+  }
+  await card.getByTestId('run-check-show').click();
+  await expect(rings).toHaveCount(0);
+  await card.getByTestId('run-check-show').click();
+  await expect(rings).toHaveCount(3);
+
+  // Fixed while it runs, the item goes, and the card with it.
+  await page.getByTestId('run').click();
+  await wire(page, [['ESP1.gnd2', 'BB1.a25']]);
+  await expect(card).toHaveCount(0);
+  await expect(rings).toHaveCount(0);
+
+  // Built as asked, Run says nothing.
+  await page.getByTestId('run').click();
+  await expect(page.getByTestId('run')).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(300);
+  await expect(card).toHaveCount(0);
+});
+
 test('in a lesson, a pin name is drawn as a wire end, striped by what the pin is for', async ({
   page,
 }) => {

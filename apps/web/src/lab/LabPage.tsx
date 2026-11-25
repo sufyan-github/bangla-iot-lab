@@ -18,6 +18,7 @@ import { IotPanel } from './IotPanel';
 import { WebPanel } from './WebPanel';
 import { checkStep } from '@banglalab/lessons';
 import { LessonPanel } from '../lessons/LessonPanel';
+import { RunCheckCard, useRunCheckWatch } from '../lessons/RunCheck';
 import { useLessonState } from '../lessons/progress';
 import { setBuzzing } from './sound';
 import { matchingStarter } from './starters';
@@ -484,6 +485,7 @@ export function LabPage() {
   useLiveSimulation();
   useKeyboardShortcuts();
   useLessonChecks();
+  useRunCheckWatch();
   const hasLesson = useLessonState((s) => s.lesson !== null);
 
   const name = useLab((s) => s.name);
@@ -838,6 +840,10 @@ export function LabPage() {
             ) : (
               <>
                 <Notice />
+                {/* Run pressed in a lesson with something it asked for missing (D-110). */}
+                <div className="pointer-events-none absolute top-3 right-3 z-20 flex justify-end max-sm:left-2">
+                  <RunCheckCard />
+                </div>
                 {view === 'board' ? <Canvas /> : <Diagram />}
               </>
             )}

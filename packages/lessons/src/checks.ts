@@ -1,4 +1,6 @@
 import {
+  ESP32_TERMINALS,
+  UNO_TERMINALS,
   isProgrammable,
   terminalsOf,
   type CircuitComponent,
@@ -6,7 +8,7 @@ import {
   type LogicSheet,
 } from '@banglalab/shared';
 import { netName, sheetTruthTable, type SimulationResult } from '@banglalab/simulation';
-import type { Check, Place, Step } from './schema';
+import type { Check, Lesson, Place, Step } from './schema';
 
 /** What a lesson can see of the student's work at one moment. */
 export interface LessonWorld {
@@ -61,7 +63,7 @@ const ofType = (circuit: CircuitDocument, type: string) =>
   circuit.components.filter((component) => component.type === type);
 
 /** Every endpoint that a place could mean in this circuit. */
-function endpoints(circuit: CircuitDocument, place: Place): string[] {
+export function endpoints(circuit: CircuitDocument, place: Place): string[] {
   if ('board' in place) {
     const board = circuit.components.filter(isProgrammable)[(place.unit ?? 1) - 1];
     return board ? [`${board.id}.${place.board}`] : [];
@@ -204,4 +206,54 @@ export function checkStep(
     return holds;
   });
   return { checks, done: checks.every(Boolean), seen: [...nowSeen].sort((a, b) => a - b) };
+}
+
+/** A check on how the circuit is built, from one of a lesson's steps. */
+export interface WiringCheck {
+  /** The step it comes from, counted from 0. */
+  step: number;
+  check: Extract<Check, { kind: 'part' | 'connected' }>;
+}
+
+/**
+ * What a lesson has asked to be built by this step (D-110): the parts and
+ * connections of this step and every one before it. Run pressed with any of
+ * them unmet, the lab says so before the circuit has a chance to puzzle.
+ */
+export function wiringSoFar(lesson: Lesson, step: number): WiringCheck[] {
+  return lesson.steps
+    .slice(0, step + 1)
+    .flatMap((each, index) =>
+      each.checks.flatMap((check) =>
+        check.kind === 'part' || check.kind === 'connected' ? [{ step: index, check }] : [],
+      ),
+    );
+}
+
+/** The parts and connections asked for so far that this circuit does not have. */
+export function unmetWiring(lesson: Lesson, step: number, circuit: CircuitDocument): WiringCheck[] {
+  const world = { circuit, result: null } as unknown as LessonWorld;
+  return wiringSoFar(lesson, step).filter(({ check }) => !evaluate(check, world));
+}
+
+/**
+ * The places on the board an unmet check is about, to point at: both ends of a
+ * connection, as far as they are in the circuit. A missing part has none.
+ */
+export function placesOf(check: WiringCheck['check'], circuit: CircuitDocument): string[] {
+  if (check.kind !== 'connected') return [];
+  // A board's "gnd" stands for any of its ground sockets, which have names of their own.
+  const sockets = (endpoint: string): string[] => {
+    const [id, pin] = endpoint.split('.');
+    if (pin !== 'gnd') return [endpoint];
+    const board = circuit.components.find((component) => component.id === id);
+    const all: readonly string[] =
+      board?.type === 'esp32' ? ESP32_TERMINALS : board?.type === 'uno' ? UNO_TERMINALS : [];
+    return all.filter((name) => name.startsWith('gnd')).map((name) => `${id}.${name}`);
+  };
+  return [
+    ...new Set(
+      [...endpoints(circuit, check.from), ...endpoints(circuit, check.to)].flatMap(sockets),
+    ),
+  ];
 }

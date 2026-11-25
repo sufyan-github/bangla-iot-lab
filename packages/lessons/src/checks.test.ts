@@ -6,7 +6,16 @@ import {
 } from '@banglalab/shared';
 import { simulate } from '@banglalab/simulation';
 import { describe, expect, it } from 'vitest';
-import { checkStep, evaluate, isEvent, type LessonWorld } from './checks';
+import {
+  checkStep,
+  evaluate,
+  isEvent,
+  placesOf,
+  unmetWiring,
+  wiringSoFar,
+  type LessonWorld,
+} from './checks';
+import { LESSONS } from './index';
 import type { Check } from './schema';
 
 function circuit(components: CircuitComponent[], wires: [string, string][]): CircuitDocument {
@@ -227,5 +236,59 @@ describe('lesson checks about what happened', () => {
     expect(second).toEqual({ checks: [true, true, true], done: true, seen: [1, 2] });
     // Switched off again: what was seen stays seen, but the step is no longer complete.
     expect(checkStep(step, { ...off, running: false }, second.seen).done).toBe(false);
+  });
+});
+
+describe('what a lesson has asked to be built, checked when Run is pressed (D-110)', () => {
+  const lesson = LESSONS.find((each) => each.id === 'led-resistor')!;
+  // The LED lesson's circuit: 3V3 through 220 Ω to the LED's long leg, its short leg to GND.
+  const built = circuit(
+    [
+      { id: 'BB1', type: 'breadboard', props: { size: 'half' } },
+      esp32,
+      resistor(220),
+      led,
+    ] as CircuitComponent[],
+    [
+      ['ESP1.3v3', 'BB1.j20'],
+      ['BB1.j25', 'ESP1.gnd'],
+    ],
+  );
+
+  it('gathers the parts and connections of this step and every one before it', () => {
+    expect(wiringSoFar(lesson, 0)).toEqual([]);
+    const asked = wiringSoFar(lesson, 2);
+    expect(asked.map(({ step, check }) => `${step}:${check.kind}`)).toEqual([
+      '1:part',
+      '1:connected',
+      '1:connected',
+    ]);
+  });
+
+  it('finds nothing missing in a circuit built as asked', () => {
+    expect(unmetWiring(lesson, 2, built)).toEqual([]);
+  });
+
+  it('names what is missing, and where on the board it is', () => {
+    // The wire from the LED's short leg to GND is left out.
+    const missing = { ...built, wires: built.wires.slice(0, 1) };
+    const unmet = unmetWiring(lesson, 2, missing);
+    expect(unmet).toHaveLength(1);
+    expect(unmet[0]!.check).toMatchObject({ kind: 'connected', to: { board: 'gnd' } });
+    // "Any ground" is both of the board's ground sockets.
+    expect(placesOf(unmet[0]!.check, missing)).toEqual(['BB1.g25', 'ESP1.gnd1', 'ESP1.gnd2']);
+
+    // A resistor of the wrong value is a connection not made as asked.
+    const wrong = {
+      ...built,
+      components: built.components.map((c) => (c.id === 'R1' ? resistor(10_000) : c)),
+    };
+    expect(unmetWiring(lesson, 2, wrong).map(({ check }) => check.kind)).toEqual(['connected']);
+
+    // With no LED at all, the part is missing, and there is nothing to point at for it.
+    const none = { ...built, components: built.components.filter((c) => c.id !== 'LED1') };
+    const parts = unmetWiring(lesson, 2, none).filter(({ check }) => check.kind === 'part');
+    expect(parts).toHaveLength(1);
+    expect(placesOf(parts[0]!.check, none)).toEqual([]);
   });
 });
