@@ -121,6 +121,8 @@ export interface SimulationFrame {
   web?: WebCall[];
   /** Present only while probes are set. */
   trace?: SignalTrace;
+  /** True when the circuit changes over time, so pausing and stepping it mean something (D-112). */
+  timeDependent?: boolean;
 }
 
 interface RunningBoard {
@@ -1030,7 +1032,12 @@ export class SimulationSession {
       board.bleNotes = [];
       this.settingsChanged.delete(id);
     }
-    const frame: SimulationFrame = { timeMs: this.time, result, boards };
+    const frame: SimulationFrame = {
+      timeMs: this.time,
+      result,
+      boards,
+      timeDependent: this.isTimeDependent,
+    };
     const messages = this.broker.takeLog();
     if (messages.length > 0) frame.mqtt = messages;
     const calls = this.webServices.takeLog();

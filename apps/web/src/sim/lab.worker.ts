@@ -28,6 +28,8 @@ let costPerMs = 0;
 let simulated = 0;
 let measuredFrom = 0;
 let speed = 1;
+/** Held still by the student (D-112): time stands until they go on or step it. */
+let paused = false;
 
 function tick() {
   if (!session || !report) return;
@@ -94,7 +96,7 @@ function schedule() {
   clearTimeout(timer);
   timer = undefined;
   if (!session || !report) return;
-  if (session.isTimeDependent) {
+  if (session.isTimeDependent && !paused) {
     lastTick = performance.now();
     timer = setTimeout(tick, TICK_MS);
   } else {
@@ -116,6 +118,7 @@ const api = {
     settings: Record<string, string> = {},
   ): Promise<string[]> {
     const started = (session = new SimulationSession(document, pressed));
+    paused = false;
     for (const [boardId, saved] of Object.entries(settings)) session.setSettings(boardId, saved);
     session.setProbes(probes);
     report = onFrame;
@@ -136,6 +139,28 @@ const api = {
     if (!session) return;
     session.update(document, pressed);
     if (!session.isTimeDependent) schedule();
+    // Held still, an edit is still shown at once; time does not move for it.
+    else if (paused) report?.({ ...session.frame(), speed });
+  },
+
+  /** Holds time still, or lets it run again from where it stood (D-112). */
+  pause(on: boolean): void {
+    paused = on;
+    if (!session || !report) return;
+    if (!on) {
+      // Measured afresh, so the time spent paused does not count as running slow.
+      simulated = 0;
+      measuredFrom = performance.now();
+    }
+    schedule();
+    if (on) report({ ...session.frame(), speed });
+  },
+
+  /** While held still: moves time on by this many milliseconds, then holds again. */
+  step(ms: number): void {
+    if (!session || !report || !paused) return;
+    for (let left = ms; left > 0; left -= MAX_STEP_MS) session.advance(Math.min(left, MAX_STEP_MS));
+    report({ ...session.frame(), speed });
   },
 
   /** Uploads new firmware to a board while the circuit keeps running. */
@@ -185,6 +210,7 @@ const api = {
     timer = undefined;
     session = null;
     report = null;
+    paused = false;
   },
 };
 

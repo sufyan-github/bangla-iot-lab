@@ -37,6 +37,7 @@ import { create } from 'zustand';
 import type { BoardProgram, ProjectContent, SketchTab } from '../storage/projects';
 import type { Point } from './geometry';
 import { samePlacing, withPart, withPartAt, type Placing } from './placing';
+import { simulation } from '../sim/client';
 import { signals } from './signals';
 import { starterProgram } from './starters';
 
@@ -117,6 +118,10 @@ interface LabState {
   speed: number;
   /** Simulated time since the circuit was switched on, milliseconds. */
   labTimeMs: number;
+  /** Time held still by the student (D-112). */
+  paused: boolean;
+  /** The running circuit changes over time, so it can be paused and stepped. */
+  timeDependent: boolean;
   /** Counts uploads per board, so a running circuit knows when to restart a program. */
   uploads: Record<string, number>;
   /** Serial output received from each board since the circuit was started. */
@@ -202,6 +207,12 @@ interface LabState {
   setProbes(probes: Probe[]): void;
   setNotice(notice: EditError | null): void;
   setRunning(running: boolean): void;
+  /** Holds time still, or lets it run on (D-112). */
+  setPaused(paused: boolean): void;
+  /** While paused, moves time on by this many milliseconds. */
+  stepTime(ms: number): void;
+  /** Starts the running circuit again from time zero, with its programs. */
+  restart(): void;
   receiveFrame(frame: SimulationFrame): void;
   clearSerial(boardId: string): void;
   /** Erases a board's saved settings, as erasing its flash would. Only while stopped. */
@@ -222,6 +233,8 @@ const STOPPED = {
   pressed: [] as string[],
   speed: 1,
   labTimeMs: 0,
+  paused: false,
+  timeDependent: false,
 };
 
 /** Where the style for new wires is remembered on the device. */
@@ -554,7 +567,21 @@ export const useLab = create<LabState>((set, get) => {
     setNotice: (notice) => set({ notice }),
     setRunning(running) {
       if (running) signals.reset(get().probes);
-      set(running ? { running } : STOPPED);
+      set(running ? { running, paused: false } : STOPPED);
+    },
+    setPaused(paused) {
+      if (!get().running) return;
+      set({ paused });
+      void simulation().pause(paused);
+    },
+    stepTime(ms) {
+      if (get().running && get().paused) void simulation().step(ms);
+    },
+    restart() {
+      if (!get().running) return;
+      // Stopped and started again: the circuit, its programs and its probes as they are now.
+      get().setRunning(false);
+      queueMicrotask(() => get().setRunning(true));
     },
 
     receiveFrame(frame) {
@@ -616,6 +643,7 @@ export const useLab = create<LabState>((set, get) => {
         settings,
         speed: frame.speed ?? 1,
         labTimeMs: frame.timeMs,
+        timeDependent: frame.timeDependent ?? false,
       });
     },
     clearSerial: (boardId) => set({ serial: { ...get().serial, [boardId]: '' } }),

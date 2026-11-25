@@ -19,6 +19,7 @@ import { WebPanel } from './WebPanel';
 import { checkStep } from '@banglalab/lessons';
 import { LessonPanel } from '../lessons/LessonPanel';
 import { RunCheckCard, useRunCheckWatch } from '../lessons/RunCheck';
+import { TimeControls } from './TimeControls';
 import { useLessonState } from '../lessons/progress';
 import { setBuzzing } from './sound';
 import { matchingStarter } from './starters';
@@ -840,6 +841,10 @@ export function LabPage() {
             ) : (
               <>
                 <Notice />
+                {/* Pause, step and start again, for a circuit that changes over time (D-112). */}
+                <div className="pointer-events-none absolute top-3 left-3 z-20">
+                  <TimeControls />
+                </div>
                 {/* Run pressed in a lesson with something it asked for missing (D-110). */}
                 <div className="pointer-events-none absolute top-3 right-3 z-20 flex justify-end max-sm:left-2">
                   <RunCheckCard />
