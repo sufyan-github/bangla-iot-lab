@@ -115,7 +115,7 @@
       "checks": [
         {
           "kind": "part",
-          "type": "motor"
+          "type": "ttmotor"
         },
         {
           "kind": "connected",
@@ -134,14 +134,14 @@
             "pin": "no"
           },
           "to": {
-            "part": "motor",
+            "part": "ttmotor",
             "pin": "*"
           }
         },
         {
           "kind": "connected",
           "from": {
-            "part": "motor",
+            "part": "ttmotor",
             "pin": "*"
           },
           "to": {
@@ -178,7 +178,7 @@
         },
         {
           "kind": "reading",
-          "part": "motor",
+          "part": "ttmotor",
           "path": "activity",
           "equals": 0
         },
@@ -201,7 +201,7 @@
         },
         {
           "kind": "reading",
-          "part": "motor",
+          "part": "ttmotor",
           "path": "activity",
           "above": 0.5
         },

@@ -547,6 +547,8 @@ export const bn = {
   'tool.soil': 'মাটির সেন্সর',
   'tool.soilmodule': 'মাটির সেন্সর',
   'tool.ir': 'IR সেন্সর',
+  'tool.irmodule': 'IR সেন্সর',
+  'tool.ttmotor': 'গিয়ার মোটর',
   'hint.place': 'বসাতে বোর্ডের একটা ছিদ্রে ট্যাপ করো।',
   'hint.running': 'সার্কিট চালু অবস্থায় সুইচ বা সেন্সরে ট্যাপ করে বদলানো যায়, আর বোতাম চেপে ধরা যায়।',
   'tool.relay': 'রিলে',
@@ -593,7 +595,17 @@ export const bn = {
   'part.dht11': 'DHT11 তাপমাত্রা ও আর্দ্রতা সেন্সর',
   'part.soil': 'মাটির সেন্সর (পুরোনো, তিন পায়ের)',
   'part.soilmodule': 'YL-69 মাটির আর্দ্রতা সেন্সর',
-  'part.ir': 'IR বাধা সেন্সর',
+  'part.ir': 'IR সেন্সর (পুরোনো, তিন পায়ের)',
+  'part.irmodule': 'IR বাধা সেন্সর',
+  'part.ttmotor': 'TT গিয়ার মোটর',
+  'part.irmodule.about':
+    'একটা IR LED আলো ফেলে, পাশের রিসিভার ফিরে আসা আলো দেখে। সামনে কিছু থাকলে OUT LOW হয় আর সবুজ বাতি জ্বলে; পথ পরিষ্কার থাকলে OUT HIGH। ট্রিমার ঘুরিয়ে ২ থেকে ৩০ সেমি পর্যন্ত দূরত্ব ঠিক করা যায়; গাঢ় রঙের জিনিস আরও কাছে এলে তবে দেখে। পিন: OUT, GND, VCC (3.3 V বা 5 V)। digitalRead দিয়ে পড়ো।',
+  'part.ttmotor.about':
+    'রোবট গাড়ির হলুদ মোটর: একটা ছোট ডিসি মোটর, পেছনে ১:৪৮ গিয়ারবক্স, যাতে চাকা ধীরে কিন্তু জোরে ঘোরে। 3 V থেকে 6 V-এ চলে; 6 V-এ প্রায় 250 RPM, খালি ঘুরলে প্রায় 155 mA নেয়। বোর্ডের পিন এত কারেন্ট দিতে পারে না, তাই মোটর ড্রাইভার বা রিলে দিয়ে চালাতে হয়।',
+  'inspector.irRange': 'কতদূর দেখবে (ট্রিমার)',
+  'inspector.surface': 'বাধার রং',
+  'inspector.surface.light': 'হালকা',
+  'inspector.surface.dark': 'গাঢ়',
   'part.switch.about':
     'সুইচ চালু থাকলে এর দুই পা জুড়ে থাকে, বন্ধ থাকলে আলাদা থাকে। বোতামের মতো ছেড়ে দিলে ফিরে আসে না, যেভাবে রাখবে সেভাবেই থাকে।',
   'part.diode.about':
@@ -620,7 +632,7 @@ export const bn = {
   'part.soilmodule.about':
     'কাঁটাটা মাটিতে থাকে, আর বোর্ডে চারটা পিন: VCC, GND, DO, AO। মাটি যত ভেজা, AO-র ভোল্টেজ তত কম: শুকনো অবস্থায় সাপ্লাইয়ের প্রায় ৯০%, পুরো ভেজা অবস্থায় ৩০%। ট্রিমারে যতটা ঠিক করা, মাটি তার চেয়ে ভেজা হলে DO LOW হয় আর বাতি জ্বলে। analogRead দিয়ে AO পড়ো।',
   'part.ir.about':
-    'এই সেন্সরের আউটপুট সাধারণত HIGH থাকে, সামনে কিছু এলে LOW হয়ে যায়। পা: 5 V, আউটপুট, GND। digitalRead দিয়ে পড়ো।',
+    'আগের তিন পায়ের সেন্সর, যা কিটের বোর্ডের বদলে বসানো হতো। পুরোনো সার্কিটে আগের মতোই কাজ করে; নতুন সার্কিটে IR বাধা সেন্সর নাও। আউটপুট সাধারণত HIGH, সামনে কিছু এলে LOW। পা: 5 V, আউটপুট, GND।',
   'tool.ldrmodule': 'LDR মডিউল',
   'tool.rain': 'বৃষ্টি সেন্সর',
   'tool.mq135': 'গ্যাস সেন্সর',
@@ -1903,6 +1915,8 @@ export const en: Record<MessageKey, string> = {
   'tool.soil': 'Soil sensor',
   'tool.soilmodule': 'Soil sensor',
   'tool.ir': 'IR sensor',
+  'tool.irmodule': 'IR sensor',
+  'tool.ttmotor': 'Gear motor',
   'hint.place': 'Tap a hole on the board to place it.',
   'hint.running':
     'While the circuit runs, tap a switch or sensor to change it, or hold a button down.',
@@ -1953,7 +1967,17 @@ export const en: Record<MessageKey, string> = {
   'part.dht11': 'DHT11 temperature and humidity sensor',
   'part.soil': 'Soil sensor (older, three legs)',
   'part.soilmodule': 'YL-69 soil moisture sensor',
-  'part.ir': 'IR obstacle sensor',
+  'part.ir': 'IR sensor (older, three legs)',
+  'part.irmodule': 'IR obstacle sensor',
+  'part.ttmotor': 'TT gear motor',
+  'part.irmodule.about':
+    'An IR LED shines out and the receiver beside it sees the light that comes back. With something in front, OUT goes LOW and the green light comes on; with the way clear, OUT is HIGH. The trimmer sets how far it sees, from 2 to 30 cm; a dark object must come nearer. Pins: OUT, GND, VCC (3.3 V or 5 V). Read it with digitalRead.',
+  'part.ttmotor.about':
+    'The yellow motor of robot cars: a small DC motor behind a 1:48 gearbox, so the wheel turns slowly but strongly. It runs on 3 V to 6 V; at 6 V it turns at about 250 RPM and takes about 155 mA running free. That is more than a board pin can give, so drive it through a motor driver or a relay.',
+  'inspector.irRange': 'How far it sees (trimmer)',
+  'inspector.surface': 'The obstacle’s colour',
+  'inspector.surface.light': 'Light',
+  'inspector.surface.dark': 'Dark',
   'part.switch.about':
     'A switch joins its two legs when it is on and separates them when it is off. Unlike a push button, it stays where you leave it.',
   'part.diode.about':
@@ -1980,7 +2004,7 @@ export const en: Record<MessageKey, string> = {
   'part.soilmodule.about':
     'The fork goes in the soil; the board has four pins: VCC, GND, DO and AO. AO falls as the soil gets wetter: about 90% of the supply when dry, 30% when soaked. Once the soil is wetter than the trimmer is set for, DO goes LOW and its light comes on. Read AO with analogRead.',
   'part.ir.about':
-    'This sensor’s output is HIGH normally and goes LOW when something is in front of it. Legs: 5 V, output, GND. Read it with digitalRead.',
+    'The older three-leg sensor that stood in for the kit’s board. It works as before in older circuits; for a new one, take the IR obstacle sensor. Its output is HIGH normally and LOW when something is in front of it. Legs: 5 V, output, GND.',
   'tool.ldrmodule': 'LDR module',
   'tool.rain': 'Rain sensor',
   'tool.mq135': 'Gas sensor',

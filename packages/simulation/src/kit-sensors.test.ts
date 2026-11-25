@@ -229,6 +229,46 @@ describe('YL-69 soil sensor on its four-pin board', () => {
   });
 });
 
+describe('IR obstacle sensor on its three-pin board', () => {
+  const wired = (
+    props: Partial<{ obstacle: boolean; distance: number; range: number; dark: boolean }>,
+  ) =>
+    circuit(
+      [
+        esp32,
+        {
+          id: 'IR1',
+          type: 'irmodule',
+          pins: { out: 'BB1.c10', gnd: 'BB1.c11', vcc: 'BB1.c12' },
+          props: { obstacle: false, distance: 5, range: 15, dark: false, ...props },
+        },
+      ],
+      [
+        ['ESP1.gnd1', 'BB1.a11'],
+        ['ESP1.3v3', 'BB1.a12'],
+      ],
+    );
+  const read = (props: Parameters<typeof wired>[0]) => simulate(wired(props)).readings.IR1!;
+
+  it('OUT is HIGH while the way is clear and LOW while something is within its range', () => {
+    expect(read({}).voltage).toBeGreaterThan(3.2);
+    expect(read({}).activity).toBe(0);
+    expect(read({ obstacle: true }).voltage).toBeLessThan(0.1);
+    expect(read({ obstacle: true }).activity).toBe(1);
+  });
+
+  it('the trimmer sets how far it sees, and a dark surface must come nearer', () => {
+    expect(read({ obstacle: true, distance: 20, range: 15 }).activity).toBe(0);
+    expect(read({ obstacle: true, distance: 20, range: 25 }).activity).toBe(1);
+    expect(read({ obstacle: true, distance: 10, range: 15, dark: true }).activity).toBe(0);
+    expect(read({ obstacle: true, distance: 5, range: 15, dark: true }).activity).toBe(1);
+  });
+
+  it('draws about 13 mA on 3.3 V (20 mA reported on 5 V)', () => {
+    expect(read({}).current).toBeCloseTo(3.3 / 250, 3);
+  });
+});
+
 describe('MQ-135 gas sensor module', () => {
   const module = (gas: number): CircuitComponent => ({
     id: 'MQ1',

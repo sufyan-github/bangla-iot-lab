@@ -646,19 +646,24 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
   'ir-obstacle': {
     components: [
       esp32,
-      part('IR1', 'ir', { vcc: 'BB1.c10', out: 'BB1.c11', gnd: 'BB1.c12' }, { detected: false }),
+      part(
+        'IR1',
+        'irmodule',
+        { out: 'BB1.c10', gnd: 'BB1.c11', vcc: 'BB1.c12' },
+        { obstacle: false, distance: 5, range: 15, dark: false },
+      ),
       ...lamp,
     ],
     wires: [
-      ['ESP1.3v3', 'BB1.a10'],
-      ['ESP1.d27', 'BB1.a11'],
-      ['ESP1.gnd1', 'BB1.a12'],
+      ['ESP1.d27', 'BB1.a10'],
+      ['ESP1.gnd1', 'BB1.a11'],
+      ['ESP1.3v3', 'BB1.a12'],
       ...lampWires,
     ],
     actions: {
       3: [
-        { set: 'IR1', props: { detected: true }, afterMs: 200 },
-        { set: 'IR1', props: { detected: false }, afterMs: 300 },
+        { set: 'IR1', props: { obstacle: true }, afterMs: 200 },
+        { set: 'IR1', props: { obstacle: false }, afterMs: 300 },
       ],
     },
   },
@@ -705,7 +710,7 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       esp32,
       { id: 'BAT1', type: 'battery', props: { voltage: 7.2 } },
       { id: 'DRV1', type: 'l298n', props: { enaJumper: false, enbJumper: true } },
-      part('M1', 'motor', { a: 'BB1.c10', b: 'BB1.c13' }),
+      part('M1', 'ttmotor', { a: 'BB1.c10', b: 'BB1.c13' }),
     ],
     wires: [
       ['BAT1.pos', 'DRV1.vs'],
@@ -784,7 +789,7 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
         },
         { trigger: 'high' },
       ),
-      part('M1', 'motor', { a: 'BB1.c20', b: 'BB1.c23' }),
+      part('M1', 'ttmotor', { a: 'BB1.c20', b: 'BB1.c23' }),
     ],
     wires: [
       ['ESP1.3v3', 'BB1.a1'],
@@ -1035,7 +1040,12 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
   'smart-parking': {
     components: [
       esp32,
-      part('IR1', 'ir', { vcc: 'BB1.c1', out: 'BB1.c2', gnd: 'BB1.c3' }, { detected: false }),
+      part(
+        'IR1',
+        'irmodule',
+        { out: 'BB1.c1', gnd: 'BB1.c2', vcc: 'BB1.c3' },
+        { obstacle: false, distance: 5, range: 15, dark: false },
+      ),
       part(
         'US1',
         'ultrasonic',
@@ -1048,9 +1058,9 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       part('OLED1', 'oled', { gnd: 'BB1.c24', vcc: 'BB1.c25', scl: 'BB1.c26', sda: 'BB1.c27' }),
     ],
     wires: [
-      ['ESP1.3v3', 'BB1.a1'],
-      ['ESP1.d27', 'BB1.a2'],
-      ['ESP1.gnd1', 'BB1.a3'],
+      ['ESP1.d27', 'BB1.a1'],
+      ['ESP1.gnd1', 'BB1.a2'],
+      ['ESP1.3v3', 'BB1.a3'],
       ['ESP1.vin', 'BB1.a6'],
       ['ESP1.d5', 'BB1.a7'],
       ['ESP1.gnd1', 'BB1.a9'],
@@ -1066,14 +1076,14 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     ],
     actions: {
       4: [
-        { set: 'IR1', props: { detected: true }, afterMs: 300 },
-        { set: 'IR1', props: { detected: false }, afterMs: 400 },
+        { set: 'IR1', props: { obstacle: true }, afterMs: 300 },
+        { set: 'IR1', props: { obstacle: false }, afterMs: 400 },
       ],
       // The gate is still open from the first car for three seconds: the next one waits.
       5: [
         { set: 'US1', props: { distance: 10 } },
-        { set: 'IR1', props: { detected: true }, afterMs: 3500 },
-        { set: 'IR1', props: { detected: false }, afterMs: 500 },
+        { set: 'IR1', props: { obstacle: true }, afterMs: 3500 },
+        { set: 'IR1', props: { obstacle: false }, afterMs: 500 },
       ],
     },
   },
@@ -1082,8 +1092,8 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
       esp32,
       { id: 'BAT1', type: 'battery', props: { voltage: 7.2 } },
       { id: 'DRV1', type: 'l298n', props: { enaJumper: true, enbJumper: true } },
-      part('M1', 'motor', { a: 'BB1.c1', b: 'BB1.c4' }),
-      part('M2', 'motor', { a: 'BB1.c7', b: 'BB1.c10' }),
+      part('M1', 'ttmotor', { a: 'BB1.c1', b: 'BB1.c4' }),
+      part('M2', 'ttmotor', { a: 'BB1.c7', b: 'BB1.c10' }),
       part(
         'US1',
         'ultrasonic',

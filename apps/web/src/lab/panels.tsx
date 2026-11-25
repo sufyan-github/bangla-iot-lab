@@ -589,6 +589,62 @@ function PartSettings({ part }: { part: CircuitComponent }) {
       </div>
     );
   }
+  if (part.type === 'irmodule') {
+    // Whether something is in front, how far, and its colour; and the trimmer.
+    const sliders = [
+      { key: 'distance', label: 'inspector.distance', min: 0, max: 50 },
+      { key: 'range', label: 'inspector.irRange', min: 2, max: 30 },
+    ] as const;
+    return (
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-1.5" data-testid="toggle">
+          {[false, true].map((option) => (
+            <Choice
+              key={String(option)}
+              selected={part.props.obstacle === option}
+              onClick={() => setProps(part.id, { obstacle: option })}
+            >
+              {t(option ? 'inspector.obstacle' : 'inspector.clear')}
+            </Choice>
+          ))}
+        </div>
+        {sliders.map((slider) => (
+          <label key={slider.key} className="block">
+            <span className="mb-1.5 flex justify-between text-sm text-ink-soft">
+              {t(slider.label)}
+              <span className="font-medium text-ink tabular-nums">
+                {number(part.props[slider.key])} cm
+              </span>
+            </span>
+            <input
+              type="range"
+              data-testid={`slider-${slider.key}`}
+              min={slider.min}
+              max={slider.max}
+              step={1}
+              value={part.props[slider.key]}
+              onChange={(event) => setProps(part.id, { [slider.key]: Number(event.target.value) })}
+              className="h-11 w-full accent-amber"
+            />
+          </label>
+        ))}
+        <fieldset>
+          <legend className="mb-1.5 text-sm text-ink-soft">{t('inspector.surface')}</legend>
+          <div className="flex flex-wrap gap-1.5" data-testid="ir-surface">
+            {[false, true].map((dark) => (
+              <Choice
+                key={String(dark)}
+                selected={part.props.dark === dark}
+                onClick={() => setProps(part.id, { dark })}
+              >
+                {t(dark ? 'inspector.surface.dark' : 'inspector.surface.light')}
+              </Choice>
+            ))}
+          </div>
+        </fieldset>
+      </div>
+    );
+  }
   if (part.type === 'oled') return <OledPreview id={part.id} />;
   if (part.type === 'tft') return <TftPreview id={part.id} />;
   if (part.type === 'lora') {

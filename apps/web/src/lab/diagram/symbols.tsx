@@ -118,6 +118,7 @@ function twoLegSymbol(type: CircuitComponent['type'], state: SymbolState): React
         </>
       );
     case 'motor':
+    case 'ttmotor':
       return (
         <>
           <path d={`M0 0H23M57 0H${W}`} />

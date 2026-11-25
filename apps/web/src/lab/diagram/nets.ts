@@ -106,6 +106,7 @@ export const BOX_TYPES = new Set([
   'dht11',
   'soil',
   'ir',
+  'irmodule',
   'ldrmodule',
   'rain',
   'soilmodule',

@@ -63,6 +63,7 @@ import {
   REGULATOR_OWN_AMPS,
   VOLTAGE_SENSOR_MAX,
   MODULE_COMPARATOR_MIN_SUPPLY,
+  irModuleSees,
   MOTOR_RATED_VOLTAGE,
   MOTOR_START_VOLTAGE,
   RELAY_DROP_OUT_CURRENT,
@@ -996,6 +997,7 @@ export function readSolution(
         break;
       }
       case 'temperature':
+      case 'irmodule':
       case 'soil':
       case 'ir':
         // What matters for a sensor is its output signal; the current is what it draws.
@@ -1347,7 +1349,12 @@ export class Observation {
         reading.activity = reading.voltage >= SIREN_ON_VOLTAGE ? 1 : 0;
       } else if (component.type === 'buzzer' || component.type === 'buzzermodule') {
         reading.activity = reading.voltage >= BUZZER_ON_VOLTAGE ? 1 : 0;
-      } else if (component.type === 'motor') {
+      } else if (component.type === 'irmodule') {
+        // Its green light: on while it sees something, and has power for its comparator.
+        const supply = average((s) => s.parts[id]!.supply ?? 0);
+        reading.activity =
+          irModuleSees(component) && supply >= MODULE_COMPARATOR_MIN_SUPPLY ? 1 : 0;
+      } else if (component.type === 'motor' || component.type === 'ttmotor') {
         const turning = Math.abs(reading.voltage) >= MOTOR_START_VOLTAGE;
         reading.activity = turning
           ? Math.max(-1, Math.min(1, reading.voltage / MOTOR_RATED_VOLTAGE))

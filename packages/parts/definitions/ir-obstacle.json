@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "ir-obstacle",
-  "simulates": "ir",
-  "status": "generic",
-  "statusNote": "A generic on/off sensor stands in. Range and the trimmer are not modelled.",
+  "simulates": "irmodule",
+  "status": "simulated",
   "family": "sensor",
   "tier": 1,
   "name": {
@@ -11,23 +10,25 @@
     "en": "IR obstacle sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Its output changes when something is in front of it."
+    "bn": "সামনে কিছু এলে OUT LOW হয়; ট্রিমার ঠিক করে কতদূর পর্যন্ত দেখবে।",
+    "en": "OUT goes LOW while something is in front of it; the trimmer sets how far it sees."
   },
   "model": {
     "level": "electrical",
-    "simplified": ["On or off as set by hand; no distance or surface colour."]
+    "simplified": [
+      "It sees whatever is within the trimmer's range, from 2 cm to 30 cm (REPORTED, against a white wall). A real one sees by how much light comes back, which also depends on the surface's shine and angle.",
+      "A dark surface is seen only within half the range. That half is an estimate: sources say only that darker surfaces are seen nearer.",
+      "Sunlight and bright lamps, which can confuse a real one, are not modelled.",
+      "Its comparator switches cleanly. A real one can flicker near the edge of its range.",
+      "What it draws, about 20 mA from 5 V (REPORTED), is one resistance, so it draws less on 3.3 V.",
+      "The pins are in the order OUT, GND, VCC, as on the common FC-51 board. Some boards put them the other way: go by what is printed on yours."
+    ]
   },
   "validation": {
     "state": "not-checked",
     "tests": ["C16"]
   },
   "pins": [
-    {
-      "id": "vcc",
-      "label": "VCC",
-      "role": "power"
-    },
     {
       "id": "out",
       "label": "OUT",
@@ -37,6 +38,11 @@
       "id": "gnd",
       "label": "GND",
       "role": "ground"
+    },
+    {
+      "id": "vcc",
+      "label": "VCC",
+      "role": "power"
     }
   ],
   "placement": {
@@ -44,7 +50,10 @@
     "offsets": [0, 1, 2]
   },
   "defaults": {
-    "detected": false
+    "obstacle": false,
+    "distance": 5,
+    "range": 15,
+    "dark": false
   },
   "variants": [],
   "catalog": {

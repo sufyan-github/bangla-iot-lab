@@ -422,9 +422,10 @@ describe('part shapes and part definitions', () => {
           // A stand-in definition describes the generic part it borrows, not its own legs.
           (definition.status === 'generic' && definition.model.level !== 'none')),
     );
-    // Several chips share one part type and one shape. The three-leg soil sensor has
-    // no definition of its own: it stays only so that older circuits open (D-114).
-    const retired = new Set(['soil']);
+    // Several chips share one part type and one shape. The three-leg soil and IR
+    // sensors have no definitions of their own: they stay only so that older
+    // circuits open (D-114, D-115).
+    const retired = new Set(['soil', 'ir']);
     expect(new Set(modelled.map((definition) => definition.simulates)).size).toBe(
       Object.keys(PART_SHAPES).filter((type) => !retired.has(type)).length,
     );

@@ -256,6 +256,34 @@ describe('active buzzer module (three pins)', () => {
   });
 });
 
+describe('TT gear motor', () => {
+  const run = (voltage: number, reversed = false) =>
+    simulate(
+      circuit(
+        [
+          battery(voltage),
+          { id: 'M1', type: 'ttmotor', pins: { a: 'BB1.a1', b: 'BB1.a4' }, props: {} },
+        ],
+        [
+          [reversed ? 'BAT1.neg' : 'BAT1.pos', 'BB1.b1'],
+          ['BB1.b4', reversed ? 'BAT1.pos' : 'BAT1.neg'],
+        ],
+      ),
+    ).readings.M1!;
+
+  it('turns at about 42 RPM a volt, the measured 120 to 250 RPM from 3 V to 6 V', () => {
+    const rpm = (voltage: number) => run(voltage).activity! * 250;
+    expect(rpm(6)).toBeCloseTo(250, -1);
+    expect(Math.abs(rpm(3) - 120)).toBeLessThan(10);
+    expect(Math.abs(rpm(4.5) - 185)).toBeLessThan(10);
+    expect(run(6, true).activity).toBeLessThan(0);
+  });
+
+  it('draws the measured 155 mA at 4.5 V', () => {
+    expect(run(4.5).current).toBeCloseTo(0.155, 2);
+  });
+});
+
 describe('motor and transistor', () => {
   it('a motor straight on a pin overloads the pin and barely turns', () => {
     const session = new SimulationSession(

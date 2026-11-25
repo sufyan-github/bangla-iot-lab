@@ -90,8 +90,8 @@ describe('recognising parts in a parts list', () => {
       'Unobtainium sensor',
     ]);
     expect(report.counts).toEqual({
-      simulated: 4,
-      generic: 1,
+      simulated: 5,
+      generic: 0,
       planned: 0,
       'not-simulated': 1,
       undefined: 1,

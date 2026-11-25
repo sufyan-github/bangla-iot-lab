@@ -111,6 +111,21 @@ export const MOTOR_RESISTANCE = 25;
 export const MOTOR_RATED_VOLTAGE = 6;
 export const MOTOR_START_VOLTAGE = 0.6;
 
+/**
+ * TT gear motor, the yellow 1:48 gearbox motor of robot kits (D-115). REPORTED,
+ * from one maker's measurements of one motor (Adafruit, product 3777), which
+ * says motors vary: 120, 185 and 250 RPM at the shaft running free on 3, 4.5
+ * and 6 V, drawing 150, 155 and 160 mA; 1.1 A to 1.5 A when held still. Its
+ * rated supply is 3 V to 6 V.
+ */
+export const TT_MOTOR_RPM_AT_6V = 250;
+/**
+ * ESTIMATE: one resistance for its running current, matching the 155 mA
+ * measured at 4.5 V. It takes about 105 mA at 3 V and 210 mA at 6 V where the
+ * measured motor took 150 mA and 160 mA, and nothing more when held still.
+ */
+export const TT_MOTOR_RESISTANCE = 29;
+
 /** Total resistance of a three-pin sensor module from supply to ground. */
 export const SENSOR_RESISTANCE = 10_000;
 
@@ -128,6 +143,39 @@ export function sensorOutputFraction(
     case 'ir':
       return sensor.props.detected ? 0.01 : 0.999; // output is pulled LOW by an obstacle
   }
+}
+
+/**
+ * IR obstacle sensor board (D-115): an infrared LED lit all the time, a
+ * receiver beside it, and an LM393 comparator that pulls OUT LOW while enough
+ * light comes back.
+ *
+ * REPORTED by sellers' and makers' pages (D-115): a supply of 3.3 V to 5 V;
+ * it sees from 2 cm to 30 cm, as set by the trimmer, against a white wall;
+ * OUT is HIGH while the way is clear and LOW while something is there, held
+ * HIGH by a 10 kΩ resistor on the board; a power light, and a green light
+ * while it sees something; about 20 mA. Darker surfaces are seen only nearer,
+ * by how much no source says. Sources: notes on the FC-51 board at
+ * leap-tardate-com.netlify.app (the pull-up, the lights, the trimmer's
+ * direction), SunFounder's component pages (range, LOW on detection, colour),
+ * and circuits-diy.com (the supply current). Components101 describes a
+ * different board, whose OUT goes HIGH.
+ */
+/** About 20 mA from 5 V (REPORTED), as one load. ESTIMATE that it scales with the supply. */
+export const IR_MODULE_SUPPLY_RESISTANCE = 250;
+/** The trimmer's reach: from 2 cm to 30 cm against a white surface. REPORTED. */
+export const IR_MODULE_RANGE = { min: 2, max: 30 } as const;
+/** OUT is held HIGH by a resistor on the board; the comparator can only pull it LOW. REPORTED by one source. */
+export const IR_MODULE_OUT_PULLUP = 10_000;
+/** The comparator's output while it pulls OUT LOW. ESTIMATE. */
+export const IR_MODULE_OUT_LOW_RESISTANCE = 100;
+/** How much nearer a dark surface must be to be seen. ESTIMATE: sources say only "shorter". */
+export const IR_MODULE_DARK_FACTOR = 0.5;
+
+/** True while the board sees what is in front of it: near enough for the trimmer, allowing for colour. */
+export function irModuleSees(sensor: Extract<CircuitComponent, { type: 'irmodule' }>): boolean {
+  const { obstacle, distance, range, dark } = sensor.props;
+  return obstacle && distance <= range * (dark ? IR_MODULE_DARK_FACTOR : 1);
 }
 
 /**

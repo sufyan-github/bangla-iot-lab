@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "tt-gear-motor",
-  "simulates": "motor",
-  "status": "generic",
-  "statusNote": "The generic DC motor stands in: a 25 Ω resistance, about 220 mA from the motor driver on a 7.2 V pack. A real TT motor is reported to take about 150 mA running free and much more when held still; gear ratio, speed and load are not modelled.",
+  "simulates": "ttmotor",
+  "status": "simulated",
   "family": "actuator",
   "tier": 1,
   "name": {
@@ -11,12 +10,17 @@
     "en": "TT DC gear motor"
   },
   "summary": {
-    "bn": "",
-    "en": "A small geared motor for robot wheels."
+    "bn": "রোবটের চাকার জন্য গিয়ারবক্সওয়ালা ছোট মোটর: 3 V থেকে 6 V, 6 V-এ প্রায় 250 RPM।",
+    "en": "A small geared motor for robot wheels: 3 V to 6 V, about 250 RPM at 6 V."
   },
   "model": {
     "level": "electrical",
-    "simplified": []
+    "simplified": [
+      "Its speed is in proportion to its voltage, about 42 RPM a volt at the shaft, from one maker's measurements of one motor (REPORTED); motors vary.",
+      "It is one resistance, set so that it draws the 155 mA measured at 4.5 V. A real one draws about 150 to 160 mA running free at any voltage from 3 V to 6 V, so the lab is about a third low at 3 V and a third high at 6 V.",
+      "Nothing holds it back: it always runs free. Held still, a real one draws 1.1 A to 1.5 A, which is not modelled.",
+      "It reaches its speed at once; a real one takes a moment."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -37,5 +41,10 @@
   "variants": [],
   "catalog": {
     "keywords": ["tt dc gear motor", "gear motor"]
+  },
+  "placement": {
+    "idPrefix": "M",
+    "offsets": [0, 3],
+    "maxSpan": 6
   }
 }

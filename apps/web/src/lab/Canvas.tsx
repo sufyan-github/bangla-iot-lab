@@ -98,6 +98,7 @@ const BODY_HEIGHT: Partial<Record<string, number>> = {
   dht11: 24,
   soil: 24,
   ir: 24,
+  irmodule: 58,
   ldrmodule: 46,
   rain: 46,
   soilmodule: 46,
@@ -912,7 +913,13 @@ export function Canvas() {
                   // a button is held, a switch flips, an IR sensor gets or loses its obstacle, and
                   // something starts or stops moving in front of a motion sensor.
                   const { type, id } = component;
-                  if (type !== 'button' && type !== 'switch' && type !== 'ir' && type !== 'pir')
+                  if (
+                    type !== 'button' &&
+                    type !== 'switch' &&
+                    type !== 'ir' &&
+                    type !== 'irmodule' &&
+                    type !== 'pir'
+                  )
                     return null;
                   const leads = Object.values(component.pins).map((hole) =>
                     holePoint(circuit, hole),
@@ -921,7 +928,7 @@ export function Canvas() {
                     x: (leads[0]!.x + leads.at(-1)!.x) / 2,
                     y:
                       (leads[0]!.y + leads.at(-1)!.y) / 2 -
-                      (type === 'ir' ? 14 : type === 'pir' ? 30 : 0),
+                      (type === 'ir' ? 14 : type === 'pir' || type === 'irmodule' ? 30 : 0),
                   };
                   const release = () => type === 'button' && setPressed(id, false);
                   return (
@@ -931,7 +938,7 @@ export function Canvas() {
                       data-press={id}
                       cx={centre.x}
                       cy={centre.y}
-                      r={type === 'ir' || type === 'pir' ? 22 : 16}
+                      r={type === 'ir' || type === 'pir' || type === 'irmodule' ? 22 : 16}
                       fill="transparent"
                       style={{ cursor: 'pointer' }}
                       onPointerDown={(event) => {
@@ -944,6 +951,8 @@ export function Canvas() {
                           setProps(id, { closed: !component.props.closed });
                         } else if (type === 'pir') {
                           setProps(id, { motion: !component.props.motion });
+                        } else if (type === 'irmodule') {
+                          setProps(id, { obstacle: !component.props.obstacle });
                         } else {
                           setProps(id, { detected: !component.props.detected });
                         }

@@ -24,12 +24,12 @@
       "checks": [
         {
           "kind": "part",
-          "type": "ir"
+          "type": "irmodule"
         },
         {
           "kind": "connected",
           "from": {
-            "part": "ir",
+            "part": "irmodule",
             "pin": "vcc"
           },
           "to": {
@@ -39,7 +39,7 @@
         {
           "kind": "connected",
           "from": {
-            "part": "ir",
+            "part": "irmodule",
             "pin": "out"
           },
           "to": {
@@ -49,7 +49,7 @@
         {
           "kind": "connected",
           "from": {
-            "part": "ir",
+            "part": "irmodule",
             "pin": "gnd"
           },
           "to": {

@@ -17,18 +17,18 @@
   "steps": [
     {
       "text": {
-        "bn": "এই সেন্সর অদৃশ্য ইনফ্রারেড আলো ছোড়ে, আর কিছুতে লেগে ফিরে এলে তার **OUT** পিন LOW করে দেয়। ল্যাবে এটা হাতে চালু-বন্ধ করা যায় এমন সাধারণ সেন্সর: দূরত্ব বা রং মাপে না।\n\nসেন্সরটা বসাও। **VCC** যাবে 3V3-তে, **OUT** যাবে **D27**-এ, **GND** যাবে GND-তে।",
-        "en": "This sensor sends out invisible infrared light, and when it bounces back off something its **OUT** pin goes LOW. In the lab it is a generic sensor you switch by hand: it does not measure distance or colour.\n\nPlace the sensor. **VCC** goes to 3V3, **OUT** to **D27**, **GND** to GND."
+        "bn": "এই সেন্সর অদৃশ্য ইনফ্রারেড আলো ছোড়ে, আর কিছুতে লেগে ফিরে এলে তার **OUT** পিন LOW করে দেয়। এর ট্রিমার ঠিক করে কতদূর পর্যন্ত দেখবে, ২ থেকে ৩০ সেমি। ল্যাবে ট্যাপ করলে সামনে কিছু আসে, আর সেটা কত দূরে এবং হালকা না গাঢ় রঙের, তাও ঠিক করা যায়।\n\nসেন্সরটা বসাও। **VCC** যাবে 3V3-তে, **OUT** যাবে **D27**-এ, **GND** যাবে GND-তে।",
+        "en": "This sensor sends out invisible infrared light, and when it bounces back off something its **OUT** pin goes LOW. Its trimmer sets how far it sees, from 2 to 30 cm. In the lab you tap it to put something in front, and can set how far away that is and whether it is light or dark.\n\nPlace the sensor. **VCC** goes to 3V3, **OUT** to **D27**, **GND** to GND."
       },
       "checks": [
         {
           "kind": "part",
-          "type": "ir"
+          "type": "irmodule"
         },
         {
           "kind": "connected",
           "from": {
-            "part": "ir",
+            "part": "irmodule",
             "pin": "vcc"
           },
           "to": {
@@ -38,7 +38,7 @@
         {
           "kind": "connected",
           "from": {
-            "part": "ir",
+            "part": "irmodule",
             "pin": "out"
           },
           "to": {
@@ -48,7 +48,7 @@
         {
           "kind": "connected",
           "from": {
-            "part": "ir",
+            "part": "irmodule",
             "pin": "gnd"
           },
           "to": {

@@ -16,6 +16,9 @@ import {
   type SimulationResult,
 } from '@banglalab/simulation';
 import { memo } from 'react';
+
+/** The TT gear motor's shaft speed at 6 V, in RPM: one maker's measurement (D-115). */
+const TT_MOTOR_RPM_AT_6V = 250;
 import { DRIVER_TERMINAL_NAMES } from './endpoints';
 import {
   BREADBOARD_TAB,
@@ -56,6 +59,8 @@ import {
   InstrumentView,
   BuzzerView,
   BuzzerModuleView,
+  IrModuleView,
+  TtMotorView,
   ButtonView,
   CapacitorView,
   ChipView,
@@ -445,6 +450,33 @@ export function BoardPartDrawing(props: {
           last={at(part.pins.gnd)}
           sounding={reading?.activity === 1}
           trigger={part.props.trigger}
+          selected={selected}
+        />
+      );
+    case 'ttmotor':
+      return (
+        <TtMotorView
+          a={at(part.pins.a)}
+          b={at(part.pins.b)}
+          speed={reading?.activity ?? 0}
+          rpm={
+            reading?.activity
+              ? `${props.formatNumber(Math.round(Math.abs(reading.activity) * TT_MOTOR_RPM_AT_6V))} RPM`
+              : undefined
+          }
+          selected={selected}
+        />
+      );
+    case 'irmodule':
+      return (
+        <IrModuleView
+          first={at(part.pins.out)}
+          last={at(part.pins.vcc)}
+          names={['OUT', 'GND', 'VCC']}
+          // OUT is HIGH while it is powered and sees nothing; its green light needs power too.
+          powered={(reading?.voltage ?? 0) > 2 || reading?.activity === 1}
+          seeing={reading?.activity === 1}
+          label={part.props.obstacle ? `${props.formatNumber(part.props.distance)} cm` : 'IR'}
           selected={selected}
         />
       );

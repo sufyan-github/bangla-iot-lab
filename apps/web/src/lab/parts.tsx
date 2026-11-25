@@ -1075,6 +1075,165 @@ export function MotorView(props: { a: Point; b: Point; speed: number; selected: 
 }
 
 /**
+ * TT gear motor seen from above: the yellow gearbox, the silver motor can at
+ * its end, and the white output shaft, whose marker turns at the shaft's speed.
+ * `speed` is −1 to 1 of its speed at 6 V; `rpm` is written on the gearbox while it turns.
+ */
+export function TtMotorView(props: {
+  a: Point;
+  b: Point;
+  speed: number;
+  rpm: string | undefined;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.a, props.b);
+  const turning = Math.abs(props.speed) > 0;
+  return (
+    <g transform={transform}>
+      <TwoLeads length={length} selected={props.selected} />
+      <rect x={-27} y={-17} width={58} height={36} rx={4} fill="#000" opacity={0.25} />
+      {/* The motor can behind the gearbox. */}
+      <rect
+        x={10}
+        y={-12}
+        width={22}
+        height={24}
+        rx={6}
+        fill="url(#shade-metal)"
+        stroke="#5d666a"
+      />
+      {/* The gearbox. */}
+      <rect x={-30} y={-19} width={44} height={38} rx={3} fill="#f2c230" stroke="#a7811a" />
+      <rect x={-30} y={-19} width={44} height={38} rx={3} fill="url(#shade-side)" opacity={0.5} />
+      <circle cx={-22} cy={-11} r={2.2} fill="#a7811a" />
+      <circle cx={-22} cy={11} r={2.2} fill="#a7811a" />
+      <g transform="translate(-6 0)">
+        <circle r={9.5} fill="#fdf6e0" stroke="#a7811a" />
+        <g
+          className={turning ? 'motor-rotor' : undefined}
+          style={
+            turning
+              ? {
+                  // The gearbox turns its shaft slowly: a turn every second or so at full speed.
+                  animationDuration: `${Math.max(0.6, 1 / Math.abs(props.speed))}s`,
+                  animationDirection: props.speed < 0 ? 'reverse' : 'normal',
+                }
+              : undefined
+          }
+        >
+          {/* The flattened shaft a wheel pushes onto. */}
+          <rect x={-2.2} y={-7} width={4.4} height={14} rx={1} fill="#ffffff" stroke="#8d8a7f" />
+          <path d="M0 -6.5V-3" stroke="#e8a21a" strokeWidth={2} strokeLinecap="round" />
+        </g>
+      </g>
+      {props.rpm && (
+        <text
+          x={-8}
+          y={17}
+          textAnchor="middle"
+          fontSize={6.5}
+          fontWeight={700}
+          fill="#5a4410"
+          pointerEvents="none"
+        >
+          {props.rpm}
+        </text>
+      )}
+    </g>
+  );
+}
+
+/**
+ * IR obstacle sensor on its three-pin board: the clear infrared LED and the
+ * dark receiver side by side at the far edge, the trimmer that sets how far it
+ * sees, and its two lights: power, and the one that shows an obstacle.
+ * `names` are the pins from `first` to `last`, as printed on the board.
+ */
+export function IrModuleView(props: {
+  first: Point;
+  last: Point;
+  names: readonly [string, string, string];
+  powered: boolean;
+  seeing: boolean;
+  label: string;
+  selected: boolean;
+}) {
+  const { length, transform } = between(props.first, props.last);
+  const pins = [-length / 2, 0, length / 2];
+  return (
+    <g transform={transform}>
+      {props.selected && <SelectionHalo length={length} />}
+      <ModuleBoard x={-length / 2 - 12} y={-58} width={length + 24} height={62} color="#1f5fa8" />
+      <PinHeader from={-length / 2} to={length / 2} />
+      {pins.map((x) => (
+        <SolderDot key={x} x={x} />
+      ))}
+      <g fontSize={7} fontWeight={700} fill="#dfe9f5" textAnchor="middle" pointerEvents="none">
+        {props.names.map((name, i) => (
+          <text key={name} x={pins[i]} y={-9.5}>
+            {name}
+          </text>
+        ))}
+      </g>
+      {/* The emitter, clear, and the receiver, dark, looking out past the board's edge. */}
+      {[
+        { x: -8, fill: '#e9eef2' },
+        { x: 8, fill: '#1b1d22' },
+      ].map((led) => (
+        <g key={led.x} transform={`translate(${led.x} -60)`}>
+          <rect x={-4.5} y={-6} width={9} height={14} rx={1} fill="#c4c9cc" />
+          <circle r={5.5} cy={-6} fill={led.fill} stroke="rgba(0,0,0,.4)" />
+          <circle r={5.5} cy={-6} fill="url(#shade-dome)" opacity={0.6} />
+        </g>
+      ))}
+      {/* The trimmer. */}
+      <g transform="translate(-14 -34)">
+        <rect
+          x={-7}
+          y={-7}
+          width={14}
+          height={14}
+          rx={1.5}
+          fill="#2d6fd2"
+          stroke="rgba(0,0,0,.4)"
+        />
+        <circle r={4.2} fill="#d9b65c" />
+        <path d="M-3 0H3M0 -3V3" stroke="#6d5a22" strokeWidth={1.3} />
+      </g>
+      {/* Power, and obstacle. */}
+      <rect
+        x={6}
+        y={-40}
+        width={6.8}
+        height={4.8}
+        rx={1}
+        fill={props.powered ? '#ff5340' : '#5a1f1a'}
+      />
+      {props.seeing && <circle cx={18.4} cy={-29.6} r={8} fill="#58e07f" opacity={0.35} />}
+      <rect
+        x={15}
+        y={-32}
+        width={6.8}
+        height={4.8}
+        rx={1}
+        fill={props.seeing ? '#58e07f' : '#1f4a2c'}
+      />
+      <text
+        x={0}
+        y={-17}
+        textAnchor="middle"
+        fontSize={9}
+        fontWeight={700}
+        fill="#fff"
+        pointerEvents="none"
+      >
+        {props.label}
+      </text>
+    </g>
+  );
+}
+
+/**
  * A 14-pin logic chip across the centre gap, seen from above: a black body with
  * the notch at pin 1's end, the chip's name, and its fourteen legs.
  */

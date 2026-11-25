@@ -42,7 +42,7 @@ test('every part in the palette can be placed, and the circuit still solves', as
     ['ldr', 'BB1.h14'],
     ['temperature', 'BB1.h18'],
     ['soilmodule', 'BB1.h22'],
-    ['ir', 'BB1.h26'],
+    ['irmodule', 'BB1.h26'],
     ['relay', 'BB1.e20'],
     ['servo', 'BB1.e1'],
     ['ultrasonic', 'BB1.j1'],
@@ -156,6 +156,48 @@ test('the soil sensor board: AO falls as the soil gets wetter, and DO lights pas
   await page.getByTestId('slider-moisture').fill('0.8');
   await expect(part(page, 'SOIL1')).toHaveAttribute('data-voltage', '2.100');
   await expect(part(page, 'SOIL1')).toHaveAttribute('data-activity', '1.00');
+});
+
+test('the IR obstacle board pulls OUT LOW for what is within its range', async ({ page }) => {
+  await newCircuit(page);
+  await pick(page, 'uno');
+  await place(page, 'irmodule', 'BB1.c10'); // pins: c10 OUT, c11 GND, c12 VCC
+  await wire(page, [
+    ['UNO1.gnd', 'BB1.a11'],
+    ['UNO1.5v', 'BB1.a12'],
+  ]);
+  await page.getByTestId('run').click();
+  // OUT held HIGH by its resistor: the UNO's 5 V, less a little under load.
+  await expect
+    .poll(async () => Number(await part(page, 'IR1').getAttribute('data-voltage')))
+    .toBeGreaterThan(4.9);
+
+  // A tap puts something in front, 5 cm away: within the trimmer's 15 cm.
+  await page.locator('[data-press="IR1"]').click();
+  await expect(part(page, 'IR1')).toHaveAttribute('data-activity', '1.00');
+  await expect
+    .poll(async () => Number(await part(page, 'IR1').getAttribute('data-voltage')))
+    .toBeLessThan(0.1);
+
+  // Moved out to 25 cm, it is beyond the trimmer's reach until the trimmer is turned up.
+  await page.getByTestId('slider-distance').fill('25');
+  await expect(part(page, 'IR1')).toHaveAttribute('data-activity', '0.00');
+  await page.getByTestId('slider-range').fill('30');
+  await expect(part(page, 'IR1')).toHaveAttribute('data-activity', '1.00');
+});
+
+test('the TT gear motor turns at about 42 RPM a volt', async ({ page }) => {
+  await newCircuit(page);
+  await pick(page, 'uno');
+  await place(page, 'ttmotor', 'BB1.a1'); // leads a1 and a4
+  await wire(page, [
+    ['UNO1.5v', 'BB1.b1'],
+    ['BB1.b4', 'UNO1.gnd'],
+  ]);
+  await page.getByTestId('run').click();
+  // About 5 V of its 6 V: near 208 RPM, written on the gearbox (in Bangla digits here).
+  await expect(part(page, 'M1')).toHaveAttribute('data-activity', '0.83');
+  await expect(part(page, 'M1')).toContainText(/২০[০-৯] RPM/);
 });
 
 /** Picks a ready-made program for the board, then returns to the circuit. */

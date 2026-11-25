@@ -43,6 +43,11 @@ import {
   LDR_MODULE_RESISTANCE,
   MODULE_DO_LOW_RESISTANCE,
   MODULE_DO_PULLUP,
+  IR_MODULE_OUT_LOW_RESISTANCE,
+  IR_MODULE_OUT_PULLUP,
+  IR_MODULE_SUPPLY_RESISTANCE,
+  irModuleSees,
+  TT_MOTOR_RESISTANCE,
   MOTOR_RESISTANCE,
   MQ135_HEATER_RESISTANCE,
   MQ7_HEATER_RESISTANCE,
@@ -471,6 +476,12 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         partDevice.set(
           id,
           add(resistor(id, node(component.pins.a), node(component.pins.b), MOTOR_RESISTANCE)),
+        );
+        break;
+      case 'ttmotor':
+        partDevice.set(
+          id,
+          add(resistor(id, node(component.pins.a), node(component.pins.b), TT_MOTOR_RESISTANCE)),
         );
         break;
       case 'transistor':
@@ -1040,6 +1051,19 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
               )
             : resistor(`${id}:out`, out, ground, TMP36_OUTPUT_RESISTANCE),
         );
+        break;
+      }
+      case 'irmodule': {
+        // The infrared LED and comparator as one load, and OUT held HIGH by its
+        // resistor until the comparator pulls it LOW: something is in front.
+        const supply = node(component.pins.vcc);
+        const ground = node(component.pins.gnd);
+        const out = node(component.pins.out);
+        partDevice.set(id, add(resistor(id, supply, ground, IR_MODULE_SUPPLY_RESISTANCE)));
+        add(resistor(`${id}:pullup`, supply, out, IR_MODULE_OUT_PULLUP));
+        if (irModuleSees(component)) {
+          add(resistor(`${id}:out`, out, ground, IR_MODULE_OUT_LOW_RESISTANCE));
+        }
         break;
       }
       case 'soil':

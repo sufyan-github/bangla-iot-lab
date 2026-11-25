@@ -64,6 +64,13 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The IR obstacle sensor on its three-pin board** (OUT, GND, VCC): OUT
+  goes LOW while something is within its trimmer's range, 2 to 30 cm, and a
+  dark surface must come nearer. Tap it while running to put something in
+  front; set how far away in the inspector.
+- **The TT gear motor**, the yellow robot-car motor: about 42 RPM a volt at
+  its shaft, shown on the gearbox. The motor driver, obstacle robot and
+  auto-watering lessons use it.
 - **The YL-69 soil sensor on its four-pin board** (VCC, GND, DO, AO), with
   a trimmer for where DO switches and the light that shows it. The three soil
   lessons use it, with AO where the output was. A circuit saved with the older

@@ -36,12 +36,13 @@ import { holeExists, holeName, isHole, parseHole, type BreadboardSize } from './
  *     at right angles, in place of the slack of a jumper wire.
  * 27 — adds the three-pin active buzzer module, which sounds on HIGH or on LOW.
  * 28 — adds the YL-69 soil sensor on its four-pin board, with AO and DO.
+ * 29 — adds the TT gear motor and the IR obstacle sensor on its three-pin board.
  * Apart from version 21, each version only adds part types or optional fields,
  * so an older document is valid in a newer version apart from the number. Version
  * 21 renames every hole: `migrateCircuit` puts the one fixed breadboard of an
  * older circuit in as BB1, where it was, and names its holes after it.
  */
-export const CIRCUIT_SCHEMA_VERSION = 28;
+export const CIRCUIT_SCHEMA_VERSION = 29;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 /** A breadboard hole: the breadboard's id, a dot and the hole, as "BB1.a12". */
@@ -235,6 +236,14 @@ export const MotorSchema = Type.Object({
   props: noProps,
 });
 
+/** The yellow TT gear motor of robot kits: a small DC motor behind a plastic gearbox. */
+export const TtMotorSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('ttmotor'),
+  pins: twoLeads,
+  props: noProps,
+});
+
 /** NPN transistor. */
 export const TransistorSchema = Type.Object({
   id: Id,
@@ -257,6 +266,25 @@ export const SoilSensorSchema = Type.Object({
   type: Type.Literal('soil'),
   pins: sensorLeads,
   props: Type.Object({ moisture: Type.Number({ minimum: 0, maximum: 1 }) }),
+});
+
+/**
+ * IR obstacle sensor on its three-pin board (D-115): an infrared LED and a
+ * receiver side by side, and a comparator that pulls OUT LOW while something
+ * is close enough to reflect the light. `obstacle` says whether anything is in
+ * front of it, `distance` how far away (cm), and `range` how far its trimmer
+ * lets it see (cm). A dark surface reflects less, and is seen only nearer.
+ */
+export const IrModuleSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('irmodule'),
+  pins: Type.Object({ out: Hole, gnd: Hole, vcc: Hole }),
+  props: Type.Object({
+    obstacle: Type.Boolean(),
+    distance: Type.Number({ minimum: 0, maximum: 100 }),
+    range: Type.Number({ minimum: 2, maximum: 30 }),
+    dark: Type.Boolean(),
+  }),
 });
 
 /** Infrared obstacle sensor: its output goes LOW while something is in front of it. */
@@ -945,10 +973,12 @@ export const ComponentSchema = Type.Union([
   BuzzerSchema,
   BuzzerModuleSchema,
   MotorSchema,
+  TtMotorSchema,
   TransistorSchema,
   TemperatureSensorSchema,
   SoilSensorSchema,
   IrSensorSchema,
+  IrModuleSchema,
   RelaySchema,
   ServoSchema,
   UltrasonicSchema,

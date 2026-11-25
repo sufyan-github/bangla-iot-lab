@@ -477,6 +477,21 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M13 12h3M13 8.5l2.5-1.5M13 15.5l2.5 1.5M20 5v14" {...stroke} />
     </>
   ),
+  irmodule: (
+    <>
+      <circle cx="8" cy="6" r="3" {...stroke} />
+      <circle cx="16" cy="6" r="3" fill="currentColor" />
+      <rect x="3" y="11" width="18" height="8" rx="1.5" {...stroke} />
+      <path d="M8 19v3M12 19v3M16 19v3" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
+  ttmotor: (
+    <>
+      <rect x="2.5" y="6" width="13" height="12" rx="1.5" {...stroke} />
+      <path d="M15.5 9h4a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-4" {...stroke} />
+      <path d="M9 9.5v5" {...stroke} strokeWidth={2.6} />
+    </>
+  ),
 };
 
 /** Tools in the order they are shown; each inner list is one group. */
@@ -510,6 +525,7 @@ const BINS: { id: string; items: PaletteItem[] }[] = [
       'siren',
       'rgbled',
       'motor',
+      'ttmotor',
       'servo',
       'l298n',
       'relay',
@@ -530,7 +546,7 @@ const BINS: { id: string; items: PaletteItem[] }[] = [
       'soilmodule',
       'rain',
       'pir',
-      'ir',
+      'irmodule',
       'ultrasonic',
       'jsnsr04t',
       'linesensor',

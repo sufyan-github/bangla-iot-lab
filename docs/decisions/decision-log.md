@@ -2511,3 +2511,39 @@ model (D-113).
   is named as the older one; it has left the parts list. In a soil lesson, Run
   shows that the board is what the lesson asks for.
 - Circuit format 28 adds the board. Older circuits open unchanged.
+
+## D-115 — The IR obstacle sensor and the TT gear motor; no stand-ins left
+
+Built on 25 November 2026, the last two of the stand-in parts (D-113, D-114).
+Every figure below is REPORTED from sellers' and makers' pages, with the
+sources named in the code; none was measured here.
+
+- **The IR obstacle sensor is its three-pin board**, with OUT, GND and VCC in
+  the order of the common FC-51 board; some boards put them the other way,
+  and the part says to go by what is printed. On 3.3 V to 5 V it draws about
+  20 mA. OUT is held HIGH by a 10 kΩ resistor and goes LOW, with the green
+  light, while something is within the trimmer's range, 2 cm to 30 cm against
+  a white wall. One source describes OUT the other way round; the others,
+  and the lessons' programs, agree on LOW.
+- **In the lab a tap puts something in front, as before**, and the inspector
+  sets how far away it is, the trimmer's range, and whether it is light or
+  dark. Sources say only that a darker surface is seen nearer; the lab sees a
+  dark one within half the range, an ESTIMATE. Sunlight is not modelled.
+- **The TT gear motor is its own part.** One maker measured one motor (and
+  says motors vary): 120, 185 and 250 RPM at the shaft on 3, 4.5 and 6 V,
+  150 to 160 mA running free, 1.1 A to 1.5 A held still. In the lab its speed
+  is in proportion to its voltage, about 42 RPM a volt, within 5 RPM of those
+  measurements, and is written on the gearbox.
+- **Its current is one resistance**, 29 Ω, matching the 155 mA at 4.5 V. It is
+  about a third low at 3 V and a third high at 6 V, and it never stalls. A
+  truer model would feed each solution's current back into the solver, which
+  the motor-driver lessons do not need and could unsettle; the part says what
+  it leaves out.
+- **Lessons:** the two IR lessons and the three that use the TT motor (the
+  motor driver, the obstacle robot, and auto-watering, where it stands in for
+  the pump) now use the new parts, wired as before by pin name. The other
+  motor lessons keep the generic DC motor, which they ask for.
+- **Saved circuits keep their older parts**, which still work: the three-leg IR
+  sensor's legs are in a different order from the board's, so it is not swapped
+  in place (as in D-114). The generic DC motor stays a part of its own.
+- Circuit format 29 adds both. No part definition is a stand-in any more.
