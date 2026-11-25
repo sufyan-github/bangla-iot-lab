@@ -545,6 +545,7 @@ export const bn = {
   'tool.temperature': 'তাপমাত্রা',
   'tool.dht11': 'DHT11',
   'tool.soil': 'মাটির সেন্সর',
+  'tool.soilmodule': 'মাটির সেন্সর',
   'tool.ir': 'IR সেন্সর',
   'hint.place': 'বসাতে বোর্ডের একটা ছিদ্রে ট্যাপ করো।',
   'hint.running': 'সার্কিট চালু অবস্থায় সুইচ বা সেন্সরে ট্যাপ করে বদলানো যায়, আর বোতাম চেপে ধরা যায়।',
@@ -590,7 +591,8 @@ export const bn = {
   'part.transistor': 'NPN ট্রানজিস্টর',
   'part.temperature': 'তাপমাত্রা সেন্সর',
   'part.dht11': 'DHT11 তাপমাত্রা ও আর্দ্রতা সেন্সর',
-  'part.soil': 'মাটির আর্দ্রতা সেন্সর',
+  'part.soil': 'মাটির সেন্সর (পুরোনো, তিন পায়ের)',
+  'part.soilmodule': 'YL-69 মাটির আর্দ্রতা সেন্সর',
   'part.ir': 'IR বাধা সেন্সর',
   'part.switch.about':
     'সুইচ চালু থাকলে এর দুই পা জুড়ে থাকে, বন্ধ থাকলে আলাদা থাকে। বোতামের মতো ছেড়ে দিলে ফিরে আসে না, যেভাবে রাখবে সেভাবেই থাকে।',
@@ -614,7 +616,9 @@ export const bn = {
   'part.temperature.about':
     'TMP36: প্রতি ডিগ্রি সেলসিয়াসে 10 mV, আর 0 °C-এ 0.5 V, তাই 25 °C-এ 0.75 V। 3.3 V বা 5 V দুটোতেই চলে। পা: VCC, আউটপুট, GND। আউটপুট analogRead দিয়ে পড়ো।',
   'part.soil.about':
-    'মাটি যত ভেজা, এই সেন্সরের আউটপুট ভোল্টেজ তত কম: শুকনো অবস্থায় প্রায় 4.5 V, পুরো ভেজা অবস্থায় 1.5 V। পা: 5 V, আউটপুট, GND।',
+    'আগের তিন পায়ের সেন্সর, যা কিটের চার পিনের বোর্ডের বদলে বসানো হতো। পুরোনো সার্কিটে আগের মতোই কাজ করে; নতুন সার্কিটে চার পিনের মাটির সেন্সর নাও। মাটি যত ভেজা, আউটপুট তত কম। পা: 5 V, আউটপুট, GND।',
+  'part.soilmodule.about':
+    'কাঁটাটা মাটিতে থাকে, আর বোর্ডে চারটা পিন: VCC, GND, DO, AO। মাটি যত ভেজা, AO-র ভোল্টেজ তত কম: শুকনো অবস্থায় সাপ্লাইয়ের প্রায় ৯০%, পুরো ভেজা অবস্থায় ৩০%। ট্রিমারে যতটা ঠিক করা, মাটি তার চেয়ে ভেজা হলে DO LOW হয় আর বাতি জ্বলে। analogRead দিয়ে AO পড়ো।',
   'part.ir.about':
     'এই সেন্সরের আউটপুট সাধারণত HIGH থাকে, সামনে কিছু এলে LOW হয়ে যায়। পা: 5 V, আউটপুট, GND। digitalRead দিয়ে পড়ো।',
   'tool.ldrmodule': 'LDR মডিউল',
@@ -1897,6 +1901,7 @@ export const en: Record<MessageKey, string> = {
   'tool.temperature': 'Temperature',
   'tool.dht11': 'DHT11',
   'tool.soil': 'Soil sensor',
+  'tool.soilmodule': 'Soil sensor',
   'tool.ir': 'IR sensor',
   'hint.place': 'Tap a hole on the board to place it.',
   'hint.running':
@@ -1946,7 +1951,8 @@ export const en: Record<MessageKey, string> = {
   'part.transistor': 'NPN transistor',
   'part.temperature': 'Temperature sensor',
   'part.dht11': 'DHT11 temperature and humidity sensor',
-  'part.soil': 'Soil-moisture sensor',
+  'part.soil': 'Soil sensor (older, three legs)',
+  'part.soilmodule': 'YL-69 soil moisture sensor',
   'part.ir': 'IR obstacle sensor',
   'part.switch.about':
     'A switch joins its two legs when it is on and separates them when it is off. Unlike a push button, it stays where you leave it.',
@@ -1970,7 +1976,9 @@ export const en: Record<MessageKey, string> = {
   'part.temperature.about':
     'TMP36: 10 mV for every degree Celsius, and 0.5 V at 0 °C, so 25 °C gives 0.75 V. Works on 3.3 V or 5 V. Legs: VCC, output, GND. Read the output with analogRead.',
   'part.soil.about':
-    'This sensor’s output voltage falls as the soil gets wetter: about 4.5 V when dry and 1.5 V when soaked. Legs: 5 V, output, GND.',
+    'The older three-leg sensor that stood in for the kit’s four-pin board. It works as before in older circuits; for a new one, take the four-pin soil sensor. Its output falls as the soil gets wetter. Legs: 5 V, output, GND.',
+  'part.soilmodule.about':
+    'The fork goes in the soil; the board has four pins: VCC, GND, DO and AO. AO falls as the soil gets wetter: about 90% of the supply when dry, 30% when soaked. Once the soil is wetter than the trimmer is set for, DO goes LOW and its light comes on. Read AO with analogRead.',
   'part.ir.about':
     'This sensor’s output is HIGH normally and goes LOW when something is in front of it. Legs: 5 V, output, GND. Read it with digitalRead.',
   'tool.ldrmodule': 'LDR module',

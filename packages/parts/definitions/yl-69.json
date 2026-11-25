@@ -1,9 +1,8 @@
 {
   "formatVersion": 1,
   "id": "yl-69",
-  "simulates": "soil",
-  "status": "generic",
-  "statusNote": "A generic three-leg analog sensor stands in. The real probe and its comparator board, with AO and DO, are not modelled.",
+  "simulates": "soilmodule",
+  "status": "simulated",
   "family": "sensor",
   "tier": 1,
   "name": {
@@ -11,12 +10,19 @@
     "en": "YL-69 soil moisture sensor"
   },
   "summary": {
-    "bn": "",
-    "en": "Reads how wet the soil is."
+    "bn": "মাটি কতটা ভেজা তা পড়ে: AO-তে ভোল্টেজ, আর বেশি ভেজা হলে DO LOW।",
+    "en": "Reads how wet the soil is: a voltage on AO, and DO LOW once the soil is wetter than the trimmer is set for."
   },
   "model": {
     "level": "electrical",
-    "simplified": ["A divider whose output follows the set moisture."]
+    "simplified": [
+      "How far AO falls for a given moisture is an estimate. In real soil it depends on the soil, how packed it is and what is dissolved in the water.",
+      "The fork is drawn as part of the module; on the real one it is a separate probe on two wires.",
+      "The fork does not corrode. A real one does, quickly, when left powered in wet soil; that is why projects often power it only while reading.",
+      "Its comparator switches cleanly at the trimmer's setting. A real one flickers when the reading sits right at that point.",
+      "The resistances inside the module are estimates; no schematic of the kit's module has been seen.",
+      "The comparator and the two indicator lights draw a few milliamps that are not counted."
+    ]
   },
   "validation": {
     "state": "not-checked",
@@ -29,22 +35,28 @@
       "role": "power"
     },
     {
-      "id": "out",
-      "label": "OUT",
-      "role": "output"
-    },
-    {
       "id": "gnd",
       "label": "GND",
       "role": "ground"
+    },
+    {
+      "id": "do",
+      "label": "DO",
+      "role": "output"
+    },
+    {
+      "id": "ao",
+      "label": "AO",
+      "role": "output"
     }
   ],
   "placement": {
     "idPrefix": "SOIL",
-    "offsets": [0, 1, 2]
+    "offsets": [0, 1, 2, 3]
   },
   "defaults": {
-    "moisture": 0.4
+    "moisture": 0.3,
+    "threshold": 0.5
   },
   "variants": [],
   "catalog": {

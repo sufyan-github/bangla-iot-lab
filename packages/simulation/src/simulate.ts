@@ -848,6 +848,7 @@ export function readSolution(
         break;
       case 'ldrmodule':
       case 'rain':
+      case 'soilmodule':
       case 'mq135':
       case 'mq7':
       case 'ph':
@@ -1324,6 +1325,7 @@ export class Observation {
       } else if (
         component.type === 'ldrmodule' ||
         component.type === 'rain' ||
+        component.type === 'soilmodule' ||
         component.type === 'mq135' ||
         component.type === 'mq7' ||
         component.type === 'ph'

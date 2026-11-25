@@ -85,11 +85,12 @@ describe('recognising parts in a parts list', () => {
       'SG90 micro servo 180°',
       'SX1278 Ra-02 LoRa module',
       'YL-69 soil moisture',
+      'IR obstacle avoidance sensor',
       'USB cable',
       'Unobtainium sensor',
     ]);
     expect(report.counts).toEqual({
-      simulated: 3,
+      simulated: 4,
       generic: 1,
       planned: 0,
       'not-simulated': 1,

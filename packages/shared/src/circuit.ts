@@ -35,12 +35,13 @@ import { holeExists, holeName, isHole, parseHole, type BreadboardSize } from './
  * 26 — a wire may carry `style: 'square'`: drawn in straight runs that turn
  *     at right angles, in place of the slack of a jumper wire.
  * 27 — adds the three-pin active buzzer module, which sounds on HIGH or on LOW.
+ * 28 — adds the YL-69 soil sensor on its four-pin board, with AO and DO.
  * Apart from version 21, each version only adds part types or optional fields,
  * so an older document is valid in a newer version apart from the number. Version
  * 21 renames every hole: `migrateCircuit` puts the one fixed breadboard of an
  * older circuit in as BB1, where it was, and names its holes after it.
  */
-export const CIRCUIT_SCHEMA_VERSION = 27;
+export const CIRCUIT_SCHEMA_VERSION = 28;
 
 const Id = Type.String({ minLength: 1, maxLength: 40, pattern: '^[A-Za-z0-9_-]+$' });
 /** A breadboard hole: the breadboard's id, a dot and the hole, as "BB1.a12". */
@@ -369,6 +370,18 @@ export const RainSensorSchema = Type.Object({
   type: Type.Literal('rain'),
   pins: moduleLeads,
   props: Type.Object({ wetness: Fraction, threshold: Threshold }),
+});
+
+/**
+ * YL-69 soil moisture sensor on its comparator board: the fork in the soil,
+ * AO falling as the soil gets wetter, and DO pulled LOW once it is wetter than
+ * the trimmer is set for. `moisture` runs from 0 (dry) to 1 (soaked).
+ */
+export const SoilModuleSchema = Type.Object({
+  id: Id,
+  type: Type.Literal('soilmodule'),
+  pins: moduleLeads,
+  props: Type.Object({ moisture: Fraction, threshold: Threshold }),
 });
 
 /**
@@ -943,6 +956,7 @@ export const ComponentSchema = Type.Union([
   Dht11Schema,
   LdrModuleSchema,
   RainSensorSchema,
+  SoilModuleSchema,
   Mq135Schema,
   Mq7Schema,
   PhSensorSchema,

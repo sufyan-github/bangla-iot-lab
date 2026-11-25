@@ -180,6 +180,12 @@ const ICONS: Record<PaletteItem, ReactNode> = {
       <path d="M3 21h18" {...stroke} />
     </>
   ),
+  soilmodule: (
+    <>
+      <path d="M7 3v9l1.5 3L10 12V3M14 3v9l1.5 3 1.5-3V3" {...stroke} strokeWidth={1.6} />
+      <path d="M3 18h18M5 21h14" {...stroke} strokeWidth={1.6} />
+    </>
+  ),
   servo: (
     <>
       <rect x="4" y="9" width="16" height="11" rx="2" {...stroke} />
@@ -521,7 +527,7 @@ const BINS: { id: string; items: PaletteItem[] }[] = [
       'dht11',
       'ds18b20',
       'bme280',
-      'soil',
+      'soilmodule',
       'rain',
       'pir',
       'ir',

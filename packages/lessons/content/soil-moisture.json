@@ -17,18 +17,18 @@
   "steps": [
     {
       "text": {
-        "bn": "মাটি যত শুকনো, সেন্সরের আউটপুট ভোল্টেজ তত বেশি। ল্যাবে এই সেন্সর তিন পায়ের সাধারণ সেন্সর হিসেবে আছে: **VCC**, **আউটপুট**, **GND**। কিটের মডিউলে চারটা পা থাকে; তার **AO** এই আউটপুটের মতোই কাজ করে।\n\nসেন্সরটা বসাও। VCC যাবে 3V3-তে, আউটপুট যাবে **D34**-এ, GND যাবে GND-তে।",
-        "en": "The drier the soil, the higher the sensor's output voltage. In the lab this sensor is a generic three-leg sensor: **VCC**, **output**, **GND**. The kit's module has four pins; its **AO** works like this output.\n\nPlace the sensor. VCC goes to 3V3, the output to **D34**, GND to GND."
+        "bn": "মাটি যত শুকনো, সেন্সরের আউটপুট ভোল্টেজ তত বেশি। এর বোর্ডে চারটা পিন: **VCC**, **GND**, **DO** আর **AO**। **AO** সেই ভোল্টেজ দেয়; **DO** শুধু ভেজা না শুকনো বলে, এখানে লাগবে না।\n\nসেন্সরটা বসাও। VCC যাবে 3V3-তে, **AO** যাবে **D34**-এ, GND যাবে GND-তে।",
+        "en": "The drier the soil, the higher the sensor's output voltage. Its board has four pins: **VCC**, **GND**, **DO** and **AO**. **AO** gives that voltage; **DO** only says wet or dry, and is not used here.\n\nPlace the sensor. VCC goes to 3V3, **AO** to **D34**, GND to GND."
       },
       "checks": [
         {
           "kind": "part",
-          "type": "soil"
+          "type": "soilmodule"
         },
         {
           "kind": "connected",
           "from": {
-            "part": "soil",
+            "part": "soilmodule",
             "pin": "vcc"
           },
           "to": {
@@ -38,8 +38,8 @@
         {
           "kind": "connected",
           "from": {
-            "part": "soil",
-            "pin": "out"
+            "part": "soilmodule",
+            "pin": "ao"
           },
           "to": {
             "board": "d34"
@@ -48,7 +48,7 @@
         {
           "kind": "connected",
           "from": {
-            "part": "soil",
+            "part": "soilmodule",
             "pin": "gnd"
           },
           "to": {
@@ -135,7 +135,7 @@
       "checks": [
         {
           "kind": "prop",
-          "part": "soil",
+          "part": "soilmodule",
           "prop": "moisture",
           "below": 0.1
         },

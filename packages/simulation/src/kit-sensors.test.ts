@@ -178,6 +178,57 @@ describe('rain sensor module', () => {
   });
 });
 
+describe('YL-69 soil sensor on its four-pin board', () => {
+  const wired = (moisture: number, threshold = 0.5) =>
+    circuit(
+      [
+        esp32,
+        { id: 'SOIL1', type: 'soilmodule', pins: modulePins, props: { moisture, threshold } },
+      ],
+      [
+        ['ESP1.3v3', 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a11'],
+      ],
+    );
+
+  it('AO is high in dry soil and falls as it gets wetter, as the three-leg sensor did', () => {
+    const ao = (moisture: number) => simulate(wired(moisture)).readings.SOIL1!.voltage;
+    expect(ao(0)).toBeCloseTo(3.3 * 0.9, 2);
+    expect(ao(1)).toBeCloseTo(3.3 * 0.3, 2);
+    // The same reading as the three-leg stand-in, so programs written for it read the same.
+    const older = circuit(
+      [
+        esp32,
+        {
+          id: 'SOIL1',
+          type: 'soil',
+          pins: { vcc: 'BB1.c10', out: 'BB1.c11', gnd: 'BB1.c12' },
+          props: { moisture: 0.4 },
+        },
+      ],
+      [
+        ['ESP1.3v3', 'BB1.a10'],
+        ['ESP1.gnd1', 'BB1.a12'],
+      ],
+    );
+    expect(ao(0.4)).toBeCloseTo(simulate(older).readings.SOIL1!.voltage, 6);
+  });
+
+  it('DO goes LOW, and its light comes on, once the soil is wetter than the trimmer is set for', () => {
+    const at = (moisture: number, threshold?: number) => {
+      const result = simulate(wired(moisture, threshold));
+      return { do: result.nodeVoltages[netName('BB1.c12')]!, lit: result.readings.SOIL1!.activity };
+    };
+    expect(at(0.3)).toMatchObject({ lit: 0 });
+    expect(at(0.3).do).toBeGreaterThan(3.2);
+    // 0.9 − 0.6 × 0.8 = 0.42 of the supply, below the trimmer's 0.5.
+    expect(at(0.8)).toMatchObject({ lit: 1 });
+    expect(at(0.8).do).toBeLessThan(0.1);
+    // Turned the other way, the trimmer needs wetter soil before DO switches.
+    expect(at(0.8, 0.3).lit).toBe(0);
+  });
+});
+
 describe('MQ-135 gas sensor module', () => {
   const module = (gas: number): CircuitComponent => ({
     id: 'MQ1',

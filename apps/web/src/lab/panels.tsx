@@ -1157,6 +1157,7 @@ function PartSettings({ part }: { part: CircuitComponent }) {
   if (
     part.type === 'ldrmodule' ||
     part.type === 'rain' ||
+    part.type === 'soilmodule' ||
     part.type === 'mq135' ||
     part.type === 'mq7'
   ) {
@@ -1164,6 +1165,7 @@ function PartSettings({ part }: { part: CircuitComponent }) {
     const sensed = {
       ldrmodule: { key: 'light', label: 'inspector.light' },
       rain: { key: 'wetness', label: 'inspector.wetness' },
+      soilmodule: { key: 'moisture', label: 'inspector.moisture' },
       mq135: { key: 'gas', label: 'inspector.gas' },
       mq7: { key: 'co', label: 'inspector.co' },
     }[part.type];

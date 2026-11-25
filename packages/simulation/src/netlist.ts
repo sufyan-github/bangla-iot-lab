@@ -716,6 +716,7 @@ export function buildNetlist(document: CircuitDocument, state: CircuitState = ID
         break;
       case 'ldrmodule':
       case 'rain':
+      case 'soilmodule':
       case 'mq135':
       case 'mq7':
       case 'ph': {

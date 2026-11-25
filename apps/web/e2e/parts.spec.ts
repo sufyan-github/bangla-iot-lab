@@ -41,7 +41,7 @@ test('every part in the palette can be placed, and the circuit still solves', as
     ['motor', 'BB1.h9'],
     ['ldr', 'BB1.h14'],
     ['temperature', 'BB1.h18'],
-    ['soil', 'BB1.h22'],
+    ['soilmodule', 'BB1.h22'],
     ['ir', 'BB1.h26'],
     ['relay', 'BB1.e20'],
     ['servo', 'BB1.e1'],
@@ -135,6 +135,27 @@ test('the buzzer module sounds on HIGH, or on LOW once set so', async ({ page })
   await page.locator('[data-hit="BZ1"]').click();
   await page.getByTestId('buzzer-trigger').getByRole('button').nth(1).click();
   await expect(part(page, 'BZ1')).toHaveAttribute('data-activity', '0.00');
+});
+
+test('the soil sensor board: AO falls as the soil gets wetter, and DO lights past the trimmer', async ({
+  page,
+}) => {
+  await newCircuit(page);
+  await pick(page, 'uno');
+  await place(page, 'soilmodule', 'BB1.c10'); // pins: c10 VCC, c11 GND, c12 DO, c13 AO
+  await wire(page, [
+    ['UNO1.5v', 'BB1.a10'],
+    ['UNO1.gnd', 'BB1.a11'],
+  ]);
+  await page.getByTestId('run').click();
+  // 30% wet: AO at 0.9 − 0.6 × 0.3 = 0.72 of 5 V, and DO still HIGH.
+  await expect(part(page, 'SOIL1')).toHaveAttribute('data-voltage', '3.600');
+  await expect(part(page, 'SOIL1')).toHaveAttribute('data-activity', '0.00');
+
+  await page.locator('[data-hit="SOIL1"]').click();
+  await page.getByTestId('slider-moisture').fill('0.8');
+  await expect(part(page, 'SOIL1')).toHaveAttribute('data-voltage', '2.100');
+  await expect(part(page, 'SOIL1')).toHaveAttribute('data-activity', '1.00');
 });
 
 /** Picks a ready-made program for the board, then returns to the circuit. */

@@ -19,18 +19,18 @@
   "steps": [
     {
       "text": {
-        "bn": "এই প্রকল্পে মাটির সেন্সর বলে কখন পানি লাগবে, আর **রিলে** একটা **পাম্প** চালু করে। পাম্প চলে নিজের ব্যাটারিতে। ল্যাবে পাম্পের জায়গায় একটা মোটর আছে।\n\nমাটির সেন্সর বসাও: VCC যাবে 3V3-তে, আউটপুট যাবে **D34**-এ, GND যাবে GND-তে।",
-        "en": "In this project the soil sensor says when water is needed, and a **relay** switches a **pump** on. The pump runs on its own battery. In the lab a motor stands in for the pump.\n\nPlace the soil sensor: VCC to 3V3, output to **D34**, GND to GND."
+        "bn": "এই প্রকল্পে মাটির সেন্সর বলে কখন পানি লাগবে, আর **রিলে** একটা **পাম্প** চালু করে। পাম্প চলে নিজের ব্যাটারিতে। ল্যাবে পাম্পের জায়গায় একটা মোটর আছে।\n\nমাটির সেন্সর বসাও: VCC যাবে 3V3-তে, **AO** যাবে **D34**-এ, GND যাবে GND-তে; DO লাগবে না।",
+        "en": "In this project the soil sensor says when water is needed, and a **relay** switches a **pump** on. The pump runs on its own battery. In the lab a motor stands in for the pump.\n\nPlace the soil sensor: VCC to 3V3, **AO** to **D34**, GND to GND; DO is not used."
       },
       "checks": [
         {
           "kind": "part",
-          "type": "soil"
+          "type": "soilmodule"
         },
         {
           "kind": "connected",
           "from": {
-            "part": "soil",
+            "part": "soilmodule",
             "pin": "vcc"
           },
           "to": {
@@ -40,8 +40,8 @@
         {
           "kind": "connected",
           "from": {
-            "part": "soil",
-            "pin": "out"
+            "part": "soilmodule",
+            "pin": "ao"
           },
           "to": {
             "board": "d34"
@@ -50,7 +50,7 @@
         {
           "kind": "connected",
           "from": {
-            "part": "soil",
+            "part": "soilmodule",
             "pin": "gnd"
           },
           "to": {
@@ -195,7 +195,7 @@
       "checks": [
         {
           "kind": "prop",
-          "part": "soil",
+          "part": "soilmodule",
           "prop": "moisture",
           "below": 0.1
         },
@@ -219,7 +219,7 @@
       "checks": [
         {
           "kind": "prop",
-          "part": "soil",
+          "part": "soilmodule",
           "prop": "moisture",
           "above": 0.5
         },

@@ -18,18 +18,18 @@
   "steps": [
     {
       "text": {
-        "bn": "গাছের কখন পানি লাগবে তা এই যন্ত্র বলে দেবে। লাগবে: **মাটির সেন্সর**, **DHT11**, **OLED** আর **RGB LED**।\n\nমাটির সেন্সর বসাও: VCC যাবে 3V3-তে, আউটপুট যাবে **D34**-এ, GND যাবে GND-তে। তারপর DHT11: VCC যাবে 3V3-তে, DATA যাবে **D4**-এ, GND যাবে GND-তে।",
-        "en": "This device tells you when a plant needs water. It needs the **soil sensor**, the **DHT11**, the **OLED** and the **RGB LED**.\n\nPlace the soil sensor: VCC to 3V3, output to **D34**, GND to GND. Then the DHT11: VCC to 3V3, DATA to **D4**, GND to GND."
+        "bn": "গাছের কখন পানি লাগবে তা এই যন্ত্র বলে দেবে। লাগবে: **মাটির সেন্সর**, **DHT11**, **OLED** আর **RGB LED**।\n\nমাটির সেন্সর বসাও: VCC যাবে 3V3-তে, **AO** যাবে **D34**-এ, GND যাবে GND-তে; DO লাগবে না। তারপর DHT11: VCC যাবে 3V3-তে, DATA যাবে **D4**-এ, GND যাবে GND-তে।",
+        "en": "This device tells you when a plant needs water. It needs the **soil sensor**, the **DHT11**, the **OLED** and the **RGB LED**.\n\nPlace the soil sensor: VCC to 3V3, **AO** to **D34**, GND to GND; DO is not used. Then the DHT11: VCC to 3V3, DATA to **D4**, GND to GND."
       },
       "checks": [
         {
           "kind": "part",
-          "type": "soil"
+          "type": "soilmodule"
         },
         {
           "kind": "connected",
           "from": {
-            "part": "soil",
+            "part": "soilmodule",
             "pin": "vcc"
           },
           "to": {
@@ -39,8 +39,8 @@
         {
           "kind": "connected",
           "from": {
-            "part": "soil",
-            "pin": "out"
+            "part": "soilmodule",
+            "pin": "ao"
           },
           "to": {
             "board": "d34"
@@ -49,7 +49,7 @@
         {
           "kind": "connected",
           "from": {
-            "part": "soil",
+            "part": "soilmodule",
             "pin": "gnd"
           },
           "to": {
@@ -250,7 +250,7 @@
       "checks": [
         {
           "kind": "prop",
-          "part": "soil",
+          "part": "soilmodule",
           "prop": "moisture",
           "below": 0.1
         },

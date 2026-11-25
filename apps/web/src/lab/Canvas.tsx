@@ -100,6 +100,7 @@ const BODY_HEIGHT: Partial<Record<string, number>> = {
   ir: 24,
   ldrmodule: 46,
   rain: 46,
+  soilmodule: 46,
   mq135: 46,
   mq7: 46,
   ph: 46,

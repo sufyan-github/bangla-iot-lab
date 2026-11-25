@@ -562,13 +562,18 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
   'soil-moisture': {
     components: [
       esp32,
-      part('SOIL1', 'soil', { vcc: 'BB1.c10', out: 'BB1.c11', gnd: 'BB1.c12' }, { moisture: 0.3 }),
+      part(
+        'SOIL1',
+        'soilmodule',
+        { vcc: 'BB1.c10', gnd: 'BB1.c11', do: 'BB1.c12', ao: 'BB1.c13' },
+        { moisture: 0.3, threshold: 0.5 },
+      ),
       ...lamp,
     ],
     wires: [
       ['ESP1.3v3', 'BB1.a10'],
-      ['ESP1.d34', 'BB1.a11'],
-      ['ESP1.gnd1', 'BB1.a12'],
+      ['ESP1.d34', 'BB1.a13'],
+      ['ESP1.gnd1', 'BB1.a11'],
       ...lampWires,
     ],
     actions: { 4: [{ set: 'SOIL1', props: { moisture: 0.05 } }] },
@@ -760,7 +765,12 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     components: [
       esp32,
       { id: 'BAT1', type: 'battery', props: { voltage: 6 } },
-      part('SOIL1', 'soil', { vcc: 'BB1.c1', out: 'BB1.c2', gnd: 'BB1.c3' }, { moisture: 0.3 }),
+      part(
+        'SOIL1',
+        'soilmodule',
+        { vcc: 'BB1.c1', gnd: 'BB1.c2', do: 'BB1.c3', ao: 'BB1.c4' },
+        { moisture: 0.3, threshold: 0.5 },
+      ),
       part(
         'RLY1',
         'relaymodule',
@@ -778,8 +788,8 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     ],
     wires: [
       ['ESP1.3v3', 'BB1.a1'],
-      ['ESP1.d34', 'BB1.a2'],
-      ['ESP1.gnd1', 'BB1.a3'],
+      ['ESP1.d34', 'BB1.a4'],
+      ['ESP1.gnd1', 'BB1.a2'],
       ['ESP1.vin', 'BB1.a10'],
       ['ESP1.gnd1', 'BB1.a11'],
       ['ESP1.d26', 'BB1.a12'],
@@ -942,7 +952,12 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
   'plant-monitor': {
     components: [
       esp32,
-      part('SOIL1', 'soil', { vcc: 'BB1.c1', out: 'BB1.c2', gnd: 'BB1.c3' }, { moisture: 0.3 }),
+      part(
+        'SOIL1',
+        'soilmodule',
+        { vcc: 'BB1.c1', gnd: 'BB1.c2', do: 'BB1.c3', ao: 'BB1.c4' },
+        { moisture: 0.3, threshold: 0.5 },
+      ),
       part(
         'DHT1',
         'dht11',
@@ -957,8 +972,8 @@ const WALKTHROUGHS: Record<string, Walkthrough> = {
     ],
     wires: [
       ['ESP1.3v3', 'BB1.a1'],
-      ['ESP1.d34', 'BB1.a2'],
-      ['ESP1.gnd1', 'BB1.a3'],
+      ['ESP1.d34', 'BB1.a4'],
+      ['ESP1.gnd1', 'BB1.a2'],
       ['ESP1.3v3', 'BB1.a6'],
       ['ESP1.d4', 'BB1.a7'],
       ['ESP1.gnd1', 'BB1.a8'],

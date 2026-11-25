@@ -2484,3 +2484,30 @@ stand-ins, the owner chose what each should become; this covers the first two.
 - Circuit format 27 adds the module. Older circuits open unchanged.
 - Next: the YL-69 soil sensor as its real four-pin board, then the IR obstacle
   sensor and the TT gear motor from published figures.
+
+## D-114 — The YL-69 soil sensor on its four-pin board
+
+Built on 25 November 2026, the third of the stand-in parts the owner chose to
+model (D-113).
+
+- **The YL-69 is its board's four pins: VCC, GND, DO and AO**, built as the
+  rain module is. AO falls as the soil gets wetter; the comparator pulls DO
+  LOW, and lights the board's second LED, once AO is below the trimmer's
+  setting (REPORTED by sellers' pages). The resistances inside are ESTIMATES,
+  and nothing has been measured on a real board.
+- **AO follows the same curve the three-leg stand-in had**: 90 % of the supply
+  when dry, 30 % when soaked (ESTIMATE). The ESP32 programs of the three soil
+  lessons were compiled against that curve and cannot be rebuilt on this
+  laptop, so keeping it means they read the same values as before.
+- **The three soil lessons now use the board**: AO to D34 in place of the
+  output, VCC and GND as before; DO is not used. Their text no longer says a
+  three-leg sensor stands in.
+- **Saved circuits are not rewired.** The owner asked for saved circuits to be
+  upgraded, but the board's pins sit in a different order (VCC, GND, DO, AO)
+  from the old sensor's (VCC, output, GND), and its wires end in breadboard
+  holes, not on the part. Swapping the part in place would join the wire that
+  went to the output to the board's GND, and the ground wire to DO, without a
+  word. So an older circuit keeps its three-leg sensor, which still works and
+  is named as the older one; it has left the parts list. In a soil lesson, Run
+  shows that the board is what the lesson asks for.
+- Circuit format 28 adds the board. Older circuits open unchanged.

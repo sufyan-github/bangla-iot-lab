@@ -639,6 +639,7 @@ export function BoardPartDrawing(props: {
       );
     case 'ldrmodule':
     case 'rain':
+    case 'soilmodule':
     case 'mq135':
     case 'mq7':
     case 'ph': {
@@ -651,9 +652,11 @@ export function BoardPartDrawing(props: {
                   ? part.props.light
                   : part.type === 'rain'
                     ? part.props.wetness
-                    : part.type === 'mq7'
-                      ? part.props.co
-                      : part.props.gas) * 100,
+                    : part.type === 'soilmodule'
+                      ? part.props.moisture
+                      : part.type === 'mq7'
+                        ? part.props.co
+                        : part.props.gas) * 100,
               ),
             )}%`;
       return (

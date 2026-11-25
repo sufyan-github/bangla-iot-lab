@@ -1383,6 +1383,7 @@ export function SensorView(props: {
 const MODULE_BOARD = {
   ldrmodule: '#1f5fa8',
   rain: '#a8332b',
+  soilmodule: '#b8432f',
   mq135: '#1c4f8f',
   mq7: '#2a6b3c',
   ph: '#1f4f9a',
@@ -1448,6 +1449,19 @@ export function AnalogModuleView(props: {
             strokeLinecap="round"
           />
           <path d="M-24 -7.4H24M-16 7.4H16" stroke="#d9b65c" strokeWidth={1.6} />
+        </g>
+      )}
+      {props.kind === 'soilmodule' && (
+        <g transform="translate(0 -44)">
+          {/* The fork that goes in the soil: two prongs of bare track on a dark board. */}
+          <path d="M-22 -10H22V-2H12V12L8 16L4 12V-2H-4V12L-8 16L-12 12V-2H-22Z" fill="#20242a" />
+          <path
+            d="M-8 -6V13M8 -6V13M-8 -6H8"
+            fill="none"
+            stroke="#d9b65c"
+            strokeWidth={2.4}
+            strokeLinecap="round"
+          />
         </g>
       )}
       {props.kind === 'ph' && (

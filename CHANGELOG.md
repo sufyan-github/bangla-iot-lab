@@ -64,6 +64,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **The YL-69 soil sensor on its four-pin board** (VCC, GND, DO, AO), with
+  a trimmer for where DO switches and the light that shows it. The three soil
+  lessons use it, with AO where the output was. A circuit saved with the older
+  three-leg sensor keeps it, and it still works.
 - **A three-pin active buzzer module** (S, + and −), with a setting for when
   it sounds: when S is HIGH (the default, as on the kit's board) or when S is
   LOW. The five lessons with a buzzer now use it, wired as before.

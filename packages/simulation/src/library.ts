@@ -145,7 +145,7 @@ export const TMP36_SUPPLY_RESISTANCE = 120_000;
 export const TMP36_OUTPUT_RESISTANCE = 100;
 
 /**
- * Four-pin sensor modules (LDR, rain, gas): the sensing part and a fixed
+ * Four-pin sensor modules (LDR, rain, soil, gas): the sensing part and a fixed
  * resistor make a voltage divider, whose tap is the AO pin; a comparator
  * compares the tap with a trimmer and pulls the DO pin LOW (and lights the
  * module's second LED) on one side of it.
@@ -156,7 +156,7 @@ export const TMP36_OUTPUT_RESISTANCE = 100;
  */
 export type AnalogModule = Extract<
   CircuitComponent,
-  { type: 'ldrmodule' | 'rain' | 'mq135' | 'mq7' | 'ph' }
+  { type: 'ldrmodule' | 'rain' | 'soilmodule' | 'mq135' | 'mq7' | 'ph' }
 >;
 /** Modules whose AO rises with what they sense, so DO trips above the trimmer's setting. */
 const RISING_MODULES = new Set(['mq135', 'mq7', 'ph']);
@@ -183,6 +183,10 @@ export function moduleOutputFraction(module: AnalogModule): number {
     case 'rain':
       // Dry tracks hardly conduct; water joins them. ESTIMATE of how far AO falls.
       return 0.98 - 0.68 * module.props.wetness;
+    case 'soilmodule':
+      // Wet soil conducts between the fork's prongs, which pulls AO down. ESTIMATE of the
+      // range, kept from the three-leg stand-in it replaces so that programs read as before.
+      return 0.9 - 0.6 * module.props.moisture;
     case 'mq135':
       // The sensing layer conducts better in bad air, which raises AO. ESTIMATE of the range.
       return 0.1 + 0.7 * module.props.gas;
