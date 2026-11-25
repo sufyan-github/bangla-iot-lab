@@ -55,10 +55,11 @@ test('a lesson in hand is offered on the home page, with its steps as LEDs', asy
   await page.goto('/');
   const resume = page.getByTestId('lesson-resume');
   await expect(resume).toContainText(/LED আর তার রেজিস্টর|An LED and its resistor/);
-  // Five steps, none done yet: the first is the one in hand.
+  // Five steps, and exactly one of them in hand. (The lab may already have
+  // ticked the first step, which asks for nothing to be built.)
   const leds = resume.getByTestId('led-row').locator('.led');
   await expect(leds).toHaveCount(5);
-  await expect(leds.first()).toHaveAttribute('data-led', 'now');
+  await expect(leds.and(page.locator('[data-led="now"]'))).toHaveCount(1);
   await resume.getByTestId('lesson-resume-open').click();
   await expect(page).toHaveURL(lab);
 

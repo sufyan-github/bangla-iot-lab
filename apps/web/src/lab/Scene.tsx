@@ -274,7 +274,11 @@ export interface SceneProps {
   pressed?: readonly string[];
   /** Status of boards with a running program. */
   boards?: Record<string, BoardStatus>;
-  /** False for thumbnails: leaves out the holes and lettering, which are invisible at that size. */
+  /**
+   * False for thumbnails: leaves out the holes and lettering, which are invisible
+   * at that size, and the parts' ids, so that a picture of a circuit is never
+   * taken for the circuit on the bench.
+   */
   detailed?: boolean;
   /** Text for a battery's label, e.g. "9 V". */
   batteryLabel(voltage: number): string;
@@ -836,7 +840,11 @@ export function Scene({
                 ]
               : [`${props.wave ?? 'square'} ${props.hz ?? 1} Hz`, `${volts.toFixed(2)} V`];
           return (
-            <g key={component.id} data-part={component.id} data-source={props.source}>
+            <g
+              key={component.id}
+              data-part={detailed ? component.id : undefined}
+              data-source={props.source}
+            >
               <InstrumentView
                 box={box}
                 title={component.id}
@@ -851,7 +859,7 @@ export function Scene({
         if (component.type === 'battery') {
           const box = partBox(circuit, component);
           return (
-            <g key={component.id} data-part={component.id}>
+            <g key={component.id} data-part={detailed ? component.id : undefined}>
               <BatteryView
                 box={box}
                 label={batteryLabel(component.props.voltage)}
@@ -865,7 +873,11 @@ export function Scene({
         }
         if (component.type === 'l298n') {
           return (
-            <g key={component.id} data-part={component.id} data-awake={reading?.activity === 1}>
+            <g
+              key={component.id}
+              data-part={detailed ? component.id : undefined}
+              data-awake={reading?.activity === 1}
+            >
               <MotorDriverView
                 box={partBox(circuit, component)}
                 terminals={DRIVER_TERMINALS.map(({ terminal, at }) => ({
@@ -885,7 +897,7 @@ export function Scene({
           return (
             <g
               key={component.id}
-              data-part={component.id}
+              data-part={detailed ? component.id : undefined}
               transform={`translate(${box.x} ${box.y})`}
             >
               <Esp32BoardView
@@ -901,7 +913,7 @@ export function Scene({
           return (
             <g
               key={component.id}
-              data-part={component.id}
+              data-part={detailed ? component.id : undefined}
               transform={`translate(${shift.x} ${shift.y})`}
             >
               <UnoView
@@ -922,7 +934,7 @@ export function Scene({
             key={component.id}
             className={lift?.id === component.id ? 'part-layer part-lifted' : 'part-layer'}
             style={layerStyle(component.id)}
-            data-part={component.id}
+            data-part={detailed ? component.id : undefined}
             data-pressed={component.type === 'button' ? held : undefined}
             data-led-state={
               component.type === 'led' || component.type === 'rgbled'
