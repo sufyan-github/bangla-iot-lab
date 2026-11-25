@@ -8,6 +8,13 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Changed
 
+- **More room for the circuit**: on a laptop the parts list and the work panel
+  are narrow rails that open while the pointer is on them, and can be kept
+  open; one button shows the board alone. On a phone the parts are a narrow
+  column that opens on a tap.
+- **The lab's new look** (the redesign's third stage): numbered steps and
+  clearer checks in the lesson panel, and pin names drawn as wire ends, red
+  for power, black for ground, yellow for a signal.
 - **Home, lessons and glossary rebuilt** (the redesign's second stage): the
   lessons are a numbered path with each part's drawing, progress is a row of
   LEDs, the home page offers the lesson you left off, and the glossary reads

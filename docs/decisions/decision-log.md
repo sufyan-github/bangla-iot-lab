@@ -2267,3 +2267,52 @@ the design page the owner approved.
   with hairlines in place of a card for each.
 - The drawings come from the lab's parts drawer (`PartIcon`), so a part looks
   the same on the path as in the lab, and no new pictures are shipped.
+
+## D-105 — The redesign, stage 3: the lab's look
+
+Built on 25 November 2026, the third stage of the redesign (D-103).
+
+- **The lesson panel.** Steps are numbered stops, as on the lessons page: a
+  tick when done, an amber ring for the one in hand. What the lab checks shows
+  a tick, or a dashed ring while it is not yet met.
+- **Pin names as wire ends.** A bold pin name in lesson text is drawn as the
+  end of a jumper wire with a stripe for what the pin is for: red for power,
+  black for ground, yellow for a signal. Red and black are the colours the lab
+  gives power and ground wires. Signal wires take turns between yellow, blue
+  and green, so the stripe says "a signal" and does not promise the colour the
+  wire will be. Which bold words are pins is decided by name (`pins.ts`), and
+  tested against every bold word in the lessons.
+- **The work surface stays the green mat,** in light and dark. The design page
+  drew it light. The lab has a white wire, LED glows and labels drawn for the
+  mat, and they would be lost on a light ground. The owner was told.
+- The breadboard's rails run under the lab's bar, and the open tab is marked
+  in amber.
+
+## D-106 — More room for the circuit: rails that open while in use
+
+Asked for by the owner on 25 November 2026: on a laptop the parts list and
+the work panel left the board about half the screen. This is the first of
+three parts; a board that grows in every direction and is moved by dragging,
+and right-angle wires, follow.
+
+- **The parts list is one column.** Folded, it is a rail of drawings (64 px on
+  a laptop, 48 px on a phone). While the pointer is on it, it widens to show
+  each part's name, and nothing moves up or down, so a part stays where the
+  pointer found it. It folds the moment a part is picked, so the board is
+  clear to place it. On a touch screen a first tap opens the list and a second
+  picks, so a part is chosen by its name and not by guessing at a drawing. The
+  phone's bottom sheet is gone.
+- **The work panel is a rail of tabs** at the board's edge on a wide screen.
+  What a tab holds opens over the board while the pointer or the focus is in
+  it (so typing a program does not close it), and it sits below the lab's bar,
+  so Run stays in reach. Folded, the circuit tab counts the lab's messages,
+  which would otherwise go unseen. On a phone the panel is below the board, as
+  before; that is still to be decided with the owner.
+- **Keep open.** Either rail can be kept open, which puts it back beside the
+  board; the choice is remembered on the device.
+- **The board alone.** One button puts both rails away on a wide screen.
+- On a 1366 px laptop the board goes from about 694 px to 1226 px wide.
+- **Tests.** The browser tests of what the lab does run with both rails kept
+  open, as a student may choose, so that nothing covers the board mid-test;
+  `workspace.spec.ts` tests the rails themselves from a browser that has chosen
+  nothing.
