@@ -66,6 +66,9 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **A build of the web app for Cloudflare Workers**, with security and
+  caching headers and a check that no private material is in it; the browser
+  tests run against it in Cloudflare's own runtime. Not deployed.
 - **Put it on a real board**: an UNO-compatible board plugged into a laptop
   by USB gets the program the lab built, written, read back to check, and
   started, from Chrome, Edge or Firefox 151 and newer. Not yet tried on a real

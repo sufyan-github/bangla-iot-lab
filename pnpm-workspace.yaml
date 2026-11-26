@@ -4,6 +4,7 @@ packages:
 # Packages allowed to run install scripts. Keep this list short and reviewed.
 allowBuilds:
   esbuild: true
+  workerd: false
 minimumReleaseAgeExclude:
   - '@tanstack/query-core@5.108.1'
   - '@tanstack/react-query@5.108.1'

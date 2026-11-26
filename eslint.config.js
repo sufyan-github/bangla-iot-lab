@@ -10,6 +10,7 @@ export default tseslint.config(
       '**/dev-dist/**',
       '**/node_modules/**',
       '**/.cache/**',
+      '**/.wrangler/**',
       '**/playwright-report/**',
       '**/test-results/**',
       'third_party/**',

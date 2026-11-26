@@ -2617,3 +2617,38 @@ board.
 - **Later**: a real ESP32 needs its own, much larger protocol and the board's
   real firmware, which the lab's own model of the board does not build; and
   the Pico is not in the lab yet. Each is separate work.
+
+## D-118 — The lab on Cloudflare, in stages; first, the web app
+
+Chosen by the owner on 26 November 2026: the whole lab on Cloudflare
+(Workers, D1, R2, Containers), planned in five stages, each its own change,
+tested here first and deployed only on the owner's approval. The facts behind
+it are from Cloudflare's documentation, checked on 26 November 2026 (sources
+in the conversation's research notes; VERIFIED unless said otherwise).
+
+- **Stages.** (1) The web app on Workers as static files. (2) The compile
+  service in Cloudflare Containers, generally available since April 2026, each
+  instance a small virtual machine; whether bubblewrap's sandbox works inside
+  one is not documented and needs a test, with one container per compile as
+  the fallback. (3) The server moved from Fastify to Hono, and from PostgreSQL
+  to D1 (SQLite; no step-by-step transactions, only batches); it waits for two
+  owner decisions below. (4) Email through Cloudflare's email service (in
+  public beta), behind an interface so it can be replaced. (5) A staging site,
+  then production.
+- **Decisions waiting for the owner.** A Cloudflare account on Workers Paid,
+  and a domain. Where children's data is kept: D1 and R2 offer only EU, US or
+  FedRAMP jurisdictions and a best-effort Asia-Pacific hint, no South Asia
+  option; a question for the owner's lawyer. Password hashing: scrypt as now,
+  if a test shows it runs within Workers' limits, else PBKDF2, which Workers
+  has built in and which is weaker.
+- **Stage 1, built here.** `wrangler.jsonc` serves the build with single-page
+  routing. `pnpm build:cloudflare` refuses a build with the private handbook
+  switched on, writes the headers (a content security policy, caching that
+  keeps offline use working, a permissions policy allowing serial ports to the
+  site only), and stops if any passage of the private material on the computer
+  is in the build. The full browser suite runs against this build in
+  Cloudflare's own runtime (`playwright.cloudflare.config.ts`). Wrangler is a
+  development tool (MIT or Apache-2.0), downloaded with the owner's approval,
+  and is not shipped.
+- Nothing is deployed. The server's address is still set at build time
+  (`VITE_API_URL`), as before; on Cloudflare it will be the stage 3 server.

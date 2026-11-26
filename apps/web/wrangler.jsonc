@@ -1,0 +1,14 @@
+// The web app as a Cloudflare Worker that serves only static files (D-118).
+// Build it with `pnpm build:cloudflare`, which also writes dist/_headers;
+// try it with `pnpm preview:cloudflare`. Deploying needs the owner's account
+// and approval, and is not done by any script here.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bangla-iot-lab-web",
+  "compatibility_date": "2026-11-20",
+  "assets": {
+    "directory": "./dist",
+    // Any address the app does not have as a file is one of its own pages.
+    "not_found_handling": "single-page-application",
+  },
+}
