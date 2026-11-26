@@ -2582,3 +2582,38 @@ Built on 25 November 2026, chosen by the owner from the list of what is left
 - Nothing leaves the device and no network is used, so the children's-data
   rules are unchanged. A tutor built on a language model is the later,
   separate stage, and waits for the owner's decision.
+
+## D-117 — Putting a program on a real UNO-compatible board
+
+Built on 26 November 2026, chosen by the owner from the list of what is left
+(requirement "Real-board upload (STK500v1, UF2)"). Not yet checked on a real
+board.
+
+- **Through the browser's own serial ports (Web Serial).** VERIFIED from
+  Chrome's and MDN's documentation: desktop Chrome and Edge from version 89,
+  Firefox from 151; not Safari; HTTPS pages only. On Android, Chrome 148 has
+  the API, but a Chromium engineer says it lists wired ports only on phones
+  set up to offer them, from Android 17; no source says an ordinary phone sees
+  an UNO clone. So the lab checks, and where it cannot reach a board it says
+  plainly that a laptop with one of those browsers is needed. No polyfill:
+  Google's WebUSB one handles only CDC-ACM devices, and most clones' CH340 is
+  not one (REPORTED).
+- **The same program the lab runs.** The lab already builds UNO programs with
+  the real Arduino core for the ATmega328P, so the file it runs is the file
+  the board gets.
+- **The bootloader's own protocol**, STK500 version 1, as the Arduino IDE's
+  uploader speaks it to Optiboot. VERIFIED from avrdude's and Optiboot's
+  source: a reset by the serial lines, sync, the bootloader's version, program
+  mode, the chip's signature (1E 95 0F for the ATmega328P; anything else is
+  refused before a byte is written), 128-byte pages at word addresses, every
+  page read back and compared, then the program started. 115 200 baud for the
+  UNO and newer Nanos, 57 600 for older Nanos and the Duemilanove, chosen by
+  the student. A program over 32 256 bytes is refused.
+- **Not yet checked on a board.** Which way round a USB chip turns the serial
+  lines into the board's reset is inferred from avrdude, not tried. Tests use
+  a stand-in for the bootloader that answers as Optiboot's source says, in the
+  unit tests and inside the page in the browser tests. The section says it is
+  not yet checked on a real board.
+- **Later**: a real ESP32 needs its own, much larger protocol and the board's
+  real firmware, which the lab's own model of the board does not build; and
+  the Pico is not in the lab yet. Each is separate work.

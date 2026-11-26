@@ -8,6 +8,7 @@ import { useOnline } from '../shell/useOnline';
 import { matchingStarter, starterIds, starterLabel, starterProgram } from './starters';
 import { programText, type SketchTab } from '../storage/projects';
 import { SerialPlot } from './SerialPlot';
+import { RealBoardUpload } from './real-board/RealBoardUpload';
 import { useLab } from './store';
 
 /** The main file's name, as the Arduino IDE shows a sketch's first tab. */
@@ -303,6 +304,9 @@ export function CodePanel({ boardId }: { boardId: string }) {
           )}
         </div>
       </div>
+
+      {/* The same program, on a real UNO-compatible board plugged in by USB (D-117). */}
+      {board === 'uno' && upToDate && program?.hex && <RealBoardUpload hex={program.hex} />}
 
       <div>
         <div className="mb-1.5 flex items-center gap-2">

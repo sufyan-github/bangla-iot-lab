@@ -66,6 +66,10 @@ make no promise of compatibility, except that saved circuits are always migrated
 
 ### Added
 
+- **Put it on a real board**: an UNO-compatible board plugged into a laptop
+  by USB gets the program the lab built, written, read back to check, and
+  started, from Chrome, Edge or Firefox 151 and newer. Not yet tried on a real
+  board.
 - **Hints**: a Hint button beside Run looks for what the simulation cannot
   see wrong (a leg or wire joined to nothing, a program using a pin nothing is
   wired to, a button pin left floating, and two ESP32 pin traps) and gives a

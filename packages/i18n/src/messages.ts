@@ -164,6 +164,30 @@ export const bn = {
     'তোমার প্রোগ্রাম analogRead দিয়ে {pin} পড়ে, আবার Wi-Fi-ও চালু করে। ESP32-এ এই দুটো কি একসাথে চলে?',
   'tutor.adc2-wifi.fix':
     'না: Wi-Fi চালু থাকলে দ্বিতীয় কনভার্টারের (ADC2) পিনগুলো পড়তে পারে না। D32 থেকে D35, VP বা VN ব্যবহার করো, এগুলো প্রথমটার।',
+  'realBoard.title': 'আসল বোর্ডে দাও',
+  'realBoard.intro': 'USB তার দিয়ে এই কম্পিউটারে লাগানো UNO-সামঞ্জস্যপূর্ণ বোর্ডে এই প্রোগ্রাম লেখা যায়।',
+  'realBoard.kind': 'বোর্ড',
+  'realBoard.kind.uno': 'UNO বা নতুন Nano',
+  'realBoard.kind.old': 'পুরোনো Nano বা Duemilanove',
+  'realBoard.upload': 'বোর্ড বেছে নিয়ে লেখো',
+  'realBoard.connecting': 'বোর্ডের সাথে যোগাযোগ হচ্ছে…',
+  'realBoard.writing': 'লেখা হচ্ছে: {percent}%',
+  'realBoard.checking': 'মিলিয়ে দেখা হচ্ছে: {percent}%',
+  'realBoard.done': 'হয়ে গেছে: {bytes} বাইট লেখা আর মিলিয়ে দেখা হয়েছে, প্রোগ্রাম এখন বোর্ডে চলছে।',
+  'realBoard.unsupported':
+    'এই ব্রাউজার USB-তে লাগানো বোর্ডে পৌঁছাতে পারে না। ল্যাপটপে Chrome, Edge বা Firefox (১৫১ বা নতুন) দিয়ে ল্যাব খোলো। বেশিরভাগ ফোনে এটা এখনো হয় না।',
+  'realBoard.busy':
+    'পোর্টটা অন্য কোথাও খোলা। Arduino IDE-র সিরিয়াল মনিটর বা অন্য যে ট্যাব এটা ব্যবহার করছে, সেটা বন্ধ করে আবার চেষ্টা করো।',
+  'realBoard.no-reply':
+    'বোর্ড সাড়া দিল না। তারটা দেখো, ঠিক পোর্ট বেছেছ কি না দেখো; পুরোনো Nano হলে উপরে "পুরোনো Nano" বেছে নাও।',
+  'realBoard.out-of-sync': 'বোর্ডের উত্তর বোঝা গেল না। বোর্ডটা খুলে আবার লাগিয়ে চেষ্টা করো।',
+  'realBoard.wrong-chip': 'এই বোর্ডের চিপ ATmega328P নয় (সিগনেচার {detail}), তাই কিছু লেখা হয়নি।',
+  'realBoard.write-failed': 'লেখার মাঝপথে বোর্ড থেমে গেল। আবার চেষ্টা করো।',
+  'realBoard.verify-failed':
+    'যা লেখা হলো, মিলিয়ে দেখায় তা মেলেনি। আবার চেষ্টা করো; বারবার হলে বোর্ডটা পরীক্ষা করাতে হবে।',
+  'realBoard.too-large': 'প্রোগ্রামটা UNO-র জন্য বড়।',
+  'realBoard.lost': 'বোর্ডের সাথে যোগাযোগ ছিঁড়ে গেল। তারটা দেখে আবার চেষ্টা করো।',
+  'realBoard.note': 'আসল বোর্ডে এটা এখনো পরীক্ষা করা হয়নি।',
   'runCheck.title': 'চালু করার আগে: এগুলো এখনো মেলেনি',
   'runCheck.intro':
     'সার্কিট চলছে, তবে পাঠ যা বানাতে বলেছে তার কিছু এখনো নেই। ঠিক করলে তালিকা থেকে সরে যাবে।',
@@ -1552,6 +1576,34 @@ export const en: Record<MessageKey, string> = {
     'Your program reads {pin} with analogRead and turns Wi-Fi on. Do those two go together on an ESP32?',
   'tutor.adc2-wifi.fix':
     'No: while Wi-Fi is on, the pins of the second converter (ADC2) cannot read. Use D32 to D35, VP or VN, which belong to the first.',
+  'realBoard.title': 'Put it on a real board',
+  'realBoard.intro':
+    'This program can be written to an UNO-compatible board plugged into this computer by USB.',
+  'realBoard.kind': 'Board',
+  'realBoard.kind.uno': 'UNO or a newer Nano',
+  'realBoard.kind.old': 'Older Nano or Duemilanove',
+  'realBoard.upload': 'Choose the board and write',
+  'realBoard.connecting': 'Reaching the board…',
+  'realBoard.writing': 'Writing: {percent}%',
+  'realBoard.checking': 'Checking: {percent}%',
+  'realBoard.done':
+    'Done: {bytes} bytes written and checked; the program is now running on the board.',
+  'realBoard.unsupported':
+    'This browser cannot reach a board plugged in by USB. Open the lab in Chrome, Edge or Firefox (151 or newer) on a laptop. Most phones cannot do this yet.',
+  'realBoard.busy':
+    'The port is open somewhere else. Close the Arduino IDE’s serial monitor, or any other tab using it, and try again.',
+  'realBoard.no-reply':
+    'The board did not answer. Check the cable and that you chose the right port; for an older Nano, choose “Older Nano” above.',
+  'realBoard.out-of-sync':
+    'The board’s answer made no sense. Unplug it, plug it back in and try again.',
+  'realBoard.wrong-chip':
+    'This board’s chip is not an ATmega328P (signature {detail}), so nothing was written.',
+  'realBoard.write-failed': 'The board stopped part-way through writing. Try again.',
+  'realBoard.verify-failed':
+    'What was written did not read back the same. Try again; if it keeps happening, the board needs checking.',
+  'realBoard.too-large': 'The program is too big for an UNO.',
+  'realBoard.lost': 'The connection to the board was lost. Check the cable and try again.',
+  'realBoard.note': 'Not yet checked on a real board.',
   'runCheck.title': 'Before it runs: these are not met yet',
   'runCheck.intro':
     'The circuit is running, but some of what the lesson asked you to build is not there yet. Each item goes once it is fixed.',
