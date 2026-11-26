@@ -1,6 +1,6 @@
 # Development progress
 
-Updated 25 November 2026. This report lists only what is implemented and covered
+Updated 26 November 2026. This report lists only what is implemented and covered
 by automated tests. "Not checked on hardware" applies to everything until the
 bench records in [validation/](validation/README.md) exist.
 
@@ -41,13 +41,15 @@ curriculum depend on that board.
 
 ## Test results
 
-| Suite                                                                                                                               | Result on 23 November 2026                                                                                                                              |
-| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lint, formatting, types, licence check                                                                                              | Clean                                                                                                                                                   |
-| Unit tests                                                                                                                          | 524 passed                                                                                                                                              |
-| Integration tests (database, compiler sandbox, emulators, firmware source, ESP32 board library, ESP32 compile paths, chip emulator) | 88 passed                                                                                                                                               |
-| Browser tests, desktop and phone sizes                                                                                              | 138 tests. Last full local run: 134 passed; 4 timed out under load (three at the very start of the run) and passed when rerun alone; see the note below |
-| Hardware tests                                                                                                                      | None run                                                                                                                                                |
+A full local run on 26 November 2026, on main after D-117, on the owner's laptop.
+
+| Suite                                                                                                                               | Result on 26 November 2026                                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lint, formatting, types, licence check                                                                                              | Clean                                                                                                                                                                                                                                                                                                                       |
+| Unit tests                                                                                                                          | 857 passed                                                                                                                                                                                                                                                                                                                  |
+| Integration tests (database, compiler sandbox, emulators, firmware source, ESP32 board library, ESP32 compile paths, chip emulator) | 168 passed. The 13 that build ESP32 programs need the WebAssembly toolchain, which the laptop does not have installed; they passed with it unpacked into a temporary folder. One, which builds every ESP32 starter, ran past its two minutes while the browser tests ran beside it, and passed alone in 66 seconds          |
+| Browser tests, desktop and phone sizes                                                                                              | 288 tests: 280 passed and 8 skipped by design (mouse-only tests on the phone, phone-only ones on the desktop). Six that compile ESP32 programs failed first for the same missing toolchain, and one, two boards over LoRa on the phone, timed out under load; all seven passed when rerun with the toolchain, one at a time |
+| Hardware tests                                                                                                                      | None run                                                                                                                                                                                                                                                                                                                    |
 
 **Browser tests and a busy computer.** Some tests wait for something the
 simulation does (a servo sweep, a sensor reading, two boards talking). On a
